@@ -28,9 +28,9 @@ export const authService = {
     return response.data;
   },
 
-  logout: async (): Promise<void> => {
-    await apiClient.post("/auth/logout");
-  },
+  // logout: async (): Promise<void> => {
+  //   await apiClient.post("/auth/logout");
+  // },
 
   getCurrentUser: async (): Promise<User> => {
     const response = await apiClient.get<User>("/auth/me");

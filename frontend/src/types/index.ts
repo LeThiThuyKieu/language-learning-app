@@ -5,6 +5,7 @@ export interface User {
   createdAt: string;
   lastLogin?: string;
   status: "active" | "banned";
+  roles?: string[];
 }
 
 export interface UserProfile {
