@@ -31,7 +31,6 @@ public class ConversationScript {
     private Integer levelId;
 
     private Integer duration; // seconds
-    private Integer difficulty;
     private List<String> vocabulary; // vocab ids
     private List<String> tags;
     

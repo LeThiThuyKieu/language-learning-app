@@ -25,7 +25,7 @@ public class MediaFile {
     private Integer duration; // for audio/video, seconds
     private List<String> tags;
     private LocalDateTime uploadedAt;
-    private Integer uploadedBy;
+    private Integer uploadedBy; //users.id (MySQL)
 }
 
 

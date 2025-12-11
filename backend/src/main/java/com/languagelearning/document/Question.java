@@ -25,10 +25,7 @@ public class Question {
     private List<String> options;
     private List<String> correctAnswers;
     private String explanation;
-    /**
-     * 1-5
-     */
-    private Integer difficulty;
+
     private Integer points;
 
     @Indexed
