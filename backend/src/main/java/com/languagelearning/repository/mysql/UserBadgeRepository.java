@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserBadge;
@@ -12,4 +12,5 @@ public interface UserBadgeRepository extends JpaRepository<UserBadge, Integer> {
     List<UserBadge> findByUser(User user);
     boolean existsByUserAndBadgeId(User user, Integer badgeId);
 }
+
 

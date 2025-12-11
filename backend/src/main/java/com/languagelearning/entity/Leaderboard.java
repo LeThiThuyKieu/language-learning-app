@@ -35,3 +35,4 @@ public class Leaderboard {
     private LocalDateTime updatedAt;
 }
 
+

@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.XpHistory;
@@ -11,4 +11,5 @@ import java.util.List;
 public interface XpHistoryRepository extends JpaRepository<XpHistory, Integer> {
     List<XpHistory> findByUserOrderByCreatedAtDesc(User user);
 }
+
 

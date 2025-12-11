@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -26,7 +27,15 @@ public class Vocabulary {
     private List<String> antonyms;
     private String audioUrl;
     private String imageUrl;
+
+    @Indexed
     private Integer levelId;
+    @Indexed
+    private Integer skillTreeId;
+    @Indexed
+    private Integer skillNodeId;
+
     private List<String> tags;
 }
+
 

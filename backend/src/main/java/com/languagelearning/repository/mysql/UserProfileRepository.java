@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserProfile;
@@ -12,4 +12,5 @@ public interface UserProfileRepository extends JpaRepository<UserProfile, Intege
     Optional<UserProfile> findByUser(User user);
     Optional<UserProfile> findByUserId(Integer userId);
 }
+
 

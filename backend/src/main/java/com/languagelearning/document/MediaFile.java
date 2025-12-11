@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Document(collection = "media_files")
 @Data
@@ -21,7 +22,10 @@ public class MediaFile {
     private String fileType; // image, audio, video
     private Long fileSize;
     private String mimeType;
+    private Integer duration; // for audio/video, seconds
+    private List<String> tags;
     private LocalDateTime uploadedAt;
     private Integer uploadedBy;
 }
+
 

@@ -227,6 +227,7 @@ INSERT INTO `user_profile` (`id`, `user_id`, `full_name`, `avatar_url`, `target_
 CREATE TABLE IF NOT EXISTS `user_role` (
   `user_id` int(11) NOT NULL,
   `role_id` int(11) NOT NULL,
+
   PRIMARY KEY (`user_id`,`role_id`),
   KEY `role_id` (`role_id`),
   CONSTRAINT `user_role_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),

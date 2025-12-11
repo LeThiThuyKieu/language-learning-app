@@ -27,3 +27,4 @@ public class StreakHistory {
     private Integer earnedXp = 0;
 }
 
+
