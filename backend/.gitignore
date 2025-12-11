@@ -33,6 +33,6 @@ build/
 .vscode/
 
 ### Environment Variables & Sensitive Files ###
-src/main/resources/application_local.properties
+src/main/resources/application-local.properties
 
 
