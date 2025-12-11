@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -15,15 +16,34 @@ import java.util.List;
 public class Question {
     @Id
     private String id;
-    
+
     private String questionText;
-    private String questionType; // MULTIPLE_CHOICE, FILL_BLANK, TRUE_FALSE, etc.
+    /**
+     * MULTIPLE_CHOICE, FILL_BLANK, TRUE_FALSE, MATCHING, ORDER, SPEAKING, LISTENING
+     */
+    private String questionType;
     private List<String> options;
     private List<String> correctAnswers;
     private String explanation;
-    private Integer difficulty; // 1-5
-    private Integer skillNodeId;
-    private Integer lessonId;
+    /**
+     * 1-5
+     */
+    private Integer difficulty;
     private Integer points;
+
+    @Indexed
+    private Integer levelId;
+    @Indexed
+    private Integer skillTreeId;
+    @Indexed
+    private Integer skillNodeId;
+
+    /**
+     * Optional: BEGINNER / INTERMEDIATE / ADVANCED (dùng cho placement test group)
+     */
+    private String placementGroup;
+
+    private List<String> tags;
 }
+
 

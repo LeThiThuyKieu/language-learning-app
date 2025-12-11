@@ -9,33 +9,27 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
-@Document(collection = "listening_exercises")
+@Document(collection = "review_sets")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListeningExercise {
+public class ReviewSet {
     @Id
     private String id;
-    
-    private String title;
-    private String audioUrl;
-    private String transcript;
+
+    @Indexed
+    private Integer skillTreeId;
+    private List<Integer> nodeIds;
 
     /**
-     * Lưu danh sách questionId để tránh embed quá sâu
+     * Danh sách questionId dùng cho review node (10 câu random)
      */
     private List<String> questionIds;
 
-    @Indexed
-    private Integer skillNodeId;
-    @Indexed
-    private Integer skillTreeId;
-    @Indexed
-    private Integer levelId;
-
-    private Integer duration; // seconds
-    private Integer difficulty;
+    /**
+     * Quy tắc chọn (vd: "random-10-of-40")
+     */
+    private String selectionRule;
     private List<String> tags;
 }
-
 

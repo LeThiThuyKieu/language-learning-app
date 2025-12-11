@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.PlacementTest;
 import com.languagelearning.entity.User;
@@ -11,4 +11,5 @@ import java.util.List;
 public interface PlacementTestRepository extends JpaRepository<PlacementTest, Integer> {
     List<PlacementTest> findByUserOrderByCreatedAtDesc(User user);
 }
+
 

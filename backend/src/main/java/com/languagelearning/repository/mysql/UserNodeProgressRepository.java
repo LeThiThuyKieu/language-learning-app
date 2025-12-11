@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserNodeProgress;
@@ -13,4 +13,5 @@ public interface UserNodeProgressRepository extends JpaRepository<UserNodeProgre
     Optional<UserNodeProgress> findByUserAndNodeId(User user, Integer nodeId);
     List<UserNodeProgress> findByUser(User user);
 }
+
 

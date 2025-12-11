@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.SkillTree;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,4 +10,5 @@ import java.util.List;
 public interface SkillTreeRepository extends JpaRepository<SkillTree, Integer> {
     List<SkillTree> findByLevelIdOrderByOrderIndex(Integer levelId);
 }
+
 

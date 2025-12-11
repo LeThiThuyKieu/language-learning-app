@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.StreakHistory;
@@ -14,4 +14,5 @@ public interface StreakHistoryRepository extends JpaRepository<StreakHistory, In
     List<StreakHistory> findByUser(User user);
     Optional<StreakHistory> findByUserAndDate(User user, LocalDate date);
 }
+
 

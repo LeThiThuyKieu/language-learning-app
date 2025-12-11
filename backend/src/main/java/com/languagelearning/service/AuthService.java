@@ -8,9 +8,9 @@ import com.languagelearning.entity.UserProfile;
 import com.languagelearning.exception.BadCredentialsException;
 import com.languagelearning.exception.InvalidTokenException;
 import com.languagelearning.exception.UserAlreadyExistsException;
-import com.languagelearning.repository.RoleRepository;
-import com.languagelearning.repository.UserProfileRepository;
-import com.languagelearning.repository.UserRepository;
+import com.languagelearning.repository.mysql.RoleRepository;
+import com.languagelearning.repository.mysql.UserProfileRepository;
+import com.languagelearning.repository.mysql.UserRepository;
 import com.languagelearning.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -135,4 +135,5 @@ public class AuthService {
     }
 
 }
+
 

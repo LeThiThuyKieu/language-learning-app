@@ -32,3 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
+### Environment Variables & Sensitive Files ###
+src/main/resources/application-local.properties
+
+

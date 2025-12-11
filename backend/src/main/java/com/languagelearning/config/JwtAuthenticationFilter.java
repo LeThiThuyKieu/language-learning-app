@@ -1,7 +1,7 @@
 package com.languagelearning.config;
 
 import com.languagelearning.entity.User;
-import com.languagelearning.repository.UserRepository;
+import com.languagelearning.repository.mysql.UserRepository;
 import com.languagelearning.util.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

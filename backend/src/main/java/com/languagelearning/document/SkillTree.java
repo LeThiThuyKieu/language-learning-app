@@ -7,38 +7,30 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-@Document(collection = "lessons")
+@Document(collection = "skill_trees")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Lesson {
+public class SkillTree {
     @Id
     private String id;
 
+    @Indexed
+    private Integer skillTreeId; // map MySQL skill_tree.id
+    @Indexed
+    private Integer levelId;     // map MySQL levels.id
+
     private String title;
     private String description;
-    /**
-     * Nội dung bài học (markdown/HTML/JSON)
-     */
-    private String content;
+    private Integer orderIndex;
 
-    @Indexed
-    private Integer levelId;
-    @Indexed
-    private Integer skillTreeId;
-    @Indexed
-    private Integer skillNodeId;
+    /**
+     * Danh sách node id (MySQL) thuộc tree này
+     */
+    private List<Integer> nodeIds;
 
     private List<String> tags;
-    /**
-     * Phút
-     */
-    private Integer estimatedDuration;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }
-
 

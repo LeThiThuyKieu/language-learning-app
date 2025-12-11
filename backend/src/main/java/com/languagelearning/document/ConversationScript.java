@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -21,11 +22,18 @@ public class ConversationScript {
     private List<DialogueLine> dialogue;
     private String transcript;
     private String translation;
+
+    @Indexed
     private Integer skillNodeId;
+    @Indexed
+    private Integer skillTreeId;
+    @Indexed
     private Integer levelId;
+
     private Integer duration; // seconds
     private Integer difficulty;
-    private List<String> vocabulary;
+    private List<String> vocabulary; // vocab ids
+    private List<String> tags;
     
     @Data
     @NoArgsConstructor

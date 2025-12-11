@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -22,8 +23,16 @@ public class MatchingExercise {
     private List<String> rightItems;
     private Map<String, String> correctPairs; // leftItem -> rightItem
     private String explanation;
+
+    @Indexed
     private Integer skillNodeId;
+    @Indexed
+    private Integer skillTreeId;
+    @Indexed
     private Integer levelId;
+
     private Integer difficulty;
+    private List<String> tags;
 }
+
 

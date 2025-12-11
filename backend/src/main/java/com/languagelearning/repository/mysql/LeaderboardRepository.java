@@ -1,4 +1,4 @@
-package com.languagelearning.repository;
+package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.Leaderboard;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +12,5 @@ public interface LeaderboardRepository extends JpaRepository<Leaderboard, Intege
     @Query("SELECT l FROM Leaderboard l ORDER BY l.totalXp DESC")
     List<Leaderboard> findAllOrderByTotalXpDesc();
 }
+
 

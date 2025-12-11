@@ -33,3 +33,4 @@ public class UserBadge {
     private LocalDateTime earnedAt;
 }
 
+

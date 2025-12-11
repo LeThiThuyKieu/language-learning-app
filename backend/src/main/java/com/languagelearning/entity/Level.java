@@ -25,3 +25,4 @@ public class Level {
     private Integer minScoreRequired = 0;
 }
 
+
