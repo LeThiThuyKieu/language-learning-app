@@ -20,7 +20,7 @@ export default function LoginPage() {
             const response = await authService.login({email, password});
             setAuth(response.user, response.token);
             toast.success("Đăng nhập thành công!");
-            navigate("/dashboard");
+            navigate("/");
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.message || "Đăng nhập thất bại");

@@ -31,7 +31,6 @@ public class SpeakingExercise {
     private Integer levelId;
 
     private Integer duration; // seconds
-    private Integer difficulty;
     private List<String> tags;
 }
 

@@ -32,7 +32,8 @@
       "@/types/*": ["./src/types/*"],
       "@/services/*": ["./src/services/*"],
       "@/config/*": ["./src/config/*"]
-    }
+    },
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

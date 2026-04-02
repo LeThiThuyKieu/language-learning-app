@@ -31,7 +31,6 @@ public class MatchingExercise {
     @Indexed
     private Integer levelId;
 
-    private Integer difficulty;
     private List<String> tags;
 }
 
