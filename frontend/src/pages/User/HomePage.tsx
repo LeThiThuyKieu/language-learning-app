@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, Loader } from "lucide-react";
+import heroImg from "/hero-illustration/hero-image.jpg";
 
 export default function HomePage() {
-  const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">(
+  const [, setApiStatus] = useState<"checking" | "online" | "offline">(
     "checking"
   );
 
@@ -23,121 +23,136 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <section className="text-center py-12">
-        <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-          Học một ngoại ngữ để sống
-        </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-          Những mẫu câu hữu ích trong cuộc sống hàng ngày. Được dạy với những video clip của người bản ngữ thực sự.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-base rounded-lg transition-all duration-200 shadow-md hover:shadow-lg w-full sm:w-auto">
-            Bắt đầu học
-          </button>
-          <button className="px-8 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 font-semibold text-base rounded-lg transition-all duration-200 w-full sm:w-auto">
-            Tìm hiểu thêm
-          </button>
+    <>
+      <div className="min-h-[70vh] flex flex-col md:flex-row items-center justify-between max-w-6xl mx-auto px-4 py-16 gap-8">
+        {/* Left: Text */}
+        <div className="flex-1 flex flex-col items-start justify-center text-left space-y-6 order-1 md:order-none">
+          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight">
+            Học ngoại ngữ <br />
+            <span className="text-primary-600">để sống</span>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-600 max-w-lg">
+            Những mẫu câu hữu ích trong cuộc sống hàng ngày. Được dạy với những video clip của người bản ngữ thực sự.
+          </p>
+          <div className="flex gap-4 mt-2">
+            <button className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-base rounded-lg shadow-md transition-all duration-200">
+              Bắt đầu học
+            </button>
+            <button className="px-8 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 font-semibold text-base rounded-lg transition-all duration-200">
+              Tìm hiểu thêm
+            </button>
+          </div>
         </div>
-      </section>
-
+        {/* Right: Illustration */}
+        <div className="flex-1 flex items-center justify-center mb-8 md:mb-0 order-2 md:order-none">
+          <img
+            src={heroImg}
+            alt="Hero illustration"
+            className="w-full max-w-md rounded-2xl shadow-lg object-contain"
+          />
+        </div>
+      </div>
       {/* Features Section */}
-      <section className="py-12">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 text-center">
-          Tại sao chọn Leon?
-        </h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            { icon: "📚", title: "Khóa học đa dạng", desc: "Hơn 100 khóa học từ cơ bản đến nâng cao" },
-            { icon: "🎯", title: "Phương pháp hiệu quả", desc: "Học qua video clip thực tế, giọng người bản ngữ" },
-            { icon: "🏆", title: "Sertification", desc: "Nhận chứng chỉ sau khi hoàn thành khóa học" },
-          ].map((item, idx) => (
-            <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all">
-              <div className="text-4xl mb-4">{item.icon}</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">{item.title}</h3>
-              <p className="text-gray-600 font-medium leading-relaxed">{item.desc}</p>
+      <section className="bg-white py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 text-center mb-2">
+            Tại sao nên sử dụng{" "}
+            <span className="text-primary-600">Lion</span>?
+          </h2>
+          <div className="w-24 h-2 bg-primary-600 mx-auto mb-8 rounded-full opacity-30"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {/* Card 1 */}
+            <div className="bg-blue-50 rounded-xl p-6 flex flex-col items-center shadow-sm">
+              <svg
+                width="48"
+                height="48"
+                fill="none"
+                viewBox="0 0 48 48"
+                className="mb-4"
+              >
+                <path
+                  d="M24 8c-8.837 0-16 7.163-16 16h4a12 12 0 0124 0h4c0-8.837-7.163-16-16-16z"
+                  fill="#38bdf8"
+                />
+                <path
+                  d="M24 40c8.837 0 16-7.163 16-16h-4a12 12 0 01-24 0h-4c0 8.837 7.163 16 16 16z"
+                  fill="#bae6fd"
+                />
+              </svg>
+              <p className="mt-4 text-lg font-semibold text-gray-800 text-center">
+                Các kỹ thuật ghi nhớ được khoa học chứng minh
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Tech Stack Section */}
-      <section className="py-12 bg-white rounded-xl p-8 border border-gray-100">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-          Công nghệ sử dụng
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            "React 18",
-            "TypeScript",
-            "Spring Boot",
-            "MySQL",
-            "MongoDB",
-            "Tailwind CSS",
-            "JWT Auth",
-            "Vite",
-          ].map((tech) => (
-            <div
-              key={tech}
-              className="bg-gradient-to-br from-primary-50 to-primary-100 p-4 rounded-lg text-center border border-primary-200"
-            >
-              <span className="font-semibold text-primary-900">{tech}</span>
+            {/* Card 2 */}
+            <div className="bg-purple-50 rounded-xl p-6 flex flex-col items-center shadow-sm">
+              <svg
+                width="48"
+                height="48"
+                fill="none"
+                viewBox="0 0 48 48"
+                className="mb-4"
+              >
+                <rect
+                  x="8"
+                  y="12"
+                  width="32"
+                  height="24"
+                  rx="6"
+                  fill="#a78bfa"
+                />
+                <path
+                  d="M16 24h16M16 28h8"
+                  stroke="#fff"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <p className="mt-4 text-lg font-semibold text-gray-800 text-center">
+                Học nhanh hơn gấp hai lần so với trên lớp
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* API Status Section */}
-      <section className="py-8">
-        <div className="bg-white rounded-xl p-8 border border-gray-100">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">
-            🧪 Trạng thái hệ thống
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <span className="font-semibold text-gray-900">Frontend (React + TypeScript)</span>
-              <div className="flex items-center gap-2 text-emerald-600">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-semibold">Running</span>
-              </div>
+            {/* Card 3 (highlight) */}
+            <div className="bg-emerald-50 rounded-xl p-6 flex flex-col items-center shadow-lg border-2 border-primary-600">
+              <svg
+                width="48"
+                height="48"
+                fill="none"
+                viewBox="0 0 48 48"
+                className="mb-4"
+              >
+                <circle cx="24" cy="24" r="20" fill="#34d399" />
+                <circle cx="24" cy="24" r="12" fill="#fff" />
+                <circle cx="24" cy="24" r="6" fill="#34d399" />
+              </svg>
+              <p className="mt-4 text-lg font-semibold text-gray-800 text-center">
+                Học bằng cách đắm mình trong ngôn ngữ, như thể bạn đang sống ở
+                đó vậy.
+              </p>
+              <p className="mt-2 text-sm text-gray-600 text-center">
+                Học ngôn ngữ thực sự được sử dụng trong đời sống.
+              </p>
             </div>
-
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <span className="font-semibold text-gray-900">Backend API (Spring Boot)</span>
-              <div className="flex items-center gap-2">
-                {apiStatus === "checking" && (
-                  <>
-                    <Loader className="w-5 h-5 animate-spin text-primary-600" />
-                    <span className="font-semibold text-primary-600">Checking...</span>
-                  </>
-                )}
-                {apiStatus === "online" && (
-                  <>
-                    <CheckCircle className="w-5 h-5 text-emerald-600" />
-                    <span className="font-semibold text-emerald-600">Online</span>
-                  </>
-                )}
-                {apiStatus === "offline" && (
-                  <>
-                    <XCircle className="w-5 h-5 text-rose-600" />
-                    <span className="font-semibold text-rose-600">Offline</span>
-                  </>
-                )}
-              </div>
+            {/* Card 4 */}
+            <div className="bg-rose-50 rounded-xl p-6 flex flex-col items-center shadow-sm">
+              <svg
+                width="48"
+                height="48"
+                fill="none"
+                viewBox="0 0 48 48"
+                className="mb-4"
+              >
+                <path
+                  d="M24 8l4 12h12l-10 7.5L32 40l-8-6-8 6 2-12.5L8 20h12z"
+                  fill="#fb7185"
+                />
+              </svg>
+              <p className="mt-4 text-lg font-semibold text-gray-800 text-center">
+                Bao quát mọi thứ từ kiến thức thiết yếu đến mục tiêu dài hạn
+              </p>
             </div>
-
-            {apiStatus === "offline" && (
-              <div className="p-4 bg-primary-50 rounded-lg border-l-4 border-primary-600">
-                <p className="text-primary-900 font-semibold">
-                  💡 Lưu ý: Hãy đảm bảo Spring Boot đang chạy tại <code className="bg-primary-100 px-2 py-1 rounded font-mono">http://localhost:8080</code>
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </section>
-    </div>
+    </>
   );
 }
