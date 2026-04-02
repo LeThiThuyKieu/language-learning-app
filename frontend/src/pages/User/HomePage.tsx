@@ -22,7 +22,7 @@ export default function HomePage() {
     testApi();
   }, []);
 
-  // Card data for section 3
+  // Card data for section 3 (Learning Features)
   const learningFeatures = [
     {
       color: "bg-sky-100",
@@ -44,7 +44,7 @@ export default function HomePage() {
         </svg>
       ),
       title: "Vocabulary",
-      desc: "Learn English Vocabulary",
+      desc: "Learn and practice vocabulary",
     },
     {
       color: "bg-orange-100",
@@ -58,6 +58,29 @@ export default function HomePage() {
         >
           <circle cx="24" cy="24" r="20" fill="#fb923c" />
           <path
+            d="M16 24h16"
+            stroke="#fff"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <rect x="20" y="18" width="8" height="12" rx="2" fill="#fff" />
+        </svg>
+      ),
+      title: "Listening",
+      desc: "Practice listening skills",
+    },
+    {
+      color: "bg-amber-100",
+      icon: (
+        <svg
+          width="48"
+          height="48"
+          fill="none"
+          viewBox="0 0 48 48"
+          className="mb-4"
+        >
+          <circle cx="24" cy="24" r="20" fill="#fbbf24" />
+          <path
             d="M24 18v12"
             stroke="#fff"
             strokeWidth="2"
@@ -66,8 +89,8 @@ export default function HomePage() {
           <circle cx="24" cy="32" r="2" fill="#fff" />
         </svg>
       ),
-      title: "Expressions",
-      desc: "Learn Expressions and Idioms",
+      title: "Speaking",
+      desc: "Practice speaking and pronunciation",
     },
     {
       color: "bg-emerald-100",
@@ -88,33 +111,11 @@ export default function HomePage() {
             rx="2"
             fill="#fff"
           />
+          <path d="M20 24h8" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
         </svg>
       ),
-      title: "Reading",
-      desc: "Reading comprehension",
-    },
-    {
-      color: "bg-amber-100",
-      icon: (
-        <svg
-          width="48"
-          height="48"
-          fill="none"
-          viewBox="0 0 48 48"
-          className="mb-4"
-        >
-          <circle cx="24" cy="24" r="20" fill="#fbbf24" />
-          <path
-            d="M18 30c2-2 10-2 12 0"
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <circle cx="24" cy="22" r="4" fill="#fff" />
-        </svg>
-      ),
-      title: "Pronunciation",
-      desc: "Pronunciation Lessons",
+      title: "Matching",
+      desc: "Match words and meanings",
     },
     {
       color: "bg-rose-100",
@@ -135,8 +136,8 @@ export default function HomePage() {
           />
         </svg>
       ),
-      title: "Grammar",
-      desc: "English Grammar lessons",
+      title: "Review",
+      desc: "Review and reinforce knowledge",
     },
   ];
 
@@ -172,8 +173,8 @@ export default function HomePage() {
           />
         </div>
       </div>
-      {/* Features Section */}
-      <section className="bg-white py-12">
+      {/* Features Section - why-choose-us*/}
+      <section className="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-white py-12">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 text-center mb-2">
             Tại sao nên sử dụng{" "}
@@ -183,71 +184,42 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {/* Card 1 */}
             <div className="group bg-blue-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-blue-300 border-2 border-transparent cursor-pointer">
-              <svg
-                width="56"
-                height="56"
-                fill="none"
-                viewBox="0 0 48 48"
-                className="mb-4 group-hover:scale-110 transition-transform duration-300"
-              >
-                <circle cx="24" cy="24" r="20" fill="#38bdf8" />
-              </svg>
+              <img src="/why-choose-us/1.jpg" alt="Memory" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
               <p className="mt-4 text-xl font-bold text-gray-800 text-center">
                 Các kỹ thuật ghi nhớ được khoa học chứng minh
+              </p>
+              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Đừng phí thời gian với những mẫu câu chẳng ai nói bao giờ. Hãy học ngôn ngữ thực sự được sử dụng trong đời sống.
               </p>
             </div>
             {/* Card 2 */}
             <div className="group bg-purple-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-purple-300 border-2 border-transparent cursor-pointer">
-              <svg
-                width="56"
-                height="56"
-                fill="none"
-                viewBox="0 0 48 48"
-                className="mb-4 group-hover:scale-110 transition-transform duration-300"
-              >
-                <rect x="8" y="12" width="32" height="24" rx="6" fill="#a78bfa" />
-              </svg>
+              <img src="/why-choose-us/2.jpg" alt="Fast Learning" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
               <p className="mt-4 text-xl font-bold text-gray-800 text-center">
                 Học nhanh hơn gấp hai lần so với trên lớp
               </p>
-            </div>
-            {/* Card 3 (highlight) */}
-            <div className="group bg-emerald-50 rounded-2xl p-8 flex flex-col items-center shadow-lg border-2 border-primary-600 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:border-emerald-400 cursor-pointer">
-              <svg
-                width="56"
-                height="56"
-                fill="none"
-                viewBox="0 0 48 48"
-                className="mb-4 group-hover:scale-110 transition-transform duration-300"
-              >
-                <circle cx="24" cy="24" r="20" fill="#34d399" />
-                <circle cx="24" cy="24" r="12" fill="#fff" />
-                <circle cx="24" cy="24" r="6" fill="#34d399" />
-              </svg>
-              <p className="mt-4 text-xl font-bold text-gray-800 text-center">
-                Học bằng cách đắm mình trong ngôn ngữ, như thể bạn đang sống ở
-                đó vậy.
+              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Tìm những chủ đề nội dung khớp với nhu cầu của bạn: từ nói chuyện phiếm trong kỳ nghỉ cho tới cuộc gặp gỡ với gia đình người yêu của bạn.
               </p>
-              <p className="mt-2 text-base text-gray-600 text-center">
-                Học ngôn ngữ thực sự được sử dụng trong đời sống.
+            </div>
+            {/* Card 3*/}
+            <div className="group bg-emerald-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-emerald-400 border-2 border-transparent cursor-pointer">
+              <img src="/why-choose-us/3.jpg" alt="Immersion" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
+              <p className="mt-4 text-xl font-bold text-gray-800 text-center">
+                Học bằng cách đắm mình trong ngôn ngữ, như thể bạn đang sống ở đó vậy
+              </p>
+              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Đừng phí thời gian với những mẫu câu chẳng ai nói bao giờ. Hãy học ngôn ngữ thực sự được sử dụng trong đời sống.
               </p>
             </div>
             {/* Card 4 */}
             <div className="group bg-rose-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-rose-300 border-2 border-transparent cursor-pointer">
-              <svg
-                width="56"
-                height="56"
-                fill="none"
-                viewBox="0 0 48 48"
-                className="mb-4 group-hover:scale-110 transition-transform duration-300"
-              >
-                <path
-                  d="M24 8l4 12h12l-10 7.5L32 40l-8-6-8 6 2-12.5L8 20h12z"
-                  fill="#fb7185"
-                />
-              </svg>
+              <img src="/why-choose-us/4.jpg" alt="Comprehensive" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
               <p className="mt-4 text-xl font-bold text-gray-800 text-center">
                 Bao quát mọi thứ từ kiến thức thiết yếu đến mục tiêu dài hạn
+              </p>
+              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Tìm những chủ đề nội dung khớp với nhu cầu của bạn: từ nói chuyện phiếm trong kỳ nghỉ cho tới cuộc gặp gỡ với gia đình người yêu của bạn.
               </p>
             </div>
           </div>
