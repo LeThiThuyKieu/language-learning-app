@@ -1,265 +1,290 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import heroImg from "/hero-illustration/hero-image.jpg";
 
 export default function HomePage() {
-  const [, setApiStatus] = useState<"checking" | "online" | "offline">(
-    "checking"
-  );
+    const [, setApiStatus] = useState<"checking" | "online" | "offline">(
+        "checking"
+    );
 
-  useEffect(() => {
-    const testApi = async () => {
-      try {
-        const response = await fetch("http://localhost:8080/api/public/health");
-        if (response.ok) {
-          setApiStatus("online");
-        } else {
-          setApiStatus("offline");
+    useEffect(() => {
+        const testApi = async () => {
+            try {
+                const response = await fetch("http://localhost:8080/api/public/health");
+                if (response.ok) {
+                    setApiStatus("online");
+                } else {
+                    setApiStatus("offline");
+                }
+            } catch (error) {
+                setApiStatus("offline");
+            }
+        };
+        testApi();
+    }, []);
+
+    // Card data for section 3 (Learning Features)
+    const learningFeatures = [
+        {
+            title: "Vocabulary",
+            desc: "Learn and practice vocabulary",
+            // Tông xanh Blue đậm
+            color: "bg-[#7EC9E0]",
+            patternColor: "text-[#69b7cd]/50",
+            // Lớp nền đậm hơn nữa
+            iconColor: "bg-[#4a8a9a]/90",
+            patternType: "concentric",
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="5" width="14" height="14" rx="2" ry="2"/>
+                    <path d="M7 1h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2"/>
+                </svg>
+            )
+        },
+        {
+            title: "Listening",
+            desc: "Practice listening skills",
+            // Tông cam Peach đậm
+            color: "bg-[#FFAD7A]",
+            patternColor: "text-[#ff985c]/50",
+            // Lớp nền đậm hơn nữa
+            iconColor: "bg-[#d86d34]/90",
+            patternType: "dots",
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                </svg>
+            )
+        },
+        {
+            title: "Speaking",
+            desc: "Practice speaking and pronunciation",
+            // Tông xanh Mint/Green đậm
+            color: "bg-[#8DE8C5]",
+            patternColor: "text-[#7ad8b3]/50",
+            // Lớp nền đậm hơn nữa
+            iconColor: "bg-[#4a9d7a]/90",
+            patternType: "zigzag",
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+                </svg>
+            )
+        },
+        {
+            title: "Matching",
+            desc: "Match words and meanings",
+            // Tông vàng đậm
+            color: "bg-[#FFDB80]",
+            patternColor: "text-[#ffcb5c]/50",
+            // Lớp nền đậm hơn nữa
+            iconColor: "bg-[#d89f34]/90",
+            patternType: "concentric",
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+                </svg>
+            )
+        },
+        {
+            title: "Review",
+            desc: "Review and reinforce knowledge",
+            // Tông hồng/đỏ Coral đậm
+            color: "bg-[#F79383]",
+            patternColor: "text-[#f37c69]/50",
+            // Lớp nền đậm hơn nữa
+            iconColor: "bg-[#ca5c4a]/90",
+            patternType: "leaves",
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20V10M18 20V4M6 20v-4"/>
+                </svg>
+            )
         }
-      } catch (error) {
-        setApiStatus("offline");
-      }
-    };
-    testApi();
-  }, []);
+    ];
 
-  // Card data for section 3 (Learning Features)
-  const learningFeatures = [
-    {
-      color: "bg-sky-100",
-      icon: (
-        <svg
-          width="48"
-          height="48"
-          fill="none"
-          viewBox="0 0 48 48"
-          className="mb-4"
-        >
-          <circle cx="24" cy="24" r="20" fill="#38bdf8" />
-          <path
-            d="M24 16v8l6 3"
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-      title: "Vocabulary",
-      desc: "Learn and practice vocabulary",
-    },
-    {
-      color: "bg-orange-100",
-      icon: (
-        <svg
-          width="48"
-          height="48"
-          fill="none"
-          viewBox="0 0 48 48"
-          className="mb-4"
-        >
-          <circle cx="24" cy="24" r="20" fill="#fb923c" />
-          <path
-            d="M16 24h16"
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <rect x="20" y="18" width="8" height="12" rx="2" fill="#fff" />
-        </svg>
-      ),
-      title: "Listening",
-      desc: "Practice listening skills",
-    },
-    {
-      color: "bg-amber-100",
-      icon: (
-        <svg
-          width="48"
-          height="48"
-          fill="none"
-          viewBox="0 0 48 48"
-          className="mb-4"
-        >
-          <circle cx="24" cy="24" r="20" fill="#fbbf24" />
-          <path
-            d="M24 18v12"
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <circle cx="24" cy="32" r="2" fill="#fff" />
-        </svg>
-      ),
-      title: "Speaking",
-      desc: "Practice speaking and pronunciation",
-    },
-    {
-      color: "bg-emerald-100",
-      icon: (
-        <svg
-          width="48"
-          height="48"
-          fill="none"
-          viewBox="0 0 48 48"
-          className="mb-4"
-        >
-          <circle cx="24" cy="24" r="20" fill="#34d399" />
-          <rect
-            x="18"
-            y="18"
-            width="12"
-            height="12"
-            rx="2"
-            fill="#fff"
-          />
-          <path d="M20 24h8" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      ),
-      title: "Matching",
-      desc: "Match words and meanings",
-    },
-    {
-      color: "bg-rose-100",
-      icon: (
-        <svg
-          width="48"
-          height="48"
-          fill="none"
-          viewBox="0 0 48 48"
-          className="mb-4"
-        >
-          <rect width="48" height="48" rx="20" fill="#fb7185" />
-          <path
-            d="M16 32l8-16 8 16"
-            stroke="#fff"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-      title: "Review",
-      desc: "Review and reinforce knowledge",
-    },
-  ];
+    return (
+        <>
+            {/* Section 1: Hero */}
+            <div className="min-h-[70vh] flex flex-col md:flex-row items-center justify-between max-w-6xl mx-auto px-4 py-16 gap-8">
+                {/* Text */}
+                <div className="flex-1 flex flex-col items-center md:items-start justify-center text-center md:text-left space-y-6">
+                    {/* Tăng leading của h1 lên để các dòng không dính nhau */}
+                    <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.15] md:leading-[1.2]">
+                        Học ngoại ngữ <br/>
+                        <span className="text-primary-600">để sống</span>
+                    </h1>
 
-  return (
-    <>
-      {/* Hero Section */}
-      <div className="min-h-[70vh] flex flex-col md:flex-row items-center justify-between max-w-6xl mx-auto px-4 py-16 gap-8">
-        {/* Text */}
-        <div className="flex-1 flex flex-col items-center md:items-start justify-center text-center md:text-left space-y-6">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight">
-            Học ngoại ngữ <br />
-            <span className="text-primary-600">để sống</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-600 max-w-lg">
-            Những mẫu câu hữu ích trong cuộc sống hàng ngày. Được dạy với những video
-            clip của người bản ngữ thực sự.
-          </p>
-          <div className="flex gap-4 mt-2">
-            <button className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-lg rounded-lg shadow-md transition-all duration-200">
-              Bắt đầu học
-            </button>
-            <button className="px-8 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 font-semibold text-lg rounded-lg transition-all duration-200">
-              Tìm hiểu thêm
-            </button>
-          </div>
-        </div>
-        {/* Image */}
-        <div className="flex-1 flex items-center justify-center">
-          <img
-            src={heroImg}
-            alt="Hero illustration"
-            className="w-full max-w-md rounded-2xl shadow-lg object-contain"
-          />
-        </div>
-      </div>
-      {/* Features Section - why-choose-us*/}
-      <section className="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-white py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 text-center mb-2">
-            Tại sao nên sử dụng{" "}
-            <span className="text-primary-600">Lion</span>?
-          </h2>
-          <div className="w-24 h-2 bg-primary-600 mx-auto mb-8 rounded-full opacity-30"></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {/* Card 1 */}
-            <div className="group bg-blue-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-blue-300 border-2 border-transparent cursor-pointer">
-              <img src="/why-choose-us/1.jpg" alt="Memory" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
-              <p className="mt-4 text-xl font-bold text-gray-800 text-center">
-                Các kỹ thuật ghi nhớ được khoa học chứng minh
-              </p>
-              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                Đừng phí thời gian với những mẫu câu chẳng ai nói bao giờ. Hãy học ngôn ngữ thực sự được sử dụng trong đời sống.
-              </p>
-            </div>
-            {/* Card 2 */}
-            <div className="group bg-purple-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-purple-300 border-2 border-transparent cursor-pointer">
-              <img src="/why-choose-us/2.jpg" alt="Fast Learning" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
-              <p className="mt-4 text-xl font-bold text-gray-800 text-center">
-                Học nhanh hơn gấp hai lần so với trên lớp
-              </p>
-              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                Tìm những chủ đề nội dung khớp với nhu cầu của bạn: từ nói chuyện phiếm trong kỳ nghỉ cho tới cuộc gặp gỡ với gia đình người yêu của bạn.
-              </p>
-            </div>
-            {/* Card 3*/}
-            <div className="group bg-emerald-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-emerald-400 border-2 border-transparent cursor-pointer">
-              <img src="/why-choose-us/3.jpg" alt="Immersion" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
-              <p className="mt-4 text-xl font-bold text-gray-800 text-center">
-                Học bằng cách đắm mình trong ngôn ngữ, như thể bạn đang sống ở đó vậy
-              </p>
-              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                Đừng phí thời gian với những mẫu câu chẳng ai nói bao giờ. Hãy học ngôn ngữ thực sự được sử dụng trong đời sống.
-              </p>
-            </div>
-            {/* Card 4 */}
-            <div className="group bg-rose-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-rose-300 border-2 border-transparent cursor-pointer">
-              <img src="/why-choose-us/4.jpg" alt="Comprehensive" className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300" />
-              <p className="mt-4 text-xl font-bold text-gray-800 text-center">
-                Bao quát mọi thứ từ kiến thức thiết yếu đến mục tiêu dài hạn
-              </p>
-              <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                Tìm những chủ đề nội dung khớp với nhu cầu của bạn: từ nói chuyện phiếm trong kỳ nghỉ cho tới cuộc gặp gỡ với gia đình người yêu của bạn.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      {/* Section: Learning Features */}
-      <section className="py-16 bg-gradient-to-r from-orange-50 via-white to-emerald-50">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col items-center mb-10">
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 text-center">
-                Learn English with{" "}
-                <span className="text-primary-600">Lion</span>{" "}
-              </h2>
-            </div>
-            <p className="text-lg md:text-xl text-gray-600 text-center max-w-2xl">
-              Lion is a language learning platform that makes your learning process
-              faster and easier.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
-            {learningFeatures.map((f, i) => (
-              <div
-                key={i}
-                className={`group ${f.color} rounded-3xl p-8 flex flex-col items-center shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:border-primary-600 border-2 border-transparent cursor-pointer`}
-              >
-                <div className="group-hover:scale-110 transition-transform duration-300">
-                  {f.icon}
+                    {/* Dùng leading-relaxed cho đoạn văn để dễ đọc hơn */}
+                    <p className="text-xl md:text-2xl text-gray-600 max-w-lg leading-relaxed">
+                        Những mẫu câu hữu ích trong cuộc sống hàng ngày. Được dạy với những video
+                        clip của người bản ngữ thực sự.
+                    </p>
+
+                    <div className="flex gap-4 mt-2">
+                        <button
+                            className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-lg rounded-lg shadow-md transition-all duration-200">
+                            Bắt đầu học
+                        </button>
+                        <button
+                            className="px-8 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 font-semibold text-lg rounded-lg transition-all duration-200">
+                            Tìm hiểu thêm
+                        </button>
+                    </div>
                 </div>
-                <h3 className="mt-2 text-2xl font-extrabold text-gray-900 text-center">
-                  {f.title}
-                </h3>
-                <p className="mt-2 text-lg text-gray-700 text-center">
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
-  );
+
+                {/* Image */}
+                <div className="flex-1 flex items-center justify-center">
+                    <img
+                        src={heroImg}
+                        alt="Hero illustration"
+                        className="w-full max-w-md rounded-2xl shadow-lg object-contain"
+                    />
+                </div>
+            </div>
+            {/* Section 2: why-choose-us */}
+            <section className="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-white py-12">
+                <div className="max-w-6xl mx-auto px-4">
+                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 text-center mb-2">
+                        Tại sao nên sử dụng{" "}
+                        <span className="text-primary-600">Lion</span>?
+                    </h2>
+                    <div className="w-24 h-2 bg-primary-600 mx-auto mb-8 rounded-full opacity-30"></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                        {/* Card 1 */}
+                        <div
+                            className="group bg-blue-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-blue-300 border-2 border-transparent cursor-pointer">
+                            <img src="/why-choose-us/1.jpg" alt="Memory"
+                                 className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300"/>
+                            <p className="mt-4 text-xl font-bold text-gray-800 text-center">
+                                Các kỹ thuật ghi nhớ được khoa học chứng minh
+                            </p>
+                            <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                Đừng phí thời gian với những mẫu câu chẳng ai nói bao giờ. Hãy học ngôn ngữ thực sự được
+                                sử dụng trong đời sống.
+                            </p>
+                        </div>
+                        {/* Card 2 */}
+                        <div
+                            className="group bg-purple-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-purple-300 border-2 border-transparent cursor-pointer">
+                            <img src="/why-choose-us/2.jpg" alt="Fast Learning"
+                                 className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300"/>
+                            <p className="mt-4 text-xl font-bold text-gray-800 text-center">
+                                Học nhanh hơn gấp hai lần so với trên lớp
+                            </p>
+                            <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                Tìm những chủ đề nội dung khớp với nhu cầu của bạn: từ nói chuyện phiếm trong kỳ nghỉ
+                                cho tới cuộc gặp gỡ với gia đình người yêu của bạn.
+                            </p>
+                        </div>
+                        {/* Card 3*/}
+                        <div
+                            className="group bg-emerald-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-emerald-400 border-2 border-transparent cursor-pointer">
+                            <img src="/why-choose-us/3.jpg" alt="Immersion"
+                                 className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300"/>
+                            <p className="mt-4 text-xl font-bold text-gray-800 text-center">
+                                Học bằng cách đắm mình trong ngôn ngữ, như thể bạn đang sống ở đó vậy
+                            </p>
+                            <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                Đừng phí thời gian với những mẫu câu chẳng ai nói bao giờ. Hãy học ngôn ngữ thực sự được
+                                sử dụng trong đời sống.
+                            </p>
+                        </div>
+                        {/* Card 4 */}
+                        <div
+                            className="group bg-rose-50 rounded-2xl p-8 flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-rose-300 border-2 border-transparent cursor-pointer">
+                            <img src="/why-choose-us/4.jpg" alt="Comprehensive"
+                                 className="mb-4 w-14 h-14 object-contain group-hover:scale-110 transition-transform duration-300"/>
+                            <p className="mt-4 text-xl font-bold text-gray-800 text-center">
+                                Bao quát mọi thứ từ kiến thức thiết yếu đến mục tiêu dài hạn
+                            </p>
+                            <p className="mt-2 text-base text-gray-600 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                Tìm những chủ đề nội dung khớp với nhu cầu của bạn: từ nói chuyện phiếm trong kỳ nghỉ
+                                cho tới cuộc gặp gỡ với gia đình người yêu của bạn.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {/* Section 3: Type-Learning */}
+            <section className="w-screen relative left-1/2 right-1/2 -mx-[50vw] py-16 bg-gradient-to-r from-orange-50 via-white to-emerald-50">
+                <div className="max-w-6xl mx-auto px-4">
+
+                    {/* Phần tiêu đề mới thêm vào */}
+                    <div className="flex flex-col items-center mb-12">
+                        <div className="flex items-center gap-2 mb-2">
+                            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 text-center">
+                                Learn English with{" "}
+                                <span className="text-primary-600">Lion</span>{" "}
+                            </h2>
+                        </div>
+                        <p className="text-lg md:text-xl text-gray-600 text-center max-w-2xl mt-2">
+                            Lion is a language learning platform that makes your learning process
+                            faster and easier.
+                        </p>
+                    </div>
+
+                    {/* Lưới danh sách các feature */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                        {learningFeatures.map((feature, index) => (
+                            <div
+                                key={index}
+                                className={`group ${feature.color} rounded-[2rem] p-6 flex flex-col items-center justify-center shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer relative overflow-hidden
+                    ${index === 0 || index === 4 ? "min-h-[350px]" : index === 1 || index === 3 ? "min-h-[280px]" : "min-h-[230px]"}`}
+                            >
+                                {/* Họa tiết góc trên (SVG Pattern) */}
+                                <div className={`absolute top-2 right-2 w-20 h-20 ${feature.patternColor} opacity-70`}>
+                                    {feature.patternType === 'concentric' && (
+                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="100" cy="0" r="30"/><circle cx="100" cy="0" r="50"/><circle cx="100" cy="0" r="70"/></svg>
+                                    )}
+                                    {feature.patternType === 'dots' && (
+                                        <div className="grid grid-cols-4 gap-2 mt-4 ml-4">
+                                            {[...Array(12)].map((_, i) => <div key={i} className="w-1 h-1 rounded-full bg-current" />)}
+                                        </div>
+                                    )}
+                                    {feature.patternType === 'zigzag' && (
+                                        <svg viewBox="0 0 100 40" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                            <path d="M0 10 L20 30 L40 10 L60 30 L80 10" />
+                                            <path d="M0 20 L20 40 L40 20 L60 40 L80 20" />
+                                        </svg>
+                                    )}
+                                    {feature.patternType === 'leaves' && (
+                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                                            <path d="M30 20 C40 10, 60 10, 70 20 S60 30, 30 20 Z" />
+                                            <path d="M40 30 C50 20, 70 20, 80 30 S70 40, 40 30 Z" />
+                                        </svg>
+                                    )}
+                                </div>
+
+                                {/* Icon tròn có lớp nền mờ */}
+                                <div className={`w-16 h-16 ${feature.iconColor} rounded-full flex items-center justify-center mb-6 z-10 backdrop-blur-sm`}>
+                                    <div className="w-10 h-10 text-white flex items-center justify-center">
+                                        {feature.icon}
+                                    </div>
+                                </div>
+
+                                {/* Text Content */}
+                                <div className="text-center z-10">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2 uppercase tracking-tight">
+                                        {feature.title}
+                                    </h3>
+                                    <p className="text-sm font-medium text-gray-800 leading-tight px-2">
+                                        {feature.desc}
+                                    </p>
+                                </div>
+
+                                {/* Họa tiết góc dưới (Cho Card Review và Vocabulary) */}
+                                {(index === 0 || index === 4) && (
+                                    <div className={`absolute bottom-2 left-2 w-16 h-16 ${feature.patternColor} rotate-180`}>
+                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="100" cy="0" r="30"/><circle cx="100" cy="0" r="50"/></svg>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        </>
+    );
 }
