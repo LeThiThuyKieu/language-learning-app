@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
-import Layout from "@/components/admin/layout/Layout";
-import HomePage from "./pages/HomePage";
+import AdminLayout from "@/components/admin/layout/Layout";
+import UserLayout from "@/components/user/layout/UserLayout";
+import HomePage from "@/pages/User/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
-import DashboardPage from "@/pages/admin/DashboardPage.tsx";
-import LearningPage from "./pages/LearningPage";
-import ProfilePage from "./pages/ProfilePage";
+import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
+import LearningPage from "@/pages/User/LearningPage";
+import ProfilePage from "@/pages/User/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -18,11 +19,17 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/" element={<Layout />}>
+          
+          {/* User Routes - HomePage, Learning, Profile */}
+          <Route path="/" element={<UserLayout />}>
             <Route index element={<HomePage />} />
-            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="learning" element={<LearningPage />} />
             <Route path="profile" element={<ProfilePage />} />
+          </Route>
+          
+          {/* Admin Routes - Dashboard */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<DashboardPage />} />
           </Route>
         </Routes>
         <Toaster position="top-right" />

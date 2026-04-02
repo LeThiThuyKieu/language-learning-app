@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar.tsx";
 import Sidebar from "./Sidebar.tsx";
 
-export default function Layout() {
+export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
