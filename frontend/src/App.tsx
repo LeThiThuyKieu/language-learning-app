@@ -1,11 +1,11 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
-import Layout from "./components/layout/Layout";
+import Layout from "@/components/admin/layout/Layout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
+import DashboardPage from "@/pages/admin/DashboardPage.tsx";
 import LearningPage from "./pages/LearningPage";
 import ProfilePage from "./pages/ProfilePage";
 
