@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
-export default function UserNavbar() {
+export default function Header() {
   const { user, logout, isAuthenticated } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
