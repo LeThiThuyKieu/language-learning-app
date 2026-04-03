@@ -34,7 +34,8 @@ export default function HomePage() {
             iconColor: "bg-[#4a8a9a]/90",
             patternType: "concentric",
             icon: (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                     strokeLinejoin="round">
                     <rect x="3" y="5" width="14" height="14" rx="2" ry="2"/>
                     <path d="M7 1h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2"/>
                 </svg>
@@ -50,9 +51,11 @@ export default function HomePage() {
             iconColor: "bg-[#d86d34]/90",
             patternType: "dots",
             icon: (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                     strokeLinejoin="round">
                     <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                    <path
+                        d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
                 </svg>
             )
         },
@@ -66,7 +69,8 @@ export default function HomePage() {
             iconColor: "bg-[#4a9d7a]/90",
             patternType: "zigzag",
             icon: (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                     strokeLinejoin="round">
                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
                 </svg>
@@ -82,7 +86,8 @@ export default function HomePage() {
             iconColor: "bg-[#d89f34]/90",
             patternType: "concentric",
             icon: (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                     strokeLinejoin="round">
                     <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
                 </svg>
             )
@@ -97,7 +102,8 @@ export default function HomePage() {
             iconColor: "bg-[#ca5c4a]/90",
             patternType: "leaves",
             icon: (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                     strokeLinejoin="round">
                     <path d="M12 20V10M18 20V4M6 20v-4"/>
                 </svg>
             )
@@ -107,19 +113,20 @@ export default function HomePage() {
     return (
         <>
             {/* Section 1: Hero */}
-            <div className="min-h-[70vh] flex flex-col md:flex-row items-center justify-between max-w-6xl mx-auto px-4 py-16 gap-8">
+            <div
+                className="min-h-[70vh] flex flex-col md:flex-row items-center justify-between max-w-6xl mx-auto px-4 py-16 gap-8">
                 {/* Text */}
-                <div className="flex-1 flex flex-col items-center md:items-start justify-center text-center md:text-left space-y-6">
+                <div
+                    className="flex-1 flex flex-col items-center md:items-start justify-center text-center md:text-left space-y-6">
                     {/* Tăng leading của h1 lên để các dòng không dính nhau */}
                     <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.15] md:leading-[1.2]">
                         Học ngoại ngữ <br/>
-                        <span className="text-primary-600">để sống</span>
+                        <span className="text-primary-600">mở lối tương lai </span>
                     </h1>
 
                     {/* Dùng leading-relaxed cho đoạn văn để dễ đọc hơn */}
                     <p className="text-xl md:text-2xl text-gray-600 max-w-lg leading-relaxed">
-                        Những mẫu câu hữu ích trong cuộc sống hàng ngày. Được dạy với những video
-                        clip của người bản ngữ thực sự.
+                        Khám phá thư viện mẫu câu phong phú được thiết kế dành riêng cho nhu cầu hàng ngày. Học tập thông minh, hiệu quả và không nhàm chán.
                     </p>
 
                     <div className="flex gap-4 mt-2">
@@ -208,24 +215,24 @@ export default function HomePage() {
                 </div>
             </section>
             {/* Section 3: Type-Learning */}
-            <section className="w-screen relative left-1/2 right-1/2 -mx-[50vw] py-16 bg-gradient-to-r from-orange-50 via-white to-emerald-50">
+            <section
+                className="w-screen relative left-1/2 right-1/2 -mx-[50vw] py-16 bg-gradient-to-r from-orange-50 via-white to-emerald-50">
                 <div className="max-w-6xl mx-auto px-4">
 
-                    {/* Phần tiêu đề mới thêm vào */}
+                    {/* Tiêu đề */}
                     <div className="flex flex-col items-center mb-12">
                         <div className="flex items-center gap-2 mb-2">
                             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 text-center">
-                                Learn English with{" "}
+                                Học tiếng anh cùng{" "}
                                 <span className="text-primary-600">Lion</span>{" "}
                             </h2>
                         </div>
                         <p className="text-lg md:text-xl text-gray-600 text-center max-w-2xl mt-2">
-                            Lion is a language learning platform that makes your learning process
-                            faster and easier.
+                            Học ngôn ngữ nhanh chóng và dễ dàng hơn cùng Lion – nền tảng tối ưu cho hành trình chinh phục ngoại ngữ của bạn.
                         </p>
                     </div>
 
-                    {/* Lưới danh sách các feature */}
+                    {/* Lưới danh sách các type learning */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
                         {learningFeatures.map((feature, index) => (
                             <div
@@ -236,29 +243,37 @@ export default function HomePage() {
                                 {/* Họa tiết góc trên (SVG Pattern) */}
                                 <div className={`absolute top-2 right-2 w-20 h-20 ${feature.patternColor} opacity-70`}>
                                     {feature.patternType === 'concentric' && (
-                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="100" cy="0" r="30"/><circle cx="100" cy="0" r="50"/><circle cx="100" cy="0" r="70"/></svg>
+                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                            <circle cx="100" cy="0" r="30"/>
+                                            <circle cx="100" cy="0" r="50"/>
+                                            <circle cx="100" cy="0" r="70"/>
+                                        </svg>
                                     )}
                                     {feature.patternType === 'dots' && (
                                         <div className="grid grid-cols-4 gap-2 mt-4 ml-4">
-                                            {[...Array(12)].map((_, i) => <div key={i} className="w-1 h-1 rounded-full bg-current" />)}
+                                            {[...Array(12)].map((_, i) => <div key={i}
+                                                                               className="w-1 h-1 rounded-full bg-current"/>)}
                                         </div>
                                     )}
                                     {feature.patternType === 'zigzag' && (
-                                        <svg viewBox="0 0 100 40" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                                            <path d="M0 10 L20 30 L40 10 L60 30 L80 10" />
-                                            <path d="M0 20 L20 40 L40 20 L60 40 L80 20" />
+                                        <svg viewBox="0 0 100 40" fill="none" stroke="currentColor" strokeWidth="2.5"
+                                             strokeLinecap="round">
+                                            <path d="M0 10 L20 30 L40 10 L60 30 L80 10"/>
+                                            <path d="M0 20 L20 40 L40 20 L60 40 L80 20"/>
                                         </svg>
                                     )}
                                     {feature.patternType === 'leaves' && (
-                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                                            <path d="M30 20 C40 10, 60 10, 70 20 S60 30, 30 20 Z" />
-                                            <path d="M40 30 C50 20, 70 20, 80 30 S70 40, 40 30 Z" />
+                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5"
+                                             strokeLinecap="round">
+                                            <path d="M30 20 C40 10, 60 10, 70 20 S60 30, 30 20 Z"/>
+                                            <path d="M40 30 C50 20, 70 20, 80 30 S70 40, 40 30 Z"/>
                                         </svg>
                                     )}
                                 </div>
 
                                 {/* Icon tròn có lớp nền mờ */}
-                                <div className={`w-16 h-16 ${feature.iconColor} rounded-full flex items-center justify-center mb-6 z-10 backdrop-blur-sm`}>
+                                <div
+                                    className={`w-16 h-16 ${feature.iconColor} rounded-full flex items-center justify-center mb-6 z-10 backdrop-blur-sm`}>
                                     <div className="w-10 h-10 text-white flex items-center justify-center">
                                         {feature.icon}
                                     </div>
@@ -276,8 +291,12 @@ export default function HomePage() {
 
                                 {/* Họa tiết góc dưới (Cho Card Review và Vocabulary) */}
                                 {(index === 0 || index === 4) && (
-                                    <div className={`absolute bottom-2 left-2 w-16 h-16 ${feature.patternColor} rotate-180`}>
-                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="100" cy="0" r="30"/><circle cx="100" cy="0" r="50"/></svg>
+                                    <div
+                                        className={`absolute bottom-2 left-2 w-16 h-16 ${feature.patternColor} rotate-180`}>
+                                        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                            <circle cx="100" cy="0" r="30"/>
+                                            <circle cx="100" cy="0" r="50"/>
+                                        </svg>
                                     </div>
                                 )}
                             </div>
