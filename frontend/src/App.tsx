@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Toaster } from "react-hot-toast";
 import AdminLayout from "@/components/admin/layout/Layout";
-import UserLayout from "@/components/user/layout/UserLayout";
+import MainLayout from "@/components/user/layout/MainLayout.tsx";
 import HomePage from "@/pages/User/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
@@ -21,7 +21,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           
           {/* User Routes - HomePage, Learning, Profile */}
-          <Route path="/" element={<UserLayout />}>
+          <Route path="/" element={<MainLayout />}>
             <Route index element={<HomePage />} />
             <Route path="learning" element={<LearningPage />} />
             <Route path="profile" element={<ProfilePage />} />
