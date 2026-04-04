@@ -4,6 +4,8 @@ import {Link, useNavigate} from "react-router-dom";
 import {useAuthStore} from "@/store/authStore";
 import {authService} from "@/services/authService";
 import toast from "react-hot-toast";
+import {FcGoogle} from "react-icons/fc";
+import {FaFacebook} from "react-icons/fa";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -33,68 +35,137 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-                <div>
-                    <h2 className="text-3xl font-bold text-center text-gray-900">
-                        Đăng nhập
-                    </h2>
+        <div className="h-screen w-full flex overflow-hidden bg-white font-sans">
+
+            {/* BÊN TRÁI */}
+            <div className="hidden lg:block lg:w-1/2 h-full relative bg-[#FEEED8]">
+                <img
+                    src="/auth/background.jpg"
+                    alt="Banner"
+                    className="h-full w-full object-cover"
+                />
+            </div>
+
+            {/* BÊN PHẢI */}
+            <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-20 bg-white">
+                <div className="w-full max-w-md">
+                    <div className="text-center mb-10">
+                        <h2 className="text-4xl font-black text-[#1F2937] tracking-tight">
+                            Đăng nhập
+                        </h2>
+                    </div>
+
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        <div className="space-y-5">
+
+                            {/* Email */}
+                            <div className="space-y-2">
+                                <label className="text-[15px] font-bold text-gray-700 ml-1">
+                                    Email
+                                </label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Email"
+                                    className="w-full px-5 py-4 bg-[#F3F4F6] border-none rounded-[20px]
+                                    focus:ring-2 focus:ring-[#FE4D01] outline-none transition-all
+                                    placeholder:text-gray-400 font-medium"
+                                />
+                            </div>
+
+                            {/* Password */}
+                            <div className="space-y-2">
+                                <label className="text-[15px] font-bold text-gray-700 ml-1">
+                                    Mật khẩu
+                                </label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Mật khẩu"
+                                    className="w-full px-5 py-4 bg-[#F3F4F6] border-none rounded-[20px]
+                                    focus:ring-2 focus:ring-[#FE4D01] outline-none transition-all
+                                    placeholder:text-gray-400 font-medium"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Button */}
+                        <div className="pt-4">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-4 rounded-full text-lg font-semibold
+                                text-orange-100
+                                bg-[#D84315] hover:bg-[#BF360C]
+                                shadow-md shadow-black/20
+                                active:scale-[0.97] transition-all disabled:opacity-50"
+                            >
+                                {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                            </button>
+                        </div>
+
+                        {/* Link */}
+                        <div className="text-center mt-8">
+                            <p className="text-gray-500 font-medium">
+                                Chưa có tài khoản?{" "}
+                                <Link
+                                    to="/register"
+                                    className="font-bold text-[#FE4D01] hover:underline transition-colors"
+                                >
+                                    Đăng ký ngay
+                                </Link>
+                            </p>
+                        </div>
+                        {/* Divider */}
+                        <div className="flex items-center my-6">
+                            <div className="flex-1 h-px bg-gray-300"></div>
+                            <span className="px-4 text-sm text-gray-400 font-medium">
+                                    Hoặc
+                                </span>
+                            <div className="flex-1 h-px bg-gray-300"></div>
+                        </div>
+
+                        {/* Social login */}
+                        <div className="flex justify-center gap-6">
+
+                            {/* Google */}
+                            <button
+                                type="button"
+                                title="Google"
+                                className="group w-14 h-14 flex items-center justify-center rounded-full
+                                bg-transparent
+                                transition-all duration-200 ease-out
+                                hover:bg-transparent hover:shadow-md hover:shadow-black/15
+                                active:scale-95"
+                            >
+                                <FcGoogle
+                                    size={40}
+                                    className="transition-transform duration-200 group-hover:scale-110"
+                                />
+                            </button>
+
+                            {/* Facebook */}
+                            <button
+                                type="button"
+                                title="Facebook"
+                                className="group w-14 h-14 flex items-center justify-center rounded-full
+                                bg-transparent
+                                transition-all duration-200 ease-out
+                                hover:bg-transparent hover:shadow-md hover:shadow-black/15
+                                active:scale-95"
+                            >
+                                <FaFacebook
+                                    size={38}
+                                    className="text-[#1877F2] transition-transform duration-200 group-hover:scale-110"
+                                />
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="space-y-4">
-                        <div>
-                            <label
-                                htmlFor="email"
-                                className="block text-sm font-medium text-gray-700"
-                            >
-                                Email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                            />
-                        </div>
-                        <div>
-                            <label
-                                htmlFor="password"
-                                className="block text-sm font-medium text-gray-700"
-                            >
-                                Mật khẩu
-                            </label>
-                            <input
-                                id="password"
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                        >
-                            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-                        </button>
-                    </div>
-
-                    <div className="text-center">
-                        <Link
-                            to="/register"
-                            className="text-sm text-primary-600 hover:text-primary-500"
-                        >
-                            Chưa có tài khoản? Đăng ký ngay
-                        </Link>
-                    </div>
-                </form>
             </div>
         </div>
     );
