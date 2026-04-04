@@ -25,7 +25,7 @@ export default function RegisterPage() {
             });
             setAuth(response.user, response.token);
             toast.success("Đăng ký thành công!");
-            navigate("/dashboard");
+            navigate("/");
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.message || "Đăng ký thất bại");
