@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogOut, ChevronRight } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import ConfirmModal from "./ConfirmModal";
 
 export default function Header() {
     const { user, logout, isAuthenticated } = useAuthStore();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const location = useLocation();
+    const [showConfirm, setShowConfirm] = useState(false);
 
     // Hiệu ứng đổi màu nền Header khi cuộn trang
     useEffect(() => {
@@ -23,6 +25,13 @@ export default function Header() {
         { name: "Khóa học", path: "/learning" },
         { name: "Hồ sơ", path: "/profile" },
     ];
+
+  const handleLogout = () => setShowConfirm(true);
+  const confirmLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+    setShowConfirm(false);
+  };
 
     return (
         <header className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -71,9 +80,8 @@ export default function Header() {
                                     {user?.email?.charAt(0).toUpperCase() || "L"}
                                 </div>
                                 <button
-                                    onClick={logout}
+                                    onClick={handleLogout}
                                     className="text-gray-400 hover:text-red-400 transition-all transform hover:scale-110"
-                                    title="Đăng xuất"
                                 >
                                     <LogOut className="w-5 h-5"/>
                                 </button>
@@ -81,9 +89,9 @@ export default function Header() {
                         ) : (
                             <Link
                                 to="/login"
-                                className="relative inline-flex items-center justify-center px-6 py-2.5 overflow-hidden font-bold text-white transition-all bg-primary-600 rounded-xl group hover:bg-primary-700 shadow-lg shadow-primary-900/20"
+                                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all"
                             >
-                                <span className="relative">Đăng nhập</span>
+                                Đăng nhập
                             </Link>
                         )}
                     </div>
@@ -138,6 +146,15 @@ export default function Header() {
                     </div>
                 </div>
             </div>
+
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={confirmLogout}
+                message="Bạn có chắc chắn muốn đăng xuất không?"
+            />
         </header>
     );
 }
+
