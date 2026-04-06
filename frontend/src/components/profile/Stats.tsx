@@ -11,19 +11,19 @@ export default function Stats({ streak, xp, rank }: StatsProps) {
         {
             label: "STREAK",
             value: streak,
-            icon: "/icons/streak.svg",
+            icon: "/profile/streak.gif",
             borderColor: "hover:border-orange-200"
         },
         {
             label: "TỔNG XP",
             value: xp,
-            icon: "/icons/xp.svg",
+            icon: "/profile/growth.gif",
             borderColor: "hover:border-yellow-200"
         },
         {
             label: "HẠNG",
             value: rank,
-            icon: "/icons/rank.svg",
+            icon: "/profile/top ranking.gif",
             borderColor: "hover:border-blue-200"
         },
     ];

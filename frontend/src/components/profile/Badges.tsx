@@ -15,23 +15,23 @@ export default function Badges({ badges }: BadgesProps) {
     const defaultBadges: BadgeItem[] = [
         {
             name: "Siêu cấp",
-            icon: "/icons/badges/trophy.png",
+            icon: "/profile/trophy.gif",
             color: "bg-yellow-100",
             locked: false,
             progress: 100
         },
         {
             name: "Lửa đỏ",
-            icon: "/icons/badges/fire.png",
+            icon: "/profile/fire.gif",
             color: "bg-orange-100",
             locked: false,
             progress: 100
         },
         {
             name: "Hàn lâm",
-            icon: "/icons/badges/scholar.png",
-            color: "bg-slate-100",
-            locked: true,
+            icon: "/profile/scholar.gif",
+            color: "bg-blue-100",
+            locked: false,
             progress: 45
         },
     ];
