@@ -11,7 +11,7 @@ export default function LearningPage() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white">
       <div className="w-full px-4 md:px-8 py-8">
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar left */}
@@ -58,42 +58,49 @@ export default function LearningPage() {
 
           {/* Main content */}
           <main className="col-span-12 md:col-span-9">
-            <div className="bg-primary-500 text-white rounded-2xl px-6 py-5 flex items-center justify-between">
-              <div className="max-w-[72%]">
-                  <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
+            <div className="grid grid-cols-12 gap-6">
+              {/* Header ở giữa */}
+              <div className="col-span-12 lg:col-span-7">
+                <div className="bg-primary-500 text-white rounded-2xl px-6 py-5 flex items-center justify-between">
+                  <div className="max-w-[72%]">
+                    <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
                       Phần {location.state?.treeNumber ?? 1}, Cửa 1
-                  </div>
-                  <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
+                    </div>
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
                       {(() => {
-                          const mapN: Record<"beginner"|"intermediate"|"advanced", number> = { beginner:1, intermediate:2, advanced:3 };
-                          const mapL: Record<"beginner"|"intermediate"|"advanced", string> = { beginner:"Beginner", intermediate:"Intermediate", advanced:"Advanced" };
-                          const tree = location.state?.treeNumber ?? 1;
-                          return `Level ${mapN[level]}: ${mapL[level]}, Skill tree ${tree}`;
+                        const mapN: Record<"beginner"|"intermediate"|"advanced", number> = { beginner: 1, intermediate: 2, advanced: 3 };
+                        const mapL: Record<"beginner"|"intermediate"|"advanced", string> = { beginner: "Beginner", intermediate: "Intermediate", advanced: "Advanced" };
+                        const tree = location.state?.treeNumber ?? 1;
+                        return `Level ${mapN[level]}: ${mapL[level]}, Skill tree ${tree}`;
                       })()}
-                  </h1>
+                    </h1>
+                  </div>
+                  <button className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition">
+                    <span>Hướng dẫn</span>
+                  </button>
+                </div>
               </div>
-              <button className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition">
-                <span>Hướng dẫn</span>
-              </button>
-            </div>
 
-            {/* Skill nodes */}
-              <div className="mt-8 grid grid-cols-12 gap-6">
-                  {/* Node path ở giữa */}
-                  <div className="col-span-12 lg:col-span-7">
-                      <NodePath />
-                  </div>
-                  {/* Cột phải */}
-                  <div className="col-span-12 lg:col-span-5 space-y-4">
-                      <TopStats />
-                      <InfoCard
-                          title="Mở khóa Bảng xếp hạng!"
-                          subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
-                      />
-                      <DailyCard />
-                      <ProfileCard onCreateProfile={() => navigate("/profile")} />
-                  </div>
+              {/* TopStats ở bên phải, cùng hàng với header */}
+              <div className="col-span-12 lg:col-span-5">
+                <TopStats />
               </div>
+
+              {/* Nodes ở giữa */}
+              <div className="col-span-12 lg:col-span-7">
+                <NodePath />
+              </div>
+
+              {/* Cards ở phải */}
+              <div className="col-span-12 lg:col-span-5 space-y-4">
+                <InfoCard
+                  title="Mở khóa Bảng xếp hạng!"
+                  subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
+                />
+                <DailyCard />
+                <ProfileCard onCreateProfile={() => navigate("/profile")} />
+              </div>
+            </div>
           </main>
         </div>
       </div>
