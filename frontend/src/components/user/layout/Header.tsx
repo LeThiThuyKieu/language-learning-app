@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, ChevronRight } from "lucide-react";
-import { useAuthStore } from "@/store/authStore";
+import {useState, useEffect} from "react";
+import {Link, useLocation} from "react-router-dom";
+import {Menu, X, LogOut, ChevronRight} from "lucide-react";
+import {useAuthStore} from "@/store/authStore";
 import ConfirmModal from "./ConfirmModal";
 
 export default function Header() {
-    const { user, logout, isAuthenticated } = useAuthStore();
+    const {user, logout, isAuthenticated} = useAuthStore();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const location = useLocation();
@@ -21,17 +21,17 @@ export default function Header() {
     }, []);
 
     const navLinks = [
-        { name: "Trang chủ", path: "/" },
-        { name: "Khóa học", path: "/learning" },
-        { name: "Hồ sơ", path: "/profile" },
+        {name: "Trang chủ", path: "/"},
+        {name: "Khóa học", path: "/learn"},
+        {name: "Hồ sơ", path: "/profile"},
     ];
 
-  const handleLogout = () => setShowConfirm(true);
-  const confirmLogout = () => {
-    logout();
-    setMobileMenuOpen(false);
-    setShowConfirm(false);
-  };
+    const handleLogout = () => setShowConfirm(true);
+    const confirmLogout = () => {
+        logout();
+        setMobileMenuOpen(false);
+        setShowConfirm(false);
+    };
 
     return (
         <header className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -42,14 +42,26 @@ export default function Header() {
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
 
-                    {/* Logo*/}
+                    {/* Logo */}
                     <Link to="/" className="group flex items-center gap-2">
+                        {/* 1. Hình sư tử */}
+                        <div
+                            className="relative w-14 h-14 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+                            <img
+                                src="/logo/lion.png"
+                                alt="Lion Logo"
+                                className="w-full h-full object-contain drop-shadow-xl"
+                            />
+                        </div>
+                        {/* 2. Tên web */}
                         <div className="relative">
-                            <span className="text-4xl font-black tracking-tighter text-white transition-all group-hover:tracking-normal">
-                                L<span className="text-primary-500 italic">i</span>on
-                            </span>
+                        <span
+                            className="text-4xl font-black tracking-tighter text-white transition-all group-hover:tracking-normal">
+                            L<span className="text-primary-500 italic">i</span>on
+                        </span>
                             {/* Dấu gạch chân trang trí dưới Logo */}
-                            <div className="absolute -bottom-1 left-0 w-0 h-1 bg-gradient-to-r from-primary-600 to-orange-400 transition-all duration-300 group-hover:w-full rounded-full"></div>
+                            <div
+                                className="absolute -bottom-1 left-0 w-0 h-1 bg-gradient-to-r from-primary-600 to-orange-400 transition-all duration-300 group-hover:w-full rounded-full"></div>
                         </div>
                     </Link>
 
@@ -65,9 +77,10 @@ export default function Header() {
                             >
                                 {link.name}
                                 {/* Line chạy dưới chân khi active hoặc hover */}
-                                <span className={`absolute -bottom-2 left-0 h-[2px] bg-primary-500 transition-all duration-300 ${
-                                    location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
-                                }`}></span>
+                                <span
+                                    className={`absolute -bottom-2 left-0 h-[2px] bg-primary-500 transition-all duration-300 ${
+                                        location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
+                                    }`}></span>
                             </Link>
                         ))}
                     </div>
@@ -75,8 +88,10 @@ export default function Header() {
                     {/* infomation */}
                     <div className="hidden md:flex items-center gap-6">
                         {isAuthenticated ? (
-                            <div className="flex items-center gap-4 bg-gray-800/50 p-1 pr-4 rounded-full border border-gray-700">
-                                <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-orange-500 rounded-full flex items-center justify-center font-black text-white shadow-lg">
+                            <div
+                                className="flex items-center gap-4 bg-gray-800/50 p-1 pr-4 rounded-full border border-gray-700">
+                                <div
+                                    className="w-9 h-9 bg-gradient-to-br from-primary-500 to-orange-500 rounded-full flex items-center justify-center font-black text-white shadow-lg">
                                     {user?.email?.charAt(0).toUpperCase() || "L"}
                                 </div>
                                 <button
@@ -120,14 +135,17 @@ export default function Header() {
                                 className="flex justify-between items-center text-2xl font-black text-white hover:text-primary-500 transition-colors border-b border-gray-800 pb-4"
                             >
                                 {link.name}
-                                <ChevronRight className="text-gray-600" />
+                                <ChevronRight className="text-gray-600"/>
                             </Link>
                         ))}
 
                         <div className="mt-8">
                             {isAuthenticated ? (
                                 <button
-                                    onClick={() => { logout(); setMobileMenuOpen(false); }}
+                                    onClick={() => {
+                                        logout();
+                                        setMobileMenuOpen(false);
+                                    }}
                                     className="w-full flex items-center justify-center gap-3 py-4 bg-red-600/10 text-red-500 rounded-2xl font-bold border border-red-500/20 shadow-lg"
                                 >
                                     <LogOut className="w-5 h-5"/>
