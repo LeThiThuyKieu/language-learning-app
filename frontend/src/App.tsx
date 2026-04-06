@@ -12,6 +12,7 @@ import ProfilePage from "@/pages/User/ProfilePage";
 import LionWelcome from "@/components/user/home/LionWelcome";
 import LevelSelectPage from "@/pages/User/LevelSelectPage";
 import PlacementTestPage from "@/pages/User/PlacementTestPage";
+import LevelConfirmPage from "@/pages/User/LevelConfirmPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ function App() {
                         element={<LionWelcome message="Cùng bắt đầu vào học nào!" nextPath="/level-select" />}
                     />
                     <Route path="/level-select" element={<LevelSelectPage />} />
+                    <Route path="/level-confirm" element={<LevelConfirmPage />} />
                     <Route path="/placement-test" element={<PlacementTestPage />} />
 
                     {/* Admin Routes - Dashboard */}

@@ -25,8 +25,8 @@ export default function LevelSelectPage() {
     if (selected === "test") {
       navigate("/placement-test");
     } else {
-      // Tạm thời điều hướng tới trang học chung
-      navigate("/learn", { state: { level: selected } });
+      // Điều hướng tới trang xác nhận level trước khi học
+      navigate("/level-confirm", { state: { level: selected } });
     }
   };
 
@@ -55,28 +55,56 @@ export default function LevelSelectPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
           <LevelCard
             title="Beginner"
-            description="Mới bắt đầu học"
+            description="Bắt đầu từ cơ bản"
             active={selected === "beginner"}
             onClick={() => setSelected("beginner")}
+            icon={
+              <img
+                src="/icons/select-level/beginner.svg"
+                alt="Basic start"
+                className="w-10 h-10 md:w-14 md:h-14"
+              />
+            }
           />
           <LevelCard
             title="Intermediate"
             description="Đã có nền tảng"
             active={selected === "intermediate"}
             onClick={() => setSelected("intermediate")}
+            icon={
+                <img
+                    src="/icons/select-level/intermediate.svg"
+                    alt="Intermediate"
+                    className="w-10 h-10 md:w-14 md:h-14"
+                />
+            }
           />
           <LevelCard
             title="Advanced"
             description="Trình độ cao"
             active={selected === "advanced"}
             onClick={() => setSelected("advanced")}
+            icon={
+                <img
+                    src="/icons/select-level/advanced.svg"
+                    alt="Advanced"
+                    className="w-10 h-10 md:w-14 md:h-14"
+                />
+            }
           />
-          <LevelCard
-            title="Làm bài Test đầu vào"
-            description="Biết ngay level phù hợp"
-            active={selected === "test"}
-            onClick={() => setSelected("test")}
-          />
+            <LevelCard
+                title="Xác định trình độ hiện tại"
+                description="Biết ngay level phù hợp"
+                active={selected === "test"}
+                onClick={() => setSelected("test")}
+                icon={
+                    <img
+                        src="/icons/select-level/test-level.svg"
+                        alt="Placement test"
+                        className="w-10 h-10 md:w-14 md:h-14"
+                    />
+                }
+            />
         </div>
       </div>
 
@@ -104,20 +132,30 @@ type LevelCardProps = {
   description: string;
   active?: boolean;
   onClick?: () => void;
+  icon?: React.ReactNode;
 };
 
-function LevelCard({ title, description, active, onClick }: LevelCardProps) {
+function LevelCard({ title, description, active, onClick, icon }: LevelCardProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "text-left p-5 rounded-2xl border transition-all bg-white/95 hover:bg-white",
+        "text-left p-5 rounded-2xl border transition-all bg-white hover:bg-white",
         "shadow-md hover:shadow-xl",
         active ? "border-primary-600 ring-2 ring-primary-300" : "border-transparent"
       )}
     >
-      <div className="text-xl font-semibold text-gray-900">{title}</div>
-      <div className="mt-1 text-sm text-gray-600">{description}</div>
+      <div className="flex items-center gap-4">
+        {icon && (
+          <div className="shrink-0">
+            {icon}
+          </div>
+        )}
+        <div>
+          <div className="text-lg md:text-xl font-bold text-gray-900">{title}</div>
+          <div className="mt-1 text-sm text-gray-600">{description}</div>
+        </div>
+      </div>
     </button>
   );
 }
