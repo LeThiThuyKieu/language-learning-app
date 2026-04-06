@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import {useState } from "react";
 
 type LevelKey = "beginner" | "intermediate" | "advanced";
 
@@ -8,38 +8,15 @@ export default function LearningPage() {
   const navigate = useNavigate();
   const level = (location.state?.level ?? "beginner") as LevelKey;
 
-  const headerText = useMemo(() => {
-    const levelNumberMap: Record<LevelKey, number> = {
-      beginner: 1,
-      intermediate: 2,
-      advanced: 3,
-    };
-    const levelLabelMap: Record<LevelKey, string> = {
-      beginner: "Beginner",
-      intermediate: "Intermediate",
-      advanced: "Advanced",
-    };
-    return `Level ${levelNumberMap[level]}: ${levelLabelMap[level]}, Skill tree 1`;
-  }, [level]);
-
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen w-full bg-white">
+      <div className="w-full px-4 md:px-8 py-8">
         <div className="grid grid-cols-12 gap-6">
           {/* Sidebar left */}
           <aside className="col-span-12 md:col-span-3">
             <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/logo/lion.png"
-                  alt="Lion"
-                  className="w-10 h-10 object-contain"
-                />
-                <div className="text-2xl font-extrabold text-gray-900">Lion</div>
-              </div>
-
               <nav className="mt-2 space-y-2">
                 <SidebarItem label="Học" active />
                 <SidebarItem label="Bảng xếp hạng" />
@@ -82,13 +59,18 @@ export default function LearningPage() {
           {/* Main content */}
           <main className="col-span-12 md:col-span-9">
             <div className="bg-primary-500 text-white rounded-2xl px-6 py-5 flex items-center justify-between">
-              <div>
-                <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
-                  Phần 1, Cửa 1
-                </div>
-                <h1 className="text-3xl md:text-4xl font-extrabold">
-                  {headerText}
-                </h1>
+              <div className="max-w-[72%]">
+                  <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
+                      Phần {location.state?.treeNumber ?? 1}, Cửa 1
+                  </div>
+                  <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
+                      {(() => {
+                          const mapN: Record<"beginner"|"intermediate"|"advanced", number> = { beginner:1, intermediate:2, advanced:3 };
+                          const mapL: Record<"beginner"|"intermediate"|"advanced", string> = { beginner:"Beginner", intermediate:"Intermediate", advanced:"Advanced" };
+                          const tree = location.state?.treeNumber ?? 1;
+                          return `Level ${mapN[level]}: ${mapL[level]}, Skill tree ${tree}`;
+                      })()}
+                  </h1>
               </div>
               <button className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition">
                 <span>Hướng dẫn</span>
@@ -96,11 +78,22 @@ export default function LearningPage() {
             </div>
 
             {/* Skill nodes */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <SkillNode key={i} index={i + 1} />
-              ))}
-            </div>
+              <div className="mt-8 grid grid-cols-12 gap-6">
+                  {/* Node path ở giữa */}
+                  <div className="col-span-12 lg:col-span-7">
+                      <NodePath />
+                  </div>
+                  {/* Cột phải */}
+                  <div className="col-span-12 lg:col-span-5 space-y-4">
+                      <TopStats />
+                      <InfoCard
+                          title="Mở khóa Bảng xếp hạng!"
+                          subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
+                      />
+                      <DailyCard />
+                      <ProfileCard onCreateProfile={() => navigate("/profile")} />
+                  </div>
+              </div>
           </main>
         </div>
       </div>
@@ -133,16 +126,99 @@ function MoreItem({ label, onClick }: { label: string; onClick?: () => void }) {
   );
 }
 
-function SkillNode({ index }: { index: number }) {
-  return (
-    <button className="bg-white rounded-2xl p-5 shadow-md hover:shadow-xl transition border border-gray-100 flex flex-col items-center gap-3">
-      <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center">
-        <span className="text-primary-700 font-extrabold">{index}</span>
-      </div>
-      <div className="text-center">
-        <div className="text-lg font-bold text-gray-900">Bài {index}</div>
-        <div className="text-sm text-gray-600">Chủ đề {index}</div>
-      </div>
-    </button>
-  );
+function NodePath() {
+    return (
+        <div className="flex flex-col items-center gap-6">
+            <div className="relative">
+                <div className="absolute -top-7 left-1/2 -translate-x-1/2">
+          <span className="bg-white text-gray-900 font-bold text-sm px-3 py-1 rounded-xl shadow">
+            Bắt đầu
+          </span>
+                </div>
+                <CircleNode index={1} active />
+            </div>
+            <CircleNode index={2} />
+            <CircleNode index={3} />
+            <CircleNode index={4} />
+            <CircleNode index={5} />
+        </div>
+    );
+}
+
+function CircleNode({ index, active = false }: { index: number; active?: boolean }) {
+    return (
+        <div className="bg-white rounded-2xl p-4 shadow-md border border-gray-100 w-full max-w-[220px] flex items-center gap-4">
+            <div className={`${active ? "bg-primary-600 text-white" : "bg-gray-100 text-gray-700"} w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center`}>
+                <span className="font-extrabold">{index}</span>
+            </div>
+            <div className="flex-1">
+                <div className="text-base md:text-lg font-bold text-gray-900">
+                    {active ? "Bài 1" : `Bài ${index}`}
+                </div>
+                <div className="text-xs md:text-sm text-gray-600">Chủ đề {index}</div>
+            </div>
+        </div>
+    );
+}
+
+function InfoCard({ title, subtitle }: { title: string; subtitle: string }) {
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="text-gray-900 font-extrabold mb-2">{title}</div>
+            <div className="text-gray-600 text-sm">{subtitle}</div>
+        </div>
+    );
+}
+
+function DailyCard() {
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+                <div className="text-gray-900 font-extrabold">Nhiệm vụ hằng ngày</div>
+                <button className="text-primary-600 font-semibold text-sm">Xem tất cả</button>
+            </div>
+            <div className="mt-3">
+                <div className="text-gray-700 font-semibold text-sm mb-2">Kiếm 10 KN</div>
+                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-3 bg-yellow-400 rounded-full" style={{ width: "100%" }} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ProfileCard({ onCreateProfile }: { onCreateProfile: () => void }) {
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="text-gray-900 font-extrabold mb-2">Tạo hồ sơ để lưu tiến trình của bạn!</div>
+            <button
+                onClick={onCreateProfile}
+                className="mt-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-xl transition"
+            >
+                Tạo hồ sơ
+            </button>
+        </div>
+    );
+}
+
+function TopStats() {
+    const stats = [
+        { label: "Điểm thưởng", value: "120" },
+        { label: "Streak", value: "7" },
+        { label: "Badges", value: "5" },
+        { label: "Tim", value: "5" },
+    ];
+
+    return (
+        <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm">
+            <div className="grid grid-cols-4 gap-2">
+                {stats.map((item) => (
+                    <div key={item.label} className="text-center">
+                        <div className="text-sm text-gray-500 font-semibold">{item.label}</div>
+                        <div className="text-lg font-extrabold text-gray-900">{item.value}</div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 }
