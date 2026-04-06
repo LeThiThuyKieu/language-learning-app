@@ -1,6 +1,6 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "react-query";
-import { Toaster } from "react-hot-toast";
+import {BrowserRouter, Routes, Route} from "react-router-dom";
+import {QueryClient, QueryClientProvider} from "react-query";
+import {Toaster} from "react-hot-toast";
 import AdminLayout from "@/components/admin/layout/Layout";
 import MainLayout from "@/components/user/layout/MainLayout.tsx";
 import HomePage from "@/pages/User/HomePage";
@@ -9,33 +9,46 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
 import LearningPage from "@/pages/User/LearningPage";
 import ProfilePage from "@/pages/User/ProfilePage";
+import LionWelcome from "@/components/user/home/LionWelcome";
+import LevelSelectPage from "@/pages/User/LevelSelectPage";
+import PlacementTestPage from "@/pages/User/PlacementTestPage";
 
 const queryClient = new QueryClient();
 
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          
-          {/* User Routes - HomePage, Learning, Profile */}
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="learning" element={<LearningPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-          </Route>
-          
-          {/* Admin Routes - Dashboard */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route path="dashboard" element={<DashboardPage />} />
-          </Route>
-        </Routes>
-        <Toaster position="top-right" />
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
+    return (
+        <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/login" element={<LoginPage/>}/>
+                    <Route path="/register" element={<RegisterPage/>}/>
+
+                    {/* User Routes - HomePage, Learning, Profile */}
+                    <Route path="/" element={<MainLayout/>}>
+                        <Route index element={<HomePage/>}/>
+                        <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="profile" element={<ProfilePage/>}/>
+                    </Route>
+
+                    {/* Trang Welcome */}
+                    <Route path="/welcome"
+                        element={<LionWelcome message="Chào bạn! Tớ là sư tử Lion!" nextPath="/welcome-start" />}
+                    />
+                    <Route path="/welcome-start"
+                        element={<LionWelcome message="Cùng bắt đầu vào học nào!" nextPath="/level-select" />}
+                    />
+                    <Route path="/level-select" element={<LevelSelectPage />} />
+                    <Route path="/placement-test" element={<PlacementTestPage />} />
+
+                    {/* Admin Routes - Dashboard */}
+                    <Route path="/admin" element={<AdminLayout/>}>
+                        <Route path="dashboard" element={<DashboardPage/>}/>
+                    </Route>
+                </Routes>
+                <Toaster position="top-right"/>
+            </BrowserRouter>
+        </QueryClientProvider>
+    );
 }
 
 export default App;

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import Header from "../../components/profile/Header";
-import Stats from "../../components/profile/Stats";
-import Badges from "../../components/profile/Badges";
-import Activity from "../../components/profile/Activity";
-import AvatarSelection from "../../components/profile/AvatarSelection";
+import Header from "@/components/user/profile/Header";
+import Stats from "@/components/user/profile/Stats";
+import Badges from "@/components/user/profile/Badges";
+import Activity from "@/components/user/profile/Activity";
+import AvatarSelection from "@/components/user/profile/AvatarSelection";
 
 // Mock data ban đầu
 const INITIAL_USER = {
