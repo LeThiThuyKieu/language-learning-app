@@ -1,7 +1,9 @@
 import heroImg from "/hero-illustration/hero-image.jpg";
+import { useNavigate } from "react-router-dom";
 
-export default function HeroSection()
-{
+export default function HeroSection() {
+    const navigate = useNavigate();
+
     return (
         <div
             className="min-h-[70vh] flex flex-col md:flex-row items-center justify-between max-w-6xl mx-auto px-4 py-16 gap-8">
@@ -22,6 +24,7 @@ export default function HeroSection()
 
                 <div className="flex gap-4 mt-2">
                     <button
+                        onClick={() => navigate("/welcome")}
                         className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-lg rounded-lg shadow-md transition-all duration-200">
                         Bắt đầu học
                     </button>
