@@ -48,6 +48,31 @@ export interface SkillNode {
   orderIndex: number;
 }
 
+/** GET /learning/trees/:treeId/questions — bộ câu hỏi mẫu theo skill tree */
+export interface SkillTreeQuestionsData {
+  treeId: number;
+  levelId: number;
+  nodes: SkillTreeNodeQuestionsData[];
+}
+
+export interface SkillTreeNodeQuestionsData {
+  nodeId: number;
+  title: string;
+  nodeType: string;
+  questions: SkillTreeEnrichedQuestion[];
+}
+
+export interface SkillTreeEnrichedQuestion {
+  id?: number;
+  mongoQuestionId?: string;
+  questionText?: string;
+  options?: string[];
+  correctAnswer?: string;
+  questionType?: string;
+  audioUrl?: string;
+  phonetic?: string;
+}
+
 export interface UserSkillTreeProgress {
   id: number;
   userId: number;

@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface SkillTreeRepository extends JpaRepository<SkillTree, Integer> {
-    List<SkillTree> findByLevelIdOrderByOrderIndex(Integer levelId);
+    List<SkillTree> findByLevel_IdOrderByOrderIndex(Integer levelId);
 }
 
 

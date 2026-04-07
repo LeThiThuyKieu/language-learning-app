@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface SkillNodeRepository extends JpaRepository<SkillNode, Integer> {
-    List<SkillNode> findBySkillTreeIdOrderByOrderIndex(Integer skillTreeId);
+    List<SkillNode> findBySkillTree_IdOrderByOrderIndex(Integer skillTreeId);
 }
 
 
