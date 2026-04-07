@@ -1,0 +1,99 @@
+import {useEffect, useMemo, useState} from "react";
+import {useLocation, useNavigate} from "react-router-dom";
+import {learningService} from "@/services/learningService";
+import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
+import ListeningLessonView from "@/components/user/learn/ListeningLessonView";
+
+type LocationState = {
+    treeId?: number;
+    node?: SkillTreeNodeQuestionsData;
+};
+
+export default function ListeningLessonPage() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const state = (location.state ?? {}) as LocationState;
+
+    const treeId = Number(state.treeId ?? 1);
+    const [treeData, setTreeData] = useState<SkillTreeQuestionsData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (state.node && state.node.nodeType === "LISTENING") {
+            setLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        (async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const data = await learningService.getTreeQuestions(treeId);
+                if (!cancelled) setTreeData(data);
+            } catch (e: unknown) {
+                if (!cancelled) {
+                    setError(e instanceof Error ? e.message : "Không tải được dữ liệu LISTENING");
+                    setTreeData(null);
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [treeId, state.node]);
+
+    const listeningNode = useMemo(() => {
+        if (state.node && state.node.nodeType === "LISTENING") return state.node;
+        const nodes = treeData?.nodes ?? [];
+        return nodes.find((n) => n.nodeType === "LISTENING") ?? null;
+    }, [state.node, treeData]);
+
+    if (loading) {
+        return (
+            <div
+                className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex items-center justify-center text-gray-500"
+            >
+                Đang tải bài học…
+            </div>
+        );
+    }
+
+    if (error || !listeningNode) {
+        return (
+            <div
+                className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex items-center justify-center px-4"
+            >
+                <div className="max-w-md w-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="text-gray-900 font-extrabold mb-2">Không tải được bài LISTENING</div>
+                    <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node LISTENING"}</div>
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="mt-4 w-full rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 transition"
+                    >
+                        Quay lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
+            <ListeningLessonView
+                node={listeningNode}
+                onExit={() => navigate(-1)}
+                onComplete={() => {
+                    // Tạm: hoàn thành LISTENING cũng +10 KN, chưa unlock node 3 theo yêu cầu (sẽ làm sau)
+                    navigate("/learn", {state: {treeId}});
+                }}
+            />
+        </div>
+    );
+}
+
