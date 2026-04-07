@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface StreakHistoryRepository extends JpaRepository<StreakHistory, Integer> {
     List<StreakHistory> findByUser(User user);
     Optional<StreakHistory> findByUserAndDate(User user, LocalDate date);
+    List<StreakHistory> findByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
 }
 
 

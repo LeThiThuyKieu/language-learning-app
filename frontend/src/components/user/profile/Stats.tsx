@@ -1,12 +1,10 @@
-// 1. Định nghĩa "cổng" nhận dữ liệu cho Stats
 interface StatsProps {
     streak: number;
-    xp: string | number; // Có thể là số hoặc chuỗi đã format (vD: "1,250")
-    rank: number;
+    xp: string | number; // Có thể là số hoặc chuỗi
+    rank: string | number;
 }
 
 export default function Stats({ streak, xp, rank }: StatsProps) {
-    // 2. Chuyển mảng stats thành dữ liệu động dựa trên Props nhận được
     const statsData = [
         {
             label: "STREAK",
@@ -38,11 +36,11 @@ export default function Stats({ streak, xp, rank }: StatsProps) {
                                shadow-[0_2px_8px_rgba(0,0,0,0.06)] active:shadow-none active:translate-y-[2px]`}
                 >
                     {/* Icon */}
-                    <div className="mb-1 transition-transform group-hover:scale-110 duration-200">
+                    <div className="mb-2 w-16 h-16 flex items-center justify-center transition-transform group-hover:scale-110 duration-200 rounded-full bg-white shadow-sm">
                         <img
                             src={s.icon}
                             alt={s.label}
-                            className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+                            className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
                         />
                     </div>
 

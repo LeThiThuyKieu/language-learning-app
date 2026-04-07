@@ -1,27 +1,53 @@
 interface BestProps {
     highestStreak: number;
-    maxDayXp: number;
+    totalXp: number;
     totalLessons: number;
 }
 
-export default function PersonalBest({ highestStreak, maxDayXp, totalLessons }: BestProps) {
+export default function PersonalBest({ highestStreak, totalXp, totalLessons }: BestProps) {
+
     const bests = [
-        { label: "KỶ LỤC CHUỖI", value: `${highestStreak} ngày`, icon: "🏆", color: "text-primary-700", bg: "bg-primary-100" },
-        { label: "XP CAO NHẤT/NGÀY", value: `${maxDayXp} XP`, icon: "🔥", color: "text-primary-600", bg: "bg-primary-200" },
-        { label: "BÀI ĐÃ HỌC", value: totalLessons, icon: "📚", color: "text-primary-800", bg: "bg-primary-50" },
+        { label: "KỶ LỤC CHUỖI", value: `${highestStreak} ngày`, icon: "/profile/trophy.gif" },
+        { label: "TỔNG XP", value: `${totalXp} XP`, icon: "/profile/fire.gif" },
+        { label: "BÀI ĐÃ HỌC", value: totalLessons, icon: "/profile/book.gif" },
     ];
 
     return (
-        <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)] min-h-full">
-            <h3 className="text-primary-900 font-black text-sm mb-4 uppercase tracking-tight">Kỷ lục cá nhân</h3>
-            <div className="space-y-2.5">
+        <div className="bg-white p-4 rounded-3xl shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+
+            {/* Title */}
+            <h3 className="text-xl font-black italic uppercase tracking-tighter text-primary-900 mb-5">
+                Kỷ lục cá nhân
+            </h3>
+
+            <div className="space-y-3">
                 {bests.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl transition-colors">
-                        <div className="flex items-center gap-3">
-                            <span className={`w-9 h-9 rounded-full grid place-items-center text-lg ${item.bg}`}>{item.icon}</span>
-                            <span className="text-[11px] font-black text-primary-700 uppercase tracking-wide">{item.label}</span>
+                    <div
+                        key={i}
+                        className="flex items-center justify-between p-4 rounded-2xl
+                                   hover:bg-slate-50 transition-all duration-200"
+                    >
+                        <div className="flex items-center gap-4">
+
+                            {/* ICON */}
+                            <div className="flex items-center justify-center w-14 h-14 bg-white rounded-full shadow-sm">
+                                <img
+                                    src={item.icon}
+                                    alt={item.label}
+                                    className="w-14 h-14 object-contain"
+                                />
+                            </div>
+
+                            {/* LABEL */}
+                            <span className="text-xs font-black text-[#1f1a17] uppercase tracking-wide">
+                                {item.label}
+                            </span>
                         </div>
-                        <span className={`font-black text-sm ${item.color}`}>{item.value}</span>
+
+                        {/* VALUE */}
+                        <span className="font-black text-base text-primary-600">
+                            {item.value}
+                        </span>
                     </div>
                 ))}
             </div>
