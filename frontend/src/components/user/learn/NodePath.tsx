@@ -257,6 +257,7 @@ export default function NodePath({
                                      onStartListening,
                                      onStartSpeaking,
                                      onStartMatching,
+                                     onStartReview,
                                  }: {
     apiNodes: SkillTreeNodeQuestionsData[] | null;
     unlockedCount?: number; // 1..5
@@ -264,6 +265,7 @@ export default function NodePath({
     onStartListening: (node: SkillTreeNodeQuestionsData) => void;
     onStartSpeaking: (node: SkillTreeNodeQuestionsData) => void;
     onStartMatching: (node: SkillTreeNodeQuestionsData) => void;
+    onStartReview: (node: SkillTreeNodeQuestionsData) => void;
 }) {
     const nodes = apiNodes?.length ? apiNodes : FALLBACK_PATH_NODES;
     const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
@@ -326,6 +328,8 @@ export default function NodePath({
                                                 ? () => onStartSpeaking(n)
                                                 : status === "active" && n.nodeType === "MATCHING"
                                                     ? () => onStartMatching(n)
+                                                    : status === "active" && n.nodeType === "REVIEW"
+                                                        ? () => onStartReview(n)
                                             : undefined
                                 }
                             />

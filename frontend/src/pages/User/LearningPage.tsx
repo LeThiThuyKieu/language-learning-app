@@ -190,6 +190,9 @@ export default function LearningPage() {
                                     onStartMatching={(node) =>
                                         navigate("/learn/matching", {state: {treeId, node}})
                                     }
+                                    onStartReview={(node) =>
+                                        navigate("/learn/review", {state: {treeId, node}})
+                                    }
                                 />
                                 <TreeNodesDataPreview data={treeData}/>
                             </div>

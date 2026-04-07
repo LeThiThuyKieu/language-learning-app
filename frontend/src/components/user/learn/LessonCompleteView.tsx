@@ -6,7 +6,7 @@ export default function LessonCompleteView({
     onContinue: () => void;
 }) {
     return (
-        <div className="min-h-screen bg-white flex flex-col">
+        <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex flex-col">
             <div className="flex-1 flex items-center justify-center px-4">
                 <div className="w-full max-w-xl text-center">
                     <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-primary-50 flex items-center justify-center">
