@@ -187,6 +187,9 @@ export default function LearningPage() {
                                     onStartSpeaking={(node) =>
                                         navigate("/learn/speaking", {state: {treeId, node}})
                                     }
+                                    onStartMatching={(node) =>
+                                        navigate("/learn/matching", {state: {treeId, node}})
+                                    }
                                 />
                                 <TreeNodesDataPreview data={treeData}/>
                             </div>

@@ -256,12 +256,14 @@ export default function NodePath({
                                      onStartVocab,
                                      onStartListening,
                                      onStartSpeaking,
+                                     onStartMatching,
                                  }: {
     apiNodes: SkillTreeNodeQuestionsData[] | null;
     unlockedCount?: number; // 1..5
     onStartVocab: (node: SkillTreeNodeQuestionsData) => void;
     onStartListening: (node: SkillTreeNodeQuestionsData) => void;
     onStartSpeaking: (node: SkillTreeNodeQuestionsData) => void;
+    onStartMatching: (node: SkillTreeNodeQuestionsData) => void;
 }) {
     const nodes = apiNodes?.length ? apiNodes : FALLBACK_PATH_NODES;
     const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
@@ -322,6 +324,8 @@ export default function NodePath({
                                             ? () => onStartListening(n)
                                             : status === "active" && n.nodeType === "SPEAKING"
                                                 ? () => onStartSpeaking(n)
+                                                : status === "active" && n.nodeType === "MATCHING"
+                                                    ? () => onStartMatching(n)
                                             : undefined
                                 }
                             />
