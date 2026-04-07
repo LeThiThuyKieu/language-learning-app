@@ -1,15 +1,12 @@
 import { useState } from "react";
-import Header from "@/components/user/profile/Header";
-import Stats from "@/components/user/profile/Stats";
-import Badges from "@/components/user/profile/Badges";
-import Activity from "@/components/user/profile/Activity";
-import AvatarSelection from "@/components/user/profile/AvatarSelection";
-
-// --- IMPORT CÁC COMPONENT MỚI ---
-import AccuracyStats from "../../components/profile/AccuracyStats";
-import PersonalBest from "../../components/profile/PersonalBest";
-import BadgeProgress from "../../components/profile/BadgeProgress";
-import LeagueStatus from "../../components/profile/LeagueStatus";
+import Header from "../../components/user/profile/Header";
+import Stats from "../../components/user/profile/Stats";
+import Badges from "../../components/user/profile/Badges";
+import Activity from "../../components/user/profile/Activity";
+import AvatarSelection from "../../components/user/profile/AvatarSelection";
+import AccuracyStats from "../../components/user/profile/AccuracyStats";
+import PersonalBest from "../../components/user/profile/PersonalBest";
+import BadgeProgress from "../../components/user/profile/BadgeProgress";
 
 const INITIAL_USER = {
     fullName: "Lê Văn Học",
@@ -24,8 +21,7 @@ const INITIAL_USER = {
     bestStreak: 20,
     maxDayXp: 350,
     totalLessons: 48,
-    nextBadge: { name: "Hàn Lâm II", target: 1500, icon: "/badges/scholar.png" },
-    league: { name: "Silver", trend: "up" as const }
+    nextBadge: { name: "Hàn Lâm II", target: 1500, icon: "/badges/scholar.png" }
 };
 
 export default function ProfilePage() {
@@ -38,62 +34,64 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="bg-slate-50 min-h-screen relative font-sans">
-            <div className="max-w-2xl mx-auto bg-white min-h-screen pb-20 shadow-sm border-x border-slate-100">
+        <div className="bg-gradient-to-b from-slate-50 to-slate-100 min-h-screen relative font-sans">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-20">
+                <div className="bg-white rounded-3xl shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] border border-slate-200 overflow-hidden">
 
-                <Header
-                    name={user.fullName}
-                    level={user.level}
-                    avatarUrl={user.avatar}
-                    onAvatarClick={() => setIsModalOpen(true)}
-                />
-
-                <div className="px-6 space-y-6 mt-4">
-                    {/* 1. Chỉ số cơ bản */}
-                    <Stats
-                        streak={user.streak}
-                        xp={user.xp}
-                        rank={user.rank}
+                    <Header
+                        name={user.fullName}
+                        level={user.level}
+                        avatarUrl={user.avatar}
+                        onAvatarClick={() => setIsModalOpen(true)}
                     />
 
-                    {/* 2. Hàng ngang: Độ chính xác & Kỷ lục cá nhân */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <AccuracyStats percent={user.accuracy} />
-                        <PersonalBest
-                            highestStreak={user.bestStreak}
-                            maxDayXp={user.maxDayXp}
-                            totalLessons={user.totalLessons}
-                        />
-                    </div>
+                    <div className="px-6 md:px-8 py-6">
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                            <div className="xl:col-span-2 space-y-6">
+                                {/* 1. Chỉ số cơ bản */}
+                                <Stats
+                                    streak={user.streak}
+                                    xp={user.xp}
+                                    rank={user.rank}
+                                />
 
-                    {/* 3. Trạng thái giải đấu (League) */}
-                    <LeagueStatus
-                        rank={user.rank}
-                        trend={user.league.trend}
-                        leagueName={user.league.name}
-                    />
+                                {/* 2. Độ chính xác & Kỷ lục cá nhân */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+                                    <AccuracyStats percent={user.accuracy} />
+                                    <PersonalBest
+                                        highestStreak={user.bestStreak}
+                                        maxDayXp={user.maxDayXp}
+                                        totalLessons={user.totalLessons}
+                                    />
+                                </div>
 
-                    {/* 4. Tiến trình đạt Huy hiệu tiếp theo */}
-                    <BadgeProgress
-                        nextBadgeName={user.nextBadge.name}
-                        currentXp={parseInt(user.xp.replace(',', ''))}
-                        targetXp={user.nextBadge.target}
-                        badgeIcon={user.nextBadge.icon}
-                    />
+                                {/* 3. Danh sách Huy hiệu đã đạt được */}
+                                <div className="pt-4 border-t border-slate-100">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="font-black text-slate-800 uppercase text-sm italic">Thành tích</h3>
+                                        <button className="text-blue-500 font-bold text-xs uppercase hover:underline">Xem thêm</button>
+                                    </div>
+                                    <Badges />
+                                </div>
 
-                    {/* 5. Danh sách Huy hiệu đã đạt được */}
-                    <div className="pt-4 border-t border-slate-100">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-black text-slate-800 uppercase text-sm italic">Thành tích</h3>
-                            <button className="text-blue-500 font-bold text-xs uppercase hover:underline">Xem thêm</button>
+                                {/* 4. Biểu đồ hoạt động */}
+                                <div className="pt-4 border-t border-slate-100">
+                                    <h3 className="font-black text-slate-800 uppercase text-sm italic mb-4">Hoạt động tuần này</h3>
+                                    <Activity data={user.activityData} />
+                                </div>
+                            </div>
+
+                            <div className="xl:col-span-1">
+                                <div className="sticky top-6">
+                                    <BadgeProgress
+                                        nextBadgeName={user.nextBadge.name}
+                                        currentXp={parseInt(user.xp.replace(',', ''))}
+                                        targetXp={user.nextBadge.target}
+                                        badgeIcon={user.nextBadge.icon}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <Badges />
-                    </div>
-
-                    {/* 6. Biểu đồ hoạt động */}
-                    <div className="pt-4 border-t border-slate-100">
-                        <h3 className="font-black text-slate-800 uppercase text-sm italic mb-4">Hoạt động tuần này</h3>
-                        <Activity data={user.activityData} />
                     </div>
                 </div>
             </div>
