@@ -1,7 +1,7 @@
-import { useState } from "react";
-import Header from "../../components/user/profile/Header";
+import { useState, useEffect } from "react";
+import UserProfileCard from "@/components/user/profile/UserProfileCard.tsx";
 import Stats from "../../components/user/profile/Stats";
-import Badges from "../../components/user/profile/Badges";
+import BadgesGrid from "../../components/user/profile/BadgesGrid";
 import Activity from "../../components/user/profile/Activity";
 import AvatarSelection from "../../components/user/profile/AvatarSelection";
 import AccuracyStats from "../../components/user/profile/AccuracyStats";
@@ -16,47 +16,58 @@ const INITIAL_USER = {
     rank: 12,
     avatar: "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Sky",
     activityData: [20, 50, 40, 90, 100, 60, 30],
-    // Dữ liệu giả lập cho các phần mới (Lấy từ DB db.sql của bạn)
     accuracy: 95,
     bestStreak: 20,
     maxDayXp: 350,
     totalLessons: 48,
-    nextBadge: { name: "Hàn Lâm II", target: 1500, icon: "/badges/scholar.png" }
+    nextBadge: { name: "Hàn Lâm II", target: 1500, icon: "/profile/scholar.gif" }
 };
 
 export default function ProfilePage() {
     const [user, setUser] = useState(INITIAL_USER);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const currentXp = parseInt(user.xp.replace(',', ''));
+
     const handleUpdateAvatar = (newUrl: string) => {
         setUser((prev) => ({ ...prev, avatar: newUrl }));
         setIsModalOpen(false);
     };
 
+    // 🔥 LOCK SCROLL khi mở modal
+    useEffect(() => {
+        if (isModalOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+    }, [isModalOpen]);
+
     return (
-        <div className="bg-gradient-to-b from-slate-50 to-slate-100 min-h-screen relative font-sans">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-20">
-                <div className="bg-white rounded-3xl shadow-[0_18px_40px_-20px_rgba(15,23,42,0.25)] border border-slate-200 overflow-hidden">
+        <>
+            {/* ================= MAIN PAGE ================= */}
+            <div className="bg-primary-50/30 min-h-screen flex flex-col font-sans">
+                <div className="flex-1">
+                <div className="max-w-6xl mx-auto px-0 sm:px-6 lg:px-8 pt-0">
 
-                    <Header
-                        name={user.fullName}
-                        level={user.level}
-                        avatarUrl={user.avatar}
-                        onAvatarClick={() => setIsModalOpen(true)}
-                    />
+                    <div className="bg-white rounded-none sm:rounded-3xl shadow-sm border-b sm:border border-primary-100 overflow-hidden mb-0 sm:mb-6">
+                        <UserProfileCard
+                            name={user.fullName}
+                            level={user.level}
+                            avatarUrl={user.avatar}
+                            onAvatarClick={() => setIsModalOpen(true)}
+                        />
+                    </div>
 
-                    <div className="px-6 md:px-8 py-6">
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                            <div className="xl:col-span-2 space-y-6">
-                                {/* 1. Chỉ số cơ bản */}
-                                <Stats
-                                    streak={user.streak}
-                                    xp={user.xp}
-                                    rank={user.rank}
-                                />
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-0 sm:gap-6 items-start">
 
-                                {/* 2. Độ chính xác & Kỷ lục cá nhân */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+                        <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+                            <div className="rounded-none sm:rounded-3xl border-b sm:border border-primary-100 shadow-sm">
+                                <Stats streak={user.streak} xp={user.xp} rank={user.rank} />
+                            </div>
+
+                            <div className="px-4 sm:px-0 space-y-4 sm:space-y-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                                     <AccuracyStats percent={user.accuracy} />
                                     <PersonalBest
                                         highestStreak={user.bestStreak}
@@ -65,58 +76,67 @@ export default function ProfilePage() {
                                     />
                                 </div>
 
-                                {/* 3. Danh sách Huy hiệu đã đạt được */}
-                                <div className="pt-4 border-t border-slate-100">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-black text-slate-800 uppercase text-sm italic">Thành tích</h3>
-                                        <button className="text-blue-500 font-bold text-xs uppercase hover:underline">Xem thêm</button>
-                                    </div>
-                                    <Badges />
-                                </div>
-
-                                {/* 4. Biểu đồ hoạt động */}
-                                <div className="pt-4 border-t border-slate-100">
-                                    <h3 className="font-black text-slate-800 uppercase text-sm italic mb-4">Hoạt động tuần này</h3>
-                                    <Activity data={user.activityData} />
-                                </div>
-                            </div>
-
-                            <div className="xl:col-span-1">
-                                <div className="sticky top-6">
-                                    <BadgeProgress
-                                        nextBadgeName={user.nextBadge.name}
-                                        currentXp={parseInt(user.xp.replace(',', ''))}
-                                        targetXp={user.nextBadge.target}
-                                        badgeIcon={user.nextBadge.icon}
-                                    />
-                                </div>
+                                <BadgesGrid />
                             </div>
                         </div>
+
+                        <div className="xl:col-span-1 px-4 sm:px-0 mt-4 sm:mt-0">
+                            <div className="xl:sticky xl:top-6 space-y-4 sm:space-y-6">
+                                <BadgeProgress
+                                    nextBadgeName={user.nextBadge.name}
+                                    currentXp={currentXp}
+                                    targetXp={user.nextBadge.target}
+                                    badgeIcon={user.nextBadge.icon}
+                                />
+                                <Activity data={user.activityData} />
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
-            {/* --- MODAL CHỌN AVATAR --- */}
+            {/* ================= MODAL ================= */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-                        onClick={() => setIsModalOpen(false)}
-                    />
-                    <div className="relative z-10 w-full max-w-sm animate-in zoom-in-95 duration-200">
-                        <button
-                            onClick={() => setIsModalOpen(false)}
-                            className="absolute -top-10 right-0 text-white font-black hover:text-orange-400 transition-colors uppercase text-sm"
-                        >
-                            Đóng ✕
-                        </button>
-                        <AvatarSelection
-                            onSelect={handleUpdateAvatar}
-                            currentValue={user.avatar}
-                        />
+                <div className="fixed inset-0 z-[9999] bg-black/50">
+
+                    {/* MOBILE: full screen | DESKTOP: modal */}
+                    <div className="
+                        fixed inset-0
+                        w-screen h-[100dvh]
+                        bg-white
+                        flex flex-col
+
+                        sm:relative sm:inset-auto
+                        sm:max-w-md sm:h-[600px]
+                        sm:mx-auto sm:mt-20
+                        sm:rounded-3xl
+                        sm:shadow-2xl
+                    ">
+
+                        {/* HEADER */}
+                        <div className="p-4 border-b flex justify-between items-center">
+                            <h3 className="font-bold text-lg">Chọn ảnh đại diện</h3>
+                            <button
+                                onClick={() => setIsModalOpen(false)}
+                                className="p-2 text-2xl"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* CONTENT */}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <AvatarSelection
+                                onSelect={handleUpdateAvatar}
+                                currentValue={user.avatar}
+                            />
+                        </div>
                     </div>
                 </div>
+
             )}
-        </div>
+            </div>
+        </>
     );
 }

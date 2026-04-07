@@ -12,19 +12,19 @@ export default function Stats({ streak, xp, rank }: StatsProps) {
             label: "STREAK",
             value: streak,
             icon: "/profile/streak.gif",
-            borderColor: "hover:border-orange-200"
+            borderColor: "hover:border-primary-300"
         },
         {
             label: "TỔNG XP",
             value: xp,
             icon: "/profile/growth.gif",
-            borderColor: "hover:border-yellow-200"
+            borderColor: "hover:border-primary-400"
         },
         {
             label: "HẠNG",
             value: rank,
             icon: "/profile/top ranking.gif",
-            borderColor: "hover:border-blue-200"
+            borderColor: "hover:border-primary-500"
         },
     ];
 
@@ -35,7 +35,7 @@ export default function Stats({ streak, xp, rank }: StatsProps) {
                     key={i}
                     className={`group p-3 sm:p-4 rounded-2xl border-2 border-slate-200 flex flex-col items-center 
                                transition-all duration-200 cursor-default bg-white ${s.borderColor}
-                               shadow-[0_4px_0_0_rgba(226,232,240,1)] active:shadow-none active:translate-y-[2px]`}
+                               shadow-[0_2px_8px_rgba(0,0,0,0.06)] active:shadow-none active:translate-y-[2px]`}
                 >
                     {/* Icon */}
                     <div className="mb-1 transition-transform group-hover:scale-110 duration-200">
@@ -47,12 +47,12 @@ export default function Stats({ streak, xp, rank }: StatsProps) {
                     </div>
 
                     {/* Giá trị số - Lấy từ Props */}
-                    <span className="text-lg sm:text-xl font-black text-slate-800 leading-none mt-1">
+                    <span className="text-lg sm:text-xl font-black text-primary-900 leading-none mt-1">
                         {s.value}
                     </span>
 
                     {/* Nhãn */}
-                    <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-400 mt-1 uppercase tracking-wider text-center">
+                    <span className="text-[9px] sm:text-[10px] font-extrabold text-primary-600 mt-1 uppercase tracking-wider text-center">
                         {s.label}
                     </span>
                 </div>
