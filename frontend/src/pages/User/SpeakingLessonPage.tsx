@@ -2,14 +2,14 @@ import {useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
-import ListeningLessonView from "@/components/user/learn/ListeningLessonView";
+import SpeakingLessonView from "@/components/user/learn/SpeakingLessonView";
 
 type LocationState = {
     treeId?: number;
     node?: SkillTreeNodeQuestionsData;
 };
 
-export default function ListeningLessonPage() {
+export default function SpeakingLessonPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const state = (location.state ?? {}) as LocationState;
@@ -20,7 +20,7 @@ export default function ListeningLessonPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (state.node && state.node.nodeType === "LISTENING") {
+        if (state.node && state.node.nodeType === "SPEAKING") {
             setLoading(false);
             return;
         }
@@ -34,7 +34,7 @@ export default function ListeningLessonPage() {
                 if (!cancelled) setTreeData(data);
             } catch (e: unknown) {
                 if (!cancelled) {
-                    setError(e instanceof Error ? e.message : "Không tải được dữ liệu LISTENING");
+                    setError(e instanceof Error ? e.message : "Không tải được dữ liệu SPEAKING");
                     setTreeData(null);
                 }
             } finally {
@@ -47,10 +47,10 @@ export default function ListeningLessonPage() {
         };
     }, [treeId, state.node]);
 
-    const listeningNode = useMemo(() => {
-        if (state.node && state.node.nodeType === "LISTENING") return state.node;
+    const speakingNode = useMemo(() => {
+        if (state.node && state.node.nodeType === "SPEAKING") return state.node;
         const nodes = treeData?.nodes ?? [];
-        return nodes.find((n) => n.nodeType === "LISTENING") ?? null;
+        return nodes.find((n) => n.nodeType === "SPEAKING") ?? null;
     }, [state.node, treeData]);
 
     if (loading) {
@@ -63,14 +63,14 @@ export default function ListeningLessonPage() {
         );
     }
 
-    if (error || !listeningNode) {
+    if (error || !speakingNode) {
         return (
             <div
                 className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex items-center justify-center px-4"
             >
                 <div className="max-w-md w-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <div className="text-gray-900 font-extrabold mb-2">Không tải được bài LISTENING</div>
-                    <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node LISTENING"}</div>
+                    <div className="text-gray-900 font-extrabold mb-2">Không tải được bài SPEAKING</div>
+                    <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node SPEAKING"}</div>
                     <button
                         type="button"
                         onClick={() => navigate(-1)}
@@ -85,17 +85,17 @@ export default function ListeningLessonPage() {
 
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
-            <ListeningLessonView
-                node={listeningNode}
+            <SpeakingLessonView
+                node={speakingNode}
                 onExit={() => navigate(-1)}
                 onComplete={() => {
-                    // Hoàn thành LISTENING → +10 KN, mở khóa node 3 (SPEAKING) và quay về /learn
+                    // Hoàn thành SPEAKING → +10 KN, mở khóa node 4 (MATCHING) và quay về /learn
                     try {
-                        sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, "3");
+                        sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, "4");
                     } catch {
                         // ignore
                     }
-                    navigate("/learn", {state: {treeId, unlockedCount: 3}});
+                    navigate("/learn", {state: {treeId, unlockedCount: 4}});
                 }}
             />
         </div>

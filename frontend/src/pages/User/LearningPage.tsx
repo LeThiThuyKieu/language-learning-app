@@ -184,6 +184,9 @@ export default function LearningPage() {
                                     onStartListening={(node) =>
                                         navigate("/learn/listening", {state: {treeId, node}})
                                     }
+                                    onStartSpeaking={(node) =>
+                                        navigate("/learn/speaking", {state: {treeId, node}})
+                                    }
                                 />
                                 <TreeNodesDataPreview data={treeData}/>
                             </div>

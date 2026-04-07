@@ -10,6 +10,7 @@ import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
 import LearningPage from "@/pages/User/LearningPage";
 import VocabLessonPage from "@/pages/User/VocabLessonPage";
 import ListeningLessonPage from "@/pages/User/ListeningLessonPage";
+import SpeakingLessonPage from "@/pages/User/SpeakingLessonPage";
 import ProfilePage from "@/pages/User/ProfilePage";
 import LionWelcome from "@/components/user/home/LionWelcome";
 import LevelSelectPage from "@/pages/User/LevelSelectPage";
@@ -32,6 +33,7 @@ function App() {
                         <Route path="learn" element={<LearningPage/>}/>
                         <Route path="learn/vocab" element={<VocabLessonPage/>}/>
                         <Route path="learn/listening" element={<ListeningLessonPage/>}/>
+                        <Route path="learn/speaking" element={<SpeakingLessonPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
                     </Route>
 
