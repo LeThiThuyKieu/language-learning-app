@@ -2,11 +2,11 @@ import {useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
-import VocabLessonView from "@/components/user/learn/VocabLessonView";
-import ListeningLessonView from "@/components/user/learn/ListeningLessonView";
-import SpeakingLessonView from "@/components/user/learn/SpeakingLessonView";
-import MatchingLessonView from "@/components/user/learn/MatchingLessonView";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
+import ReviewVocabView from "@/components/user/learn/review/ReviewVocabView";
+import ReviewListeningView from "@/components/user/learn/review/ReviewListeningView";
+import ReviewSpeakingView from "@/components/user/learn/review/ReviewSpeakingView";
+import ReviewMatchingView from "@/components/user/learn/review/ReviewMatchingView";
 
 type Stage = "VOCAB" | "LISTENING" | "SPEAKING" | "MATCHING" | "DONE";
 
@@ -154,35 +154,31 @@ export default function ReviewLessonPage() {
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
             {stage === "VOCAB" && vocabNode && (
-                <VocabLessonView
+                <ReviewVocabView
                     node={vocabNode}
                     onExit={() => navigate(-1)}
                     onComplete={() => setStage("LISTENING")}
-                    showCompletion={false}
                 />
             )}
             {stage === "LISTENING" && listeningNode && (
-                <ListeningLessonView
+                <ReviewListeningView
                     node={listeningNode}
                     onExit={() => navigate(-1)}
                     onComplete={() => setStage("SPEAKING")}
-                    showCompletion={false}
                 />
             )}
             {stage === "SPEAKING" && speakingNode && (
-                <SpeakingLessonView
+                <ReviewSpeakingView
                     node={speakingNode}
                     onExit={() => navigate(-1)}
                     onComplete={() => setStage("MATCHING")}
-                    showCompletion={false}
                 />
             )}
             {stage === "MATCHING" && matchingNode && (
-                <MatchingLessonView
+                <ReviewMatchingView
                     node={matchingNode}
                     onExit={() => navigate(-1)}
                     onComplete={() => setStage("DONE")}
-                    showCompletion={false}
                 />
             )}
         </div>
