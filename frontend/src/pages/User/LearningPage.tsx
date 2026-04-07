@@ -11,56 +11,68 @@ export default function LearningPage() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
-    <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white">
-      <div className="w-full px-4 md:px-8 py-8">
+    <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">
+      <div className="w-full px-4 md:px-8 pt-6 md:pt-8 pb-8">
         <div className="grid grid-cols-12 gap-6">
-          {/* Sidebar left */}
-          <aside className="col-span-12 md:col-span-3">
-            <div className="flex flex-col gap-4">
-              <nav className="mt-2 space-y-2">
-                <SidebarItem label="Học" active />
-                <SidebarItem label="Bảng xếp hạng" />
-                <SidebarItem label="Nhiệm vụ" />
+          {/* Sidebar left — layout kiểu Duolingo: cột có viền, mục cùng độ rộng */}
+          <aside className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-5 md:pl-1 lg:pr-6">
+            <nav className="mt-1 flex w-full max-w-[17.5rem] flex-col gap-1">
+              <SidebarItem
+                label="Học"
+                active
+                icon={<img src="/icons/learn/hoc.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />}
+              />
+              <SidebarItem
+                label="Bảng xếp hạng"
+                icon={<img src="/icons/learn/bxh.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />}
+              />
+              <SidebarItem
+                label="Nhiệm vụ"
+                icon={<img src="/icons/learn/task.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />}
+              />
+              <SidebarItem
+                label="Hồ sơ"
+                icon={<img src="/icons/learn/more-info.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />}
+              />
 
-                {/* Xem thêm dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setMoreOpen((v) => !v)}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border text-gray-800 bg-white hover:bg-gray-50 transition"
+              <div className="relative w-full pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen((v) => !v)}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent px-4 py-3 text-left text-gray-600 transition hover:bg-gray-100"
+                >
+                  <span className="text-sm font-bold uppercase tracking-wide">Xem thêm</span>
+                  <svg
+                    className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${
+                      moreOpen ? "rotate-180" : ""
+                    }`}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <span className="font-semibold">Xem thêm</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${
-                        moreOpen ? "rotate-180" : ""
-                      }`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </button>
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
 
-                  {moreOpen && (
-                    <div className="mt-2 rounded-xl border bg-white shadow-md overflow-hidden">
-                      <MoreItem label="Cài đặt" onClick={() => navigate("/profile")} />
-                      <MoreItem label="Trợ giúp" />
-                      <MoreItem label="Đăng xuất" />
-                    </div>
-                  )}
-                </div>
-              </nav>
-            </div>
+                {moreOpen && (
+                  <div className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
+                    <MoreItem label="Cài đặt" onClick={() => navigate("/profile")} />
+                    <MoreItem label="Trợ giúp" />
+                    <MoreItem label="Đăng xuất" />
+                  </div>
+                )}
+              </div>
+            </nav>
           </aside>
 
           {/* Main content */}
-          <main className="col-span-12 md:col-span-9">
+          <main className="col-span-12 md:col-span-9 lg:col-span-9">
             <div className="grid grid-cols-12 gap-6">
-              {/* Header ở giữa */}
-              <div className="col-span-12 lg:col-span-7">
+              {/* Cột trái: banner + lộ trình bài */}
+              <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
                 <div className="bg-primary-500 text-white rounded-2xl px-6 py-5 flex items-center justify-between">
                   <div className="max-w-[72%]">
                     <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
@@ -79,20 +91,12 @@ export default function LearningPage() {
                     <span>Hướng dẫn</span>
                   </button>
                 </div>
-              </div>
-
-              {/* TopStats ở bên phải, cùng hàng với header */}
-              <div className="col-span-12 lg:col-span-5">
-                <TopStats />
-              </div>
-
-              {/* Nodes ở giữa */}
-              <div className="col-span-12 lg:col-span-7">
                 <NodePath />
               </div>
 
-              {/* Cards ở phải */}
-              <div className="col-span-12 lg:col-span-5 space-y-4">
+              {/* Cột phải: TopStats sát các card bên dưới */}
+              <div className="col-span-12 lg:col-span-4 flex flex-col gap-3">
+                <TopStats />
                 <InfoCard
                   title="Mở khóa Bảng xếp hạng!"
                   subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
@@ -108,16 +112,18 @@ export default function LearningPage() {
   );
 }
 
-function SidebarItem({ label, active = false }: { label: string; active?: boolean }) {
+function SidebarItem({ label, active = false, icon }: { label: string; active?: boolean; icon?: React.ReactNode }) {
   return (
     <button
-      className={`w-full text-left px-4 py-3 rounded-xl border transition ${
+      type="button"
+      className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm transition ${
         active
-          ? "bg-primary-50 border-primary-200 text-primary-700 font-bold"
-          : "bg-white hover:bg-gray-50 border-gray-200 text-gray-800 font-semibold"
+          ? "border-primary-300 bg-primary-50 font-bold text-primary-700 shadow-sm"
+          : "border-transparent font-semibold text-gray-600 hover:bg-gray-100"
       }`}
     >
-      {label}
+      {icon && <span className="flex shrink-0 items-center justify-center">{icon}</span>}
+      <span className="uppercase tracking-wide">{label}</span>
     </button>
   );
 }
@@ -200,7 +206,7 @@ function ProfileCard({ onCreateProfile }: { onCreateProfile: () => void }) {
             <div className="text-gray-900 font-extrabold mb-2">Tạo hồ sơ để lưu tiến trình của bạn!</div>
             <button
                 onClick={onCreateProfile}
-                className="mt-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-xl transition"
+        className="mt-2 w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 rounded-xl transition"
             >
                 Tạo hồ sơ
             </button>
