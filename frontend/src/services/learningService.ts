@@ -1,5 +1,12 @@
 import apiClient from "@/config/api";
-import { Lesson, Question, Vocabulary, SkillTree, SkillNode } from "@/types";
+import {
+  Lesson,
+  Question,
+  Vocabulary,
+  SkillTree,
+  SkillNode,
+  SkillTreeQuestionsData,
+} from "@/types";
 
 export const learningService = {
   getSkillTrees: async (levelId?: number) => {
@@ -12,6 +19,14 @@ export const learningService = {
   getSkillNodes: async (skillTreeId: number) => {
     const response = await apiClient.get<SkillNode[]>(
       `/learning/skill-trees/${skillTreeId}/nodes`
+    );
+    return response.data;
+  },
+
+  /** Bộ câu theo tree (VOCAB/LISTENING/… + REVIEW), dữ liệu đã enrich từ Mongo */
+  getTreeQuestions: async (skillTreeId: number) => {
+    const response = await apiClient.get<SkillTreeQuestionsData>(
+      `/learning/trees/${skillTreeId}/questions`
     );
     return response.data;
   },

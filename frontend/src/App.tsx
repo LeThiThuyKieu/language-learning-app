@@ -7,12 +7,17 @@ import HomePage from "@/pages/User/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
-import LearningPage from "@/pages/User/LearningPage";
+import LearningPage from "@/pages/User/learn/LearningPage.tsx";
+import VocabLessonPage from "@/pages/User/learn/VocabLessonPage.tsx";
+import ListeningLessonPage from "@/pages/User/learn/ListeningLessonPage.tsx";
+import SpeakingLessonPage from "@/pages/User/learn/SpeakingLessonPage.tsx";
+import MatchingLessonPage from "@/pages/User/learn/MatchingLessonPage.tsx";
+import ReviewLessonPage from "@/pages/User/learn/ReviewLessonPage.tsx";
 import ProfilePage from "@/pages/User/ProfilePage";
 import LionWelcome from "@/components/user/home/LionWelcome";
-import LevelSelectPage from "@/pages/User/LevelSelectPage";
-import PlacementTestPage from "@/pages/User/PlacementTestPage";
-import LevelConfirmPage from "@/pages/User/LevelConfirmPage";
+import LevelSelectPage from "@/pages/User/learn/LevelSelectPage.tsx";
+import PlacementTestPage from "@/pages/User/learn/PlacementTestPage.tsx";
+import LevelConfirmPage from "@/pages/User/learn/LevelConfirmPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +33,11 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="learn/vocab" element={<VocabLessonPage/>}/>
+                        <Route path="learn/listening" element={<ListeningLessonPage/>}/>
+                        <Route path="learn/speaking" element={<SpeakingLessonPage/>}/>
+                        <Route path="learn/matching" element={<MatchingLessonPage/>}/>
+                        <Route path="learn/review" element={<ReviewLessonPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
                     </Route>
 
