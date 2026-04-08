@@ -11,7 +11,7 @@ export default function Header() {
     const location = useLocation();
     const [showConfirm, setShowConfirm] = useState(false);
 
-    // Hiệu ứng đổi màu nền Header khi cuộn trang
+    // Hiệu ứng đổi màu nền UserProfileCard khi cuộn trang
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
@@ -96,9 +96,14 @@ export default function Header() {
                                 </div>
                                 <button
                                     onClick={handleLogout}
-                                    className="text-gray-400 hover:text-red-400 transition-all transform hover:scale-110"
+                                    className="flex items-center justify-center w-9 h-9 rounded-full
+                                    bg-gray-700/50 hover:bg-red-500/20
+                                    text-gray-400 hover:text-red-400
+                                    transition-all duration-300
+                                    border border-gray-600 hover:border-red-400
+                                    shadow-sm hover:shadow-md"
                                 >
-                                    <LogOut className="w-5 h-5"/>
+                                    <LogOut className="w-4 h-4"/>
                                 </button>
                             </div>
                         ) : (
