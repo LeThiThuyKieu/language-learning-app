@@ -2,12 +2,14 @@
 interface UserProfileProps {
     name: string;
     level: string;
+    showLevelLabel?: boolean;
     avatarUrl?: string; // Thêm dấu ? để báo hiệu avatar có thể bị trống
     onAvatarClick: () => void;
     onEditNameClick: () => void;
+    onLevelClick?: () => void;
 }
 
-export default function UserProfileCard({ name, level, avatarUrl, onAvatarClick, onEditNameClick }: UserProfileProps) {
+export default function UserProfileCard({ name, level, showLevelLabel = true, avatarUrl, onAvatarClick, onEditNameClick, onLevelClick }: UserProfileProps) {
 
     // Link ảnh con gấu mặc định bạn muốn
     const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/thumbs/svg?seed=Bear";
@@ -31,16 +33,21 @@ export default function UserProfileCard({ name, level, avatarUrl, onAvatarClick,
                         <i className="fa-solid fa-pencil text-sm"></i>
                     </button>
                 </div>
-                <p className="text-[#1f1a17] font-bold text-xl">
-                    Trình độ: {level}
-                </p>
+                <button
+                    type="button"
+                    onClick={onLevelClick}
+                    disabled={!onLevelClick}
+                    className={`text-left text-[#1f1a17] font-bold text-xl ${onLevelClick ? "hover:text-primary-700 transition cursor-pointer" : "cursor-default"}`}
+                >
+                    {showLevelLabel ? `Trình độ: ${level}` : level}
+                </button>
 
-                <div className="mt-4 flex gap-2">
-                    <span className="px-3.5 py-1.5 bg-primary-100 text-[#1f1a17] rounded-full text-[11px] font-black uppercase tracking-wider">
-                        ANH VĂN
+                <div className="flex gap-2 mt-[10px]">
+                    <span className="px-3 py-1 bg-slate-100 text-slate-600  rounded-lg text-[10px] font-bold uppercase tracking-widest border border-slate-200">
+                        Anh Văn
                     </span>
-                    <span className="px-3.5 py-1.5 bg-primary-200 text-[#1f1a17] rounded-full text-[11px] font-black uppercase tracking-wider">
-                        ACTIVE
+                    <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-green-100">
+                        Active
                     </span>
                 </div>
             </div>

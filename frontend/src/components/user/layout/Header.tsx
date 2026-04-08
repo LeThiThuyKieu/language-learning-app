@@ -1,176 +1,198 @@
-import {useState, useEffect} from "react";
-import {Link, useLocation} from "react-router-dom";
-import {Menu, X, LogOut, ChevronRight} from "lucide-react";
-import {useAuthStore} from "@/store/authStore";
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X, LogOut, ChevronDown, User } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { profileService } from "@/services/profileService";
 import ConfirmModal from "./ConfirmModal";
 
+const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/thumbs/svg?seed=Bear";
+
 export default function Header() {
-    const {user, logout, isAuthenticated} = useAuthStore();
+    const { user, logout, isAuthenticated } = useAuthStore();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const location = useLocation();
     const [showConfirm, setShowConfirm] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
 
-    // Hiệu ứng đổi màu nền UserProfileCard khi cuộn trang
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const location = useLocation();
+
+    // 1. Xử lý Scroll hiệu quả hơn
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // 2. Fix lỗi Click Outside bằng useRef (Chuẩn React)
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // 3. Đóng mobile menu khi chuyển trang
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            setAvatarUrl(DEFAULT_AVATAR);
+            return;
+        }
+
+        let isMounted = true;
+
+        const loadAvatar = async () => {
+            try {
+                const profile = await profileService.getMyProfile();
+                if (isMounted) {
+                    setAvatarUrl(profile.avatarUrl || DEFAULT_AVATAR);
+                }
+            } catch {
+                if (isMounted) {
+                    setAvatarUrl(DEFAULT_AVATAR);
+                }
+            }
+        };
+
+        void loadAvatar();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [isAuthenticated]);
+
     const navLinks = [
-        {name: "Trang chủ", path: "/"},
-        {name: "Khóa học", path: "/learn"},
-        {name: "Hồ sơ", path: "/profile"},
+        { name: "Trang chủ", path: "/" },
+        { name: "Khóa học", path: "/learn" },
+        { name: "Hồ sơ", path: "/profile" },
     ];
 
-    const handleLogout = () => setShowConfirm(true);
     const confirmLogout = () => {
         logout();
         setMobileMenuOpen(false);
         setShowConfirm(false);
+        setDropdownOpen(false);
     };
 
     return (
-        <header className={`sticky top-0 z-50 transition-all duration-300 ${
-            isScrolled
-                ? "bg-gray-900/90 backdrop-blur-md shadow-lg py-2"
-                : "bg-gray-900 py-4"
-        }`}>
+        <header
+            className={`sticky top-0 z-50 transition-all duration-300 ${
+                isScrolled
+                    ? "bg-gray-900/95 backdrop-blur-md shadow-xl py-2"
+                    : "bg-gray-900 py-4"
+            }`}
+        >
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
 
                     {/* Logo */}
                     <Link to="/" className="group flex items-center gap-2">
-                        {/* 1. Hình sư tử */}
-                        <div
-                            className="relative w-14 h-14 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
-                            <img
-                                src="/logo/lion.png"
-                                alt="Lion Logo"
-                                className="w-full h-full object-contain drop-shadow-xl"
-                            />
+                        <div className="w-12 h-12 transition-transform group-hover:scale-110">
+                            <img src="/logo/lion.png" alt="Logo" className="w-full h-full object-contain" />
                         </div>
-                        {/* 2. Tên web */}
-                        <div className="relative">
-                        <span
-                            className="text-4xl font-black tracking-tighter text-white transition-all group-hover:tracking-normal">
-                            L<span className="text-primary-500 italic">i</span>on
+                        <span className="text-3xl font-black text-white tracking-tighter">
+                            L<span className="text-orange-500 italic">i</span>on
                         </span>
-                            {/* Dấu gạch chân trang trí dưới Logo */}
-                            <div
-                                className="absolute -bottom-1 left-0 w-0 h-1 bg-gradient-to-r from-primary-600 to-orange-400 transition-all duration-300 group-hover:w-full rounded-full"></div>
-                        </div>
                     </Link>
 
-                    {/* menu */}
-                    <div className="hidden md:flex items-center gap-10">
+                    {/* Desktop Menu */}
+                    <div className="hidden md:flex items-center gap-8">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className={`relative text-base font-bold uppercase transition-colors hover:text-primary-400 ${
-                                    location.pathname === link.path ? "text-primary-500" : "text-gray-300"
-                                } group`}
+                                className={`text-sm font-bold uppercase tracking-wider transition-colors hover:text-orange-500 ${
+                                    location.pathname === link.path ? "text-orange-500" : "text-gray-300"
+                                }`}
                             >
                                 {link.name}
-                                {/* Line chạy dưới chân khi active hoặc hover */}
-                                <span
-                                    className={`absolute -bottom-2 left-0 h-[2px] bg-primary-500 transition-all duration-300 ${
-                                        location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
-                                    }`}></span>
                             </Link>
                         ))}
                     </div>
 
-                    {/* infomation */}
-                    <div className="hidden md:flex items-center gap-6">
+                    {/* User Area */}
+                    <div className="hidden md:flex items-center gap-4">
                         {isAuthenticated ? (
-                            <div
-                                className="flex items-center gap-4 bg-gray-800/50 p-1 pr-4 rounded-full border border-gray-700">
-                                <div
-                                    className="w-9 h-9 bg-gradient-to-br from-primary-500 to-orange-500 rounded-full flex items-center justify-center font-black text-white shadow-lg">
-                                    {user?.email?.charAt(0).toUpperCase() || "L"}
-                                </div>
+                            <div className="relative" ref={dropdownRef}>
                                 <button
-                                    onClick={handleLogout}
-                                    className="flex items-center justify-center w-9 h-9 rounded-full
-                                    bg-gray-700/50 hover:bg-red-500/20
-                                    text-gray-400 hover:text-red-400
-                                    transition-all duration-300
-                                    border border-gray-600 hover:border-red-400
-                                    shadow-sm hover:shadow-md"
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 p-1 pr-3 rounded-full transition-all"
                                 >
-                                    <LogOut className="w-4 h-4"/>
+                                    <div className="w-8 h-8 rounded-full overflow-hidden border bg-primary-50 ">
+                                        <img
+                                            src={avatarUrl}
+                                            alt="Avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <ChevronDown size={16} className={`text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
                                 </button>
+
+                                {dropdownOpen && (
+                                    <div className="absolute right-0 mt-3 w-56 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                                        <div className="px-4 py-3 bg-gray-750 border-b border-gray-700">
+                                            <p className="text-xs text-gray-500 truncate">Đang đăng nhập với</p>
+                                            <p className="text-sm font-medium text-white truncate">{user?.email}</p>
+                                        </div>
+                                        <Link to="/profile" className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-700 transition">
+                                            <User size={16} /> Hồ sơ của tôi
+                                        </Link>
+                                        <button
+                                            onClick={() => setShowConfirm(true)}
+                                            className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-red-500/10 transition"
+                                        >
+                                            <LogOut size={16} /> Đăng xuất
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ) : (
-                            <Link
-                                to="/login"
-                                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all"
-                            >
-                                Đăng nhập
+                            <Link to="/login" className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-full font-bold text-sm transition-all shadow-lg shadow-orange-900/20">
+                                ĐĂNG NHẬP
                             </Link>
                         )}
                     </div>
 
-                    {/* Mobile Hamburger */}
+                    {/* Mobile Toggle */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="md:hidden p-2 rounded-lg bg-gray-800 text-primary-500 border border-gray-700 shadow-inner"
+                        className="md:hidden p-2 text-gray-300 hover:bg-gray-800 rounded-lg transition"
                     >
-                        {mobileMenuOpen ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
+                        {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
                     </button>
                 </div>
             </nav>
 
-            {/* Mobile menu (responsive) */}
-            <div className={`fixed inset-0 z-40 md:hidden transition-all duration-500 ${
-                mobileMenuOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
-            }`}>
-                <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-xl pt-24 px-6">
-                    <div className="flex flex-col gap-6">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.path}
-                                to={link.path}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="flex justify-between items-center text-2xl font-black text-white hover:text-primary-500 transition-colors border-b border-gray-800 pb-4"
-                            >
-                                {link.name}
-                                <ChevronRight className="text-gray-600"/>
-                            </Link>
-                        ))}
-
-                        <div className="mt-8">
-                            {isAuthenticated ? (
-                                <button
-                                    onClick={() => {
-                                        logout();
-                                        setMobileMenuOpen(false);
-                                    }}
-                                    className="w-full flex items-center justify-center gap-3 py-4 bg-red-600/10 text-red-500 rounded-2xl font-bold border border-red-500/20 shadow-lg"
-                                >
-                                    <LogOut className="w-5 h-5"/>
-                                    Đăng xuất hệ thống
-                                </button>
-                            ) : (
-                                <Link
-                                    to="/login"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="block py-5 bg-gradient-to-r from-primary-600 to-orange-500 text-white rounded-2xl text-center text-xl font-bold shadow-xl shadow-primary-900/40"
-                                >
-                                    Bắt đầu học ngay
-                                </Link>
-                            )}
-                        </div>
-                    </div>
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+                <div className="md:hidden absolute top-full left-0 w-full bg-gray-900 border-t border-gray-800 shadow-2xl p-4 space-y-2 animate-in slide-in-from-top duration-300">
+                    {navLinks.map((link) => (
+                        <Link
+                            key={link.path}
+                            to={link.path}
+                            className={`block p-3 rounded-lg font-semibold ${
+                                location.pathname === link.path ? "bg-orange-500/10 text-orange-500" : "text-gray-300"
+                            }`}
+                        >
+                            {link.name}
+                        </Link>
+                    ))}
+                    {!isAuthenticated && (
+                        <Link to="/login" className="block p-3 text-center bg-orange-600 text-white rounded-lg font-bold">
+                            Đăng nhập
+                        </Link>
+                    )}
                 </div>
-            </div>
+            )}
 
-            {/* Confirm Modal */}
             <ConfirmModal
                 isOpen={showConfirm}
                 onClose={() => setShowConfirm(false)}
@@ -180,4 +202,3 @@ export default function Header() {
         </header>
     );
 }
-
