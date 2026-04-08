@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import UserProfileCard from "@/components/user/profile/UserProfileCard.tsx";
 import Stats from "../../components/user/profile/Stats";
 import BadgesGrid from "../../components/user/profile/BadgesGrid";
@@ -9,12 +10,16 @@ import PersonalBest from "../../components/user/profile/PersonalBest";
 import BadgeProgress from "../../components/user/profile/BadgeProgress";
 import { profileService, UserProfileDetail } from "@/services/profileService";
 import ProfileSkeleton from "@/components/user/profile/ProfileSkeleton";
+import { useAuthStore } from "@/store/authStore";
+import GuestProfilePrompt from "@/components/user/GuestPrompt";
 
 const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/thumbs/svg?seed=Bear";
 
 const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
 export default function ProfilePage() {
+    const { isAuthenticated } = useAuthStore();
+    const navigate = useNavigate();
     const [profile, setProfile] = useState<UserProfileDetail | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isNameModalOpen, setIsNameModalOpen] = useState(false);
@@ -38,8 +43,13 @@ export default function ProfilePage() {
     };
 
     useEffect(() => {
+        if (!isAuthenticated) {
+            setIsLoading(false);
+            setProfile(null);
+            return;
+        }
         void fetchProfile();
-    }, []);
+    }, [isAuthenticated]);
 
     const handleUpdateAvatar = async (newUrl: string) => {
         if (!profile) return;
@@ -57,9 +67,10 @@ export default function ProfilePage() {
     };
 
     const displayName = profile?.fullName?.trim() || profile?.email || "Người dùng";
-    const levelDisplay = [profile?.currentLevelCefr, profile?.currentLevelName]
-        .filter(Boolean)
-        .join(" - ") || "Beginner";
+    const isLevelUndefined = !profile?.currentLevelCefr && !profile?.currentLevelName;
+    const levelDisplay = isLevelUndefined
+        ? "Bạn thuộc cấp độ nào? Cùng khám phá nhé!"
+        : [profile?.currentLevelCefr, profile?.currentLevelName].filter(Boolean).join(" - ");
     const avatarUrl = profile?.avatarUrl || DEFAULT_AVATAR;
 
     const openEditNameModal = () => {
@@ -108,6 +119,10 @@ export default function ProfilePage() {
         );
     }
 
+    if (!isAuthenticated) {
+        return <GuestProfilePrompt />;
+    }
+
     if (!profile) {
         return (
             <div className="min-h-screen bg-primary-50/30 flex items-center justify-center px-6">
@@ -135,9 +150,11 @@ export default function ProfilePage() {
                             <UserProfileCard
                                 name={displayName}
                                 level={levelDisplay}
+                                showLevelLabel={!isLevelUndefined}
                                 avatarUrl={avatarUrl}
                                 onAvatarClick={() => setIsModalOpen(true)}
                                 onEditNameClick={openEditNameModal}
+                                onLevelClick={isLevelUndefined ? () => navigate("/welcome") : undefined}
                             />
                         </div>
 
@@ -186,7 +203,7 @@ export default function ProfilePage() {
 
                 {/* ================= MODAL ================= */}
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-[9999] bg-black/50">
+                    <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center sm:p-4">
 
                         {/* MOBILE: full screen | DESKTOP: modal */}
                         <div className="
@@ -195,11 +212,10 @@ export default function ProfilePage() {
                         bg-white
                         flex flex-col
 
-                        sm:relative sm:inset-auto
-                        sm:max-w-md sm:h-[600px]
-                        sm:mx-auto sm:mt-20
+                        sm:relative sm:inset-auto sm:w-full
+                        sm:max-w-2xl sm:h-auto
                         sm:rounded-3xl
-                        sm:shadow-2xl
+                        sm:shadow-2xl sm:max-h-[92dvh]
                     ">
 
                             {/* HEADER */}
@@ -215,7 +231,7 @@ export default function ProfilePage() {
                             </div>
 
                             {/* CONTENT */}
-                            <div className="flex-1 overflow-y-auto p-6">
+                            <div className="p-4 sm:p-6">
                                 <AvatarSelection
                                     onSelect={handleUpdateAvatar}
                                     currentValue={avatarUrl}

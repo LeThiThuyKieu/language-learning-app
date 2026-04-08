@@ -27,7 +27,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -40,7 +39,9 @@ public class UserProfileService {
     private final UserBadgeRepository userBadgeRepository;
     private final UserNodeProgressRepository userNodeProgressRepository;
     private final LeaderboardRepository leaderboardRepository;
-        private final StreakHistoryRepository streakHistoryRepository;
+    private final StreakHistoryRepository streakHistoryRepository;
+    private final AvatarUploadService avatarUploadService;
+
 
     /*
      * Dùng cho phần Overview của trang hồ sơ.
@@ -73,7 +74,11 @@ public class UserProfileService {
             profile.setFullName(request.getFullName());
         }
         if (request.getAvatarUrl() != null) {
+            String oldAvatarUrl = profile.getAvatarUrl();
             profile.setAvatarUrl(request.getAvatarUrl());
+            if (oldAvatarUrl != null && !oldAvatarUrl.equals(request.getAvatarUrl())) {
+                avatarUploadService.deleteAvatarIfManaged(oldAvatarUrl);
+            }
         }
         if (request.getTargetGoal() != null) {
             profile.setTargetGoal(request.getTargetGoal());

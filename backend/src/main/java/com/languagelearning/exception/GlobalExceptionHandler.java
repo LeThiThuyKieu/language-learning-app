@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -86,6 +87,36 @@ public class GlobalExceptionHandler {
         response.put("error", "Validation Failed");
         response.put("message", "Invalid input data");
         response.put("errors", errors);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Xử lý các lỗi liên quan đến tham số không hợp lệ (ví dụ: sai định dạng file, file trống).
+     * Trả về phản hồi lỗi chi tiết với mã trạng thái 400 (Bad Request).
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Bad Request");
+        response.put("message", e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Xử lý lỗi khi người dùng upload file vượt quá cấu hình tối đa của hệ thống (Spring Boot).
+     * Chuyển đổi thông báo lỗi mặc định thành thông báo dễ hiểu hơn cho người dùng.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException e) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("error", "Bad Request");
+        response.put("message", "Avatar must be smaller than 2MB");
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
