@@ -18,6 +18,7 @@ import LionWelcome from "@/components/user/home/LionWelcome";
 import LevelSelectPage from "@/pages/User/learn/LevelSelectPage.tsx";
 import PlacementTestPage from "@/pages/User/learn/PlacementTestPage.tsx";
 import LevelConfirmPage from "@/pages/User/learn/LevelConfirmPage.tsx";
+import HelpPage from "@/pages/User/HelpPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ function App() {
                         <Route path="learn/matching" element={<MatchingLessonPage/>}/>
                         <Route path="learn/review" element={<ReviewLessonPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
+                        <Route path="help" element={<HelpPage/>}/>
                     </Route>
 
                     {/* Trang Welcome */}

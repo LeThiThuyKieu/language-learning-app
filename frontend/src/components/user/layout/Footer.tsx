@@ -23,10 +23,10 @@ const footerGroups = [
   {
     title: "Hỗ trợ",
     links: [
-      { label: "Câu hỏi thường gặp", to: "/" },
+      { label: "Câu hỏi thường gặp", to: "/help", scrollToTop: true },
       { label: "Chính sách bảo mật", to: "/" },
       { label: "Điều khoản sử dụng", to: "/" },
-      { label: "Liên hệ tư vấn", to: "/" },
+      { label: "Liên hệ tư vấn", to: "/help", scrollToTop: true },
     ],
   },
 ];
