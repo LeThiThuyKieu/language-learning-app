@@ -4,12 +4,15 @@ import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
 import NodePath from "@/components/user/learn/NodePath.tsx";
 import TreeNodesDataPreview from "@/components/user/learn/TreeNodesDataPreview.tsx";
+import {useAuthStore} from "@/store/authStore";
+import GuestPrompt from "@/components/user/GuestPrompt";
 
 type LevelKey = "beginner" | "intermediate" | "advanced";
 
 export default function LearningPage() {
     const location = useLocation();
     const navigate = useNavigate();
+    const {isAuthenticated} = useAuthStore();
     const level = (location.state?.level ?? "beginner") as LevelKey;
 
     const treeId = Number(location.state?.treeId ?? location.state?.treeNumber ?? 1);
@@ -42,7 +45,6 @@ export default function LearningPage() {
                 }
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state, treeId]);
 
     useEffect(() => {
@@ -72,6 +74,10 @@ export default function LearningPage() {
             cancelled = true;
         };
     }, [treeId]);
+
+    if (!isAuthenticated) {
+        return <GuestPrompt/>;
+    }
 
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">
@@ -249,19 +255,19 @@ function InfoCard({title, subtitle, iconSrc}: {
     iconSrc?: string;
 }) {
     return (<div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
-            <div className="flex items-center gap-3">
-                {iconSrc && (
-                    <div
-                        className="h-[54px] w-[54px] rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                        <img src={iconSrc} alt="" className="h-[26px] w-[26px] object-contain"/>
-                    </div>
-                )}
-                <div className="flex-1">
-                    <div className="text-gray-900 font-extrabold text-sm mb-1.5">{title}</div>
-                    <div className="text-gray-600 text-sm leading-snug">{subtitle}</div>
+        <div className="flex items-center gap-3">
+            {iconSrc && (
+                <div
+                    className="h-[54px] w-[54px] rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                    <img src={iconSrc} alt="" className="h-[26px] w-[26px] object-contain"/>
                 </div>
+            )}
+            <div className="flex-1">
+                <div className="text-gray-900 font-extrabold text-sm mb-1.5">{title}</div>
+                <div className="text-gray-600 text-sm leading-snug">{subtitle}</div>
             </div>
-        </div>);
+        </div>
+    </div>);
 }
 
 function DailyCard() {

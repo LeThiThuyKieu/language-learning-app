@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/utils/cn.ts";
+import { profileService } from "@/services/profileService";
+import toast from "react-hot-toast";
 
 type LevelKey = "beginner" | "intermediate" | "advanced" | "test";
 
@@ -11,8 +13,15 @@ const messages: Record<LevelKey, string> = {
   test: "Hãy làm bài Test đầu vào để khám phá trình độ của bạn!",
 };
 
+const levelIdMap: Record<Exclude<LevelKey, "test">, number> = {
+  beginner: 1,
+  intermediate: 2,
+  advanced: 3,
+};
+
 export default function LevelSelectPage() {
   const [selected, setSelected] = useState<LevelKey | null>(null);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   const currentMessage = useMemo(() => {
@@ -20,13 +29,26 @@ export default function LevelSelectPage() {
     return messages[selected];
   }, [selected]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selected) return;
+
     if (selected === "test") {
       navigate("/placement-test");
-    } else {
+      return;
+    }
+
+    const levelId = levelIdMap[selected];
+
+    try {
+      setSaving(true);
+      await profileService.updateMyProfile({ currentLevelId: levelId });
+      toast.success("Đã lưu trình độ bắt đầu của bạn!");
       // Điều hướng tới trang xác nhận level trước khi học
       navigate("/level-confirm", { state: { level: selected } });
+    } catch {
+      toast.error("Không thể lưu trình độ, vui lòng thử lại.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -112,15 +134,15 @@ export default function LevelSelectPage() {
       <div className="fixed bottom-8 right-4 md:bottom-10 md:right-6">
         <button
           onClick={handleContinue}
-          disabled={!selected}
+          disabled={!selected || saving}
           className={cn(
             "px-8 py-3 rounded-lg text-sm font-semibold shadow-md transition-all duration-200",
-            selected
+            selected && !saving
               ? "bg-primary-600 hover:bg-primary-700 text-white"
               : "bg-gray-500 cursor-not-allowed text-white"
           )}
         >
-          Tiếp tục
+          {saving ? "Đang lưu..." : "Tiếp tục"}
         </button>
       </div>
     </div>

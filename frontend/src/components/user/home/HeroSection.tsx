@@ -1,8 +1,49 @@
 import heroImg from "/hero-illustration/hero-image.jpg";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/store/authStore";
+import { profileService } from "@/services/profileService";
+import toast from "react-hot-toast";
+import { useState } from "react";
 
 export default function HeroSection() {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuthStore();
+    const [loading, setLoading] = useState(false);
+
+    const mapLevelIdToKey = (levelId: number): "beginner" | "intermediate" | "advanced" => {
+        if (levelId === 1) return "beginner";
+        if (levelId === 2) return "intermediate";
+        return "advanced";
+    };
+
+    const handleStartLearning = async () => {
+        if (loading) return;
+
+        // Chưa đăng nhập: hiển thị trang tạm GuestPrompt (qua route /learn đã xử lý sẵn)
+        if (!isAuthenticated) {
+            navigate("/learn");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const profile = await profileService.getMyProfile();
+            const levelId = profile.currentLevelId;
+
+            if (levelId) {
+                const level = mapLevelIdToKey(levelId);
+                navigate("/learn", { state: { level } });
+            } else {
+                // Chưa có level: chào đón + chọn trình độ
+                navigate("/welcome");
+            }
+        } catch {
+            toast.error("Không thể tải thông tin trình độ của bạn.");
+            navigate("/welcome");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div
@@ -24,9 +65,10 @@ export default function HeroSection() {
 
                 <div className="flex gap-4 mt-2">
                     <button
-                        onClick={() => navigate("/welcome")}
+                        onClick={handleStartLearning}
+                        disabled={loading}
                         className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-base rounded-lg shadow-md transition-all duration-200">
-                        Bắt đầu học
+                        {isAuthenticated ? (loading ? "Đang kiểm tra..." : "Vào bài học") : "Bắt đầu học"}
                     </button>
                     <button
                         className="px-8 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 font-semibold text-base rounded-lg transition-all duration-200">
