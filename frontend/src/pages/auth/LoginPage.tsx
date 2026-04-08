@@ -6,6 +6,7 @@ import {authService} from "@/services/authService";
 import toast from "react-hot-toast";
 import {FcGoogle} from "react-icons/fc";
 import {FaFacebook} from "react-icons/fa";
+import { profileService } from "@/services/profileService";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -22,7 +23,24 @@ export default function LoginPage() {
             const response = await authService.login({email, password});
             setAuth(response.user, response.token);
             toast.success("Đăng nhập thành công!");
-            navigate("/");
+            try {
+                const profile = await profileService.getMyProfile();
+                const levelId = profile.currentLevelId;
+
+                if (levelId) {
+                    const level =
+                        levelId === 1
+                            ? "beginner"
+                            : levelId === 2
+                            ? "intermediate"
+                            : "advanced";
+                    navigate("/learn", { state: { level } });
+                } else {
+                    navigate("/welcome");
+                }
+            } catch {
+                navigate("/");
+            }
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.message || "Đăng nhập thất bại");

@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/progress")
 @RequiredArgsConstructor
 public class ProgressController {
-    // TODO: Implement progress tracking endpoints
 }
 
 
