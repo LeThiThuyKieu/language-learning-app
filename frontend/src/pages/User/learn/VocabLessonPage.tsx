@@ -1,8 +1,8 @@
 import {useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
-import {learningService} from "@/services/learningService";
+import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
-import VocabLessonView from "@/components/user/learn/VocabLessonView";
+import VocabLessonView from "@/components/user/learn/VocabLessonView.tsx";
 
 type LocationState = {
     treeId?: number;

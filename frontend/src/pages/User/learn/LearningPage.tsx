@@ -1,9 +1,9 @@
 import {useLocation, useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
-import {learningService} from "@/services/learningService";
+import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
-import NodePath from "@/components/user/learn/NodePath";
-import TreeNodesDataPreview from "@/components/user/learn/TreeNodesDataPreview";
+import NodePath from "@/components/user/learn/NodePath.tsx";
+import TreeNodesDataPreview from "@/components/user/learn/TreeNodesDataPreview.tsx";
 
 type LevelKey = "beginner" | "intermediate" | "advanced";
 
@@ -30,7 +30,7 @@ export default function LearningPage() {
 
     // cập nhật unlockedCount nếu quay về từ lesson
     useEffect(() => {
-        const next = (location.state as any)?.unlockedCount;
+        const next = (location.state as Record<string, unknown>)?.unlockedCount;
         if (next && Number(next) !== unlockedCount) {
             const n = Number(next);
             if (Number.isFinite(n) && n >= 1) {

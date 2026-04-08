@@ -1,15 +1,15 @@
 import {useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
-import {learningService} from "@/services/learningService";
+import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
-import SpeakingLessonView from "@/components/user/learn/SpeakingLessonView";
+import MatchingLessonView from "@/components/user/learn/MatchingLessonView.tsx";
 
 type LocationState = {
     treeId?: number;
     node?: SkillTreeNodeQuestionsData;
 };
 
-export default function SpeakingLessonPage() {
+export default function MatchingLessonPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const state = (location.state ?? {}) as LocationState;
@@ -20,7 +20,7 @@ export default function SpeakingLessonPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (state.node && state.node.nodeType === "SPEAKING") {
+        if (state.node && state.node.nodeType === "MATCHING") {
             setLoading(false);
             return;
         }
@@ -34,7 +34,7 @@ export default function SpeakingLessonPage() {
                 if (!cancelled) setTreeData(data);
             } catch (e: unknown) {
                 if (!cancelled) {
-                    setError(e instanceof Error ? e.message : "Không tải được dữ liệu SPEAKING");
+                    setError(e instanceof Error ? e.message : "Không tải được dữ liệu MATCHING");
                     setTreeData(null);
                 }
             } finally {
@@ -47,10 +47,10 @@ export default function SpeakingLessonPage() {
         };
     }, [treeId, state.node]);
 
-    const speakingNode = useMemo(() => {
-        if (state.node && state.node.nodeType === "SPEAKING") return state.node;
+    const matchingNode = useMemo(() => {
+        if (state.node && state.node.nodeType === "MATCHING") return state.node;
         const nodes = treeData?.nodes ?? [];
-        return nodes.find((n) => n.nodeType === "SPEAKING") ?? null;
+        return nodes.find((n) => n.nodeType === "MATCHING") ?? null;
     }, [state.node, treeData]);
 
     if (loading) {
@@ -63,14 +63,14 @@ export default function SpeakingLessonPage() {
         );
     }
 
-    if (error || !speakingNode) {
+    if (error || !matchingNode) {
         return (
             <div
                 className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex items-center justify-center px-4"
             >
                 <div className="max-w-md w-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <div className="text-gray-900 font-extrabold mb-2">Không tải được bài SPEAKING</div>
-                    <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node SPEAKING"}</div>
+                    <div className="text-gray-900 font-extrabold mb-2">Không tải được bài MATCHING</div>
+                    <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node MATCHING"}</div>
                     <button
                         type="button"
                         onClick={() => navigate(-1)}
@@ -85,20 +85,19 @@ export default function SpeakingLessonPage() {
 
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
-            <SpeakingLessonView
-                node={speakingNode}
+            <MatchingLessonView
+                node={matchingNode}
                 onExit={() => navigate(-1)}
                 onComplete={() => {
-                    // Hoàn thành SPEAKING → +10 KN, mở khóa node 4 (MATCHING) và quay về /learn
+                    // Hoàn thành MATCHING → mở khóa node 5 (REVIEW) và quay về /learn
                     try {
-                        sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, "4");
+                        sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, "5");
                     } catch {
                         // ignore
                     }
-                    navigate("/learn", {state: {treeId, unlockedCount: 4}});
+                    navigate("/learn", {state: {treeId, unlockedCount: 5}});
                 }}
             />
         </div>
     );
 }
-

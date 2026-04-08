@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/utils/cn";
+import { cn } from "@/utils/cn.ts";
 
 type LevelKey = "beginner" | "intermediate" | "advanced" | "test";
 

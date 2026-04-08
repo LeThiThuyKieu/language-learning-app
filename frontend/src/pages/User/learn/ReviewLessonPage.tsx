@@ -1,12 +1,12 @@
 import {useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
-import {learningService} from "@/services/learningService";
+import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
-import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
-import ReviewVocabView from "@/components/user/learn/review/ReviewVocabView";
-import ReviewListeningView from "@/components/user/learn/review/ReviewListeningView";
-import ReviewSpeakingView from "@/components/user/learn/review/ReviewSpeakingView";
-import ReviewMatchingView from "@/components/user/learn/review/ReviewMatchingView";
+import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
+import ReviewVocabView from "@/components/user/learn/review/ReviewVocabView.tsx";
+import ReviewListeningView from "@/components/user/learn/review/ReviewListeningView.tsx";
+import ReviewSpeakingView from "@/components/user/learn/review/ReviewSpeakingView.tsx";
+import ReviewMatchingView from "@/components/user/learn/review/ReviewMatchingView.tsx";
 
 type Stage = "VOCAB" | "LISTENING" | "SPEAKING" | "MATCHING" | "DONE";
 
