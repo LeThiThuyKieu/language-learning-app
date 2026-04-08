@@ -156,7 +156,7 @@ function LessonBubble({
             : "Bắt đầu để nhận thêm kinh nghiệm.");
 
     return (
-        <div className="absolute top-[100px] left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute top-[100px] left-1/2 -translate-x-1/2 z-10">
             <div className="relative">
                 <div
                     className={`rounded-2xl border px-5 py-3.5 shadow-lg min-w-[230px] max-w-[280px] ${containerColor}`}

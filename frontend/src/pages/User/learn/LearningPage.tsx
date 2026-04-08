@@ -143,7 +143,7 @@ export default function LearningPage() {
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">
             <div className="w-full px-4 md:px-8 pt-6 md:pt-8 pb-8">
                 <div className="grid grid-cols-12 gap-6">
-                    {/* Sidebar left (sticky giống Duolingo) */}
+                    {/* Sidebar left */}
                     <aside
                         className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-3 md:pl-0 lg:pr-6">
                         <div className="md:sticky md:top-20 lg:top-24">
@@ -208,13 +208,13 @@ export default function LearningPage() {
                             {/* Cột trái: banner + lộ trình bài */}
                             <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
                                 <div
-                                    className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white rounded-2xl px-6 py-5 flex items-center justify-between sticky top-4 z-10`}>
+                                    className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white rounded-2xl px-6 py-5 flex items-center justify-between sticky top-20 lg:top-24 z-40`}>
                                     <div className="max-w-[72%]">
                                         <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
                                             Phần {activeTreeIndex + 1}, Cửa 1
                                         </div>
                                         <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
-                                            {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Skill tree ${
+                                            {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${
                                                 activeTreeIndex + 1
                                             }`}
                                         </h1>
@@ -234,7 +234,7 @@ export default function LearningPage() {
                                 )}
 
                                 {/* Skill tree theo level (scroll để đổi active) */}
-                                <div className="flex flex-col">
+                                <div className="flex flex-col mt-4">
                                     {trees.map((tree, idx) => {
                                         const accentKey = accentForIndex(idx);
                                         const isActive = idx === activeTreeIndex;
@@ -268,7 +268,8 @@ export default function LearningPage() {
                                                     </div>
                                                 )}
 
-                                                <div className="min-h-[420px]">
+                                                {/* Đệm phía trên để node + bubble luôn nằm dưới banner sticky */}
+                                                <div className="min-h-[420px] pt-24">
                                                     <NodePath
                                                         key={`${tree.treeId}-${accentKey}`}
                                                         accentKey={accentKey}
