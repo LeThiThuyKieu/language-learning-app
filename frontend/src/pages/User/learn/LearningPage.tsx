@@ -1,8 +1,8 @@
 import {useLocation, useNavigate} from "react-router-dom";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
-import NodePath from "@/components/user/learn/NodePath.tsx";
+import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx";
 import TreeNodesDataPreview from "@/components/user/learn/TreeNodesDataPreview.tsx";
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
@@ -15,13 +15,63 @@ export default function LearningPage() {
     const {isAuthenticated} = useAuthStore();
     const level = (location.state?.level ?? "beginner") as LevelKey;
 
-    const treeId = Number(location.state?.treeId ?? location.state?.treeNumber ?? 1);
+    const levelIdMap: Record<LevelKey, number> = useMemo(
+        () => ({
+            beginner: 1,
+            intermediate: 2,
+            advanced: 3,
+        }),
+        []
+    );
+
+    const levelNameMap: Record<LevelKey, string> = useMemo(
+        () => ({
+            beginner: "Beginner",
+            intermediate: "Intermediate",
+            advanced: "Advanced",
+        }),
+        []
+    );
 
     const [moreOpen, setMoreOpen] = useState(false);
-    const [treeData, setTreeData] = useState<SkillTreeQuestionsData | null>(null);
-    const [treeLoading, setTreeLoading] = useState(true);
-    const [treeError, setTreeError] = useState<string | null>(null);
-    const [unlockedCount, setUnlockedCount] = useState<number>(() => {
+    const [trees, setTrees] = useState<SkillTreeQuestionsData[]>([]);
+    const [treesLoading, setTreesLoading] = useState(true);
+    const [treesError, setTreesError] = useState<string | null>(null);
+    const [activeTreeIndex, setActiveTreeIndex] = useState(0);
+
+    const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    const accentKeys: NodeAccentKey[] = useMemo(
+        () => ["orange", "blue", "purple", "teal", "rose"],
+        []
+    );
+
+    const bannerBgByAccent: Record<NodeAccentKey, string> = useMemo(
+        () => ({
+            orange: "bg-primary-500",
+            blue: "bg-blue-500",
+            purple: "bg-purple-500",
+            teal: "bg-teal-500",
+            rose: "bg-rose-500",
+        }),
+        []
+    );
+
+    const dividerBorderByAccent: Record<NodeAccentKey, string> = useMemo(
+        () => ({
+            orange: "border-primary-300",
+            blue: "border-blue-300",
+            purple: "border-purple-300",
+            teal: "border-teal-300",
+            rose: "border-rose-300",
+        }),
+        []
+    );
+
+    const accentForIndex = (idx: number): NodeAccentKey =>
+        accentKeys[idx % accentKeys.length] ?? "orange";
+
+    const getUnlockedCount = (treeId: number): number => {
         try {
             const v = sessionStorage.getItem(`learn_tree_${treeId}_unlocked`);
             const n = v ? Number(v) : 1;
@@ -29,51 +79,61 @@ export default function LearningPage() {
         } catch {
             return 1;
         }
-    });
+    };
 
-    // cập nhật unlockedCount nếu quay về từ lesson
+    // Fetch tất cả skill tree + câu hỏi theo level (backend quyết định số tree cho mỗi level)
     useEffect(() => {
-        const next = (location.state as Record<string, unknown>)?.unlockedCount;
-        if (next && Number(next) !== unlockedCount) {
-            const n = Number(next);
-            if (Number.isFinite(n) && n >= 1) {
-                setUnlockedCount(n);
-                try {
-                    sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, String(n));
-                } catch {
-                    // ignore
-                }
-            }
-        }
-    }, [location.state, treeId]);
+        if (!isAuthenticated) return;
 
-    useEffect(() => {
         let cancelled = false;
         (async () => {
-            setTreeLoading(true);
-            setTreeError(null);
+            setTreesLoading(true);
+            setTreesError(null);
+
             try {
-                const data = await learningService.getTreeQuestions(treeId);
-                if (!cancelled) {
-                    setTreeData(data);
-                }
+                const levelId = levelIdMap[level];
+                const data = await learningService.getLevelQuestions(levelId);
+                if (cancelled) return;
+                setTrees(data);
             } catch (e: unknown) {
-                if (!cancelled) {
-                    setTreeError(
-                        e instanceof Error ? e.message : "Không tải được dữ liệu skill tree"
-                    );
-                    setTreeData(null);
-                }
+                if (cancelled) return;
+                setTreesError(
+                    e instanceof Error ? e.message : "Không tải được dữ liệu skill trees"
+                );
+                setTrees([]);
             } finally {
-                if (!cancelled) {
-                    setTreeLoading(false);
-                }
+                if (!cancelled) setTreesLoading(false);
             }
         })();
+
         return () => {
             cancelled = true;
         };
-    }, [treeId]);
+    }, [level, isAuthenticated, levelIdMap]);
+
+    // Scroll => đổi active tree banner/màu + node status.
+    useEffect(() => {
+        if (!trees.length) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const visible = entries.filter((e) => e.isIntersecting);
+                if (!visible.length) return;
+                visible.sort((a, b) => (b.intersectionRatio ?? 0) - (a.intersectionRatio ?? 0));
+                const el = visible[0].target as HTMLDivElement;
+                const idxRaw = el.dataset.index;
+                const idx = idxRaw ? Number(idxRaw) : 0;
+                if (Number.isFinite(idx)) setActiveTreeIndex(idx);
+            },
+            { threshold: 0.55 }
+        );
+
+        sectionRefs.current.forEach((el) => {
+            if (el) observer.observe(el);
+        });
+
+        return () => observer.disconnect();
+    }, [trees.length, treesLoading]);
 
     if (!isAuthenticated) {
         return <GuestPrompt/>;
@@ -146,26 +206,15 @@ export default function LearningPage() {
                             {/* Cột trái: banner + lộ trình bài */}
                             <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
                                 <div
-                                    className="bg-primary-500 text-white rounded-2xl px-6 py-5 flex items-center justify-between">
+                                    className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white rounded-2xl px-6 py-5 flex items-center justify-between sticky top-4 z-10`}>
                                     <div className="max-w-[72%]">
                                         <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
-                                            Phần {location.state?.treeNumber ?? 1}, Cửa 1
+                                            Phần {activeTreeIndex + 1}, Cửa 1
                                         </div>
                                         <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
-                                            {(() => {
-                                                const mapN: Record<"beginner" | "intermediate" | "advanced", number> = {
-                                                    beginner: 1,
-                                                    intermediate: 2,
-                                                    advanced: 3
-                                                };
-                                                const mapL: Record<"beginner" | "intermediate" | "advanced", string> = {
-                                                    beginner: "Beginner",
-                                                    intermediate: "Intermediate",
-                                                    advanced: "Advanced"
-                                                };
-                                                const tree = location.state?.treeNumber ?? 1;
-                                                return `Level ${mapN[level]}: ${mapL[level]}, Skill tree ${tree}`;
-                                            })()}
+                                            {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Skill tree ${
+                                                activeTreeIndex + 1
+                                            }`}
                                         </h1>
                                     </div>
                                     <button
@@ -173,34 +222,79 @@ export default function LearningPage() {
                                         <span>Hướng dẫn</span>
                                     </button>
                                 </div>
-                                {treeError && (
+                                {treesError && (
                                     <p className="text-sm font-semibold text-red-600" role="alert">
-                                        {treeError}
+                                        {treesError}
                                     </p>
                                 )}
-                                {treeLoading && (
+                                {treesLoading && (
                                     <p className="text-sm text-gray-500">Đang tải lộ trình bài học…</p>
                                 )}
-                                <NodePath
-                                    apiNodes={treeData?.nodes ?? null}
-                                    unlockedCount={unlockedCount}
-                                    onStartVocab={(node) =>
-                                        navigate("/learn/vocab", {state: {treeId, node}})
-                                    }
-                                    onStartListening={(node) =>
-                                        navigate("/learn/listening", {state: {treeId, node}})
-                                    }
-                                    onStartSpeaking={(node) =>
-                                        navigate("/learn/speaking", {state: {treeId, node}})
-                                    }
-                                    onStartMatching={(node) =>
-                                        navigate("/learn/matching", {state: {treeId, node}})
-                                    }
-                                    onStartReview={(node) =>
-                                        navigate("/learn/review", {state: {treeId, node}})
-                                    }
-                                />
-                                <TreeNodesDataPreview data={treeData}/>
+
+                                {/* Skill tree theo level (scroll để đổi active) */}
+                                <div className="flex flex-col">
+                                    {trees.map((tree, idx) => {
+                                        const accentKey = accentForIndex(idx);
+                                        const isActive = idx === activeTreeIndex;
+                                        const treeData = tree;
+
+                                        return (
+                                            <div
+                                                key={tree.treeId}
+                                                ref={(el) => {
+                                                    sectionRefs.current[idx] = el;
+                                                }}
+                                                data-index={idx}
+                                                className="scroll-mt-6"
+                                            >
+                                                {idx > 0 && (
+                                                    <div
+                                                        className={`relative w-full my-8 ${dividerBorderByAccent[accentKey]} `}
+                                                    >
+                                                        <div
+                                                            className={`absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed ${dividerBorderByAccent[accentKey]}`}
+                                                        />
+                                                        <div
+                                                            className={`relative mx-auto w-10 h-10 rounded-full bg-white border-2 shadow-sm flex items-center justify-center ${dividerBorderByAccent[accentKey]}`}
+                                                        >
+                                                            <img
+                                                                src="/icons/learn/more-info.svg"
+                                                                alt=""
+                                                                className="w-5 h-5 object-contain"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="min-h-[420px]">
+                                                    <NodePath
+                                                        key={`${tree.treeId}-${accentKey}`}
+                                                        accentKey={accentKey}
+                                                        apiNodes={treeData?.nodes?.slice(0, 5) ?? null}
+                                                        unlockedCount={getUnlockedCount(tree.treeId)}
+                                                        onStartVocab={(node) =>
+                                                            navigate("/learn/vocab", {state: {treeId: tree.treeId, node}})
+                                                        }
+                                                        onStartListening={(node) =>
+                                                            navigate("/learn/listening", {state: {treeId: tree.treeId, node}})
+                                                        }
+                                                        onStartSpeaking={(node) =>
+                                                            navigate("/learn/speaking", {state: {treeId: tree.treeId, node}})
+                                                        }
+                                                        onStartMatching={(node) =>
+                                                            navigate("/learn/matching", {state: {treeId: tree.treeId, node}})
+                                                        }
+                                                        onStartReview={(node) =>
+                                                            navigate("/learn/review", {state: {treeId: tree.treeId, node}})
+                                                        }
+                                                    />
+
+                                                    {isActive && <TreeNodesDataPreview data={treeData}/>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
                             {/* Cột phải: TopStats, các card bên dưới */}
