@@ -6,7 +6,7 @@ const footerGroups = [
     title: "Khám phá",
     links: [
       { label: "Giới thiệu", to: "/" },
-      { label: "Khóa học", to: "/learning" },
+      { label: "Khóa học", to: "/learn" },
       { label: "Hồ sơ học tập", to: "/profile" },
       { label: "Đăng nhập", to: "/login" },
     ],
@@ -14,10 +14,10 @@ const footerGroups = [
   {
     title: "Chương trình",
     links: [
-      { label: "Tiếng Anh giao tiếp", to: "/learning" },
-      { label: "Luyện từ vựng mỗi ngày", to: "/learning" },
-      { label: "Bài học theo chủ đề", to: "/learning" },
-      { label: "Học qua video", to: "/learning" },
+      { label: "Tiếng Anh giao tiếp", to: "/learn" },
+      { label: "Luyện từ vựng mỗi ngày", to: "/learn" },
+      { label: "Bài học theo chủ đề", to: "/learn" },
+      { label: "Học qua nối từ", to: "/learn" },
     ],
   },
   {
@@ -40,7 +40,7 @@ const socialLinks = [
 const contactItems = [
   { icon: Mail, label: "hello@lionlearning.vn" },
   { icon: Phone, label: "(+84) 1900 6868" },
-  { icon: MapPin, label: "Quận 1, TP. Hồ Chí Minh" },
+  { icon: MapPin, label: "Thủ Đức, TP. Hồ Chí Minh" },
 ];
 
 export default function Footer() {
@@ -58,8 +58,8 @@ export default function Footer() {
               </div>
 
               <div className="space-y-4">
-                <Link to="/" className="inline-block text-3xl font-black tracking-tight text-white sm:text-4xl">
-                  Lion
+                <Link to="/" className="text-4xl font-black tracking-tighter text-white transition-all group-hover:tracking-normal">
+                    L<span className="text-primary-500 italic">i</span>on
                 </Link>
                 <p className="max-w-md text-sm leading-7 text-slate-300 sm:text-base">
                   Học ngoại ngữ theo lộ trình rõ ràng, thực hành mỗi ngày và theo dõi tiến bộ của bạn trong một không

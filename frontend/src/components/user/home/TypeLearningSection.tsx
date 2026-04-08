@@ -2,7 +2,7 @@
 const learningFeatures = [
     {
         title: "Vocabulary",
-        desc: "Learn and practice vocabulary",
+        desc: "Phát triển vốn từ vựng",
         // Tông xanh Blue đậm
         color: "bg-[#7EC9E0]",
         patternColor: "text-[#69b7cd]/50",
@@ -19,7 +19,7 @@ const learningFeatures = [
     },
     {
         title: "Listening",
-        desc: "Practice listening skills",
+        desc: "Rèn luyện đôi tai linh hoạt",
         // Tông cam Peach đậm
         color: "bg-[#FFAD7A]",
         patternColor: "text-[#ff985c]/50",
@@ -37,7 +37,7 @@ const learningFeatures = [
     },
     {
         title: "Speaking",
-        desc: "Practice speaking and pronunciation",
+        desc: "Tự tin giao tiếp tự nhiên",
         // Tông xanh Mint/Green đậm
         color: "bg-[#8DE8C5]",
         patternColor: "text-[#7ad8b3]/50",
@@ -54,7 +54,7 @@ const learningFeatures = [
     },
     {
         title: "Matching",
-        desc: "Match words and meanings",
+        desc: "Nối từ và ghi nhớ nghĩa",
         // Tông vàng đậm
         color: "bg-[#FFDB80]",
         patternColor: "text-[#ffcb5c]/50",
@@ -70,7 +70,7 @@ const learningFeatures = [
     },
     {
         title: "Review",
-        desc: "Review and reinforce knowledge",
+        desc: "Ôn tập và củng cố kiến thức",
         // Tông hồng/đỏ Coral đậm
         color: "bg-[#F79383]",
         patternColor: "text-[#f37c69]/50",
@@ -100,7 +100,7 @@ export default function TypeLearningSection(){
                             <span className="text-primary-600">Lion</span>{" "}
                         </h2>
                     </div>
-                    <p className="text-lg md:text-xl text-gray-600 text-center max-w-2xl mt-2">
+                    <p className="text-basic md:text-xl text-gray-600 text-center max-w-2xl mt-2">
                         Học ngôn ngữ nhanh chóng và dễ dàng hơn cùng Lion – nền tảng tối ưu cho hành trình chinh
                         phục ngoại ngữ của bạn.
                     </p>
@@ -155,10 +155,10 @@ export default function TypeLearningSection(){
 
                             {/* Text Content */}
                             <div className="text-center z-10">
-                                <h3 className="text-xl font-bold text-gray-900 mb-2 uppercase tracking-tight">
+                                <h3 className="text-xl font-bold text-gray-800 mb-2 uppercase tracking-tight">
                                     {feature.title}
                                 </h3>
-                                <p className="text-sm font-medium text-gray-800 leading-tight px-2">
+                                <p className="text-base text-gray-700 font-medium leading-tight px-2 text-center text-balance">
                                     {feature.desc}
                                 </p>
                             </div>

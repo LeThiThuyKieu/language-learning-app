@@ -115,7 +115,7 @@ export default function FAQSection() {
                 className="bg-gray-800 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:shadow-xl mb-4"
                 onClick={() => toggleItem(globalIndex)}
             >
-                <div className="flex justify-between items-center text-white font-bold text-lg">
+                <div className="flex justify-between items-center text-white font-bold text-basic">
                     <span className="pr-4">{item.question}</span>
                     <ChevronDown
                         className={`shrink-0 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`}/>
