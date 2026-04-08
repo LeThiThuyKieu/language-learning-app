@@ -3,27 +3,19 @@ import {
   Lesson,
   Question,
   Vocabulary,
-  SkillTree,
-  SkillNode,
   SkillTreeQuestionsData,
 } from "@/types";
 
 export const learningService = {
-  getSkillTrees: async (levelId?: number) => {
-    const response = await apiClient.get<SkillTree[]>("/learning/skill-trees", {
-      params: { levelId },
-    });
-    return response.data;
-  },
-
-  getSkillNodes: async (skillTreeId: number) => {
-    const response = await apiClient.get<SkillNode[]>(
-      `/learning/skill-trees/${skillTreeId}/nodes`
+  /** Bộ câu theo tất cả tree của một level  */
+  getLevelQuestions: async (levelId: number) => {
+    const response = await apiClient.get<SkillTreeQuestionsData[]>(
+      `/learning/levels/${levelId}/questions`
     );
     return response.data;
   },
 
-  /** Bộ câu theo tree (VOCAB/LISTENING/… + REVIEW), dữ liệu đã enrich từ Mongo */
+  /** Bộ câu theo tree đơn lẻ (VOCAB/LISTENING/… + REVIEW), dữ liệu đã enrich từ Mongo */
   getTreeQuestions: async (skillTreeId: number) => {
     const response = await apiClient.get<SkillTreeQuestionsData>(
       `/learning/trees/${skillTreeId}/questions`

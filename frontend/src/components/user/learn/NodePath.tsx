@@ -5,6 +5,55 @@ type NodeStatus = "active" | "locked" | "completed";
 
 const NODE_PATH_OFFSETS = [0, 64, 18, -44, 28] as const;
 
+export type NodeAccentKey = "orange" | "blue" | "purple" | "teal" | "rose";
+
+const ACCENTS: Record<
+  NodeAccentKey,
+  {
+    bubbleContainer: string; // includes bg/text/border
+    bubbleTail: string; // includes border-color and bg
+    bubbleButtonText: string; // includes text color
+    nodeActiveOuterBg: string;
+    nodeActiveInnerBgBorder: string; // includes bg and border
+  }
+> = {
+  orange: {
+    bubbleContainer: "bg-primary-500 text-white border-primary-500",
+    bubbleTail: "border-primary-500 bg-primary-500",
+    bubbleButtonText: "text-primary-600",
+    nodeActiveOuterBg: "bg-primary-100",
+    nodeActiveInnerBgBorder: "bg-primary-500 border-primary-600",
+  },
+  blue: {
+    bubbleContainer: "bg-blue-500 text-white border-blue-500",
+    bubbleTail: "border-blue-500 bg-blue-500",
+    bubbleButtonText: "text-blue-600",
+    nodeActiveOuterBg: "bg-blue-100",
+    nodeActiveInnerBgBorder: "bg-blue-500 border-blue-600",
+  },
+  purple: {
+    bubbleContainer: "bg-purple-500 text-white border-purple-500",
+    bubbleTail: "border-purple-500 bg-purple-500",
+    bubbleButtonText: "text-purple-600",
+    nodeActiveOuterBg: "bg-purple-100",
+    nodeActiveInnerBgBorder: "bg-purple-500 border-purple-600",
+  },
+  teal: {
+    bubbleContainer: "bg-teal-500 text-white border-teal-500",
+    bubbleTail: "border-teal-500 bg-teal-500",
+    bubbleButtonText: "text-teal-600",
+    nodeActiveOuterBg: "bg-teal-100",
+    nodeActiveInnerBgBorder: "bg-teal-500 border-teal-600",
+  },
+  rose: {
+    bubbleContainer: "bg-rose-500 text-white border-rose-500",
+    bubbleTail: "border-rose-500 bg-rose-500",
+    bubbleButtonText: "text-rose-600",
+    nodeActiveOuterBg: "bg-rose-100",
+    nodeActiveInnerBgBorder: "bg-rose-500 border-rose-600",
+  },
+};
+
 const FALLBACK_PATH_NODES: SkillTreeNodeQuestionsData[] = [
     {nodeId: 0, title: "Học từ vựng", nodeType: "VOCAB", questions: []},
     {nodeId: 0, title: "Luyện nghe", nodeType: "LISTENING", questions: []},
@@ -79,22 +128,25 @@ function LessonBubble({
                           description,
                           buttonLabel,
                           onStart,
+                          accentKey,
                       }: {
     status: NodeStatus;
     title: string;
     description: string;
     buttonLabel: string;
     onStart?: () => void;
+    accentKey: NodeAccentKey;
 }) {
     const isLocked = status === "locked";
+    const accent = ACCENTS[accentKey];
 
     const containerColor = isLocked
         ? "bg-gray-100 text-gray-700 border-gray-200"
-        : "bg-primary-500 text-white border-primary-500";
+        : accent.bubbleContainer;
     const subtitleColor = isLocked ? "text-gray-600" : "text-white/90";
     const buttonColor = isLocked
         ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-        : "bg-white text-primary-600 hover:bg-white/90";
+        : `bg-white ${accent.bubbleButtonText} hover:bg-white/90`;
 
     const finalTitle = title || (isLocked ? "Bài học đang khóa" : "Bài học hiện tại");
     const finalDescription =
@@ -104,7 +156,7 @@ function LessonBubble({
             : "Bắt đầu để nhận thêm kinh nghiệm.");
 
     return (
-        <div className="absolute top-[100px] left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute top-[100px] left-1/2 -translate-x-1/2 z-10">
             <div className="relative">
                 <div
                     className={`rounded-2xl border px-5 py-3.5 shadow-lg min-w-[230px] max-w-[280px] ${containerColor}`}
@@ -129,7 +181,7 @@ function LessonBubble({
                     </button>
                 </div>
                 <div
-                    className={`absolute left-1/2 -top-[7px] h-4 w-4 -translate-x-1/2 rotate-45 border-l border-t ${isLocked ? "border-gray-200 bg-gray-100" : "border-primary-500 bg-primary-500"}`}
+                    className={`absolute left-1/2 -top-[7px] h-4 w-4 -translate-x-1/2 rotate-45 border-l border-t ${isLocked ? "border-gray-200 bg-gray-100" : accent.bubbleTail}`}
                 />
             </div>
         </div>
@@ -141,14 +193,17 @@ function CircleNode({
                         label,
                         status = "locked",
                         onClick,
+                        accentKey,
                     }: {
     kind: "vocabulary" | "listening" | "speaking" | "puzzle" | "review";
     status?: NodeStatus;
     label?: string;
     onClick?: () => void;
+    accentKey: NodeAccentKey;
 }) {
     const isActive = status === "active";
     const isCompleted = status === "completed";
+    const accent = ACCENTS[accentKey];
 
     return (
         <button
@@ -160,7 +215,7 @@ function CircleNode({
             <span
                 aria-hidden="true"
                 className={`absolute inset-0 rounded-full ${
-                    isActive ? "bg-primary-100" : isCompleted ? "bg-emerald-100" : "bg-gray-200"
+                    isActive ? accent.nodeActiveOuterBg : isCompleted ? "bg-emerald-100" : "bg-gray-200"
                 }`}
             />
             <span aria-hidden="true" className="absolute inset-[7px] rounded-full bg-white"/>
@@ -168,7 +223,7 @@ function CircleNode({
                 aria-hidden="true"
                 className={`absolute inset-[14px] rounded-full flex items-center justify-center border ${
                     isActive
-                        ? "bg-primary-500 border-primary-600"
+                        ? accent.nodeActiveInnerBgBorder
                         : isCompleted
                             ? "bg-emerald-500 border-emerald-600"
                             : "bg-gray-100 border-gray-200"
@@ -253,6 +308,7 @@ function CircleNode({
 export default function NodePath({
                                      apiNodes,
                                      unlockedCount = 1,
+                                     accentKey = "orange",
                                      onStartVocab,
                                      onStartListening,
                                      onStartSpeaking,
@@ -261,6 +317,7 @@ export default function NodePath({
                                  }: {
     apiNodes: SkillTreeNodeQuestionsData[] | null;
     unlockedCount?: number; // 1..5
+    accentKey?: NodeAccentKey;
     onStartVocab: (node: SkillTreeNodeQuestionsData) => void;
     onStartListening: (node: SkillTreeNodeQuestionsData) => void;
     onStartSpeaking: (node: SkillTreeNodeQuestionsData) => void;
@@ -332,6 +389,7 @@ export default function NodePath({
                                                         ? () => onStartReview(n)
                                             : undefined
                                 }
+                                accentKey={accentKey}
                             />
                         )}
                         <CircleNode
@@ -339,6 +397,7 @@ export default function NodePath({
                             status={status}
                             label={label}
                             onClick={() => setSelectedIndex(idx)}
+                            accentKey={accentKey}
                         />
                     </div>
                 );

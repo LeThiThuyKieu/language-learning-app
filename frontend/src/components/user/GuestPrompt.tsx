@@ -9,11 +9,11 @@ export default function GuestPrompt() {
 
                     {/* Cột Nội Dung */}
                     <div className="text-center lg:text-left order-2 lg:order-1">
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#1f1a17] leading-[1.2] tracking-tight">
+                        <h2 className="text-4xl sm:text-4xl lg:text-5xl font-extrabold text-[#1f1a17] leading-[1.2] tracking-tight">
                             Bạn đã có hồ sơ <br className="hidden lg:block" /> học tập chưa?
                         </h2>
-                        <p className="mt-6 text-slate-500 text-lg sm:text-xl max-w-md mx-auto lg:mx-0 leading-relaxed">
-                            Đăng ký hoặc đăng nhập để lưu lại quá trình học, nhận huy hiệu và thi đua cùng bạn bè mỗi ngày.
+                        <p className="mt-6 text-gray-600 text-basic sm:text-xl max-w-md mx-auto lg:mx-0 leading-relaxed">
+                            Đăng nhập hoặc tạo tài khoản để lưu lại quá trình học, nhận huy hiệu và thi đua cùng bạn bè mỗi ngày.
                         </p>
 
                         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
