@@ -143,61 +143,63 @@ export default function LearningPage() {
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">
             <div className="w-full px-4 md:px-8 pt-6 md:pt-8 pb-8">
                 <div className="grid grid-cols-12 gap-6">
-                    {/* Sidebar left */}
+                    {/* Sidebar left (sticky giống Duolingo) */}
                     <aside
                         className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-3 md:pl-0 lg:pr-6">
-                        <nav className="mt-1 flex w-full max-w-[16.5rem] flex-col gap-1">
-                            <SidebarItem
-                                label="Học"
-                                active
-                                icon={<img src="/icons/learn/hoc.svg" alt=""
-                                           className="h-8 w-8 shrink-0 object-contain"/>}
-                            />
-                            <SidebarItem
-                                label="Bảng xếp hạng"
-                                icon={<img src="/icons/learn/bxh.svg" alt=""
-                                           className="h-8 w-8 shrink-0 object-contain"/>}
-                            />
-                            <SidebarItem
-                                label="Nhiệm vụ"
-                                icon={<img src="/icons/learn/task.svg" alt=""
-                                           className="h-8 w-8 shrink-0 object-contain"/>}
-                            />
-                            <div className="relative w-full pt-0.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setMoreOpen((v) => !v)}
-                                    className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent px-4 py-3 text-left text-gray-600 transition hover:bg-gray-100"
-                                >
-                  <span className="flex items-center gap-3">
-                    <img src="/icons/learn/more-info.svg" alt="" className="h-8 w-8 shrink-0 object-contain"/>
-                    <span className="text-sm font-semibold uppercase tracking-wide">Xem thêm</span>
-                  </span>
-                                    <svg
-                                        className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${
-                                            moreOpen ? "rotate-180" : ""
-                                        }`}
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
+                        <div className="md:sticky md:top-20 lg:top-24">
+                            <nav className="mt-1 flex w-full max-w-[16.5rem] flex-col gap-1">
+                                <SidebarItem
+                                    label="Học"
+                                    active
+                                    icon={<img src="/icons/learn/hoc.svg" alt=""
+                                               className="h-8 w-8 shrink-0 object-contain"/>}
+                                />
+                                <SidebarItem
+                                    label="Bảng xếp hạng"
+                                    icon={<img src="/icons/learn/bxh.svg" alt=""
+                                               className="h-8 w-8 shrink-0 object-contain"/>}
+                                />
+                                <SidebarItem
+                                    label="Nhiệm vụ"
+                                    icon={<img src="/icons/learn/task.svg" alt=""
+                                               className="h-8 w-8 shrink-0 object-contain"/>}
+                                />
+                                <div className="relative w-full pt-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setMoreOpen((v) => !v)}
+                                        className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent px-4 py-3 text-left text-gray-600 transition hover:bg-gray-100"
                                     >
-                                        <path d="M6 9l6 6 6-6"/>
-                                    </svg>
-                                </button>
+                      <span className="flex items-center gap-3">
+                        <img src="/icons/learn/more-info.svg" alt="" className="h-8 w-8 shrink-0 object-contain"/>
+                        <span className="text-sm font-semibold uppercase tracking-wide">Xem thêm</span>
+                      </span>
+                                        <svg
+                                            className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${
+                                                moreOpen ? "rotate-180" : ""
+                                            }`}
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        >
+                                            <path d="M6 9l6 6 6-6"/>
+                                        </svg>
+                                    </button>
 
-                                {moreOpen && (
-                                    <div
-                                        className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
-                                        <MoreItem label="Cài đặt" onClick={() => navigate("/profile")}/>
-                                        <MoreItem label="Trợ giúp"/>
-                                        <MoreItem label="Đăng xuất"/>
-                                    </div>
-                                )}
-                            </div>
-                        </nav>
+                                    {moreOpen && (
+                                        <div
+                                            className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
+                                            <MoreItem label="Cài đặt" onClick={() => navigate("/profile")}/>
+                                            <MoreItem label="Trợ giúp"/>
+                                            <MoreItem label="Đăng xuất"/>
+                                        </div>
+                                    )}
+                                </div>
+                            </nav>
+                        </div>
                     </aside>
 
                     {/* Main content */}
@@ -297,16 +299,18 @@ export default function LearningPage() {
                                 </div>
                             </div>
 
-                            {/* Cột phải: TopStats, các card bên dưới */}
-                            <div className="col-span-12 lg:col-span-4 flex flex-col gap-3">
-                                <TopStats/>
-                                <InfoCard
-                                    title="Mở khóa Bảng xếp hạng!"
-                                    subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
-                                    iconSrc="/icons/learn/lock-bxh.svg"
-                                />
-                                <DailyCard/>
-                                <ProfileCard onCreateProfile={() => navigate("/profile")}/>
+                            {/* Cột phải: TopStats, các card bên dưới (sticky để đứng yên khi cuộn) */}
+                            <div className="col-span-12 lg:col-span-4">
+                                <div className="lg:sticky lg:top-20 xl:top-24 flex flex-col gap-3">
+                                    <TopStats/>
+                                    <InfoCard
+                                        title="Mở khóa Bảng xếp hạng!"
+                                        subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
+                                        iconSrc="/icons/learn/lock-bxh.svg"
+                                    />
+                                    <DailyCard/>
+                                    <ProfileCard onCreateProfile={() => navigate("/profile")}/>
+                                </div>
                             </div>
                         </div>
                     </main>
