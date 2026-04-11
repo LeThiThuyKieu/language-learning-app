@@ -3,6 +3,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import SpeakingLessonView from "@/components/user/learn/SpeakingLessonView.tsx";
+import {bumpLearnTreeUnlocked} from "@/utils/learnTreeProgress";
 
 type LocationState = {
     treeId?: number;
@@ -73,7 +74,7 @@ export default function SpeakingLessonPage() {
                     <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node SPEAKING"}</div>
                     <button
                         type="button"
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate("/learn")}
                         className="mt-4 w-full rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 transition"
                     >
                         Quay lại
@@ -84,18 +85,13 @@ export default function SpeakingLessonPage() {
     }
 
     return (
-        <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
+        <div className="min-h-screen w-full bg-gray-50">
             <SpeakingLessonView
                 node={speakingNode}
-                onExit={() => navigate(-1)}
+                onLeaveLesson={() => navigate("/learn")}
                 onComplete={() => {
-                    // Hoàn thành SPEAKING → +10 KN, mở khóa node 4 (MATCHING) và quay về /learn
-                    try {
-                        sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, "4");
-                    } catch {
-                        // ignore
-                    }
-                    navigate("/learn", {state: {treeId, unlockedCount: 4}});
+                    const next = bumpLearnTreeUnlocked(treeId, 4);
+                    navigate("/learn", {state: {treeId, unlockedCount: next}});
                 }}
             />
         </div>

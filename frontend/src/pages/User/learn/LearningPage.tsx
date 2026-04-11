@@ -2,10 +2,12 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
+import {getLearnTreeUnlockedCount} from "@/utils/learnTreeProgress";
 import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx";
-import TreeNodesDataPreview from "@/components/user/learn/TreeNodesDataPreview.tsx";
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
+import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
+import {MoreHorizontal} from "lucide-react";
 
 type LevelKey = "beginner" | "intermediate" | "advanced";
 
@@ -57,29 +59,8 @@ export default function LearningPage() {
         []
     );
 
-    const dividerBorderByAccent: Record<NodeAccentKey, string> = useMemo(
-        () => ({
-            orange: "border-primary-300",
-            blue: "border-blue-300",
-            purple: "border-purple-300",
-            teal: "border-teal-300",
-            rose: "border-rose-300",
-        }),
-        []
-    );
-
     const accentForIndex = (idx: number): NodeAccentKey =>
         accentKeys[idx % accentKeys.length] ?? "orange";
-
-    const getUnlockedCount = (treeId: number): number => {
-        try {
-            const v = sessionStorage.getItem(`learn_tree_${treeId}_unlocked`);
-            const n = v ? Number(v) : 1;
-            return Number.isFinite(n) && n >= 1 ? n : 1;
-        } catch {
-            return 1;
-        }
-    };
 
     // Fetch tất cả skill tree + câu hỏi theo level (backend quyết định số tree cho mỗi level)
     useEffect(() => {
@@ -141,12 +122,13 @@ export default function LearningPage() {
 
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">
-            <div className="w-full px-4 md:px-8 pt-6 md:pt-8 pb-8">
+            {/* Một lớp pt duy nhất; pt trên aside/main riêng sẽ cuộn mất còn sticky top-* là khoảng cách thật khi dính header */}
+            <div className="w-full px-4 pb-8 pt-5 md:px-8 md:pt-6">
                 <div className="grid grid-cols-12 gap-6">
-                    {/* Sidebar left */}
                     <aside
                         className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-3 md:pl-0 lg:pr-6">
-                        <div className="md:sticky md:top-20 lg:top-24">
+                        {/* top-24 ≈ header thu gọn (~80px) + khe ~16px; đồng bộ khi scroll */}
+                        <div className="md:sticky md:top-24">
                             <nav className="mt-1 flex w-full max-w-[16.5rem] flex-col gap-1">
                                 <SidebarItem
                                     label="Học"
@@ -202,42 +184,50 @@ export default function LearningPage() {
                         </div>
                     </aside>
 
-                    {/* Main content */}
                     <main className="col-span-12 md:col-span-9 lg:col-span-9">
                         <div className="grid grid-cols-12 gap-6">
-                            {/* Cột trái: banner + lộ trình bài */}
-                            <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
-                                <div
-                                    className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white rounded-2xl px-6 py-5 flex items-center justify-between sticky top-20 lg:top-24 z-40`}>
-                                    <div className="max-w-[72%]">
-                                        <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
-                                            Phần {activeTreeIndex + 1}, Cửa 1
+                            <div className="relative isolate z-0 col-span-12 lg:col-span-8 flex min-w-0 flex-col gap-4">
+                                <div className="sticky top-20 z-[45]">
+                                    <div
+                                        className="overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5"
+                                    >
+                                        {/* Vệt nền trắng: tạo khe nhẹ dưới header, che nội dung cuộn (cùng lớp với banner) */}
+                                        <div
+                                            className="h-2 w-full bg-white pointer-events-none"
+                                            aria-hidden
+                                        />
+                                        <div
+                                            className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-5 flex items-center justify-between`}
+                                        >
+                                            <div className="max-w-[72%]">
+                                                <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
+                                                    Phần {activeTreeIndex + 1}, Cửa 1
+                                                </div>
+                                                <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
+                                                    {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${
+                                                        activeTreeIndex + 1
+                                                    }`}
+                                                </h1>
+                                            </div>
+                                            <button
+                                                className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition"
+                                            >
+                                                <span>Hướng dẫn</span>
+                                            </button>
                                         </div>
-                                        <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
-                                            {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${
-                                                activeTreeIndex + 1
-                                            }`}
-                                        </h1>
                                     </div>
-                                    <button
-                                        className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition">
-                                        <span>Hướng dẫn</span>
-                                    </button>
                                 </div>
                                 {treesError && (
                                     <p className="text-sm font-semibold text-red-600" role="alert">
                                         {treesError}
                                     </p>
                                 )}
-                                {treesLoading && (
-                                    <p className="text-sm text-gray-500">Đang tải lộ trình bài học…</p>
-                                )}
+                                {treesLoading && <LearningPathLoading/>}
 
-                                {/* Skill tree theo level (scroll để đổi active) */}
-                                <div className="flex flex-col mt-4">
+                                {/* Lộ trình cuộn dưới banner (z-0 < z-[45] của banner) */}
+                                <div className="relative z-0 flex flex-col mt-2">
                                     {trees.map((tree, idx) => {
                                         const accentKey = accentForIndex(idx);
-                                        const isActive = idx === activeTreeIndex;
                                         const treeData = tree;
 
                                         return (
@@ -250,31 +240,25 @@ export default function LearningPage() {
                                                 className="scroll-mt-6"
                                             >
                                                 {idx > 0 && (
-                                                    <div
-                                                        className={`relative w-full my-8 ${dividerBorderByAccent[accentKey]} `}
-                                                    >
-                                                        <div
-                                                            className={`absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed ${dividerBorderByAccent[accentKey]}`}
-                                                        />
-                                                        <div
-                                                            className={`relative mx-auto w-10 h-10 rounded-full bg-white border-2 shadow-sm flex items-center justify-center ${dividerBorderByAccent[accentKey]}`}
-                                                        >
-                                                            <img
-                                                                src="/icons/learn/more-info.svg"
-                                                                alt=""
-                                                                className="w-5 h-5 object-contain"
+                                                    <div className="relative w-full my-8 border-primary-100">
+                                                        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-primary-300"/>
+                                                        <div className="relative mx-auto flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary-400 bg-primary-50 shadow-sm ring-4 ring-white">
+                                                            <MoreHorizontal
+                                                                className="h-6 w-6 text-primary-600"
+                                                                strokeWidth={2.5}
+                                                                aria-hidden
                                                             />
                                                         </div>
                                                     </div>
                                                 )}
 
-                                                {/* Đệm phía trên để node + bubble luôn nằm dưới banner sticky */}
-                                                <div className="min-h-[420px] pt-24">
+                                                {/* Đệm trên vừa đủ để bubble không đụng banner khi cuộn; gần banner hơn so với pt-24 cũ */}
+                                                <div className="min-h-[420px] pt-8 md:pt-10">
                                                     <NodePath
                                                         key={`${tree.treeId}-${accentKey}`}
                                                         accentKey={accentKey}
                                                         apiNodes={treeData?.nodes?.slice(0, 5) ?? null}
-                                                        unlockedCount={getUnlockedCount(tree.treeId)}
+                                                        unlockedCount={getLearnTreeUnlockedCount(tree.treeId)}
                                                         onStartVocab={(node) =>
                                                             navigate("/learn/vocab", {state: {treeId: tree.treeId, node}})
                                                         }
@@ -291,8 +275,6 @@ export default function LearningPage() {
                                                             navigate("/learn/review", {state: {treeId: tree.treeId, node}})
                                                         }
                                                     />
-
-                                                    {isActive && <TreeNodesDataPreview data={treeData}/>}
                                                 </div>
                                             </div>
                                         );
@@ -302,7 +284,7 @@ export default function LearningPage() {
 
                             {/* Cột phải: TopStats, các card bên dưới (sticky để đứng yên khi cuộn) */}
                             <div className="col-span-12 lg:col-span-4">
-                                <div className="lg:sticky lg:top-20 xl:top-24 flex flex-col gap-3">
+                                <div className="flex flex-col gap-3 lg:sticky lg:top-24">
                                     <TopStats/>
                                     <InfoCard
                                         title="Mở khóa Bảng xếp hạng!"

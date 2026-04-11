@@ -303,6 +303,21 @@ CREATE TABLE IF NOT EXISTS `xp_history` (
 
 -- Data exporting was unselected.
 
+-- Snapshot bộ câu hỏi theo user + level (lần đầu sinh ngẫu nhiên, các lần sau trả về cùng bộ)
+CREATE TABLE IF NOT EXISTS `user_level_question_snapshot` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `level_id` int(11) NOT NULL,
+    `payload_json` longtext NOT NULL,
+    `created_at` datetime DEFAULT current_timestamp(),
+    `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_level_snapshot` (`user_id`,`level_id`),
+    KEY `level_id` (`level_id`),
+    CONSTRAINT `fk_ulqs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_ulqs_level` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;

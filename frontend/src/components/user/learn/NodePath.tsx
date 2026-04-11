@@ -8,50 +8,50 @@ const NODE_PATH_OFFSETS = [0, 64, 18, -44, 28] as const;
 export type NodeAccentKey = "orange" | "blue" | "purple" | "teal" | "rose";
 
 const ACCENTS: Record<
-  NodeAccentKey,
-  {
-    bubbleContainer: string; // includes bg/text/border
-    bubbleTail: string; // includes border-color and bg
-    bubbleButtonText: string; // includes text color
-    nodeActiveOuterBg: string;
-    nodeActiveInnerBgBorder: string; // includes bg and border
-  }
+    NodeAccentKey,
+    {
+        bubbleContainer: string; // includes bg/text/border
+        bubbleTail: string; // includes border-color and bg
+        bubbleButtonText: string; // includes text color
+        nodeActiveOuterBg: string;
+        nodeActiveInnerBgBorder: string; // includes bg and border
+    }
 > = {
-  orange: {
-    bubbleContainer: "bg-primary-500 text-white border-primary-500",
-    bubbleTail: "border-primary-500 bg-primary-500",
-    bubbleButtonText: "text-primary-600",
-    nodeActiveOuterBg: "bg-primary-100",
-    nodeActiveInnerBgBorder: "bg-primary-500 border-primary-600",
-  },
-  blue: {
-    bubbleContainer: "bg-blue-500 text-white border-blue-500",
-    bubbleTail: "border-blue-500 bg-blue-500",
-    bubbleButtonText: "text-blue-600",
-    nodeActiveOuterBg: "bg-blue-100",
-    nodeActiveInnerBgBorder: "bg-blue-500 border-blue-600",
-  },
-  purple: {
-    bubbleContainer: "bg-purple-500 text-white border-purple-500",
-    bubbleTail: "border-purple-500 bg-purple-500",
-    bubbleButtonText: "text-purple-600",
-    nodeActiveOuterBg: "bg-purple-100",
-    nodeActiveInnerBgBorder: "bg-purple-500 border-purple-600",
-  },
-  teal: {
-    bubbleContainer: "bg-teal-500 text-white border-teal-500",
-    bubbleTail: "border-teal-500 bg-teal-500",
-    bubbleButtonText: "text-teal-600",
-    nodeActiveOuterBg: "bg-teal-100",
-    nodeActiveInnerBgBorder: "bg-teal-500 border-teal-600",
-  },
-  rose: {
-    bubbleContainer: "bg-rose-500 text-white border-rose-500",
-    bubbleTail: "border-rose-500 bg-rose-500",
-    bubbleButtonText: "text-rose-600",
-    nodeActiveOuterBg: "bg-rose-100",
-    nodeActiveInnerBgBorder: "bg-rose-500 border-rose-600",
-  },
+    orange: {
+        bubbleContainer: "bg-primary-500 text-white border-primary-500",
+        bubbleTail: "border-primary-500 bg-primary-500",
+        bubbleButtonText: "text-primary-600",
+        nodeActiveOuterBg: "bg-primary-100",
+        nodeActiveInnerBgBorder: "bg-primary-500 border-primary-600",
+    },
+    blue: {
+        bubbleContainer: "bg-blue-500 text-white border-blue-500",
+        bubbleTail: "border-blue-500 bg-blue-500",
+        bubbleButtonText: "text-blue-600",
+        nodeActiveOuterBg: "bg-blue-100",
+        nodeActiveInnerBgBorder: "bg-blue-500 border-blue-600",
+    },
+    purple: {
+        bubbleContainer: "bg-purple-500 text-white border-purple-500",
+        bubbleTail: "border-purple-500 bg-purple-500",
+        bubbleButtonText: "text-purple-600",
+        nodeActiveOuterBg: "bg-purple-100",
+        nodeActiveInnerBgBorder: "bg-purple-500 border-purple-600",
+    },
+    teal: {
+        bubbleContainer: "bg-teal-500 text-white border-teal-500",
+        bubbleTail: "border-teal-500 bg-teal-500",
+        bubbleButtonText: "text-teal-600",
+        nodeActiveOuterBg: "bg-teal-100",
+        nodeActiveInnerBgBorder: "bg-teal-500 border-teal-600",
+    },
+    rose: {
+        bubbleContainer: "bg-rose-500 text-white border-rose-500",
+        bubbleTail: "border-rose-500 bg-rose-500",
+        bubbleButtonText: "text-rose-600",
+        nodeActiveOuterBg: "bg-rose-100",
+        nodeActiveInnerBgBorder: "bg-rose-500 border-rose-600",
+    },
 };
 
 const FALLBACK_PATH_NODES: SkillTreeNodeQuestionsData[] = [
@@ -81,11 +81,17 @@ function nodeTypeToKind(
     }
 }
 
+/** Node đang học tiếp theo: order === unlockedCount → index unlockedCount - 1 */
+function activeNodeIndex(unlockedCount: number, nodeCount: number): number | null {
+    if (nodeCount <= 0) return null;
+    return Math.min(Math.max(0, unlockedCount - 1), nodeCount - 1);
+}
+
 function getNodeMeta(nodeType: string) {
     switch (nodeType) {
         case "VOCAB":
             return {
-                title: "Từ vựng & Giới từ",
+                title: "Từ vựng",
                 description: "Chọn đáp án đúng nhất",
                 button: "BẮT ĐẦU +10 KN",
             };
@@ -283,7 +289,8 @@ function CircleNode({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                     >
-                        <path d="M8 7a2 2 0 1 1 4 0v1h1a2 2 0 0 1 2 2v1h1a2 2 0 1 1 0 4h-1v1a2 2 0 0 1-2 2h-1v1a2 2 0 1 1-4 0v-1H7a2 2 0 0 1-2-2v-1H4a2 2 0 1 1 0-4h1V10a2 2 0 0 1 2-2h1z"/>
+                        <path
+                            d="M8 7a2 2 0 1 1 4 0v1h1a2 2 0 0 1 2 2v1h1a2 2 0 1 1 0 4h-1v1a2 2 0 0 1-2 2h-1v1a2 2 0 1 1-4 0v-1H7a2 2 0 0 1-2-2v-1H4a2 2 0 1 1 0-4h1V10a2 2 0 0 1 2-2h1z"/>
                     </svg>
                 )}
                 {kind === "review" && (
@@ -325,8 +332,17 @@ export default function NodePath({
     onStartReview: (node: SkillTreeNodeQuestionsData) => void;
 }) {
     const nodes = apiNodes?.length ? apiNodes : FALLBACK_PATH_NODES;
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
+    const nodeCount = nodes.length;
+
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(() =>
+        activeNodeIndex(unlockedCount, nodeCount)
+    );
     const containerRef = useRef<HTMLDivElement | null>(null);
+
+    // Bubble mặc định bám node hiện tại (vừa mở khóa); khi hoàn thành bài và unlockedCount tăng → nhảy xuống node tiếp theo
+    useEffect(() => {
+        setSelectedIndex(activeNodeIndex(unlockedCount, nodeCount));
+    }, [unlockedCount, nodeCount]);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -352,7 +368,7 @@ export default function NodePath({
                     setSelectedIndex(null);
                 }
             }}
-            className="flex flex-col items-center gap-5 py-3 pt-7 mt-4"
+            className="flex flex-col items-center gap-5 py-2 pt-4 mt-2"
         >
             {nodes.map((n, idx) => {
                 const x = NODE_PATH_OFFSETS[idx % NODE_PATH_OFFSETS.length] ?? 0;
@@ -363,6 +379,17 @@ export default function NodePath({
                 const isSelected = selectedIndex === idx;
                 const label = n.title || FALLBACK_PATH_NODES[idx]?.title;
                 const meta = getNodeMeta(n.nodeType);
+                const canReplay = status === "active" || status === "completed";
+
+                function startHandlerForNode(): (() => void) | undefined {
+                    if (!canReplay) return undefined;
+                    if (n.nodeType === "VOCAB") return () => onStartVocab(n);
+                    if (n.nodeType === "LISTENING") return () => onStartListening(n);
+                    if (n.nodeType === "SPEAKING") return () => onStartSpeaking(n);
+                    if (n.nodeType === "MATCHING") return () => onStartMatching(n);
+                    if (n.nodeType === "REVIEW") return () => onStartReview(n);
+                    return undefined;
+                }
 
                 return (
                     <div
@@ -375,20 +402,10 @@ export default function NodePath({
                                 status={status}
                                 title={meta.title || label || ""}
                                 description={meta.description}
-                                buttonLabel={meta.button}
-                                onStart={
-                                    status === "active" && n.nodeType === "VOCAB"
-                                        ? () => onStartVocab(n)
-                                        : status === "active" && n.nodeType === "LISTENING"
-                                            ? () => onStartListening(n)
-                                            : status === "active" && n.nodeType === "SPEAKING"
-                                                ? () => onStartSpeaking(n)
-                                                : status === "active" && n.nodeType === "MATCHING"
-                                                    ? () => onStartMatching(n)
-                                                    : status === "active" && n.nodeType === "REVIEW"
-                                                        ? () => onStartReview(n)
-                                            : undefined
+                                buttonLabel={
+                                    status === "completed" ? "HỌC LẠI + 10 KN" : meta.button
                                 }
+                                onStart={startHandlerForNode()}
                                 accentKey={accentKey}
                             />
                         )}

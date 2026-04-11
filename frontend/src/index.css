@@ -13,10 +13,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  /* Tắt bounce / kéo giật khi cuộn quá đầu hoặc cuối trang (đặc biệt trackpad / mobile) */
+  overscroll-behavior-y: none;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overscroll-behavior-y: none;
 }
 
 #root {

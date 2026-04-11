@@ -42,7 +42,7 @@ export default function LessonCompleteView({
                     <button
                         type="button"
                         onClick={onContinue}
-                        className="w-[170px] h-12 rounded-2xl bg-primary-600 hover:bg-primary-700 px-6 text-sm font-extrabold uppercase tracking-wide text-white shadow-sm transition"
+                        className="min-w-[170px] rounded-2xl bg-primary-600 px-6 py-3 text-base font-extrabold uppercase tracking-wide text-white shadow-sm transition hover:bg-primary-700"
                     >
                         TIẾP TỤC
                     </button>
