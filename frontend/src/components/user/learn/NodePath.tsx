@@ -352,7 +352,7 @@ export default function NodePath({
                     setSelectedIndex(null);
                 }
             }}
-            className="flex flex-col items-center gap-5 py-3 pt-7 mt-4"
+            className="flex flex-col items-center gap-5 py-2 pt-4 mt-2"
         >
             {nodes.map((n, idx) => {
                 const x = NODE_PATH_OFFSETS[idx % NODE_PATH_OFFSETS.length] ?? 0;
