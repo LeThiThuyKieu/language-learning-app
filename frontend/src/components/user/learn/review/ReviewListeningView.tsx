@@ -21,6 +21,10 @@ function parseExpectedTokens(correctAnswer?: string): string[] {
     return [raw];
 }
 
+function tokenMatches(input: string, expectedToken: string): boolean {
+    return input.trim().toLowerCase() === expectedToken.trim().toLowerCase();
+}
+
 export default function ReviewListeningView({
     node,
     onLeaveLesson,
@@ -61,7 +65,7 @@ export default function ReviewListeningView({
     const isCorrect = useMemo(() => {
         if (!checked) return false;
         if (expected.length === 0) return false;
-        return expected.every((exp, i) => (inputs[i] ?? "").trim().toLowerCase() === exp.trim().toLowerCase());
+        return expected.every((exp, i) => tokenMatches(inputs[i] ?? "", exp));
     }, [checked, expected, inputs]);
 
     function handleContinue() {
@@ -118,22 +122,25 @@ export default function ReviewListeningView({
                             )}
 
                             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {expected.map((_, i) => {
+                                {expected.map((exp, i) => {
                                     const isSelected = selectedIndex === i;
-                                    const showCorrect = checked && isCorrect;
-                                    const showWrong = checked && !isCorrect;
+                                    const slotOk = checked && tokenMatches(inputs[i] ?? "", exp);
+                                    const slotBad = checked && !slotOk;
                                     const locked = checked;
+                                    const frameClass = slotOk
+                                        ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200/80"
+                                        : slotBad
+                                            ? "border-red-500 bg-red-50 ring-2 ring-red-200/80"
+                                            : !locked && isSelected
+                                                ? "border-primary-500 bg-primary-100 ring-2 ring-primary-200"
+                                                : "border-gray-200 bg-white";
                                     return (
                                         <div
                                             key={i}
                                             className={[
                                                 "rounded-2xl border-2 px-4 py-4 transition",
                                                 locked ? "pointer-events-none" : "",
-                                                !locked && isSelected
-                                                    ? "border-primary-500 bg-primary-100 ring-2 ring-primary-200"
-                                                    : "border-gray-200 bg-white",
-                                                showCorrect ? "border-emerald-500 bg-emerald-50" : "",
-                                                showWrong ? "border-red-500 bg-red-50" : "",
+                                                frameClass,
                                             ].join(" ")}
                                             onMouseDown={() => {
                                                 if (!checked) setSelectedIndex(i);
@@ -153,7 +160,14 @@ export default function ReviewListeningView({
                                                         return next;
                                                     });
                                                 }}
-                                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-900 outline-none focus:ring-4 focus:ring-primary-200 disabled:bg-gray-50"
+                                                className={[
+                                                    "w-full rounded-xl border px-3 py-2 text-gray-900 outline-none focus:ring-4 focus:ring-primary-200 disabled:cursor-default",
+                                                    checked && slotOk
+                                                        ? "border-emerald-400 bg-emerald-50/80 text-emerald-950"
+                                                        : checked && slotBad
+                                                            ? "border-red-400 bg-red-50/80 text-red-950"
+                                                            : "border-gray-200 bg-white focus:ring-primary-200 disabled:bg-gray-50",
+                                                ].join(" ")}
                                                 placeholder="Nhập từ..."
                                             />
                                         </div>

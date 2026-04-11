@@ -99,9 +99,6 @@ export default function ReviewSpeakingView({
                                             ].join(" ")}
                                         >
                                             <div className="min-w-0 flex-1">
-                                                <span className="text-xs font-extrabold text-primary-600">
-                                                    {idx + 1}.
-                                                </span>{" "}
                                                 <span className="text-gray-900 font-semibold leading-snug whitespace-pre-wrap">
                                                     {line}
                                                 </span>

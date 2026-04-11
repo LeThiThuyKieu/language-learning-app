@@ -81,6 +81,12 @@ function nodeTypeToKind(
     }
 }
 
+/** Node đang học tiếp theo: order === unlockedCount → index unlockedCount - 1 */
+function activeNodeIndex(unlockedCount: number, nodeCount: number): number | null {
+    if (nodeCount <= 0) return null;
+    return Math.min(Math.max(0, unlockedCount - 1), nodeCount - 1);
+}
+
 function getNodeMeta(nodeType: string) {
     switch (nodeType) {
         case "VOCAB":
@@ -326,8 +332,17 @@ export default function NodePath({
     onStartReview: (node: SkillTreeNodeQuestionsData) => void;
 }) {
     const nodes = apiNodes?.length ? apiNodes : FALLBACK_PATH_NODES;
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
+    const nodeCount = nodes.length;
+
+    const [selectedIndex, setSelectedIndex] = useState<number | null>(() =>
+        activeNodeIndex(unlockedCount, nodeCount)
+    );
     const containerRef = useRef<HTMLDivElement | null>(null);
+
+    // Bubble mặc định bám node hiện tại (vừa mở khóa); khi hoàn thành bài và unlockedCount tăng → nhảy xuống node tiếp theo
+    useEffect(() => {
+        setSelectedIndex(activeNodeIndex(unlockedCount, nodeCount));
+    }, [unlockedCount, nodeCount]);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {

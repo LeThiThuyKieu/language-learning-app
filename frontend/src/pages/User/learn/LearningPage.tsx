@@ -122,12 +122,13 @@ export default function LearningPage() {
 
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">
-            <div className="w-full px-4 md:px-8 pt-6 md:pt-8 pb-8">
+            {/* Một lớp pt duy nhất; pt trên aside/main riêng sẽ cuộn mất còn sticky top-* là khoảng cách thật khi dính header */}
+            <div className="w-full px-4 pb-8 pt-5 md:px-8 md:pt-6">
                 <div className="grid grid-cols-12 gap-6">
-                    {/* Sidebar left */}
                     <aside
                         className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-3 md:pl-0 lg:pr-6">
-                        <div className="md:sticky md:top-20">
+                        {/* top-24 ≈ header thu gọn (~80px) + khe ~16px; đồng bộ khi scroll */}
+                        <div className="md:sticky md:top-24">
                             <nav className="mt-1 flex w-full max-w-[16.5rem] flex-col gap-1">
                                 <SidebarItem
                                     label="Học"
@@ -183,10 +184,8 @@ export default function LearningPage() {
                         </div>
                     </aside>
 
-                    {/* Main content */}
                     <main className="col-span-12 md:col-span-9 lg:col-span-9">
                         <div className="grid grid-cols-12 gap-6">
-                            {/* Cột trái: banner sticky (có vệt trắng trong khối = khe dưới header khi cuộn) + lộ trình */}
                             <div className="relative isolate z-0 col-span-12 lg:col-span-8 flex min-w-0 flex-col gap-4">
                                 <div className="sticky top-20 z-[45]">
                                     <div
@@ -285,7 +284,7 @@ export default function LearningPage() {
 
                             {/* Cột phải: TopStats, các card bên dưới (sticky để đứng yên khi cuộn) */}
                             <div className="col-span-12 lg:col-span-4">
-                                <div className="lg:sticky lg:top-20 flex flex-col gap-3">
+                                <div className="flex flex-col gap-3 lg:sticky lg:top-24">
                                     <TopStats/>
                                     <InfoCard
                                         title="Mở khóa Bảng xếp hạng!"
