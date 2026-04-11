@@ -3,6 +3,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import MatchingLessonView from "@/components/user/learn/MatchingLessonView.tsx";
+import {bumpLearnTreeUnlocked} from "@/utils/learnTreeProgress";
 
 type LocationState = {
     treeId?: number;
@@ -89,13 +90,8 @@ export default function MatchingLessonPage() {
                 node={matchingNode}
                 onLeaveLesson={() => navigate("/learn")}
                 onComplete={() => {
-                    // Hoàn thành MATCHING → mở khóa node 5 (REVIEW) và quay về /learn
-                    try {
-                        sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, "5");
-                    } catch {
-                        // ignore
-                    }
-                    navigate("/learn", {state: {treeId, unlockedCount: 5}});
+                    const next = bumpLearnTreeUnlocked(treeId, 5);
+                    navigate("/learn", {state: {treeId, unlockedCount: next}});
                 }}
             />
         </div>

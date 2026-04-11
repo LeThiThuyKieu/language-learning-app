@@ -3,6 +3,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import VocabLessonView from "@/components/user/learn/VocabLessonView.tsx";
+import {bumpLearnTreeUnlocked} from "@/utils/learnTreeProgress";
 
 type LocationState = {
     treeId?: number;
@@ -90,13 +91,8 @@ export default function VocabLessonPage() {
                 node={vocabNode}
                 onLeaveLesson={() => navigate("/learn")}
                 onComplete={() => {
-                    // Hoàn thành VOCAB → +10 KN, mở khóa node 2 (LISTENING) và quay về /learn
-                    try {
-                        sessionStorage.setItem(`learn_tree_${treeId}_unlocked`, "2");
-                    } catch {
-                        // ignore
-                    }
-                    navigate("/learn", {state: {treeId, unlockedCount: 2}});
+                    const next = bumpLearnTreeUnlocked(treeId, 2);
+                    navigate("/learn", {state: {treeId, unlockedCount: next}});
                 }}
             />
         </div>

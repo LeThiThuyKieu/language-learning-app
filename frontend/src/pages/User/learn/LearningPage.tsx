@@ -2,6 +2,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
+import {getLearnTreeUnlockedCount} from "@/utils/learnTreeProgress";
 import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx";
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
@@ -60,16 +61,6 @@ export default function LearningPage() {
 
     const accentForIndex = (idx: number): NodeAccentKey =>
         accentKeys[idx % accentKeys.length] ?? "orange";
-
-    const getUnlockedCount = (treeId: number): number => {
-        try {
-            const v = sessionStorage.getItem(`learn_tree_${treeId}_unlocked`);
-            const n = v ? Number(v) : 1;
-            return Number.isFinite(n) && n >= 1 ? n : 1;
-        } catch {
-            return 1;
-        }
-    };
 
     // Fetch tất cả skill tree + câu hỏi theo level (backend quyết định số tree cho mỗi level)
     useEffect(() => {
@@ -268,7 +259,7 @@ export default function LearningPage() {
                                                         key={`${tree.treeId}-${accentKey}`}
                                                         accentKey={accentKey}
                                                         apiNodes={treeData?.nodes?.slice(0, 5) ?? null}
-                                                        unlockedCount={getUnlockedCount(tree.treeId)}
+                                                        unlockedCount={getLearnTreeUnlockedCount(tree.treeId)}
                                                         onStartVocab={(node) =>
                                                             navigate("/learn/vocab", {state: {treeId: tree.treeId, node}})
                                                         }
