@@ -74,7 +74,7 @@ export default function VocabLessonPage() {
                     <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node VOCAB"}</div>
                     <button
                         type="button"
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate("/learn")}
                         className="mt-4 w-full rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 transition"
                     >
                         Quay lại
@@ -85,10 +85,10 @@ export default function VocabLessonPage() {
     }
 
     return (
-        <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
+        <div className="min-h-screen w-full bg-gray-50">
             <VocabLessonView
                 node={vocabNode}
-                onExit={() => navigate(-1)}
+                onLeaveLesson={() => navigate("/learn")}
                 onComplete={() => {
                     // Hoàn thành VOCAB → +10 KN, mở khóa node 2 (LISTENING) và quay về /learn
                     try {

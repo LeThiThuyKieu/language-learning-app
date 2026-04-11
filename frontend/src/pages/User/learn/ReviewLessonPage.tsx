@@ -108,7 +108,7 @@ export default function ReviewLessonPage() {
 
     if (loading) {
         return (
-            <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex items-center justify-center text-gray-500">
+            <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center text-gray-500">
                 Đang tải bài học…
             </div>
         );
@@ -116,13 +116,13 @@ export default function ReviewLessonPage() {
 
     if (error || !reviewNode) {
         return (
-            <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex items-center justify-center px-4">
+            <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center px-4">
                 <div className="max-w-md w-full rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                     <div className="text-gray-900 font-extrabold mb-2">Không tải được bài REVIEW</div>
                     <div className="text-gray-600 text-sm">{error ?? "Thiếu dữ liệu node REVIEW"}</div>
                     <button
                         type="button"
-                        onClick={() => navigate(-1)}
+                        onClick={() => navigate("/learn")}
                         className="mt-4 w-full rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 transition"
                     >
                         Quay lại
@@ -134,7 +134,7 @@ export default function ReviewLessonPage() {
 
     if (stage === "DONE") {
         return (
-            <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
+            <div className="min-h-screen w-full bg-gray-50">
                 <LessonCompleteView
                     knGained={20}
                     onContinue={() => {
@@ -152,32 +152,32 @@ export default function ReviewLessonPage() {
     }
 
     return (
-        <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen">
+        <div className="min-h-screen w-full bg-gray-50">
             {stage === "VOCAB" && vocabNode && (
                 <ReviewVocabView
                     node={vocabNode}
-                    onExit={() => navigate(-1)}
+                    onLeaveLesson={() => navigate("/learn")}
                     onComplete={() => setStage("LISTENING")}
                 />
             )}
             {stage === "LISTENING" && listeningNode && (
                 <ReviewListeningView
                     node={listeningNode}
-                    onExit={() => navigate(-1)}
+                    onLeaveLesson={() => navigate("/learn")}
                     onComplete={() => setStage("SPEAKING")}
                 />
             )}
             {stage === "SPEAKING" && speakingNode && (
                 <ReviewSpeakingView
                     node={speakingNode}
-                    onExit={() => navigate(-1)}
+                    onLeaveLesson={() => navigate("/learn")}
                     onComplete={() => setStage("MATCHING")}
                 />
             )}
             {stage === "MATCHING" && matchingNode && (
                 <ReviewMatchingView
                     node={matchingNode}
-                    onExit={() => navigate(-1)}
+                    onLeaveLesson={() => navigate("/learn")}
                     onComplete={() => setStage("DONE")}
                 />
             )}

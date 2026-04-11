@@ -1,17 +1,19 @@
 import {useEffect, useMemo, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
+import LessonTopBar from "@/components/user/learn/LessonTopBar";
+import LessonExitModal from "@/components/user/learn/LessonExitModal";
+import LessonResultFooter from "@/components/user/learn/LessonResultFooter";
 
 /**
- * UI y chang `VocabLessonView` nhưng không hiện `LessonCompleteView`.
- * Làm xong sẽ gọi `onComplete()` để chuyển sang stage kế tiếp trong Review.
+ * Giống VocabLessonView nhưng không hiện LessonCompleteView — gọi onComplete khi xong cả cụm.
  */
 export default function ReviewVocabView({
-                                           node,
-                                           onExit,
-                                           onComplete,
-                                       }: {
+    node,
+    onLeaveLesson,
+    onComplete,
+}: {
     node: SkillTreeNodeQuestionsData;
-    onExit: () => void;
+    onLeaveLesson: () => void;
     onComplete: () => void;
 }) {
     const questions = node.questions ?? [];
@@ -20,6 +22,7 @@ export default function ReviewVocabView({
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [checked, setChecked] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
+    const [exitOpen, setExitOpen] = useState(false);
 
     const current = questions[index];
 
@@ -32,7 +35,7 @@ export default function ReviewVocabView({
     const progressPercent = ((index + 1) / total) * 100;
 
     const correctOptionText = useMemo(() => {
-        const raw = (current as any)?.correctAnswer as string | undefined;
+        const raw = (current as {correctAnswer?: string})?.correctAnswer as string | undefined;
         const correctAnswer = (raw ?? "").trim();
         if (!correctAnswer) return "";
 
@@ -79,153 +82,123 @@ export default function ReviewVocabView({
     if (isFinished) return null;
 
     return (
-        <div className="min-h-screen bg-white flex flex-col">
-            <div className="w-full bg-white sticky top-0 z-30">
-                <div className="w-full max-w-4xl mx-auto flex items-center justify-between px-4 md:px-8 py-3">
-                    <button
-                        type="button"
-                        onClick={onExit}
-                        className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition"
-                        aria-label="Thoát bài học"
-                    >
-                        <span className="text-2xl leading-none">&times;</span>
-                    </button>
-                    <div className="flex-1 mx-4">
-                        <div className="h-3.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-primary-500 rounded-full transition-all duration-300"
-                                style={{width: `${progressPercent}%`}}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-sm font-semibold text-gray-700 whitespace-nowrap">
-                        <span className="tabular-nums">{questions.length || 0}</span>
-                        <span className="text-gray-400">câu</span>
-                    </div>
-                </div>
-            </div>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            <LessonTopBar
+                onClosePress={() => setExitOpen(true)}
+                progressPercent={progressPercent}
+                rightLabel={`${index + 1}/${total}`}
+            />
 
             <main className="flex-1 w-full">
-                <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-10 pb-28">
-                    <div className="max-w-2xl">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-primary-600 mb-2">
-                            Từ vựng mới
-                        </p>
-                        <h1 className="min-h-[92px] whitespace-pre-wrap text-3xl md:text-4xl font-extrabold text-gray-900 leading-[1.18]">
-                            {questionText || "Câu hỏi đang tải..."}
-                        </h1>
-                    </div>
+                <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-32">
+                    <div className="rounded-3xl bg-white border border-gray-100 shadow-sm p-6 md:p-10">
+                        <div className="max-w-2xl">
+                            <p className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200 mb-4">
+                                Từ vựng mới
+                            </p>
+                            <h1 className="min-h-[72px] whitespace-pre-wrap text-xl md:text-2xl font-extrabold text-gray-900 leading-snug">
+                                {questionText || "Câu hỏi đang tải..."}
+                            </h1>
+                        </div>
 
-                    <div className="mt-9 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 items-stretch">
-                        {options.map((opt, i) => {
-                            const isThirdAlone = options.length === 3 && i === 2;
-                            const isSelected = selectedOption === opt;
-                            const showCorrect = checked && opt === correctOptionText;
-                            const showWrongSelected = checked && isSelected && !isCorrect;
-                            return (
-                                <button
-                                    key={`${opt}-${i}`}
-                                    type="button"
-                                    onClick={() => {
-                                        if (checked) return;
-                                        setSelectedOption(opt);
-                                    }}
-                                    className={[
-                                        "group relative w-full",
-                                        "rounded-2xl border-2 border-gray-200 bg-white px-5 py-7 md:py-8 shadow-sm",
-                                        "transition-all duration-150",
-                                        "hover:-translate-y-0.5 hover:border-primary-500 hover:shadow-md",
-                                        "active:translate-y-0",
-                                        "focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-200",
-                                        "min-h-[88px] md:min-h-[104px]",
-                                        isSelected && !checked
-                                            ? "border-primary-500 bg-primary-100 ring-2 ring-primary-200"
-                                            : "",
-                                        showCorrect ? "border-emerald-500 bg-emerald-50" : "",
-                                        showWrongSelected ? "border-red-500 bg-red-50" : "",
-                                        isThirdAlone
-                                            ? "sm:col-span-2 sm:justify-self-center sm:w-[calc(50%-0.75rem)]"
-                                            : "",
-                                    ].join(" ")}
-                                >
-                                    <span
+                        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 items-stretch">
+                            {options.map((opt, i) => {
+                                const isThirdAlone = options.length === 3 && i === 2;
+                                const isSelected = selectedOption === opt;
+                                const showCorrect = checked && opt === correctOptionText;
+                                const showWrongSelected = checked && isSelected && !isCorrect;
+                                const locked = checked;
+
+                                return (
+                                    <button
+                                        key={`${opt}-${i}`}
+                                        type="button"
+                                        disabled={locked}
+                                        onClick={() => {
+                                            if (locked) return;
+                                            setSelectedOption(opt);
+                                        }}
                                         className={[
-                                            "block text-base md:text-lg font-semibold text-center line-clamp-2",
-                                            isSelected && !checked ? "text-primary-700" : "text-gray-800",
+                                            "group relative w-full rounded-2xl border-2 px-5 py-6 md:py-7 shadow-sm transition-all duration-150",
+                                            "focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-200",
+                                            "min-h-[80px] md:min-h-[96px]",
+                                            locked
+                                                ? "pointer-events-none cursor-default"
+                                                : "hover:-translate-y-0.5 hover:border-primary-400 hover:shadow-md active:translate-y-0",
+                                            !locked && !isSelected ? "border-gray-200 bg-white" : "",
+                                            !locked && isSelected
+                                                ? "border-primary-500 bg-primary-100 ring-2 ring-primary-300/80 shadow-md"
+                                                : "",
+                                            showCorrect ? "border-emerald-500 bg-emerald-100" : "",
+                                            showWrongSelected ? "border-red-500 bg-red-100" : "",
+                                            locked && !showCorrect && !showWrongSelected
+                                                ? "border-gray-200 bg-gray-50 text-gray-500"
+                                                : "",
+                                            isThirdAlone
+                                                ? "sm:col-span-2 sm:justify-self-center sm:w-[calc(50%-0.5rem)]"
+                                                : "",
                                         ].join(" ")}
                                     >
-                                        {opt}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                                        <span
+                                            className={[
+                                                "block text-base md:text-lg font-semibold text-center line-clamp-3",
+                                                !locked && isSelected ? "text-primary-900" : "text-gray-800",
+                                                showCorrect ? "text-emerald-900" : "",
+                                                showWrongSelected ? "text-red-900" : "",
+                                                locked && !showCorrect && !showWrongSelected ? "text-gray-500" : "",
+                                            ].join(" ")}
+                                        >
+                                            {opt}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
                 {!checked ? (
-                    <div className="sticky bottom-0 w-full bg-white/95 backdrop-blur">
-                        <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-end gap-4">
+                    <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white/95 backdrop-blur-md">
+                        <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-end">
                             <button
                                 type="button"
                                 disabled={!selectedOption}
                                 onClick={handleCheck}
                                 className={[
-                                    "w-[170px] h-12 rounded-2xl px-6 text-sm font-extrabold uppercase tracking-wide shadow-sm transition",
+                                    "min-w-[160px] h-12 rounded-2xl px-6 text-sm font-extrabold uppercase tracking-wide shadow-sm transition",
                                     selectedOption
                                         ? "bg-primary-600 hover:bg-primary-700 text-white"
                                         : "bg-gray-200 text-gray-400 cursor-not-allowed",
                                 ].join(" ")}
                             >
-                                KIỂM TRA
+                                Kiểm tra
                             </button>
                         </div>
                     </div>
                 ) : (
-                    <div
-                        className={[
-                            "sticky bottom-0 w-full",
-                            isCorrect ? "bg-emerald-100 border-emerald-200" : "bg-red-100 border-red-200",
-                        ].join(" ")}
-                    >
-                        <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-5 flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <div
-                                    className={[
-                                        "h-14 w-14 rounded-full flex items-center justify-center bg-white shadow-sm",
-                                        isCorrect ? "text-emerald-600" : "text-red-600",
-                                    ].join(" ")}
-                                    aria-hidden="true"
-                                >
-                                    <span className="text-2xl font-extrabold">{isCorrect ? "✓" : "×"}</span>
-                                </div>
-                                <div>
-                                    <div
-                                        className={[
-                                            "text-lg font-extrabold",
-                                            isCorrect ? "text-emerald-700" : "text-red-700",
-                                        ].join(" ")}
-                                    >
-                                        {isCorrect ? "Tuyệt vời!" : "Đáp án đúng:"}
-                                    </div>
-                                    {!isCorrect && (
-                                        <div className="text-sm font-semibold text-red-700">
-                                            {correctOptionText || "(không có đáp án)"}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleContinue}
-                                className="w-[170px] h-12 rounded-2xl bg-primary-600 hover:bg-primary-700 px-6 text-sm font-extrabold uppercase tracking-wide text-white shadow-sm transition"
-                            >
-                                TIẾP TỤC
-                            </button>
-                        </div>
-                    </div>
+                    <LessonResultFooter
+                        variant={isCorrect ? "correct" : "incorrect"}
+                        title={isCorrect ? "Tuyệt vời!" : "Đáp án đúng:"}
+                        detail={
+                            isCorrect ? undefined : (
+                                <span className="font-bold text-red-900">
+                                    {correctOptionText || "(không có đáp án)"}
+                                </span>
+                            )
+                        }
+                        onContinue={handleContinue}
+                    />
                 )}
             </main>
+
+            <LessonExitModal
+                open={exitOpen}
+                onContinue={() => setExitOpen(false)}
+                onExit={() => {
+                    setExitOpen(false);
+                    onLeaveLesson();
+                }}
+            />
         </div>
     );
 }
-

@@ -1,5 +1,8 @@
 package com.languagelearning.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.languagelearning.document.Question;
 import com.languagelearning.dto.learning.EnrichedQuestionDto;
 import com.languagelearning.dto.learning.NodeQuestionsDto;
@@ -8,10 +11,12 @@ import com.languagelearning.entity.QuestionIndex;
 import com.languagelearning.entity.QuestionType;
 import com.languagelearning.entity.SkillNode;
 import com.languagelearning.entity.SkillTree;
+import com.languagelearning.entity.UserLevelQuestionSnapshot;
 import com.languagelearning.repository.mongo.QuestionRepository;
 import com.languagelearning.repository.mysql.QuestionIndexRepository;
 import com.languagelearning.repository.mysql.SkillNodeRepository;
 import com.languagelearning.repository.mysql.SkillTreeRepository;
+import com.languagelearning.repository.mysql.UserLevelQuestionSnapshotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -36,6 +41,56 @@ public class SkillTreeQuestionService {
     private final SkillNodeRepository skillNodeRepository;
     private final QuestionIndexRepository questionIndexRepository;
     private final QuestionRepository questionRepository;
+    private final UserLevelQuestionSnapshotRepository userLevelQuestionSnapshotRepository;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * Bộ câu cho một tree: lấy từ snapshot level của user (cùng bộ như lần đầu vào /learn).
+     */
+    @Transactional
+    public SkillTreeQuestionsResponse getSampleQuestionsForTreeForUser(Integer userId, Integer treeId) {
+        SkillTree tree = skillTreeRepository.findById(treeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Skill tree not found: " + treeId));
+        Integer levelId = tree.getLevel() != null ? tree.getLevel().getId() : null;
+        if (levelId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Skill tree has no level");
+        }
+        List<SkillTreeQuestionsResponse> levelTrees = getOrCreateLevelSnapshot(userId, levelId);
+        return levelTrees.stream()
+                .filter(t -> treeId.equals(t.getTreeId()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Skill tree not found in snapshot: " + treeId));
+    }
+
+    /**
+     * Sinh ngẫu nhiên một lần cho (user, level), sau đó luôn trả về JSON đã lưu.
+     */
+    @Transactional
+    public List<SkillTreeQuestionsResponse> getOrCreateLevelSnapshot(Integer userId, Integer levelId) {
+        Optional<UserLevelQuestionSnapshot> existing = userLevelQuestionSnapshotRepository.findByUserIdAndLevelId(userId, levelId);
+        if (existing.isPresent()) {
+            try {
+                return objectMapper.readValue(
+                        existing.get().getPayloadJson(),
+                        new TypeReference<List<SkillTreeQuestionsResponse>>() {}
+                );
+            } catch (JsonProcessingException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid stored lesson snapshot");
+            }
+        }
+        List<SkillTreeQuestionsResponse> fresh = buildSampleQuestionsByLevel(levelId);
+        try {
+            String json = objectMapper.writeValueAsString(fresh);
+            UserLevelQuestionSnapshot row = new UserLevelQuestionSnapshot();
+            row.setUserId(userId);
+            row.setLevelId(levelId);
+            row.setPayloadJson(json);
+            userLevelQuestionSnapshotRepository.save(row);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cannot save lesson snapshot");
+        }
+        return fresh;
+    }
 
     @Transactional(readOnly = true)
     public SkillTreeQuestionsResponse getSampleQuestionsForTree(Integer treeId) {
@@ -51,6 +106,10 @@ public class SkillTreeQuestionService {
 
     @Transactional(readOnly = true)
     public List<SkillTreeQuestionsResponse> getSampleQuestionsByLevel(Integer levelId) {
+        return buildSampleQuestionsByLevel(levelId);
+    }
+
+    private List<SkillTreeQuestionsResponse> buildSampleQuestionsByLevel(Integer levelId) {
         List<SkillTree> trees = skillTreeRepository.findByLevel_IdOrderByOrderIndex(levelId);
         List<SkillTreeQuestionsResponse> out = new ArrayList<>();
         for (SkillTree tree : trees) {

@@ -34,14 +34,16 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
-                        <Route path="learn/vocab" element={<VocabLessonPage/>}/>
-                        <Route path="learn/listening" element={<ListeningLessonPage/>}/>
-                        <Route path="learn/speaking" element={<SpeakingLessonPage/>}/>
-                        <Route path="learn/matching" element={<MatchingLessonPage/>}/>
-                        <Route path="learn/review" element={<ReviewLessonPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
                         <Route path="help" element={<HelpPage/>}/>
                     </Route>
+
+                    {/* Bài học full màn hình: không Header/Footer layout trang chủ */}
+                    <Route path="/learn/vocab" element={<VocabLessonPage/>}/>
+                    <Route path="/learn/listening" element={<ListeningLessonPage/>}/>
+                    <Route path="/learn/speaking" element={<SpeakingLessonPage/>}/>
+                    <Route path="/learn/matching" element={<MatchingLessonPage/>}/>
+                    <Route path="/learn/review" element={<ReviewLessonPage/>}/>
 
                     {/* Trang Welcome */}
                     <Route path="/welcome"

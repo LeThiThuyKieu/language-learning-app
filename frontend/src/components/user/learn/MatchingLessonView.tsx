@@ -1,6 +1,8 @@
 import {useEffect, useMemo, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
+import LessonTopBar from "@/components/user/learn/LessonTopBar";
+import LessonExitModal from "@/components/user/learn/LessonExitModal";
 
 type Pair = {
     id: string;
@@ -19,11 +21,11 @@ function shuffle<T>(arr: T[]) {
 
 export default function MatchingLessonView({
                                                node,
-                                               onExit,
+                                               onLeaveLesson,
                                                onComplete,
                                            }: {
     node: SkillTreeNodeQuestionsData;
-    onExit: () => void;
+    onLeaveLesson: () => void;
     onComplete: () => void;
 }) {
     const pairs: Pair[] = useMemo(() => {
@@ -51,6 +53,7 @@ export default function MatchingLessonView({
     const [justMatchedIds, setJustMatchedIds] = useState<Set<string>>(new Set());
     const [wrongPair, setWrongPair] = useState<{ leftId: string; rightId: string } | null>(null);
     const [isFinished, setIsFinished] = useState(false);
+    const [exitOpen, setExitOpen] = useState(false);
 
     useEffect(() => {
         setSelectedLeftId(null);
@@ -105,26 +108,19 @@ export default function MatchingLessonView({
         return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
     }
 
+    const matchPct = pairs.length === 0 ? 0 : (matchedIds.size / pairs.length) * 100;
+    const matchLabel = `${matchedIds.size}/${pairs.length}`;
+
     return (
-        <div className="min-h-screen bg-white flex flex-col font-sans">
-            {/* Header */}
-            <div className="w-full bg-white sticky top-0 z-30 border-b border-gray-100">
-                <div className="w-full max-w-4xl mx-auto flex items-center justify-between px-4 md:px-8 py-3">
-                    <button
-                        type="button"
-                        onClick={onExit}
-                        className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition"
-                    >
-                        <span className="text-2xl leading-none">&times;</span>
-                    </button>
-                    <div className="text-sm font-bold text-primary-600 uppercase tracking-widest">
-                        Tiến độ: {matchedIds.size} / {pairs.length}
-                    </div>
-                </div>
-            </div>
+        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+            <LessonTopBar
+                onClosePress={() => setExitOpen(true)}
+                progressPercent={matchPct}
+                rightLabel={matchLabel}
+            />
 
             <main className="flex-1 w-full">
-                <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-10 pb-28">
+                <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-28">
                     <div className="max-w-2xl mb-10">
                         <p className="text-xs font-bold uppercase tracking-widest text-primary-500 mb-2">
                             Matching Game
@@ -158,7 +154,7 @@ export default function MatchingLessonView({
                                             "bg-white border-gray-200",
                                             !isMatched && !isJustMatched && !isWrong && !isSelected ? "hover:border-gray-300 hover:bg-gray-50 active:translate-y-0.5" : "",
                                             // Đang chọn (Màu cam chủ đạo)
-                                            isSelected && !isWrong && !isJustMatched ? "border-primary-500 bg-primary-100 ring-2 ring-primary-100 shadow-md" : "",
+                                            isSelected && !isWrong && !isJustMatched ? "border-primary-500 bg-primary-100 ring-2 ring-primary-300/70 shadow-md" : "",
                                             // Chọn sai (Đỏ)
                                             isWrong ? "border-red-500 bg-red-100 animate-[shake_0.3s_ease-in-out]" : "",
                                             // Chọn đúng (Xanh lá)
@@ -205,7 +201,7 @@ export default function MatchingLessonView({
                                             "bg-white border-gray-200", // Mặc định
                                             !isMatched && !isJustMatched && !isWrong && !isSelected ? "hover:border-gray-300 hover:bg-gray-50 active:translate-y-0.5" : "",
                                             // Đang chọn (Màu cam chủ đạo)
-                                            isSelected && !isWrong && !isJustMatched ? "border-primary-500 bg-primary-400 ring-2 ring-primary-100 shadow-md" : "",
+                                            isSelected && !isWrong && !isJustMatched ? "border-primary-500 bg-primary-100 ring-2 ring-primary-300/70 shadow-md" : "",
                                             // Chọn sai (Đỏ)
                                             isWrong ? "border-red-500 bg-red-100 animate-[shake_0.3s_ease-in-out]" : "",
                                             // Chọn đúng (Xanh lá)
@@ -236,6 +232,15 @@ export default function MatchingLessonView({
           75% { transform: translateX(4px); }
         }
       `}</style>
+
+            <LessonExitModal
+                open={exitOpen}
+                onContinue={() => setExitOpen(false)}
+                onExit={() => {
+                    setExitOpen(false);
+                    onLeaveLesson();
+                }}
+            />
         </div>
     );
 }

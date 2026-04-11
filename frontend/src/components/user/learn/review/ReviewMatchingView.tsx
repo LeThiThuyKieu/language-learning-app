@@ -1,5 +1,7 @@
 import {useEffect, useMemo, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
+import LessonTopBar from "@/components/user/learn/LessonTopBar";
+import LessonExitModal from "@/components/user/learn/LessonExitModal";
 
 type Pair = {
     id: string;
@@ -22,11 +24,11 @@ function shuffle<T>(arr: T[]) {
  */
 export default function ReviewMatchingView({
                                               node,
-                                              onExit,
+                                              onLeaveLesson,
                                               onComplete,
                                           }: {
     node: SkillTreeNodeQuestionsData;
-    onExit: () => void;
+    onLeaveLesson: () => void;
     onComplete: () => void;
 }) {
     const pairs: Pair[] = useMemo(() => {
@@ -53,6 +55,7 @@ export default function ReviewMatchingView({
     const [matchedIds, setMatchedIds] = useState<Set<string>>(new Set());
     const [wrongPair, setWrongPair] = useState<{leftId: string; rightId: string} | null>(null);
     const [isFinished, setIsFinished] = useState(false);
+    const [exitOpen, setExitOpen] = useState(false);
 
     useEffect(() => {
         setSelectedLeftId(null);
@@ -99,24 +102,19 @@ export default function ReviewMatchingView({
 
     if (isFinished) return null;
 
+    const matchPct = pairs.length === 0 ? 0 : (matchedIds.size / pairs.length) * 100;
+    const matchLabel = `${matchedIds.size}/${pairs.length}`;
+
     return (
-        <div className="min-h-screen bg-white flex flex-col">
-            <div className="w-full bg-white sticky top-0 z-30">
-                <div className="w-full max-w-4xl mx-auto flex items-center justify-between px-4 md:px-8 py-3">
-                    <button
-                        type="button"
-                        onClick={onExit}
-                        className="h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition"
-                        aria-label="Thoát bài học"
-                    >
-                        <span className="text-2xl leading-none">&times;</span>
-                    </button>
-                    <div className="text-sm font-semibold text-gray-700">{pairs.length} cặp</div>
-                </div>
-            </div>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            <LessonTopBar
+                onClosePress={() => setExitOpen(true)}
+                progressPercent={matchPct}
+                rightLabel={matchLabel}
+            />
 
             <main className="flex-1 w-full">
-                <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-10 pb-28">
+                <div className="w-full max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-28">
                     <div className="max-w-2xl">
                         <p className="text-xs font-semibold uppercase tracking-wide text-primary-600 mb-2">
                             Matching
@@ -154,7 +152,7 @@ export default function ReviewMatchingView({
                                             "active:translate-y-0",
                                             "focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-200",
                                             isMatched ? "opacity-40 pointer-events-none" : "",
-                                            isSelected ? "border-primary-500 bg-primary-50 ring-2 ring-primary-200" : "border-gray-200",
+                                            isSelected ? "border-primary-500 bg-primary-100 ring-2 ring-primary-300/70 shadow-md" : "border-gray-200 bg-white",
                                             isWrong ? "border-red-500 bg-red-50" : "",
                                             showCorrect && isMatched ? "border-emerald-500 bg-emerald-50" : "",
                                         ].join(" ")}
@@ -199,7 +197,7 @@ export default function ReviewMatchingView({
                                             "active:translate-y-0",
                                             "focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-200",
                                             isMatched ? "opacity-40 pointer-events-none" : "",
-                                            isSelected ? "border-primary-500 bg-primary-50 ring-2 ring-primary-200" : "border-gray-200",
+                                            isSelected ? "border-primary-500 bg-primary-100 ring-2 ring-primary-300/70 shadow-md" : "border-gray-200 bg-white",
                                             isWrong ? "border-red-500 bg-red-50" : "",
                                             showCorrect && isMatched ? "border-emerald-500 bg-emerald-50" : "",
                                         ].join(" ")}
@@ -219,6 +217,15 @@ export default function ReviewMatchingView({
                     </div>
                 </div>
             </main>
+
+            <LessonExitModal
+                open={exitOpen}
+                onContinue={() => setExitOpen(false)}
+                onExit={() => {
+                    setExitOpen(false);
+                    onLeaveLesson();
+                }}
+            />
         </div>
     );
 }

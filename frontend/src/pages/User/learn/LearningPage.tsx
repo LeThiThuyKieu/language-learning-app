@@ -6,6 +6,7 @@ import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
+import {MoreHorizontal} from "lucide-react";
 
 type LevelKey = "beginner" | "intermediate" | "advanced";
 
@@ -53,17 +54,6 @@ export default function LearningPage() {
             purple: "bg-purple-500",
             teal: "bg-teal-500",
             rose: "bg-rose-500",
-        }),
-        []
-    );
-
-    const dividerBorderByAccent: Record<NodeAccentKey, string> = useMemo(
-        () => ({
-            orange: "border-primary-300",
-            blue: "border-blue-300",
-            purple: "border-purple-300",
-            teal: "border-teal-300",
-            rose: "border-rose-300",
         }),
         []
     );
@@ -260,19 +250,13 @@ export default function LearningPage() {
                                                 className="scroll-mt-6"
                                             >
                                                 {idx > 0 && (
-                                                    <div
-                                                        className={`relative w-full my-8 ${dividerBorderByAccent[accentKey]} `}
-                                                    >
-                                                        <div
-                                                            className={`absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed ${dividerBorderByAccent[accentKey]}`}
-                                                        />
-                                                        <div
-                                                            className={`relative mx-auto w-10 h-10 rounded-full bg-white border-2 shadow-sm flex items-center justify-center ${dividerBorderByAccent[accentKey]}`}
-                                                        >
-                                                            <img
-                                                                src="/icons/learn/more-info.svg"
-                                                                alt=""
-                                                                className="w-5 h-5 object-contain"
+                                                    <div className="relative w-full my-8 border-primary-100">
+                                                        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-primary-300"/>
+                                                        <div className="relative mx-auto flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary-400 bg-primary-50 shadow-sm ring-4 ring-white">
+                                                            <MoreHorizontal
+                                                                className="h-6 w-6 text-primary-600"
+                                                                strokeWidth={2.5}
+                                                                aria-hidden
                                                             />
                                                         </div>
                                                     </div>
