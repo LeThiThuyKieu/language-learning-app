@@ -55,10 +55,19 @@ export default function LoginPage() {
         }
     };
 
-    const completeSocialLogin = async (provider: "google" | "facebook", accessToken: string) => {
+    const completeSocialLogin = async (
+        provider: "google" | "facebook",
+        payload: { accessToken?: string; oauthCode?: string }
+    ) => {
         setLoading(true);
         try {
-            const response = await authService.socialLogin({provider, accessToken});
+            const redirectUri = `${window.location.origin}/login`;
+            const response = await authService.socialLogin({
+                provider,
+                accessToken: payload.accessToken,
+                oauthCode: payload.oauthCode,
+                redirectUri: payload.oauthCode ? redirectUri : undefined,
+            });
             setAuth(response.user, response.token);
             toast.success(`Đăng nhập ${provider === "google" ? "Google" : "Facebook"} thành công!`);
             await navigateAfterLogin();
@@ -81,6 +90,7 @@ export default function LoginPage() {
         const queryParams = new URLSearchParams(window.location.search);
 
         const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
+        const oauthCode = queryParams.get("code");
         const state = hashParams.get("state") || queryParams.get("state");
         const pendingProvider = parseSocialProvider(sessionStorage.getItem(SOCIAL_PROVIDER_STORAGE_KEY));
         const providerFromState = parseSocialProvider(state) || pendingProvider;
@@ -92,6 +102,12 @@ export default function LoginPage() {
             window.history.replaceState({}, document.title, window.location.pathname);
             return;
         }
+        if (oauthCode && providerFromState === "facebook") {
+            sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            void completeSocialLogin("facebook", {oauthCode});
+            return;
+        }
 
         if (!accessToken || !providerFromState) {
             return;
@@ -99,7 +115,7 @@ export default function LoginPage() {
 
         sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
-        void completeSocialLogin(providerFromState, accessToken);
+        void completeSocialLogin(providerFromState, {accessToken});
     }, []);
 
     const handleGoogleLogin = () => {
@@ -133,7 +149,7 @@ export default function LoginPage() {
         const params = new URLSearchParams({
             client_id: socialConfig.facebookClientId,
             redirect_uri: socialConfig.redirectUri,
-            response_type: "token",
+            response_type: "code",
             scope: "email,public_profile",
             state: "facebook",
         });

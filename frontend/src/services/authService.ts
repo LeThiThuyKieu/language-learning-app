@@ -14,7 +14,9 @@ export interface RegisterRequest {
 
 export interface SocialLoginRequest {
   provider: "google" | "facebook";
-  accessToken: string;
+  accessToken?: string;
+  oauthCode?: string;
+  redirectUri?: string;
 }
 export interface AuthResponse {
   user: User;

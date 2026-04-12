@@ -14,8 +14,13 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class FacebookSocialProviderClient implements SocialProviderClient {
-    private static final String FACEBOOK_USER_INFO_URL = "https://graph.facebook.com/me";
-    private static final String FACEBOOK_DEBUG_TOKEN_URL = "https://graph.facebook.com/debug_token";
+    private static final String FACEBOOK_GRAPH_VERSION = "v20.0";
+    private static final String FACEBOOK_USER_INFO_URL =
+            "https://graph.facebook.com/" + FACEBOOK_GRAPH_VERSION + "/me";
+    private static final String FACEBOOK_DEBUG_TOKEN_URL =
+            "https://graph.facebook.com/" + FACEBOOK_GRAPH_VERSION + "/debug_token";
+    private static final String FACEBOOK_CODE_EXCHANGE_URL =
+            "https://graph.facebook.com/" + FACEBOOK_GRAPH_VERSION + "/oauth/access_token";
 
     private final RestTemplateBuilder restTemplateBuilder;
 
@@ -28,6 +33,40 @@ public class FacebookSocialProviderClient implements SocialProviderClient {
     @Override
     public String provider() {
         return "facebook";
+    }
+
+    @Override
+    public boolean supportsOAuthAuthorizationCode() {
+        return true;
+    }
+
+    @Override
+    public String exchangeOAuthCode(String code, String redirectUri) {
+        if (facebookAppId == null || facebookAppId.isBlank() || facebookAppSecret == null || facebookAppSecret.isBlank()) {
+            throw new BadCredentialsException("Facebook app credentials are not configured on server");
+        }
+        if (code == null || code.isBlank() || redirectUri == null || redirectUri.isBlank()) {
+            throw new BadCredentialsException("Facebook authorization code and redirect URI are required");
+        }
+
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        String url = UriComponentsBuilder
+                .fromHttpUrl(FACEBOOK_CODE_EXCHANGE_URL)
+                .queryParam("client_id", facebookAppId)
+                .queryParam("redirect_uri", redirectUri)
+                .queryParam("client_secret", facebookAppSecret)
+                .queryParam("code", code)
+                .toUriString();
+
+        try {
+            Map<String, Object> body = restTemplate.getForObject(url, Map.class);
+            if (body == null || body.get("access_token") == null) {
+                throw new BadCredentialsException("Facebook could not exchange authorization code for an access token");
+            }
+            return String.valueOf(body.get("access_token"));
+        } catch (RestClientException ex) {
+            throw new BadCredentialsException("Facebook authorization code exchange failed");
+        }
     }
 
     @Override
@@ -86,7 +125,7 @@ public class FacebookSocialProviderClient implements SocialProviderClient {
                 throw new BadCredentialsException("Facebook token is invalid or expired");
             }
 
-            if (appId == null || !facebookAppId.equals(appId)) {
+            if (appId == null || !facebookAppId.trim().equals(appId.trim())) {
                 throw new BadCredentialsException("Facebook token audience mismatch");
             }
         } catch (RestClientException ex) {

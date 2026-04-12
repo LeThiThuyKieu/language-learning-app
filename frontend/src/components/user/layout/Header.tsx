@@ -95,25 +95,43 @@ export default function Header() {
 
                     {/* Logo */}
                     <Link to="/" className="group flex items-center gap-2">
-                        <div className="w-12 h-12 transition-transform group-hover:scale-110">
-                            <img src="/logo/lion.png" alt="Logo" className="w-full h-full object-contain" />
+                        {/* 1. Hình sư tử */}
+                        <div
+                            className="relative w-14 h-14 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+                            <img
+                                src="/logo/lion.png"
+                                alt="Lion Logo"
+                                className="w-full h-full object-contain drop-shadow-xl"
+                            />
                         </div>
-                        <span className="text-3xl font-black text-white tracking-tighter">
-                            L<span className="text-orange-500 italic">i</span>on
+                        {/* 2. Tên web */}
+                        <div className="relative">
+                        <span
+                            className="text-4xl font-black tracking-tighter text-white transition-all group-hover:tracking-normal">
+                            L<span className="text-primary-500 italic">i</span>on
                         </span>
+                            {/* Dấu gạch chân trang trí dưới Logo */}
+                            <div
+                                className="absolute -bottom-1 left-0 w-0 h-1 bg-gradient-to-r from-primary-600 to-orange-400 transition-all duration-300 group-hover:w-full rounded-full"></div>
+                        </div>
                     </Link>
 
-                    {/* Desktop Menu */}
-                    <div className="hidden md:flex items-center gap-8">
+                    {/* menu */}
+                    <div className="hidden md:flex items-center gap-10">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className={`text-sm font-bold uppercase tracking-wider transition-colors hover:text-orange-500 ${
-                                    location.pathname === link.path ? "text-orange-500" : "text-gray-300"
-                                }`}
+                                className={`relative text-base font-bold uppercase transition-colors hover:text-primary-400 ${
+                                    location.pathname === link.path ? "text-primary-500" : "text-gray-300"
+                                } group`}
                             >
                                 {link.name}
+                                {/* Line chạy dưới chân khi active hoặc hover */}
+                                <span
+                                    className={`absolute -bottom-2 left-0 h-[2px] bg-primary-500 transition-all duration-300 ${
+                                        location.pathname === link.path ? "w-full" : "w-0 group-hover:w-full"
+                                    }`}></span>
                             </Link>
                         ))}
                     </div>

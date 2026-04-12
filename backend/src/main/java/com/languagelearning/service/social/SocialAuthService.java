@@ -33,10 +33,11 @@ public class SocialAuthService {
     private final List<SocialProviderClient> socialProviderClients;
 
     @Transactional
-    public AuthResponse login(String providerName, String accessToken) {
+    public AuthResponse login(String providerName, String accessToken, String oauthCode, String redirectUri) {
         String normalizedProvider = normalizeProvider(providerName);
         SocialProviderClient providerClient = findProviderClient(normalizedProvider);
-        SocialUserInfo userInfo = providerClient.getUserInfo(accessToken);
+        String resolvedAccessToken = resolveAccessToken(providerClient, accessToken, oauthCode, redirectUri);
+        SocialUserInfo userInfo = providerClient.getUserInfo(resolvedAccessToken);
 
         User.AuthProvider provider = toAuthProvider(normalizedProvider);
         User user = userRepository
@@ -54,6 +55,27 @@ public class SocialAuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
         return new AuthResponse(UserDTO.fromUser(user), token, refreshToken);
+    }
+
+    private String resolveAccessToken(
+            SocialProviderClient providerClient,
+            String accessToken,
+            String oauthCode,
+            String redirectUri
+    ) {
+        if (accessToken != null && !accessToken.isBlank()) {
+            return accessToken.trim();
+        }
+        if (oauthCode == null || oauthCode.isBlank()) {
+            throw new BadCredentialsException("Access token is required");
+        }
+        if (!providerClient.supportsOAuthAuthorizationCode()) {
+            throw new BadCredentialsException("Authorization code is not supported for this provider");
+        }
+        if (redirectUri == null || redirectUri.isBlank()) {
+            throw new BadCredentialsException("redirectUri is required for authorization code login");
+        }
+        return providerClient.exchangeOAuthCode(oauthCode.trim(), redirectUri.trim());
     }
 
     private String normalizeProvider(String providerName) {

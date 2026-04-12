@@ -7,7 +7,7 @@ import lombok.Data;
 public class SocialLoginRequest {
     @NotBlank(message = "Provider is required")
     private String provider;
-
-    @NotBlank(message = "Access token is required")
     private String accessToken;
+    private String oauthCode;
+    private String redirectUri;
 }

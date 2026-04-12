@@ -38,7 +38,12 @@ public class AuthController {
 
     @PostMapping("/social/login")
     public ResponseEntity<AuthResponse> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
-        AuthResponse response = socialAuthService.login(request.getProvider(), request.getAccessToken());
+        AuthResponse response = socialAuthService.login(
+                request.getProvider(),
+                request.getAccessToken(),
+                request.getOauthCode(),
+                request.getRedirectUri()
+        );
         return ResponseEntity.ok(response);
     }
 
