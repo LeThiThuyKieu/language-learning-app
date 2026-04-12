@@ -70,7 +70,7 @@ export default function ProfilePage() {
     const isLevelUndefined = !profile?.currentLevelCefr && !profile?.currentLevelName;
     const levelDisplay = isLevelUndefined
         ? "Bạn thuộc cấp độ nào? Cùng khám phá nhé!"
-        : [profile?.currentLevelCefr, profile?.currentLevelName].filter(Boolean).join(" - ");
+        :  profile?.currentLevelName + "";
     const avatarUrl = profile?.avatarUrl || DEFAULT_AVATAR;
 
     const openEditNameModal = () => {

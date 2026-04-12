@@ -221,7 +221,6 @@ export default function LearningPage() {
                                         <div
                                             className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
                                             <MoreItem label="Cài đặt" onClick={() => navigate("/profile")}/>
-                                            <MoreItem label="Trợ giúp"/>
                                             <MoreItem label="Đăng xuất"/>
                                         </div>
                                     )}

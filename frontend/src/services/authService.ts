@@ -12,6 +12,10 @@ export interface RegisterRequest {
   fullName?: string;
 }
 
+export interface SocialLoginRequest {
+  provider: "google" | "facebook";
+  accessToken: string;
+}
 export interface AuthResponse {
   user: User;
   token: string;
@@ -25,6 +29,11 @@ export const authService = {
 
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>("/auth/register", data);
+    return response.data;
+  },
+
+  socialLogin: async (data: SocialLoginRequest): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>("/auth/social/login", data);
     return response.data;
   },
 
