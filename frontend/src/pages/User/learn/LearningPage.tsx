@@ -8,14 +8,16 @@ import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
 import {MoreHorizontal} from "lucide-react";
-
-type LevelKey = "beginner" | "intermediate" | "advanced";
+import {profileService} from "@/services/profileService";
+import type {LevelKey} from "@/utils/learningLevel";
+import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
 
 export default function LearningPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const {isAuthenticated} = useAuthStore();
-    const level = (location.state?.level ?? "beginner") as LevelKey;
+    const [resolvedLevel, setResolvedLevel] = useState<LevelKey | null>(null);
+    const [bootstrapping, setBootstrapping] = useState(true);
 
     const levelIdMap: Record<LevelKey, number> = useMemo(
         () => ({
@@ -62,9 +64,43 @@ export default function LearningPage() {
     const accentForIndex = (idx: number): NodeAccentKey =>
         accentKeys[idx % accentKeys.length] ?? "orange";
 
+    // Chưa chọn level trên profile → không cho vào lộ trình (tránh mặc định beginner)
+    useEffect(() => {
+        if (!isAuthenticated) {
+            setBootstrapping(false);
+            setResolvedLevel(null);
+            return;
+        }
+
+        let cancelled = false;
+        (async () => {
+            try {
+                const profile = await profileService.getMyProfile();
+                if (cancelled) return;
+                if (!hasChosenLearningLevel(profile.currentLevelId)) {
+                    navigate("/welcome", {replace: true});
+                    return;
+                }
+                const fromState = location.state?.level;
+                const level: LevelKey = isLevelKeyFromState(fromState)
+                    ? fromState
+                    : mapLevelIdToKey(profile.currentLevelId as number);
+                setResolvedLevel(level);
+            } catch {
+                if (!cancelled) navigate("/welcome", {replace: true});
+                return;
+            }
+            if (!cancelled) setBootstrapping(false);
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isAuthenticated, navigate, location.state?.level]);
+
     // Fetch tất cả skill tree + câu hỏi theo level (backend quyết định số tree cho mỗi level)
     useEffect(() => {
-        if (!isAuthenticated) return;
+        if (!isAuthenticated || !resolvedLevel) return;
 
         let cancelled = false;
         (async () => {
@@ -72,7 +108,7 @@ export default function LearningPage() {
             setTreesError(null);
 
             try {
-                const levelId = levelIdMap[level];
+                const levelId = levelIdMap[resolvedLevel];
                 const data = await learningService.getLevelQuestions(levelId);
                 if (cancelled) return;
                 setTrees(data);
@@ -90,7 +126,7 @@ export default function LearningPage() {
         return () => {
             cancelled = true;
         };
-    }, [level, isAuthenticated, levelIdMap]);
+    }, [resolvedLevel, isAuthenticated, levelIdMap]);
 
     // Scroll => đổi active tree banner/màu + node status.
     useEffect(() => {
@@ -119,6 +155,16 @@ export default function LearningPage() {
     if (!isAuthenticated) {
         return <GuestPrompt/>;
     }
+
+    if (bootstrapping || !resolvedLevel) {
+        return (
+            <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex flex-col items-center justify-center -mt-8">
+                <LearningPathLoading/>
+            </div>
+        );
+    }
+
+    const level = resolvedLevel;
 
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">

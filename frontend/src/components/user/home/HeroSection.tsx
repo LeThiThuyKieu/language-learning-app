@@ -3,18 +3,36 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { profileService } from "@/services/profileService";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { hasChosenLearningLevel, mapLevelIdToKey } from "@/utils/learningLevel";
 
 export default function HeroSection() {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuthStore();
     const [loading, setLoading] = useState(false);
+    /** null = đang tải (chỉ khi đã đăng nhập) */
+    const [hasChosenLevel, setHasChosenLevel] = useState<boolean | null>(() =>
+        isAuthenticated ? null : false
+    );
 
-    const mapLevelIdToKey = (levelId: number): "beginner" | "intermediate" | "advanced" => {
-        if (levelId === 1) return "beginner";
-        if (levelId === 2) return "intermediate";
-        return "advanced";
-    };
+    useEffect(() => {
+        if (!isAuthenticated) {
+            setHasChosenLevel(false);
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            try {
+                const profile = await profileService.getMyProfile();
+                if (!cancelled) setHasChosenLevel(hasChosenLearningLevel(profile.currentLevelId));
+            } catch {
+                if (!cancelled) setHasChosenLevel(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [isAuthenticated]);
 
     const handleStartLearning = async () => {
         if (loading) return;
@@ -28,13 +46,11 @@ export default function HeroSection() {
         setLoading(true);
         try {
             const profile = await profileService.getMyProfile();
-            const levelId = profile.currentLevelId;
 
-            if (levelId) {
-                const level = mapLevelIdToKey(levelId);
+            if (hasChosenLearningLevel(profile.currentLevelId)) {
+                const level = mapLevelIdToKey(profile.currentLevelId as number);
                 navigate("/learn", { state: { level } });
             } else {
-                // Chưa có level: chào đón + chọn trình độ
                 navigate("/welcome");
             }
         } catch {
@@ -66,9 +82,15 @@ export default function HeroSection() {
                 <div className="flex gap-4 mt-2">
                     <button
                         onClick={handleStartLearning}
-                        disabled={loading}
+                        disabled={loading || (isAuthenticated && hasChosenLevel === null)}
                         className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-base rounded-lg shadow-md transition-all duration-200">
-                        {isAuthenticated ? (loading ? "Đang kiểm tra..." : "Vào bài học") : "Bắt đầu học"}
+                        {!isAuthenticated
+                            ? "Bắt đầu học"
+                            : loading || hasChosenLevel === null
+                                ? "Đang kiểm tra..."
+                                : hasChosenLevel
+                                    ? "Vào bài học"
+                                    : "Bắt đầu học"}
                     </button>
                     <button
                         className="px-8 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 font-semibold text-base rounded-lg transition-all duration-200">

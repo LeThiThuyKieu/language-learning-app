@@ -7,6 +7,7 @@ import axios from "axios";
 import {FcGoogle} from "react-icons/fc";
 import {FaFacebook} from "react-icons/fa";
 import { profileService } from "@/services/profileService";
+import {hasChosenLearningLevel, mapLevelIdToKey} from "@/utils/learningLevel";
 
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
@@ -26,16 +27,9 @@ export default function RegisterPage() {
 
             try {
                 const profile = await profileService.getMyProfile();
-                const levelId = profile.currentLevelId;
-
-                if (levelId) {
-                    const level =
-                        levelId === 1
-                            ? "beginner"
-                            : levelId === 2
-                            ? "intermediate"
-                            : "advanced";
-                    navigate("/learn", { state: { level } });
+                if (hasChosenLearningLevel(profile.currentLevelId)) {
+                    const level = mapLevelIdToKey(profile.currentLevelId as number);
+                    navigate("/learn", {state: {level}});
                 } else {
                     navigate("/welcome");
                 }

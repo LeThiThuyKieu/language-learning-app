@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import {FcGoogle} from "react-icons/fc";
 import {FaFacebook} from "react-icons/fa";
 import { profileService } from "@/services/profileService";
+import {hasChosenLearningLevel, mapLevelIdToKey} from "@/utils/learningLevel";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -25,21 +26,14 @@ export default function LoginPage() {
             toast.success("Đăng nhập thành công!");
             try {
                 const profile = await profileService.getMyProfile();
-                const levelId = profile.currentLevelId;
-
-                if (levelId) {
-                    const level =
-                        levelId === 1
-                            ? "beginner"
-                            : levelId === 2
-                            ? "intermediate"
-                            : "advanced";
-                    navigate("/learn", { state: { level } });
+                if (hasChosenLearningLevel(profile.currentLevelId)) {
+                    const level = mapLevelIdToKey(profile.currentLevelId as number);
+                    navigate("/learn", {state: {level}});
                 } else {
                     navigate("/welcome");
                 }
             } catch {
-                navigate("/");
+                navigate("/welcome");
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
