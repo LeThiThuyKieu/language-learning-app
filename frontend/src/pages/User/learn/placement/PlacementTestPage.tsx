@@ -1,5 +1,4 @@
-import {Link} from "react-router-dom";
-import toast from "react-hot-toast";
+import {Link, useNavigate} from "react-router-dom";
 import {
     ArrowLeft,
     BookOpen,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import {cn} from "@/utils/cn.ts";
 
+// Data detail
 const detailItems = [
     {
         icon: "📖",
@@ -51,8 +51,10 @@ const detailItems = [
 ] as const;
 
 export default function PlacementTestPage() {
+    const navigate = useNavigate();
+
     const handleStart = () => {
-        toast("Phần làm bài test đang được hoàn thiện — bạn sẽ làm bài tại đây ở bước tiếp theo!");
+        navigate("/placement-test/session");
     };
 
     return (
@@ -61,7 +63,7 @@ export default function PlacementTestPage() {
                 className="pointer-events-none absolute top-20 left-1/2 -translate-x-1/2 w-[min(90vw,520px)] h-[min(90vw,520px)] bg-primary-500/15 blur-[120px] rounded-full"/>
             <div
                 className="pointer-events-none absolute bottom-0 right-0 w-72 h-72 bg-primary-600/10 blur-[100px] rounded-full"/>
-
+            {/* Content */}
             <div className="relative z-10 max-w-3xl mx-auto px-5 pt-8 pb-32 md:pb-28 md:px-8">
                 <Link
                     to="/level-select"
@@ -71,6 +73,7 @@ export default function PlacementTestPage() {
                     Quay lại chọn trình độ
                 </Link>
 
+                {/* Header */}
                 <header className="text-center mb-10">
                     <div className="relative inline-block mb-5">
                         <div className="absolute inset-0 bg-primary-500/25 blur-3xl rounded-full scale-125"/>
@@ -92,29 +95,30 @@ export default function PlacementTestPage() {
                     </p>
                 </header>
 
+                {/* Detail */}
                 <section className="mb-10">
                     <h2 className="text-lg font-bold text-primary-200 mb-4">Nội dung chi tiết</h2>
                     <ul className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.06] p-5 md:p-6 backdrop-blur-sm">
                         {detailItems.map((row) => (
                             <li key={row.title} className="flex gap-3 text-sm md:text-base leading-relaxed">
-                <span className="shrink-0 text-lg leading-6" aria-hidden>
-                  {row.icon}
-                </span>
+                                <span className="shrink-0 text-lg leading-6" aria-hidden>
+                                  {row.icon}
+                                </span>
                                 <span>
-                  <span className="font-semibold text-white">{row.title}</span>{" "}
-                                    <span className="text-white/85">{row.text}</span>
-                </span>
+                                  <span className="font-semibold text-white">{row.title}</span>{" "}<span className="text-white/85">{row.text}</span>
+                                </span>
                             </li>
                         ))}
                     </ul>
                 </section>
 
+                {/* Overview */}
                 <section className="mb-10">
                     <h2 className="text-lg font-bold text-primary-200 mb-4">Tổng quan nhanh</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <InfoCard
                             title="Đánh giá kỹ năng toàn diện"
-                            subtitle="Vocab · Matching · Listening · Speaking"
+                            subtitle="Vocab · Listening · Speaking · Matching"
                             icon={
                                 <div className="flex gap-1.5 text-primary-300">
                                     <BookOpen className="w-5 h-5" strokeWidth={2}/>
@@ -126,7 +130,7 @@ export default function PlacementTestPage() {
                         />
                         <InfoCard
                             title="45+ câu hỏi"
-                            subtitle="15 Vocab, 15 Matching, cộng thêm Listening & Speaking"
+                            subtitle="15 Vocab, 3 Listening, 11 Speaking, 15 cặp Matching"
                             icon={<ListChecks className="w-8 h-8 text-primary-300" strokeWidth={1.75}/>}
                         />
                         <InfoCard
@@ -142,16 +146,13 @@ export default function PlacementTestPage() {
                     </div>
                 </section>
 
-                <aside
-                    className="rounded-2xl border-l-4 border-primary-500 bg-primary-900/25 px-4 py-4 md:px-5 text-sm md:text-base text-white/90 leading-relaxed"
-                    role="note"
-                >
-                    <span className="font-semibold text-primary-100">Lưu ý: </span>
-                    Vui lòng thực hiện bài test trung thực, chọn nơi yên tĩnh và kiểm tra Micro/Loa trước khi
-                    bắt đầu.
+                {/* Take note */}
+                <aside className="rounded-2xl border-l-4 border-primary-500 bg-primary-900/25 px-4 py-4 md:px-5 text-sm md:text-base text-white/90 leading-relaxed" role="note">
+                    <span className="font-semibold text-primary-100">Lưu ý: </span>Vui lòng thực hiện bài test trung thực, chọn nơi yên tĩnh và kiểm tra Micro/Loa trước khi bắt đầu.
                 </aside>
             </div>
 
+            {/* Button Bắt đầu Test */}
             <div
                 className="fixed bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-[#0a192f]/90 backdrop-blur-md px-5 py-4 md:py-5 flex justify-center">
                 <button

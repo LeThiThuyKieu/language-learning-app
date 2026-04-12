@@ -1,9 +1,9 @@
 import {useEffect, useMemo, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
-import LessonTopBar from "@/components/user/learn/LessonTopBar";
-import LessonExitModal from "@/components/user/learn/LessonExitModal";
-import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer";
-import LessonResultFooter from "@/components/user/learn/LessonResultFooter";
+import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
+import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
+import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
+import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
 
 function parseExpectedTokens(correctAnswer?: string): string[] {
     const raw = (correctAnswer ?? "").trim();

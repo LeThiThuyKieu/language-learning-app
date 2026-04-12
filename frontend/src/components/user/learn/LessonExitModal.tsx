@@ -2,9 +2,16 @@ type Props = {
     open: boolean;
     onContinue: () => void;
     onExit: () => void;
+    // Mặc định: Tiếp tục học . Placement test dùng "Tiếp tục Test".
+    continueButtonText?: string;
 };
 
-export default function LessonExitModal({open, onContinue, onExit}: Props) {
+export default function LessonExitModal({
+    open,
+    onContinue,
+    onExit,
+    continueButtonText = "Tiếp tục học",
+}: Props) {
     if (!open) return null;
 
     return (
@@ -37,7 +44,7 @@ export default function LessonExitModal({open, onContinue, onExit}: Props) {
                     onClick={onContinue}
                     className="w-full rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-extrabold py-3.5 uppercase tracking-wide text-sm mb-2 transition shadow-md"
                 >
-                    Tiếp tục học
+                    {continueButtonText}
                 </button>
                 <button
                     type="button"
