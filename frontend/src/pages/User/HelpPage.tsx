@@ -273,7 +273,7 @@ export default function HelpPage() {
 
             <main className="mx-auto max-w-7xl px-4 pt-[10px] pb-12 lg:px-8 grid gap-8 lg:grid-cols-2">
                 {/* FAQ */}
-                <div className="space-y-4">
+                <div id="help-faq" className="space-y-4 scroll-mt-24">
                     <div className="relative mb-6">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <input
@@ -300,8 +300,8 @@ export default function HelpPage() {
                 </div>
 
                 {/* FORM */}
-                <div className="space-y-6">
-                    <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm lg:sticky lg:top-24 self-start">
+                <div id="help-chat" className="space-y-6 scroll-mt-24">
+                   <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm lg:sticky lg:top-24 self-start">
                         <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                             <MessageSquare className="h-5 w-5 text-blue-600" /> Gửi tin nhắn
                         </h2>
