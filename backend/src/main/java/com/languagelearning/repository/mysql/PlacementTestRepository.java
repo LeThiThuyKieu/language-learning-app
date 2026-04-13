@@ -5,11 +5,10 @@ import com.languagelearning.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PlacementTestRepository extends JpaRepository<PlacementTest, Integer> {
-    List<PlacementTest> findByUserOrderByCreatedAtDesc(User user);
+
+    Optional<PlacementTest> findByIdAndUser(Integer id, User user);
 }
-
-

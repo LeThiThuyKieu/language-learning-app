@@ -1,6 +1,6 @@
 import {cn} from "@/utils/cn.ts";
 import type {PlacementLevelBand} from "@/pages/User/learn/placement/placementTypes.ts";
-import {levelBandEnglish} from "@/pages/User/learn/placement/buildPlacementSteps.ts";
+import {levelBandEnglish} from "@/pages/User/learn/placement/placementTypes.ts";
 
 export type PlacementSkillBar = {
     // Chỉ tỷ lệ, ví dụ "1/15"

@@ -1,30 +1,7 @@
 import type {PlacementBandResult, PlacementSkillKey, PlacementTestResultPayload} from "@/pages/User/learn/placement/placementTypes.ts";
 import {PLACEMENT_MAX_TOTAL, SKILL_MAX} from "@/pages/User/learn/placement/placementTypes.ts";
 
-const VOCAB_COUNT = 15;
-const MATCHING_PAIRS = 15;
-const LISTENING_COUNT = 3;
-const SPEAKING_COUNT = 11;
-
-const PTS_PER_VOCAB = SKILL_MAX.vocab / VOCAB_COUNT;
-const PTS_PER_PAIR = SKILL_MAX.matching / MATCHING_PAIRS;
-const PTS_PER_LISTENING = SKILL_MAX.listening / LISTENING_COUNT;
-const PTS_PER_SPEAKING = SKILL_MAX.speaking / SPEAKING_COUNT;
-
-export function scoreVocab(correct: boolean): number {
-  return correct ? PTS_PER_VOCAB : 0;
-}
-
-export function scoreMatchingPairs(correctPairs: number): number {
-  return correctPairs * PTS_PER_PAIR;
-}
-
-export function scoreListeningBlanks(allCorrect: boolean): number {
-  return allCorrect ? PTS_PER_LISTENING : 0;
-}
-
-// Điểm speaking cho một dòng: so khớp từ (đơn giản)
-export function scoreSpeakingLine(user: string, expected: string): number {
+function scoreSpeakingLine(user: string, expected: string): number {
   const norm = (s: string) =>
     s
       .toLowerCase()
@@ -45,28 +22,20 @@ export function scoreSpeakingLine(user: string, expected: string): number {
   return Math.min(1, hit / wb.length);
 }
 
+/** Trung bình độ khớp từng dòng (0–1), chỉ dùng gợi ý “yếu” trên UI. */
 export function scoreSpeakingStep(lines: string[], inputs: string[]): number {
   if (lines.length === 0) return 0;
   let sum = 0;
   lines.forEach((line, i) => {
     sum += scoreSpeakingLine(inputs[i] ?? "", line);
   });
-  return (sum / lines.length) * PTS_PER_SPEAKING;
+  return sum / lines.length;
 }
 
-export function emptySkillScores(): Record<PlacementSkillKey, {score: number; max: number}> {
-  return {
-    vocab: {score: 0, max: SKILL_MAX.vocab},
-    matching: {score: 0, max: SKILL_MAX.matching},
-    listening: {score: 0, max: SKILL_MAX.listening},
-    speaking: {score: 0, max: SKILL_MAX.speaking},
-  };
-}
-
+/** Khớp backend & bảng quy đổi: ≤55 Beginner, ≤125 Intermediate, còn lại Advanced (thang 160). */
 export function bandFromTotal(total: number): PlacementBandResult {
-  const p = total / PLACEMENT_MAX_TOTAL;
-  if (p < 0.45) return "BEGINNER";
-  if (p < 0.72) return "INTERMEDIATE";
+  if (total <= 55) return "BEGINNER";
+  if (total <= 125) return "INTERMEDIATE";
   return "ADVANCED";
 }
 
@@ -104,7 +73,7 @@ export function analysisForWeakest(w: PlacementSkillKey): string {
   return map[w];
 }
 
-/** Demo: nếu cần cố định gần ví dụ 94.5/160 — chỉ dùng khi không có state */
+/** Khi không có kết quả API (vào trang kết quả trực tiếp). */
 export function buildDemoResult(userName: string): PlacementTestResultPayload {
   const skills = {
     vocab: {score: 26.5, max: SKILL_MAX.vocab},
@@ -127,30 +96,4 @@ export function buildDemoResult(userName: string): PlacementTestResultPayload {
     weakest: w,
     analysisVi: analysisForWeakest(w),
   };
-}
-
-export function buildResultFromSession(
-  userName: string,
-  scores: Record<PlacementSkillKey, {score: number; max: number}>
-): PlacementTestResultPayload {
-  const total =
-    scores.vocab.score + scores.matching.score + scores.listening.score + scores.speaking.score;
-  const band = bandFromTotal(total);
-  const {labelVi, cefr} = bandDisplay(band);
-  const w = weakestSkill(scores);
-  return {
-    userName,
-    totalScore: Math.round(total * 10) / 10,
-    maxScore: PLACEMENT_MAX_TOTAL,
-    band,
-    bandLabelVi: labelVi,
-    cefrLabel: cefr,
-    skills: scores,
-    weakest: w,
-    analysisVi: analysisForWeakest(w),
-  };
-}
-
-export function isListeningBlankCorrect(input: string, expected: string): boolean {
-  return input.trim().toLowerCase() === expected.trim().toLowerCase();
 }

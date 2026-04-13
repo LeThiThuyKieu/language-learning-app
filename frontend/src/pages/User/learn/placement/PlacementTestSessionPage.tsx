@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {Lightbulb} from "lucide-react";
+import {Lightbulb, Loader2} from "lucide-react";
 import toast from "react-hot-toast";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
@@ -8,30 +8,63 @@ import PlacementHeader, {
   type PlacementSkillBar,
 } from "@/components/user/learn/placement/PlacementHeader.tsx";
 import PlacementMatchingLock from "@/components/user/learn/placement/PlacementMatchingLock.tsx";
-import {buildPlacementSteps, PLACEMENT_SECTION_COUNTS} from "@/pages/User/learn/placement/buildPlacementSteps.ts";
-import type {PlacementStep} from "@/pages/User/learn/placement/placementTypes.ts";
-import {
-  buildResultFromSession,
-  emptySkillScores,
-  isListeningBlankCorrect,
-  scoreListeningBlanks,
-  scoreMatchingPairs,
-  scoreSpeakingStep,
-  scoreVocab,
-} from "@/pages/User/learn/placement/placementScoring.ts";
+import {PLACEMENT_SECTION_COUNTS} from "@/pages/User/learn/placement/placementTypes.ts";
+import {mapPlacementResultToPayload} from "@/pages/User/learn/placement/placementResultMapper.ts";
+import type {PlacementLevelBand, PlacementStep} from "@/pages/User/learn/placement/placementTypes.ts";
+import {scoreSpeakingStep} from "@/pages/User/learn/placement/placementScoring.ts";
 import {profileService} from "@/services/profileService.ts";
+import {
+  placementTestService,
+  type PlacementListeningData,
+  type PlacementMatchingData,
+  type PlacementSpeakingData,
+  type PlacementVocabItem,
+} from "@/services/placementTestService.ts";
 import {cn} from "@/utils/cn.ts";
 
+const VOCAB_PER_LEVEL = 5;
+
+function resolveMediaUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+  const origin = base.replace(/\/api\/?$/, "");
+  return `${origin}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+type LevelBundle = {
+  vocab: PlacementVocabItem[];
+  matching: PlacementMatchingData;
+  listening: PlacementListeningData;
+  speaking: PlacementSpeakingData;
+};
+
+type SessionStep =
+  | {kind: "vocab"; vocabIndex: number}
+  | {kind: "listening"}
+  | {kind: "speaking"}
+  | {kind: "matching"};
+
+function buildSessionSteps(): SessionStep[] {
+  const v = Array.from({length: VOCAB_PER_LEVEL}, (_, vocabIndex) => ({
+    kind: "vocab" as const,
+    vocabIndex,
+  }));
+  return [...v, {kind: "listening" as const}, {kind: "speaking" as const}, {kind: "matching" as const}];
+}
+
+const STEPS = buildSessionSteps();
+
 function ListeningFill({
-  step,
+  textWithBlanks,
   values,
   onChange,
 }: {
-  step: Extract<PlacementStep, {kind: "listening"}>;
+  textWithBlanks: string;
   values: string[];
   onChange: (i: number, v: string) => void;
 }) {
-  const parts = step.textWithBlanks.split("___");
+  const parts = textWithBlanks.split("___");
   const n = Math.max(0, parts.length - 1);
   return (
     <div className="text-base font-semibold leading-relaxed text-gray-900 md:text-lg">
@@ -60,23 +93,77 @@ function ListeningFill({
 
 export default function PlacementTestSessionPage() {
   const navigate = useNavigate();
-  const steps = useMemo(() => buildPlacementSteps(), []);
-  const total = steps.length;
 
-  const [index, setIndex] = useState(0);
-  const [, setSkillScores] = useState(emptySkillScores);
+  const [phase, setPhase] = useState<"boot" | "loading" | "ready" | "submitting" | "error">("boot");
+  const [testId, setTestId] = useState<number | null>(null);
+  const [currentLevel, setCurrentLevel] = useState<PlacementLevelBand>(1);
+  const [bundle, setBundle] = useState<LevelBundle | null>(null);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [vocabAnswers, setVocabAnswers] = useState<{questionId: number; selectedOptionIndex: number}[]>(
+    []
+  );
+  const [listeningBuffer, setListeningBuffer] = useState<string[] | null>(null);
+  const [speakingBuffer, setSpeakingBuffer] = useState<string[] | null>(null);
   const [exitOpen, setExitOpen] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
-  const [wrongAttempts, setWrongAttempts] = useState<Record<string, number>>({});
+  const [wrongAttempts, setWrongAttempts] = useState(0);
   const [userName, setUserName] = useState("Bạn");
-  /** Số cặp đã ghép trong khối Matching hiện tại (0–5) */
   const [matchingLockedCount, setMatchingLockedCount] = useState(0);
 
-  const step = steps[index];
+  const step = STEPS[stepIndex];
+
+  const loadLevel = useCallback(async (tid: number, level: PlacementLevelBand) => {
+    setPhase("loading");
+    setBundle(null);
+    setVocabAnswers([]);
+    setListeningBuffer(null);
+    setSpeakingBuffer(null);
+    setStepIndex(0);
+    setMatchingLockedCount(0);
+    setWrongAttempts(0);
+    try {
+      const [vocab, matching, listening, speaking] = await Promise.all([
+        placementTestService.getVocab(tid, level),
+        placementTestService.getMatching(tid, level),
+        placementTestService.getListening(tid, level),
+        placementTestService.getSpeaking(tid, level),
+      ]);
+      if (vocab.length < VOCAB_PER_LEVEL) {
+        throw new Error("Không đủ câu vocab");
+      }
+      const blankN = Math.max(
+        1,
+        (listening.textWithBlanks.match(/___/g) ?? []).length
+      );
+      setListeningBuffer(Array.from({length: blankN}, () => ""));
+      setSpeakingBuffer(Array.from({length: speaking.lines.length}, () => ""));
+      setBundle({vocab, matching, listening, speaking});
+      setPhase("ready");
+    } catch (e: unknown) {
+      console.error(e);
+      toast.error("Không tải được bài test. Thử lại sau.");
+      setPhase("error");
+    }
+  }, []);
 
   useEffect(() => {
-    setMatchingLockedCount(0);
-  }, [step?.id]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const {testId: tid} = await placementTestService.start();
+        if (cancelled) return;
+        setTestId(tid);
+        await loadLevel(tid, 1);
+      } catch (e: unknown) {
+        console.error(e);
+        toast.error("Không mở được phiên test. Bạn đã đăng nhập chưa?");
+        setPhase("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadLevel]);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,27 +181,77 @@ export default function PlacementTestSessionPage() {
     };
   }, []);
 
-  const bumpWrong = useCallback((id: string) => {
-    setWrongAttempts((prev) => ({...prev, [id]: (prev[id] ?? 0) + 1}));
+  const bumpWrong = useCallback(() => {
+    setWrongAttempts((n) => n + 1);
   }, []);
 
-  const advanceOrFinish = useCallback(
-    (nextScores: ReturnType<typeof emptySkillScores>) => {
-      if (index >= total - 1) {
-        const result = buildResultFromSession(userName, nextScores);
-        navigate("/placement-test/results", {state: {placementResult: result}});
-      } else {
-        setIndex((i) => i + 1);
+  const handleAfterLevelSubmit = useCallback(
+    async (lvl: PlacementLevelBand, submitRes: {status: string; message?: string}) => {
+      if (!testId) return;
+      if (submitRes.message) toast.success(submitRes.message);
+      if (submitRes.status === "continue" && lvl < 3) {
+        const next = (lvl + 1) as PlacementLevelBand;
+        setCurrentLevel(next);
+        await loadLevel(testId, next);
+        return;
+      }
+      if (submitRes.status === "finished" || submitRes.status === "completed") {
+        setPhase("submitting");
+        try {
+          const result = await placementTestService.getResult(testId);
+          const payload = mapPlacementResultToPayload(userName, result);
+          navigate("/placement-test/results", {state: {placementResult: payload}});
+        } catch (e: unknown) {
+          console.error(e);
+          toast.error("Không lấy được kết quả.");
+          setPhase("ready");
+        }
+        return;
       }
     },
-    [index, navigate, total, userName]
+    [loadLevel, navigate, testId, userName]
   );
 
-  const handleExit = () => {
-    navigate("/placement-test");
-  };
+  const submitCurrentLevel = useCallback(
+    async (matchingPairs: {leftCardId: string; rightCardId: string}[]) => {
+      if (!testId || !bundle || !listeningBuffer || !speakingBuffer) return;
+      setPhase("submitting");
+      try {
+        const speakingLines = bundle.speaking.lines;
+        const speakingAnswers = speakingLines.map((line, i) => ({
+          questionId: line.questionId,
+          lineIndex: line.lineIndex,
+          typedText: speakingBuffer[i] ?? "",
+        }));
+        const res = await placementTestService.submitSection({
+          testId,
+          level: currentLevel,
+          vocabAnswers,
+          matchingAnswers: matchingPairs,
+          listeningAnswers: [
+            {
+              questionId: bundle.listening.questionId,
+              gapAnswers: listeningBuffer,
+            },
+          ],
+          speakingAnswers,
+        });
+        await handleAfterLevelSubmit(currentLevel, res);
+      } catch (e: unknown) {
+        console.error(e);
+        toast.error("Nộp bài thất bại.");
+        setPhase("ready");
+      }
+    },
+    [bundle, currentLevel, handleAfterLevelSubmit, listeningBuffer, speakingBuffer, testId, vocabAnswers]
+  );
 
-  const skillBars = useMemo(() => {
+  const skillBars = useMemo((): [
+    PlacementSkillBar,
+    PlacementSkillBar,
+    PlacementSkillBar,
+    PlacementSkillBar,
+  ] => {
     const C = PLACEMENT_SECTION_COUNTS;
     const emptyBars = (): [PlacementSkillBar, PlacementSkillBar, PlacementSkillBar, PlacementSkillBar] => [
       {ratioLabel: `0/${C.vocab}`, complete: false, fillRatio: 0},
@@ -122,77 +259,202 @@ export default function PlacementTestSessionPage() {
       {ratioLabel: `0/${C.speaking}`, complete: false, fillRatio: 0},
       {ratioLabel: `0/${C.matchingPairs}`, complete: false, fillRatio: 0},
     ];
-    if (!step) {
+    if (!step || phase !== "ready" || !bundle) {
       return emptyBars();
     }
-    const completedBefore = steps.slice(0, index);
-    const vf = completedBefore.filter((s) => s.kind === "vocab").length;
-    const lf = completedBefore.filter((s) => s.kind === "listening").length;
-    const sf = completedBefore.filter((s) => s.kind === "speaking").length;
-    const matchBlocksDone = completedBefore.filter((s) => s.kind === "matching").length;
-    const partialPairs = step.kind === "matching" ? matchingLockedCount : 0;
-    const matchPairs = Math.min(C.matchingPairs, matchBlocksDone * 5 + partialPairs);
 
-    const effV = Math.min(C.vocab, vf + (step.kind === "vocab" ? 1 : 0));
-    const effL = Math.min(C.listening, lf + (step.kind === "listening" ? 1 : 0));
-    const effS = Math.min(C.speaking, sf + (step.kind === "speaking" ? 1 : 0));
+    const vocabDoneThisLevel = stepIndex < 5 ? vocabAnswers.length : VOCAB_PER_LEVEL;
+    const effV = Math.min(C.vocab, (currentLevel - 1) * VOCAB_PER_LEVEL + vocabDoneThisLevel);
+    const listenGlobal = (currentLevel - 1) + (stepIndex >= 6 ? 1 : 0);
+    const speakGlobal = (currentLevel - 1) + (stepIndex >= 7 ? 1 : 0);
+    const matchPairs =
+      (currentLevel - 1) * VOCAB_PER_LEVEL + (stepIndex === 7 ? matchingLockedCount : 0);
 
-    const vocabDone = vf >= C.vocab;
-    const listenDone = lf >= C.listening;
-    const speakDone = sf >= C.speaking;
-    const matchDone = matchBlocksDone >= 3;
+    const vocabDone = effV >= C.vocab;
+    const listenDone = listenGlobal >= C.listening;
+    const speakDone = speakGlobal >= C.speaking;
+    const matchDone = matchPairs >= C.matchingPairs;
 
     const ratioV = vocabDone ? 1 : effV / C.vocab;
-    const ratioL = listenDone ? 1 : effL / C.listening;
-    const ratioS = speakDone ? 1 : effS / C.speaking;
+    const ratioL = listenDone ? 1 : listenGlobal / C.listening;
+    const ratioS = speakDone ? 1 : speakGlobal / C.speaking;
     const ratioM = matchDone ? 1 : matchPairs / C.matchingPairs;
 
     return [
       {ratioLabel: `${effV}/${C.vocab}`, complete: vocabDone, fillRatio: ratioV},
-      {ratioLabel: `${effL}/${C.listening}`, complete: listenDone, fillRatio: ratioL},
-      {ratioLabel: `${effS}/${C.speaking}`, complete: speakDone, fillRatio: ratioS},
+      {ratioLabel: `${listenGlobal}/${C.listening}`, complete: listenDone, fillRatio: ratioL},
+      {ratioLabel: `${speakGlobal}/${C.speaking}`, complete: speakDone, fillRatio: ratioS},
       {ratioLabel: `${matchPairs}/${C.matchingPairs}`, complete: matchDone, fillRatio: ratioM},
-    ] as [PlacementSkillBar, PlacementSkillBar, PlacementSkillBar, PlacementSkillBar];
-  }, [steps, index, step, matchingLockedCount]);
+    ];
+  }, [
+    bundle,
+    currentLevel,
+    matchingLockedCount,
+    phase,
+    step,
+    stepIndex,
+    vocabAnswers.length,
+  ]);
 
-  if (!step) {
+  const hintStep = useMemo((): PlacementStep | null => {
+    if (!bundle || !step || phase !== "ready") return null;
+    if (step.kind === "vocab") {
+      const item = bundle.vocab[step.vocabIndex];
+      return {
+        kind: "vocab",
+        id: `v-${item.questionId}`,
+        level: currentLevel,
+        questionId: item.questionId,
+        prompt: item.questionText,
+        options: item.options,
+      };
+    }
+    if (step.kind === "listening") {
+      return {
+        kind: "listening",
+        id: `l-${bundle.listening.questionId}`,
+        level: currentLevel,
+        questionId: bundle.listening.questionId,
+        title: "Nghe và điền",
+        audioUrl: resolveMediaUrl(bundle.listening.audioUrl),
+        textWithBlanks: bundle.listening.textWithBlanks,
+      };
+    }
+    if (step.kind === "speaking") {
+      return {
+        kind: "speaking",
+        id: `s-${currentLevel}`,
+        level: currentLevel,
+        instruction: "Đọc và gõ lại từng dòng (bài kiểm tra không gợi ý đáp án).",
+        lines: bundle.speaking.lines.map((l) => ({
+          questionId: l.questionId,
+          lineIndex: l.lineIndex,
+          text: l.line,
+        })),
+      };
+    }
     return null;
+  }, [bundle, currentLevel, phase, step]);
+
+  const handleExit = () => {
+    navigate("/placement-test");
+  };
+
+  if (phase === "error") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#f0f1f3] px-4">
+        <p className="text-center text-gray-700">Không tải được placement test.</p>
+        <button
+          type="button"
+          className="mt-4 rounded-full bg-primary-600 px-6 py-2 text-sm font-bold text-white"
+          onClick={() => navigate("/placement-test")}
+        >
+          Quay lại
+        </button>
+      </div>
+    );
   }
 
-  const attempts = wrongAttempts[step.id] ?? 0;
+  if (phase === "boot" || phase === "loading" || !bundle || !step || !listeningBuffer || !speakingBuffer) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#f0f1f3]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
+        <p className="mt-4 text-sm text-gray-600">Đang chuẩn bị bài test…</p>
+      </div>
+    );
+  }
+
+  const vocabItem = step.kind === "vocab" ? bundle.vocab[step.vocabIndex] : null;
+  const stepKey = `${currentLevel}-${stepIndex}-${step.kind === "vocab" ? step.vocabIndex : ""}`;
+
+  const attempts = wrongAttempts;
   const hintEnabled = step.kind !== "matching" && attempts >= 2;
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f0f1f3] font-sans text-gray-900">
       <PlacementHeader
-        currentLevel={step.level}
+        currentLevel={currentLevel}
         bars={skillBars}
         onClosePress={() => setExitOpen(true)}
       />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-36 pt-6 md:px-8 md:pb-40 md:pt-8">
         <div className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm md:p-10">
-          {step.kind === "vocab" && (
+          {phase === "submitting" && (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-10 w-10 animate-spin text-primary-600" />
+              <p className="mt-3 text-sm text-gray-600">Đang nộp bài…</p>
+            </div>
+          )}
+          {phase === "ready" && step.kind === "vocab" && vocabItem && (
             <VocabStep
-              key={step.id}
-              step={step}
-              onSubmit={(correct) => {
-                if (!correct) bumpWrong(step.id);
-                let nextSnapshot = emptySkillScores();
-                setSkillScores((prev) => {
-                  nextSnapshot = {
-                    ...prev,
-                    vocab: {...prev.vocab, score: prev.vocab.score + scoreVocab(correct)},
-                  };
-                  return nextSnapshot;
-                });
-                advanceOrFinish(nextSnapshot);
+              key={stepKey}
+              questionId={vocabItem.questionId}
+              prompt={vocabItem.questionText}
+              options={vocabItem.options}
+              onSubmit={(selectedOptionIndex) => {
+                setVocabAnswers((prev) => [...prev, {questionId: vocabItem.questionId, selectedOptionIndex}]);
+                setWrongAttempts(0);
+                if (step.vocabIndex >= VOCAB_PER_LEVEL - 1) {
+                  setStepIndex(5);
+                } else {
+                  setStepIndex((i) => i + 1);
+                }
               }}
             />
           )}
 
-          {step.kind === "matching" && (
-            <div key={step.id}>
+          {phase === "ready" && step.kind === "listening" && (
+            <ListeningStep
+              key={`${currentLevel}-listen`}
+              title="Nghe và điền"
+              audioUrl={resolveMediaUrl(bundle.listening.audioUrl)}
+              textWithBlanks={bundle.listening.textWithBlanks}
+              values={listeningBuffer}
+              onChange={(i, v) => {
+                setListeningBuffer((prev) => {
+                  if (!prev) return prev;
+                  const next = [...prev];
+                  next[i] = v;
+                  return next;
+                });
+              }}
+              onSubmit={(ok) => {
+                if (!ok) bumpWrong();
+                setWrongAttempts(0);
+                setStepIndex(6);
+              }}
+            />
+          )}
+
+          {phase === "ready" && step.kind === "speaking" && (
+            <SpeakingStep
+              key={`${currentLevel}-speak`}
+              instruction="Đọc và gõ lại từng dòng."
+              lines={bundle.speaking.lines.map((l) => ({
+                questionId: l.questionId,
+                lineIndex: l.lineIndex,
+                text: l.line,
+              }))}
+              values={speakingBuffer}
+              onChange={(i, v) => {
+                setSpeakingBuffer((prev) => {
+                  if (!prev) return prev;
+                  const next = [...prev];
+                  next[i] = v;
+                  return next;
+                });
+              }}
+              onSubmit={(_pts, isWeak) => {
+                if (isWeak) bumpWrong();
+                setWrongAttempts(0);
+                setStepIndex(7);
+              }}
+            />
+          )}
+
+          {phase === "ready" && step.kind === "matching" && (
+            <div key={`${currentLevel}-match`}>
               <p className="mb-6 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
                 Matching
               </p>
@@ -201,73 +463,22 @@ export default function PlacementTestSessionPage() {
                 Chọn một ô bên trái, sau đó chọn một ô bên phải để ghép cặp — đã ghép sẽ không đổi được.
               </p>
               <div className="mt-6">
-              <PlacementMatchingLock
-                pairs={step.pairs}
-                onLockedPairsChange={setMatchingLockedCount}
-                onSubmitScore={(correct, max) => {
-                  let nextSnapshot = emptySkillScores();
-                  setSkillScores((prev) => {
-                    nextSnapshot = {
-                      ...prev,
-                      matching: {
-                        ...prev.matching,
-                        score: prev.matching.score + scoreMatchingPairs(correct),
-                      },
-                    };
-                    return nextSnapshot;
-                  });
-                  toast.success(`Đã chấm: ${correct}/${max} cặp đúng`);
-                  advanceOrFinish(nextSnapshot);
-                }}
-              />
+                <PlacementMatchingLock
+                  leftColumn={bundle.matching.leftColumn.map((c) => ({id: c.cardId, text: c.text}))}
+                  rightColumn={bundle.matching.rightColumn.map((c) => ({id: c.cardId, text: c.text}))}
+                  shuffleRight={false}
+                  onLockedPairsChange={setMatchingLockedCount}
+                  onSubmitPairs={(pairs) => {
+                    void submitCurrentLevel(pairs);
+                  }}
+                />
               </div>
             </div>
-          )}
-
-          {step.kind === "listening" && (
-            <ListeningStep
-              key={step.id}
-              step={step}
-              onSubmit={(ok) => {
-                if (!ok) bumpWrong(step.id);
-                let nextSnapshot = emptySkillScores();
-                setSkillScores((prev) => {
-                  nextSnapshot = {
-                    ...prev,
-                    listening: {
-                      ...prev.listening,
-                      score: prev.listening.score + scoreListeningBlanks(ok),
-                    },
-                  };
-                  return nextSnapshot;
-                });
-                advanceOrFinish(nextSnapshot);
-              }}
-            />
-          )}
-
-          {step.kind === "speaking" && (
-            <SpeakingStep
-              key={step.id}
-              step={step}
-              onSubmit={(pts, isWeak) => {
-                if (isWeak) bumpWrong(step.id);
-                let nextSnapshot = emptySkillScores();
-                setSkillScores((prev) => {
-                  nextSnapshot = {
-                    ...prev,
-                    speaking: {...prev.speaking, score: prev.speaking.score + pts},
-                  };
-                  return nextSnapshot;
-                });
-                advanceOrFinish(nextSnapshot);
-              }}
-            />
           )}
         </div>
       </main>
 
-      {step.kind !== "matching" && (
+      {phase === "ready" && step.kind !== "matching" && (
         <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-gray-200 bg-[#f7f7f8]/95 backdrop-blur-md">
           <div className="relative mx-auto flex max-w-4xl items-end justify-center px-4 py-4 md:px-8">
             <StepFooterActions hintEnabled={hintEnabled} onHint={() => setHintOpen(true)} />
@@ -282,30 +493,30 @@ export default function PlacementTestSessionPage() {
         continueButtonText="Tiếp tục Test"
       />
 
-      {hintOpen && step.kind !== "matching" && (
-        <HintOverlay
-          step={step}
-          onClose={() => setHintOpen(false)}
-        />
+      {hintOpen && hintStep && hintStep.kind !== "matching" && (
+        <HintOverlay step={hintStep} onClose={() => setHintOpen(false)} />
       )}
     </div>
   );
 }
 
 function VocabStep({
-  step,
+  questionId: _qid,
+  prompt,
+  options,
   onSubmit,
 }: {
-  step: Extract<PlacementStep, {kind: "vocab"}>;
-  onSubmit: (correct: boolean) => void;
+  questionId: number;
+  prompt: string;
+  options: string[];
+  onSubmit: (selectedOptionIndex: number) => void;
 }) {
   const [sel, setSel] = useState<number | null>(null);
 
   const canSubmit = sel != null;
   const handleNop = () => {
     if (sel == null) return;
-    const correct = sel === step.correctIndex;
-    onSubmit(correct);
+    onSubmit(sel);
   };
 
   return (
@@ -313,20 +524,22 @@ function VocabStep({
       <p className="mb-3 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
         Từ vựng
       </p>
-      <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{step.prompt}</h2>
-      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {step.options.map((opt, i) => {
+      <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{prompt}</h2>
+      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-3">
+        {options.map((opt, i) => {
           const active = sel === i;
+          const lastAloneInTwoCol = options.length % 2 === 1 && i === options.length - 1;
           return (
             <button
               key={i}
               type="button"
               onClick={() => setSel(i)}
               className={cn(
-                "rounded-2xl border-2 px-5 py-5 text-left text-sm font-semibold shadow-sm transition md:text-base",
+                "w-full rounded-2xl border-2 px-5 py-5 text-left text-sm font-semibold shadow-sm transition md:py-6 md:text-base",
+                lastAloneInTwoCol && "sm:col-span-2 sm:justify-self-center sm:w-[calc(50%-0.5rem)]",
                 active
                   ? "border-primary-500 bg-primary-100 ring-2 ring-primary-200"
-                  : "border-gray-200 bg-white hover:border-primary-300"
+                  : "border-gray-200 bg-white hover:border-primary-300 hover:shadow-md"
               )}
             >
               {opt}
@@ -352,19 +565,24 @@ function VocabStep({
 }
 
 function ListeningStep({
-  step,
+  title,
+  audioUrl,
+  textWithBlanks,
+  values,
+  onChange,
   onSubmit,
 }: {
-  step: Extract<PlacementStep, {kind: "listening"}>;
+  title: string;
+  audioUrl: string;
+  textWithBlanks: string;
+  values: string[];
+  onChange: (i: number, v: string) => void;
   onSubmit: (ok: boolean) => void;
 }) {
-  const n = step.blankAnswers.length;
-  const [vals, setVals] = useState<string[]>(() => Array.from({length: n}, () => ""));
-
-  const filled = vals.every((v) => v.trim().length > 0);
+  const n = Math.max(0, textWithBlanks.split("___").length - 1);
+  const filled = n === 0 || values.slice(0, n).every((v) => v.trim().length > 0);
   const handleNop = () => {
-    const ok = step.blankAnswers.every((a, i) => isListeningBlankCorrect(vals[i] ?? "", a));
-    onSubmit(ok);
+    onSubmit(true);
   };
 
   return (
@@ -372,20 +590,12 @@ function ListeningStep({
       <p className="mb-3 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
         Nghe hiểu
       </p>
-      <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{step.title}</h2>
+      <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{title}</h2>
       <div className="mt-6">
-        <LessonAudioPlayer src={step.audioUrl} trackKey={step.id} />
+        <LessonAudioPlayer src={audioUrl} trackKey={textWithBlanks.slice(0, 40)} />
       </div>
       <div className="mt-8 rounded-2xl border-2 border-gray-100 bg-gray-50/80 p-5 md:p-6">
-        <ListeningFill
-          step={step}
-          values={vals}
-          onChange={(i, v) => setVals((prev) => {
-            const next = [...prev];
-            next[i] = v;
-            return next;
-          })}
-        />
+        <ListeningFill textWithBlanks={textWithBlanks} values={values} onChange={onChange} />
       </div>
       <div className="mt-10 flex justify-center">
         <button
@@ -405,19 +615,26 @@ function ListeningStep({
 }
 
 function SpeakingStep({
-  step,
+  instruction,
+  lines,
+  values,
+  onChange,
   onSubmit,
 }: {
-  step: Extract<PlacementStep, {kind: "speaking"}>;
+  instruction: string;
+  lines: {questionId: number; lineIndex: number; text: string}[];
+  values: string[];
+  onChange: (i: number, v: string) => void;
   onSubmit: (points: number, isWeak: boolean) => void;
 }) {
-  const [vals, setVals] = useState<string[]>(() => step.lines.map(() => ""));
-
-  const filled = vals.every((v) => v.trim().length > 0);
+  const filled = values.every((v) => v.trim().length > 0);
   const handleNop = () => {
-    const pts = scoreSpeakingStep(step.lines, vals);
-    const isWeak = pts < 1.5;
-    onSubmit(pts, isWeak);
+    const ratio = scoreSpeakingStep(
+      lines.map((l) => l.text),
+      values
+    );
+    const isWeak = ratio < 0.45;
+    onSubmit(ratio, isWeak);
   };
 
   return (
@@ -425,25 +642,19 @@ function SpeakingStep({
       <p className="mb-3 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
         Nói / Đọc
       </p>
-      <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{step.instruction}</h2>
+      <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{instruction}</h2>
       <div className="mt-8 space-y-4">
-        {step.lines.map((line, i) => (
-          <div key={i} className="rounded-2xl border-2 border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-700">{line}</p>
+        {lines.map((line, i) => (
+          <div key={`${line.questionId}-${line.lineIndex}`} className="rounded-2xl border-2 border-gray-100 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-700">{line.text}</p>
             <label className="mt-3 block text-[10px] font-bold uppercase tracking-wide text-primary-600">
-              Từ {i + 1}
+              Dòng {i + 1}
             </label>
             <input
               type="text"
-              value={vals[i] ?? ""}
-              onChange={(e) =>
-                setVals((prev) => {
-                  const n = [...prev];
-                  n[i] = e.target.value;
-                  return n;
-                })
-              }
-              placeholder="Nhập từ..."
+              value={values[i] ?? ""}
+              onChange={(e) => onChange(i, e.target.value)}
+              placeholder="Gõ lại..."
               className="mt-1 w-full rounded-xl border-2 border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
             />
           </div>
@@ -505,11 +716,16 @@ function HintOverlay({
 }) {
   let body = "";
   if (step.kind === "vocab") {
-    body = `Gợi ý: đáp án đúng là "${step.options[step.correctIndex]}".`;
+    body =
+      step.correctIndex != null
+        ? `Gợi ý: đáp án đúng là "${step.options[step.correctIndex]}".`
+        : "Bài kiểm tra trực tuyến không hiển thị đáp án gợi ý.";
   } else if (step.kind === "listening") {
-    body = `Gợi ý: ${step.blankAnswers.map((a, i) => `Từ ${i + 1}: "${a}"`).join(" · ")}`;
+    body = step.blankAnswers?.length
+      ? `Gợi ý: ${step.blankAnswers.map((a, i) => `Từ ${i + 1}: "${a}"`).join(" · ")}`
+      : "Nghe kỹ và điền từ phù hợp vào từng chỗ trống.";
   } else {
-    body = `Gợi ý: ${step.lines.map((l, i) => `Câu ${i + 1}: "${l}"`).join(" ")}`;
+    body = `Gợi ý: ${step.lines.map((l, i) => `Dòng ${i + 1}: "${l.text}"`).join(" ")}`;
   }
 
   return (

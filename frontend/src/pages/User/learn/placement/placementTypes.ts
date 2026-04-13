@@ -7,9 +7,11 @@ export type PlacementStep =
       kind: "vocab";
       id: string;
       level: PlacementLevelBand;
+      questionId: number;
       prompt: string;
       options: string[];
-      correctIndex: number;
+      /** Chỉ có khi mock local — API không gửi đáp án */
+      correctIndex?: number;
     }
   | {
       kind: "matching";
@@ -21,19 +23,21 @@ export type PlacementStep =
       kind: "listening";
       id: string;
       level: PlacementLevelBand;
+      questionId: number;
       title: string;
       audioUrl: string;
       /** Câu có chỗ trống, đánh dấu bằng "___" */
       textWithBlanks: string;
-      /** Đáp án theo thứ tự chỗ trống */
-      blankAnswers: string[];
+      /** Chỉ mock: đáp án đúng để gợi ý */
+      blankAnswers?: string[];
     }
   | {
       kind: "speaking";
       id: string;
       level: PlacementLevelBand;
       instruction: string;
-      lines: string[];
+      /** Mỗi dòng: questionId + lineIndex + text mẫu */
+      lines: { questionId: number; lineIndex: number; text: string }[];
     };
 
 export const PLACEMENT_MAX_TOTAL = 160;
@@ -43,6 +47,20 @@ export const SKILL_MAX = {
   listening: 40,
   speaking: 40,
 } as const;
+
+/** Tổng cả bài (3 level): 15 vocab, 3 listening, 3 speaking, 15 cặp matching */
+export const PLACEMENT_SECTION_COUNTS = {
+  vocab: 15,
+  listening: 3,
+  speaking: 3,
+  matchingPairs: 15,
+} as const;
+
+export function levelBandEnglish(level: PlacementLevelBand): string {
+  if (level === 1) return "Beginner";
+  if (level === 2) return "Intermediate";
+  return "Advanced";
+}
 
 export type PlacementBandResult = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 

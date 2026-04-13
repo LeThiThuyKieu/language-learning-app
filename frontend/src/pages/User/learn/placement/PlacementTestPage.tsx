@@ -26,7 +26,7 @@ const detailItems = [
     {
         icon: "🗣️",
         title: "Speaking:",
-        text: "6 - 15 câu (Đọc và phát âm các câu/đoạn văn linh hoạt theo năng lực).",
+        text: "3 bài (mỗi cấp 1 bài; mỗi bài nhiều dòng — chấm theo từng dòng).",
     },
     {
         icon: "🧩",
@@ -130,7 +130,7 @@ export default function PlacementTestPage() {
                         />
                         <InfoCard
                             title="45+ câu hỏi"
-                            subtitle="15 Vocab, 3 Listening, 11 Speaking, 15 cặp Matching"
+                            subtitle="15 Vocab, 3 Listening, 3 Speaking, 15 cặp Matching"
                             icon={<ListChecks className="w-8 h-8 text-primary-300" strokeWidth={1.75}/>}
                         />
                         <InfoCard

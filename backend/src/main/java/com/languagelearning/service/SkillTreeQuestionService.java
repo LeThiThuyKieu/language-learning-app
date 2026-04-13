@@ -228,6 +228,11 @@ public class SkillTreeQuestionService {
         return enrichFromMongo(rows);
     }
 
+    /** Dùng cho Placement Test và API khác: bổ sung nội dung từ Mongo theo bản ghi MySQL. */
+    public List<EnrichedQuestionDto> enrichQuestionRows(List<QuestionIndex> rows) {
+        return enrichFromMongo(rows);
+    }
+
     private List<EnrichedQuestionDto> enrichFromMongo(List<QuestionIndex> rows) {
         if (rows == null || rows.isEmpty()) {
             return List.of();
