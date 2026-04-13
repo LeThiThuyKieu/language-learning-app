@@ -203,13 +203,14 @@ export default function PlacementTestSessionPage() {
         async (lvl: PlacementLevelBand, submitRes: { status: string; message?: string }) => {
             if (!testId) return;
             if (submitRes.message) toast.success(submitRes.message);
+            // Flow mới: luôn đi hết 3 level, chỉ completed ở level 3.
             if (submitRes.status === "continue" && lvl < 3) {
                 const next = (lvl + 1) as PlacementLevelBand;
                 setCurrentLevel(next);
                 await loadLevel(testId, next);
                 return;
             }
-            if (submitRes.status === "finished" || submitRes.status === "completed") {
+            if (submitRes.status === "completed") {
                 setPhase("submitting");
                 try {
                     const result = await placementTestService.getResult(testId);

@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Placement test: bốc câu theo level_id (1/2/3), chấm điểm, adaptive dừng khi TB level < 50%.
+ * Placement test: bốc câu theo level_id (1/2/3), chấm điểm, làm đủ 3 level rồi mới kết thúc.
  * Vocab/Matching: 5 câu/level; Listening: 1 bài/level; Speaking: 1 bài Mongo/level, chấm theo từng dòng (câu nhỏ).
  */
 @Service
@@ -180,7 +180,7 @@ public class PlacementTestService {
         return res;
     }
 
-    /** Chấm một level; adaptive: TB 4 kỹ năng < 50% → finished. */
+    /** Chấm một level; luôn làm đủ 3 level rồi mới completed. */
     @Transactional
     public PlacementSubmitResponse submitSection(String email, PlacementSubmitRequest req) {
         if (req.getTestId() == null || req.getLevel() == null) {
@@ -200,29 +200,25 @@ public class PlacementTestService {
         // check payload từ req
         validateSubmitPayload(req, lvl, level);
 
-        // Điểm từng phần theo thang 160
+        // Tỷ lệ đúng từng phần (0..1)
         double rV = scoreVocab(req.getVocabAnswers(), lvl.get("vocabIds"));
+        double rM = scoreMatching(req.getMatchingAnswers(), lvl.get("matching"));
         double rL = scoreListening(req.getListeningAnswers(), lvl.get("listeningId"));
         double rS = scoreSpeaking(req.getSpeakingAnswers(), lvl.get("speakingIds"));
-        double rM = scoreMatching(req.getMatchingAnswers(), lvl.get("matching"));
 
         int listeningGaps = lvl.path("listeningBlanks").asInt(1);
         int speakLines = resolveSpeakingLineCount(lvl, level);
-        mergeScores(session, rV, rL, rS, rM, listeningGaps, speakLines);
+        // Lưu đúng thứ tự kỹ năng: vocab, matching, listening, speaking.
+        mergeScores(session, rV, rM, rL, rS, listeningGaps, speakLines);
 
         double avg = (rV + rL + rS + rM) / 4.0;
         String status = "continue";
-        String message = "Đạt ngưỡng, có thể làm level tiếp theo.";
-        if (avg < 0.5) {
-            status = "finished";
-            message = "Điểm TB level này dưới 50% — kết thúc placement (adaptive).";
-            session.setStatus("STOPPED_LOW_SCORE");
-            finalizeScores(session);
-        } else if (level >= 3) {
+        String message = "Đã nộp level này. Tiếp tục level tiếp theo.";
+        if (level >= 3) {
             status = "completed";
             session.setStatus("COMPLETED");
             finalizeScores(session);
-            message = "Hoàn thành placement.";
+            message = "Hoàn thành cả 3 level. Đang tổng hợp kết quả.";
         }
         sessionRepository.save(session);
         return PlacementSubmitResponse.builder()
@@ -652,9 +648,8 @@ public class PlacementTestService {
         }
     }
 
-    /** Bốn điểm kỹ năng trên thang 0–160, mỗi kỹ năng làm tròn số nguyên rồi mới TB (khớp ví dụ tài liệu). */
+    /** Bốn điểm kỹ năng trên thang 0–160, mỗi kỹ năng làm tròn số nguyên rồi mới TB */
     private record SkillScores160(int vocab, int matching, int listening, int speaking) {}
-
     private SkillScores160 computeSkillScores160(ObjectNode sc) {
         int vC = sc.path("vocab").path("c").asInt(0);
         int vT = Math.max(1, sc.path("vocab").path("t").asInt(1));
@@ -669,7 +664,6 @@ public class PlacementTestService {
                 skillScore160(sC, sT)
         );
     }
-
     private static int skillScore160(int correct, int total) {
         if (total <= 0) {
             return 0;
