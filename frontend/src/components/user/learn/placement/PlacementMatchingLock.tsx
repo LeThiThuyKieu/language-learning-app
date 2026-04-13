@@ -79,6 +79,11 @@ export default function PlacementMatchingLock({
   }, [leftColumn, rightColumn, pairs, shuffleRight]);
 
   const {left, right, correctMap, total} = derived;
+  const leftOrder = useMemo(() => {
+    const m = new Map<string, number>();
+    left.forEach((c, idx) => m.set(c.id, idx + 1));
+    return m;
+  }, [left]);
 
   const [selectedLeftId, setSelectedLeftId] = useState<string | null>(null);
   const [locked, setLocked] = useState<Locked[]>([]);
@@ -87,13 +92,20 @@ export default function PlacementMatchingLock({
     onLockedPairsChange?.(locked.length);
   }, [locked, onLockedPairsChange]);
 
+  // Parent often passes new array instances each render (e.g. map()),
+  // so we must not reset state on reference changes. Reset only when the actual card ids change.
+  const sourceKey = useMemo(() => {
+    const lk = left.map((c) => c.id).join(",");
+    const rk = right.map((c) => c.id).join(",");
+    return `${lk}||${rk}||${total}`;
+  }, [left, right, total]);
+
   useEffect(() => {
     setSelectedLeftId(null);
     setLocked([]);
-  }, [leftColumn, rightColumn, pairs]);
+  }, [sourceKey]);
 
   const lockedLeft = useMemo(() => new Set(locked.map((l) => l.leftId)), [locked]);
-  const lockedRight = useMemo(() => new Set(locked.map((l) => l.rightId)), [locked]);
 
   function pairNoForLeft(id: string) {
     return locked.find((l) => l.leftId === id)?.pairNo;
@@ -108,12 +120,14 @@ export default function PlacementMatchingLock({
   }
 
   function handlePickRight(rightId: string) {
-    if (lockedRight.has(rightId)) return;
-    if (!selectedLeftId) {
-      return;
-    }
-    const nextNo = locked.length + 1;
-    setLocked((prev) => [...prev, {leftId: selectedLeftId, rightId, pairNo: nextNo}]);
+    if (!selectedLeftId) return;
+    setLocked((prev) => {
+      const leftTaken = prev.some((p) => p.leftId === selectedLeftId);
+      const rightTaken = prev.some((p) => p.rightId === rightId);
+      if (leftTaken || rightTaken) return prev;
+      const nextNo = leftOrder.get(selectedLeftId) ?? (prev.length + 1);
+      return [...prev, {leftId: selectedLeftId, rightId, pairNo: nextNo}];
+    });
     setSelectedLeftId(null);
   }
 
@@ -121,7 +135,9 @@ export default function PlacementMatchingLock({
 
   function handleSubmitSection() {
     if (!allPaired) return;
-    const payload = locked.map((l) => ({
+    const payload = [...locked]
+      .sort((a, b) => a.pairNo - b.pairNo)
+      .map((l) => ({
       leftCardId: l.leftId,
       rightCardId: l.rightId,
     }));

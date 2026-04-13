@@ -57,7 +57,7 @@ public class PlacementTestService {
     }
 
     /** Lấy 5 câu vocab ngẫu nhiên theo level (1–3). */
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PlacementVocabItemDto> getVocab(String email, Integer testId, int level) {
         PlacementTest session = loadSession(email, testId);
         int levelId = assertLevel(level);
@@ -444,15 +444,12 @@ public class PlacementTestService {
         if (text == null) {
             return 0;
         }
+        // Giữ nguyên text gốc; chỉ đếm số ô trống để FE render input.
+        // Mỗi cụm gạch dưới (ví dụ "___", "______", "_______(3)") chỉ tính 1 lần.
         int c = 0;
-        int i = 0;
-        while (true) {
-            int j = text.indexOf("___", i);
-            if (j < 0) {
-                break;
-            }
+        var m = java.util.regex.Pattern.compile("_{3,}(?:\\s*\\(\\d+\\))?").matcher(text);
+        while (m.find()) {
             c++;
-            i = j + 3;
         }
         return c;
     }

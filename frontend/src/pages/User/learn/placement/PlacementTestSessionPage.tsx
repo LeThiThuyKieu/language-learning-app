@@ -1,6 +1,6 @@
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {Lightbulb, Loader2} from "lucide-react";
+import {Lightbulb, Loader2, Mic} from "lucide-react";
 import toast from "react-hot-toast";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
@@ -57,35 +57,41 @@ const STEPS = buildSessionSteps();
 
 function ListeningFill({
   textWithBlanks,
+}: {
+  textWithBlanks: string;
+}) {
+  const normalized = String(textWithBlanks ?? "").replace(/\\n/g, "\n");
+  return (
+    <p className="whitespace-pre-wrap text-base font-semibold leading-relaxed text-gray-900 md:text-lg">
+      {normalized}
+    </p>
+  );
+}
+
+function ListeningInputsGrid({
+  blankCount,
   values,
   onChange,
 }: {
-  textWithBlanks: string;
+  blankCount: number;
   values: string[];
   onChange: (i: number, v: string) => void;
 }) {
-  const parts = textWithBlanks.split("___");
-  const n = Math.max(0, parts.length - 1);
   return (
-    <div className="text-base font-semibold leading-relaxed text-gray-900 md:text-lg">
-      {parts.map((part, i) => (
-        <span key={i} className="inline leading-relaxed">
-          <span className="whitespace-pre-wrap">{part}</span>
-          {i < n && (
-            <span className="mx-1 inline-flex flex-col align-middle">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-primary-600">
-                Từ {i + 1}
-              </span>
-              <input
-                type="text"
-                value={values[i] ?? ""}
-                onChange={(e) => onChange(i, e.target.value)}
-                placeholder="Nhập từ..."
-                className="mt-0.5 min-w-[140px] rounded-xl border-2 border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 shadow-inner outline-none focus:border-primary-500 md:min-w-[180px]"
-              />
-            </span>
-          )}
-        </span>
+    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+      {Array.from({length: blankCount}, (_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border-2 border-gray-200 bg-white px-4 py-4 shadow-sm transition focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-200/80"
+        >
+          <input
+            type="text"
+            value={values[i] ?? ""}
+            onChange={(e) => onChange(i, e.target.value)}
+            placeholder={`Nhập đáp án (${i + 1})...`}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-900 outline-none focus:border-primary-500"
+          />
+        </div>
       ))}
     </div>
   );
@@ -122,19 +128,15 @@ export default function PlacementTestSessionPage() {
     setMatchingLockedCount(0);
     setWrongAttempts(0);
     try {
-      const [vocab, matching, listening, speaking] = await Promise.all([
-        placementTestService.getVocab(tid, level),
-        placementTestService.getMatching(tid, level),
-        placementTestService.getListening(tid, level),
-        placementTestService.getSpeaking(tid, level),
-      ]);
+      // Fetch tuần tự để tránh race-condition ghi đè issued_json ở backend.
+      const vocab = await placementTestService.getVocab(tid, level);
+      const matching = await placementTestService.getMatching(tid, level);
+      const listening = await placementTestService.getListening(tid, level);
+      const speaking = await placementTestService.getSpeaking(tid, level);
       if (vocab.length < VOCAB_PER_LEVEL) {
         throw new Error("Không đủ câu vocab");
       }
-      const blankN = Math.max(
-        1,
-        (listening.textWithBlanks.match(/___/g) ?? []).length
-      );
+      const blankN = Math.max(1, listening.blankCount || 0);
       setListeningBuffer(Array.from({length: blankN}, () => ""));
       setSpeakingBuffer(Array.from({length: speaking.lines.length}, () => ""));
       setBundle({vocab, matching, listening, speaking});
@@ -239,7 +241,16 @@ export default function PlacementTestSessionPage() {
         await handleAfterLevelSubmit(currentLevel, res);
       } catch (e: unknown) {
         console.error(e);
-        toast.error("Nộp bài thất bại.");
+        const err = e as {
+          response?: {data?: {message?: string; data?: {message?: string}}};
+          message?: string;
+        };
+        const detail =
+          err.response?.data?.data?.message ||
+          err.response?.data?.message ||
+          err.message ||
+          "Nộp bài thất bại.";
+        toast.error(detail);
         setPhase("ready");
       }
     },
@@ -325,7 +336,7 @@ export default function PlacementTestSessionPage() {
         kind: "speaking",
         id: `s-${currentLevel}`,
         level: currentLevel,
-        instruction: "Đọc và gõ lại từng dòng (bài kiểm tra không gợi ý đáp án).",
+        instruction: "Bấm mic để đọc từng dòng (bài kiểm tra không gợi ý đáp án).",
         lines: bundle.speaking.lines.map((l) => ({
           questionId: l.questionId,
           lineIndex: l.lineIndex,
@@ -579,7 +590,8 @@ function ListeningStep({
   onChange: (i: number, v: string) => void;
   onSubmit: (ok: boolean) => void;
 }) {
-  const n = Math.max(0, textWithBlanks.split("___").length - 1);
+  const normalized = useMemo(() => String(textWithBlanks ?? "").replace(/\\n/g, "\n"), [textWithBlanks]);
+  const n = values.length;
   const filled = n === 0 || values.slice(0, n).every((v) => v.trim().length > 0);
   const handleNop = () => {
     onSubmit(true);
@@ -592,10 +604,11 @@ function ListeningStep({
       </p>
       <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{title}</h2>
       <div className="mt-6">
-        <LessonAudioPlayer src={audioUrl} trackKey={textWithBlanks.slice(0, 40)} />
+        <LessonAudioPlayer src={audioUrl} trackKey={normalized.slice(0, 40)} />
       </div>
       <div className="mt-8 rounded-2xl border-2 border-gray-100 bg-gray-50/80 p-5 md:p-6">
-        <ListeningFill textWithBlanks={textWithBlanks} values={values} onChange={onChange} />
+        <ListeningFill textWithBlanks={normalized} />
+        <ListeningInputsGrid blankCount={n} values={values} onChange={onChange} />
       </div>
       <div className="mt-10 flex justify-center">
         <button
@@ -637,28 +650,119 @@ function SpeakingStep({
     onSubmit(ratio, isWeak);
   };
 
+  const [activeMicIndex, setActiveMicIndex] = useState<number | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
+  const recRef = useRef<any>(null);
+
+  const stopMic = useCallback(() => {
+    try {
+      recRef.current?.stop?.();
+    } catch {
+      // ignore
+    }
+    recRef.current = null;
+    setActiveMicIndex(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopMic();
+    };
+  }, [stopMic]);
+
+  const startMicFor = useCallback(
+    (idx: number) => {
+      const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) {
+        setMicError("Trình duyệt chưa hỗ trợ SpeechRecognition. Bạn có thể gõ tay để nộp bài.");
+        toast.error("Trình duyệt chưa hỗ trợ micro (SpeechRecognition).");
+        return;
+      }
+      setMicError(null);
+      stopMic();
+      const rec = new SR();
+      rec.lang = "en-US";
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onresult = (e: any) => {
+        const t = e?.results?.[0]?.[0]?.transcript ?? "";
+        onChange(idx, String(t));
+      };
+      rec.onerror = (e: any) => {
+        const msg = e?.error ? String(e.error) : "micro_error";
+        setMicError(`Không dùng được mic: ${msg}`);
+      };
+      rec.onend = () => {
+        recRef.current = null;
+        setActiveMicIndex(null);
+      };
+      recRef.current = rec;
+      setActiveMicIndex(idx);
+      try {
+        rec.start();
+      } catch {
+        setMicError("Không thể bật mic. Hãy kiểm tra quyền truy cập micro.");
+      }
+    },
+    [onChange, stopMic]
+  );
+
   return (
     <>
       <p className="mb-3 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
         Nói / Đọc
       </p>
       <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{instruction}</h2>
-      <div className="mt-8 space-y-4">
-        {lines.map((line, i) => (
-          <div key={`${line.questionId}-${line.lineIndex}`} className="rounded-2xl border-2 border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-sm font-semibold text-gray-700">{line.text}</p>
-            <label className="mt-3 block text-[10px] font-bold uppercase tracking-wide text-primary-600">
-              Dòng {i + 1}
-            </label>
-            <input
-              type="text"
-              value={values[i] ?? ""}
-              onChange={(e) => onChange(i, e.target.value)}
-              placeholder="Gõ lại..."
-              className="mt-1 w-full rounded-xl border-2 border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-primary-500"
-            />
-          </div>
-        ))}
+      {micError && <p className="mt-3 text-sm font-semibold text-amber-700">{micError}</p>}
+      <div className="mt-8 rounded-2xl border-2 border-gray-200 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-6 shadow-inner">
+        <p className="mb-4 text-sm font-semibold text-gray-600">
+          Bấm mic ở mỗi câu để đọc. Hệ thống sẽ ghi lại transcript để chấm điểm (bạn vẫn có thể chỉnh sửa bằng tay).
+        </p>
+        <div className="space-y-3">
+          {lines.map((line, i) => {
+            const active = activeMicIndex === i;
+            const lineText = String(line.text ?? "").replace(/\\n/g, "\n");
+            return (
+              <div
+                key={`${line.questionId}-${line.lineIndex}`}
+                className={cn(
+                  "rounded-2xl border-2 px-4 py-4 shadow-sm transition",
+                  active ? "border-primary-500 bg-primary-100 ring-2 ring-primary-200" : "border-gray-200 bg-white"
+                )}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-gray-900 font-semibold leading-snug whitespace-pre-wrap">{lineText}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (active) stopMic();
+                      else startMicFor(i);
+                    }}
+                    className={cn(
+                      "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 transition shadow-sm",
+                      active
+                        ? "border-primary-500 bg-primary-500 text-white hover:bg-primary-600"
+                        : "border-gray-200 bg-white text-primary-600 hover:border-primary-300 hover:bg-primary-50"
+                    )}
+                    aria-label="Bấm để đọc"
+                    title={active ? "Dừng" : "Bấm để đọc"}
+                  >
+                    <Mic className="h-5 w-5" strokeWidth={2.2} />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={values[i] ?? ""}
+                  onChange={(e) => onChange(i, e.target.value)}
+                  placeholder="Transcript sẽ hiện ở đây..."
+                  className="mt-3 w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-primary-500"
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
       <div className="mt-10 flex justify-center">
         <button
