@@ -410,12 +410,16 @@ public class PlacementTestService {
         List<QuestionIndex> rows = questionIndexRepository.findAllById(idList);
         Map<Long, QuestionIndex> byId = rows.stream().collect(Collectors.toMap(QuestionIndex::getId, r -> r));
         List<PlacementSpeakingLineDto> lines = new ArrayList<>();
+        String audioUrl = null;
         for (Long id : idList) {
             QuestionIndex row = byId.get(id);
             if (row == null) {
                 continue;
             }
             EnrichedQuestionDto e = skillTreeQuestionService.enrichQuestionRows(List.of(row)).get(0);
+            if (audioUrl == null || audioUrl.isBlank()) {
+                audioUrl = e.getAudioUrl();
+            }
             List<String> parts = splitSpeakingLines(e.getQuestionText());
             int idx = 0;
             for (String part : parts) {
@@ -427,7 +431,7 @@ public class PlacementTestService {
                         .build());
             }
         }
-        return PlacementSpeakingResponse.builder().level(level).lines(lines).build();
+        return PlacementSpeakingResponse.builder().level(level).audioUrl(audioUrl).lines(lines).build();
     }
 
     private List<String> splitSpeakingLines(String questionText) {

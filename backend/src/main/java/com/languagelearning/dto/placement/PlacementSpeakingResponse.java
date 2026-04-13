@@ -14,5 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 public class PlacementSpeakingResponse {
     private int level;
+    private String audioUrl;
     private List<PlacementSpeakingLineDto> lines;
 }

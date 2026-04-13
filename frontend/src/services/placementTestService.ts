@@ -50,6 +50,7 @@ export interface PlacementSpeakingLine {
 
 export interface PlacementSpeakingData {
   level: number;
+  audioUrl: string | null;
   lines: PlacementSpeakingLine[];
 }
 

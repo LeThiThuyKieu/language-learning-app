@@ -441,7 +441,8 @@ export default function PlacementTestSessionPage() {
           {phase === "ready" && step.kind === "speaking" && (
             <SpeakingStep
               key={`${currentLevel}-speak`}
-              instruction="Đọc và gõ lại từng dòng."
+              instruction="Nghe mẫu và luyện đọc theo từng câu"
+              audioUrl={resolveMediaUrl(bundle.speaking.audioUrl)}
               lines={bundle.speaking.lines.map((l) => ({
                 questionId: l.questionId,
                 lineIndex: l.lineIndex,
@@ -629,12 +630,14 @@ function ListeningStep({
 
 function SpeakingStep({
   instruction,
+  audioUrl,
   lines,
   values,
   onChange,
   onSubmit,
 }: {
   instruction: string;
+  audioUrl: string;
   lines: {questionId: number; lineIndex: number; text: string}[];
   values: string[];
   onChange: (i: number, v: string) => void;
@@ -713,6 +716,9 @@ function SpeakingStep({
         Nói / Đọc
       </p>
       <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{instruction}</h2>
+      <div className="mt-6">
+        <LessonAudioPlayer src={audioUrl} trackKey={`${instruction}-${lines[0]?.questionId ?? "speak"}`} />
+      </div>
       {micError && <p className="mt-3 text-sm font-semibold text-amber-700">{micError}</p>}
       <div className="mt-8 rounded-2xl border-2 border-gray-200 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-6 shadow-inner">
         <p className="mb-4 text-sm font-semibold text-gray-600">
