@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/** Danh sách câu đọc theo level. */
+/** 1 đoạn speaking theo level . */
 @Data
 @Builder
 @NoArgsConstructor

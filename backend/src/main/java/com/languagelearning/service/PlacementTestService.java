@@ -78,7 +78,7 @@ public class PlacementTestService {
         return materializeVocab(ids);
     }
 
-    /** Lấy 5 cặp matching đã shuffle hai cột. */
+    /** Lấy 5 cặp matching ngẫu nhiên theo level (1-3) đã shuffle hai cột. */
     @Transactional
     public PlacementMatchingResponse getMatching(String email, Integer testId, int level) {
         PlacementTest session = loadSession(email, testId);
@@ -133,7 +133,7 @@ public class PlacementTestService {
                 .build();
     }
 
-    /** Một bài listening theo level (URL + đoạn có ___). */
+    /** Lấy 1 bài listening theo level (1-3) */
     @Transactional
     public PlacementListeningResponse getListening(String email, Integer testId, int level) {
         PlacementTest session = loadSession(email, testId);
@@ -156,7 +156,7 @@ public class PlacementTestService {
         return res;
     }
 
-    /** Một bài speaking/level (Mongo): tách {@code question_text} theo dòng → nhiều “câu nhỏ” để chấm. */
+    /** Lấy 1 bài speaking theo level (1-3) */
     @Transactional
     public PlacementSpeakingResponse getSpeaking(String email, Integer testId, int level) {
         PlacementTest session = loadSession(email, testId);
@@ -197,18 +197,20 @@ public class PlacementTestService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chưa tải đủ 4 phần nội dung cho level này từ API GET");
         }
 
+        // check payload từ req
         validateSubmitPayload(req, lvl, level);
 
+        // Điểm từng phần theo thang 160
         double rV = scoreVocab(req.getVocabAnswers(), lvl.get("vocabIds"));
-        double rM = scoreMatching(req.getMatchingAnswers(), lvl.get("matching"));
         double rL = scoreListening(req.getListeningAnswers(), lvl.get("listeningId"));
         double rS = scoreSpeaking(req.getSpeakingAnswers(), lvl.get("speakingIds"));
+        double rM = scoreMatching(req.getMatchingAnswers(), lvl.get("matching"));
 
         int listeningGaps = lvl.path("listeningBlanks").asInt(1);
         int speakLines = resolveSpeakingLineCount(lvl, level);
-        mergeScores(session, rV, rM, rL, rS, listeningGaps, speakLines);
+        mergeScores(session, rV, rL, rS, rM, listeningGaps, speakLines);
 
-        double avg = (rV + rM + rL + rS) / 4.0;
+        double avg = (rV + rL + rS + rM) / 4.0;
         String status = "continue";
         String message = "Đạt ngưỡng, có thể làm level tiếp theo.";
         if (avg < 0.5) {
@@ -231,7 +233,7 @@ public class PlacementTestService {
                 .build();
     }
 
-    /** Bảng điểm + xếp lớp (10–55 Beginner, 60–125 Intermediate, 130–160 Advanced). */
+    /** Bảng điểm + xếp level (10–55 Beginner, 60–125 Intermediate, 130–160 Advanced). */
     @Transactional
     public PlacementResultResponse getResult(String email, Integer testId) {
         PlacementTest session = loadSession(email, testId);
@@ -274,6 +276,7 @@ public class PlacementTestService {
 
     private record Pair(String left, String right) {}
 
+    // Kiem tra phiên test của user
     private PlacementTest loadSession(String email, Integer testId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
@@ -288,6 +291,7 @@ public class PlacementTestService {
         return level;
     }
 
+    // Kiểm tra payload (data) từ req xem có hơp lệ ko
     private void validateSubmitPayload(PlacementSubmitRequest req, ObjectNode lvl, int level) {
         if (req.getVocabAnswers() == null || req.getVocabAnswers().size() != VOCAB_COUNT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần đúng " + VOCAB_COUNT + " câu vocab");
@@ -307,7 +311,7 @@ public class PlacementTestService {
         }
     }
 
-    /** Số “câu nhỏ” speaking (đã lưu khi GET hoặc tính lại từ Mongo). */
+    // Số câu trong 1 speaking (đã lưu khi GET hoặc tính lại từ Mongo)
     private int resolveSpeakingLineCount(ObjectNode lvl, int level) {
         int c = lvl.path("speakingLineCount").asInt(0);
         if (c > 0) {
@@ -434,6 +438,7 @@ public class PlacementTestService {
         return PlacementSpeakingResponse.builder().level(level).audioUrl(audioUrl).lines(lines).build();
     }
 
+    // Lấy ra danh sách cac câu speaking trong 1 bài speaking
     private List<String> splitSpeakingLines(String questionText) {
         if (questionText == null || questionText.isBlank()) {
             return List.of();
@@ -444,20 +449,16 @@ public class PlacementTestService {
                 .toList();
     }
 
+    // Đếm chỗ trống trong listening
     private int countBlanks(String text) {
-        if (text == null) {
-            return 0;
-        }
-        // Giữ nguyên text gốc; chỉ đếm số ô trống để FE render input.
-        // Mỗi cụm gạch dưới (ví dụ "___", "______", "_______(3)") chỉ tính 1 lần.
+        if (text == null) {return 0;}
         int c = 0;
         var m = java.util.regex.Pattern.compile("_{3,}(?:\\s*\\(\\d+\\))?").matcher(text);
-        while (m.find()) {
-            c++;
-        }
+        while (m.find()) {c++;}
         return c;
     }
 
+    // Tính điểm vocab (tỉ lệ, vd: 3/5 câu đúng => 0,6 (double))
     private double scoreVocab(List<PlacementSubmitRequest.VocabAnswer> answers, JsonNode vocabIds) {
         int ok = 0;
         for (PlacementSubmitRequest.VocabAnswer a : answers) {
@@ -476,6 +477,7 @@ public class PlacementTestService {
         return ok / (double) VOCAB_COUNT;
     }
 
+    // Tính điểm matching
     private double scoreMatching(List<PlacementSubmitRequest.MatchingAnswer> answers, JsonNode matching) {
         Set<String> correct = new HashSet<>();
         for (JsonNode c : matching.get("correct")) {
@@ -490,6 +492,7 @@ public class PlacementTestService {
         return ok / (double) MATCHING_COUNT;
     }
 
+    // Tính điểm listening
     private double scoreListening(List<PlacementSubmitRequest.ListeningAnswer> answers, JsonNode listeningIdNode) {
         if (listeningIdNode == null || !listeningIdNode.isNumber()) {
             return 0;
@@ -530,6 +533,7 @@ public class PlacementTestService {
         return out;
     }
 
+    // Tính điểm speaking
     private double scoreSpeaking(List<PlacementSubmitRequest.SpeakingAnswer> answers, JsonNode speakingIds) {
         if (speakingIds == null || speakingIds.isEmpty() || answers == null || answers.isEmpty()) {
             return 0;
@@ -626,6 +630,7 @@ public class PlacementTestService {
         n.put("n", n.path("n").asInt(0) + 1);
     }
 
+    // Tính ra điểm số cuối cùng theo thang 160
     private void finalizeScores(PlacementTest session) {
         try {
             ObjectNode sc = (ObjectNode) objectMapper.readTree(session.getScoresJson());

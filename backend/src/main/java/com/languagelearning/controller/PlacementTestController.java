@@ -38,7 +38,7 @@ public class PlacementTestController {
         return ResponseEntity.ok(ApiResponse.success("OK", data));
     }
 
-    /** 5 cặp matching đã shuffle hai cột. */
+    /** 5 cặp matching ngẫu nhiên theo level (1-3) đã shuffle hai cột. */
     @GetMapping("/matching")
     public ResponseEntity<ApiResponse<PlacementMatchingResponse>> matching(
             Authentication authentication,
@@ -49,7 +49,7 @@ public class PlacementTestController {
         return ResponseEntity.ok(ApiResponse.success("OK", data));
     }
 
-    /** 1 bài listening: audio + đoạn có chỗ trống. */
+    /** 1 bài listening */
     @GetMapping("/listening")
     public ResponseEntity<ApiResponse<PlacementListeningResponse>> listening(
             Authentication authentication,
@@ -60,7 +60,7 @@ public class PlacementTestController {
         return ResponseEntity.ok(ApiResponse.success("OK", data));
     }
 
-    /** Danh sách câu đọc speaking theo level. */
+    /** 1 bài speaking theo level. */
     @GetMapping("/speaking")
     public ResponseEntity<ApiResponse<PlacementSpeakingResponse>> speaking(
             Authentication authentication,

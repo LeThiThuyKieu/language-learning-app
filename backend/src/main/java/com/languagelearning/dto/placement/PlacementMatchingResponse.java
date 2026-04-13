@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/** 5 cặp: hai cột đã shuffle, client ghép theo cardId. */
+/** 5 cặp: hai cột đã shuffle, ghép theo cardId. */
 @Data
 @Builder
 @NoArgsConstructor

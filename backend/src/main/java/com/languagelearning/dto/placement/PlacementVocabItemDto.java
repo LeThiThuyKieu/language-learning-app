@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/** Một câu trắc nghiệm (không gửi đáp án). */
+/** Một câu trắc nghiệm , ko gửi đáp án */
 @Data
 @Builder
 @NoArgsConstructor

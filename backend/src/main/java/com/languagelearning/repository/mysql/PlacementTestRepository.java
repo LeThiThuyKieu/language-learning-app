@@ -9,6 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface PlacementTestRepository extends JpaRepository<PlacementTest, Integer> {
-
     Optional<PlacementTest> findByIdAndUser(Integer id, User user);
 }

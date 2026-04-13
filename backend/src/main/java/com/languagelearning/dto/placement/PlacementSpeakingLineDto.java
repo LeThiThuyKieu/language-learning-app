@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** Một “câu nhỏ” trong bài speaking (cùng questionId, khác lineIndex). */
+/** Từng câu nhỏ trong 1 bài speaking của 1 level bất kì (cùng questionId, khác lineIndex). */
 @Data
 @Builder
 @NoArgsConstructor
@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 public class PlacementSpeakingLineDto {
     private Long questionId;
     private String mongoQuestionId;
-    /** 0-based, khớp field lineIndex trong body nộp bài. */
-    private Integer lineIndex;
-    private String line;
+    private Integer lineIndex; // Số dùng
+    private String line; //Nội dung của dòng đó
 }

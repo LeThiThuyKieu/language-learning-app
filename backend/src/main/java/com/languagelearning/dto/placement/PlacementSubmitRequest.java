@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/** Nộp một level: các mảng câu trả lời (có thể rỗng nếu chưa làm phần đó). */
+/** Nộp một level: các mảng câu trả lời (ko có trường hợp rỗng câu trả lời vì cho lamf hết mới bấm nộp bài theo từng loại bài */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -14,7 +14,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class PlacementResultResponse {
     private Integer testId;
-    /** TB cộng bốn điểm kỹ năng (0–160), có thể có một chữ số thập phân. */
+    /** TB cộng bốn điểm kỹ năng (0–160) */
     private Double totalScore;
     private String band;
     private String bandLabelVi;
