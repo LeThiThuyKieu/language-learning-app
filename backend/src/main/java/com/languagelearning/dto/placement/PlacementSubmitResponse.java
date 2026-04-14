@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** Chấm theo level: continue = được lên level tiếp; finished = dừng adaptive (<50%). */
+/** Chấm điểm ... */
 @Data
 @Builder
 @NoArgsConstructor

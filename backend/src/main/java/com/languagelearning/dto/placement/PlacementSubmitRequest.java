@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/** Nộp một level: các mảng câu trả lời (ko có trường hợp rỗng câu trả lời vì cho lamf hết mới bấm nộp bài theo từng loại bài */
+/** Nộp sau khi làm xong hết 3 level: các mảng câu trả lời (ko có trường hợp rỗng câu trả lời vì cho lamf hết mới bấm nộp bài theo từng loại bài */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,7 +25,6 @@ public class PlacementSubmitRequest {
     @AllArgsConstructor
     public static class VocabAnswer {
         private Long questionId;
-        /** Chỉ số đáp án chọn (0..n) */
         private Integer selectedOptionIndex;
     }
 
@@ -50,7 +49,6 @@ public class PlacementSubmitRequest {
     @AllArgsConstructor
     public static class SpeakingAnswer {
         private Long questionId;
-        /** 0-based; có thể bỏ nếu gửi đúng thứ tự như GET /speaking. */
         private Integer lineIndex;
         private String typedText;
     }

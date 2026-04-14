@@ -26,13 +26,11 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 
 /**
- * Lấy bộ câu hỏi mẫu cho một skill tree (và theo level).
- * <ul>
- *   <li>Mỗi tree 5 node: VOCAB, LISTENING, SPEAKING, MATCHING, REVIEW</li>
- *   <li>VOCAB: 10 câu; LISTENING: 1; SPEAKING: 1; MATCHING: 10 (theo node_id trong MySQL)</li>
- *   <li>REVIEW: 4 VOCAB + 4 MATCHING + 1 LISTENING + 1 SPEAKING ngẫu nhiên trong cùng level,
- *       không trùng id với câu đã dùng ở 4 node trước của cùng tree</li>
- * </ul>
+ * Lấy bộ câu hỏi mẫu cho một skill tree (và theo level)
+ *   Mỗi tree 5 node: VOCAB, LISTENING, SPEAKING, MATCHING, REVIEW
+ *   VOCAB: 10 câu; LISTENING: 1; SPEAKING: 1; MATCHING: 10 (theo node_id trong MySQL)
+ *   REVIEW: 4 VOCAB + 4 MATCHING + 1 LISTENING + 1 SPEAKING ngẫu nhiên trong cùng level,
+ *   không trùng id với câu đã dùng ở 4 node trước của cùng tree
  */
 @Service
 @RequiredArgsConstructor
@@ -228,7 +226,7 @@ public class SkillTreeQuestionService {
         return enrichFromMongo(rows);
     }
 
-    /** Dùng cho Placement Test và API khác: bổ sung nội dung từ Mongo theo bản ghi MySQL. */
+    /** Lấy ra thông tin question, kết hợp MySQL và MongoDB */
     public List<EnrichedQuestionDto> enrichQuestionRows(List<QuestionIndex> rows) {
         return enrichFromMongo(rows);
     }

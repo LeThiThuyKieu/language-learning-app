@@ -180,7 +180,7 @@ public class PlacementTestService {
         return res;
     }
 
-    /** Chấm một level; luôn làm đủ 3 level rồi mới completed. */
+    /** Chấm, làm đủ 3 level rồi mới completed. */
     @Transactional
     public PlacementSubmitResponse submitSection(String email, PlacementSubmitRequest req) {
         if (req.getTestId() == null || req.getLevel() == null) {
@@ -200,7 +200,7 @@ public class PlacementTestService {
         // check payload từ req
         validateSubmitPayload(req, lvl, level);
 
-        // Tỷ lệ đúng từng phần (0..1)
+        // Tỷ lệ đúng từng phần
         double rV = scoreVocab(req.getVocabAnswers(), lvl.get("vocabIds"));
         double rM = scoreMatching(req.getMatchingAnswers(), lvl.get("matching"));
         double rL = scoreListening(req.getListeningAnswers(), lvl.get("listeningId"));
@@ -208,12 +208,11 @@ public class PlacementTestService {
 
         int listeningGaps = lvl.path("listeningBlanks").asInt(1);
         int speakLines = resolveSpeakingLineCount(lvl, level);
-        // Lưu đúng thứ tự kỹ năng: vocab, matching, listening, speaking.
         mergeScores(session, rV, rM, rL, rS, listeningGaps, speakLines);
 
         double avg = (rV + rL + rS + rM) / 4.0;
         String status = "continue";
-        String message = "Đã nộp level này. Tiếp tục level tiếp theo.";
+        String message = "Đã nộp. Tiếp tục level tiếp theo ngay.";
         if (level >= 3) {
             status = "completed";
             session.setStatus("COMPLETED");
@@ -237,7 +236,7 @@ public class PlacementTestService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bài test chưa hoàn thành");
         }
         if (session.getTotalScore() == null) {
-            finalizeScores(session);
+            finalizeScores(session); //Tính tổng điểm (thang 160)
             sessionRepository.save(session);
         }
         double score = session.getTotalScore() != null ? session.getTotalScore() : 0.0;
@@ -257,8 +256,8 @@ public class PlacementTestService {
             labelVi = "Advanced";
             detectedId = 3;
         }
-        Level lv = levelRepository.findById(detectedId).orElse(null);
-        Map<String, Double> skills = readSkillDoubleMap(session.getScoresJson());
+        Level lv = levelRepository.findById(detectedId).orElse(null); // Lấy level từ db
+        Map<String, Double> skills = readSkillDoubleMap(session.getScoresJson());//lấy ra ds điểm các skill
         return PlacementResultResponse.builder()
                 .testId(session.getId())
                 .totalScore(score)
@@ -280,6 +279,7 @@ public class PlacementTestService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy phiên test"));
     }
 
+    // lấy ra level
     private int assertLevel(int level) {
         if (level < 1 || level > 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "level phải là 1, 2 hoặc 3");
@@ -458,15 +458,17 @@ public class PlacementTestService {
     private double scoreVocab(List<PlacementSubmitRequest.VocabAnswer> answers, JsonNode vocabIds) {
         int ok = 0;
         for (PlacementSubmitRequest.VocabAnswer a : answers) {
+            //Lấy thông tin đầy đủ của câu hỏi từ DB
             QuestionIndex row = questionIndexRepository.findById(a.getQuestionId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "questionId vocab không hợp lệ"));
             EnrichedQuestionDto e = skillTreeQuestionService.enrichQuestionRows(List.of(row)).get(0);
-            List<String> opts = e.getOptions() != null ? e.getOptions() : List.of();
+            List<String> opts = e.getOptions() != null ? e.getOptions() : List.of(); // Lấy ra các option của cau hỏi
+
             if (a.getSelectedOptionIndex() == null || a.getSelectedOptionIndex() < 0 || a.getSelectedOptionIndex() >= opts.size()) {
                 continue;
             }
-            String picked = opts.get(a.getSelectedOptionIndex());
-            if (norm(picked).equals(norm(e.getCorrectAnswer()))) {
+            String picked = opts.get(a.getSelectedOptionIndex()); // Lấy ra đáp án user chọn
+            if (norm(picked).equals(norm(e.getCorrectAnswer()))) { //so sánh câu trả lời
                 ok++;
             }
         }
@@ -474,9 +476,14 @@ public class PlacementTestService {
     }
 
     // Tính điểm matching
-    private double scoreMatching(List<PlacementSubmitRequest.MatchingAnswer> answers, JsonNode matching) {
+    private double scoreMatching(List<PlacementSubmitRequest.MatchingAnswer> answers, JsonNode matchingIds) {
+        // Tập hợp đáp án đúng
+        //  "correct": [
+        //    { "l": "1", "r": "A" },
+        //    { "l": "2", "r": "B" }
+        //  ]
         Set<String> correct = new HashSet<>();
-        for (JsonNode c : matching.get("correct")) {
+        for (JsonNode c : matchingIds.get("correct")) {
             correct.add(c.get("l").asText() + "|" + c.get("r").asText());
         }
         int ok = 0;
@@ -488,12 +495,12 @@ public class PlacementTestService {
         return ok / (double) MATCHING_COUNT;
     }
 
-    // Tính điểm listening
-    private double scoreListening(List<PlacementSubmitRequest.ListeningAnswer> answers, JsonNode listeningIdNode) {
-        if (listeningIdNode == null || !listeningIdNode.isNumber()) {
+    // Tính điểm listening (listeningIdNode là question Id)
+    private double scoreListening(List<PlacementSubmitRequest.ListeningAnswer> answers, JsonNode listeningIds) {
+        if (listeningIds == null || !listeningIds.isNumber()) {
             return 0;
         }
-        long qid = listeningIdNode.asLong();
+        long qid = listeningIds.asLong();
         QuestionIndex row = questionIndexRepository.findById(qid).orElseThrow();
         EnrichedQuestionDto e = skillTreeQuestionService.enrichQuestionRows(List.of(row)).get(0);
         List<String> expected = parseListeningExpected(e.getCorrectAnswer());
@@ -511,6 +518,8 @@ public class PlacementTestService {
         return ok / (double) expected.size();
     }
 
+    // parse đáp án
+    // 1: apple | 2: banana | 3: orange ==> ["apple", "banana", "orange"]
     private List<String> parseListeningExpected(String correctAnswer) {
         if (correctAnswer == null || correctAnswer.isBlank()) {
             return List.of();
@@ -542,6 +551,8 @@ public class PlacementTestService {
         if (expectedLines.isEmpty()) {
             return 0;
         }
+
+        // check có lineIndex ko
         boolean anyIndex = answers.stream().anyMatch(a -> a.getLineIndex() != null);
         int ok = 0;
         if (!anyIndex) {
@@ -704,6 +715,7 @@ public class PlacementTestService {
         return m;
     }
 
+    // Lấy ra ds điểm của các skill
     private Map<String, Double> readSkillDoubleMap(String json) {
         try {
             ObjectNode sc = (ObjectNode) objectMapper.readTree(json);
@@ -713,6 +725,7 @@ public class PlacementTestService {
         }
     }
 
+    // Chuẩn hoá đáp án (tránh null crash, và tránh phân biệt chữ hoa, thường
     private static String norm(String s) {
         return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
     }

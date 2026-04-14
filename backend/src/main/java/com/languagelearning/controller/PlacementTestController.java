@@ -71,7 +71,7 @@ public class PlacementTestController {
         return ResponseEntity.ok(ApiResponse.success("OK", data));
     }
 
-    /** Chấm theo level, 50% → status finished (dừng adaptive). */
+    /** Nộp bài test */
     @PostMapping("/submit-section")
     public ResponseEntity<ApiResponse<PlacementSubmitResponse>> submitSection(
             Authentication authentication,
