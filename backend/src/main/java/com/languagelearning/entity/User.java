@@ -21,34 +21,45 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @Column(unique = true, nullable = false)
     private String email;
-    
-    @Column(name = "password_hash", nullable = false)
+
+    @Column(name = "password_hash")
     private String passwordHash;
-    
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider", nullable = false)
+    private AuthProvider authProvider = AuthProvider.local;
+
+    @Column(name = "provider_user_id")
+    private String providerUserId;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-    
+
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserStatus status = UserStatus.active;
-    
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-        name = "user_role",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
+            name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
-    
+
     public enum UserStatus {
         active, banned
+    }
+
+    public enum AuthProvider {
+        local, google, facebook
     }
 }
 

@@ -21,6 +21,7 @@ import PlacementTestSessionPage from "@/pages/User/learn/placement/PlacementTest
 import PlacementTestResultsPage from "@/pages/User/learn/placement/PlacementTestResultsPage.tsx";
 import LevelConfirmPage from "@/pages/User/learn/LevelConfirmPage.tsx";
 import HelpPage from "@/pages/User/HelpPage.tsx";
+import SupportFloatingButton from "@/components/user/common/SupportFloatingButton.tsx";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ function App() {
                         <Route path="dashboard" element={<DashboardPage/>}/>
                     </Route>
                 </Routes>
+                <SupportFloatingButton />
                 <Toaster position="top-right"/>
             </BrowserRouter>
         </QueryClientProvider>

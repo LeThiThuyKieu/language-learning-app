@@ -40,6 +40,8 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setAuthProvider(User.AuthProvider.local);
+        user.setProviderUserId(null);
         user.setStatus(User.UserStatus.active);
 
         // assign default role (USER)
@@ -83,6 +85,9 @@ public class AuthService {
             throw new BadCredentialsException("Account is banned");
         }
 
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new BadCredentialsException("This account uses social login. Please continue with Google/Facebook.");
+        }
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BadCredentialsException("Invalid email or password");
