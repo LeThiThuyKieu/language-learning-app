@@ -8,15 +8,17 @@ import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
-import VocabLessonPage from "@/pages/User/learn/VocabLessonPage.tsx";
-import ListeningLessonPage from "@/pages/User/learn/ListeningLessonPage.tsx";
-import SpeakingLessonPage from "@/pages/User/learn/SpeakingLessonPage.tsx";
-import MatchingLessonPage from "@/pages/User/learn/MatchingLessonPage.tsx";
-import ReviewLessonPage from "@/pages/User/learn/ReviewLessonPage.tsx";
+import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
+import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";
+import SpeakingLessonPage from "@/pages/User/learn/question_type/SpeakingLessonPage.tsx";
+import MatchingLessonPage from "@/pages/User/learn/question_type/MatchingLessonPage.tsx";
+import ReviewLessonPage from "@/pages/User/learn/question_type/ReviewLessonPage.tsx";
 import ProfilePage from "@/pages/User/ProfilePage";
 import LionWelcome from "@/components/user/home/LionWelcome";
 import LevelSelectPage from "@/pages/User/learn/LevelSelectPage.tsx";
-import PlacementTestPage from "@/pages/User/learn/PlacementTestPage.tsx";
+import PlacementTestPage from "@/pages/User/learn/placement/PlacementTestPage.tsx";
+import PlacementTestSessionPage from "@/pages/User/learn/placement/PlacementTestSessionPage.tsx";
+import PlacementTestResultsPage from "@/pages/User/learn/placement/PlacementTestResultsPage.tsx";
 import LevelConfirmPage from "@/pages/User/learn/LevelConfirmPage.tsx";
 import HelpPage from "@/pages/User/HelpPage.tsx";
 import SupportFloatingButton from "@/components/user/common/SupportFloatingButton.tsx";
@@ -56,6 +58,8 @@ function App() {
                     <Route path="/level-select" element={<LevelSelectPage />} />
                     <Route path="/level-confirm" element={<LevelConfirmPage />} />
                     <Route path="/placement-test" element={<PlacementTestPage />} />
+                    <Route path="/placement-test/session" element={<PlacementTestSessionPage />} />
+                    <Route path="/placement-test/results" element={<PlacementTestResultsPage />} />
 
                     {/* Admin Routes - Dashboard */}
                     <Route path="/admin" element={<AdminLayout/>}>

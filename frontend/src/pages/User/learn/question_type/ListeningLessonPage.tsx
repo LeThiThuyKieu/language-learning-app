@@ -2,8 +2,8 @@ import {useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
-import ListeningLessonView from "@/components/user/learn/ListeningLessonView.tsx";
-import {bumpLearnTreeUnlocked} from "@/utils/learnTreeProgress";
+import ListeningLessonView from "@/components/user/learn/question_type/listening/ListeningLessonView.tsx";
+import {bumpLearnTreeUnlocked} from "@/utils/learnTreeProgress.ts";
 
 type LocationState = {
     treeId?: number;

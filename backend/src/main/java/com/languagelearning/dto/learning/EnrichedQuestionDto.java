@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+// Thông tin đầy đủ của 1 question
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,7 +21,7 @@ public class EnrichedQuestionDto {
     private String mongoQuestionId;
     private String questionText;
     private List<String> options;
-    /** Chuỗi đáp án (MySQL correct_answer hoặc ghép từ Mongo) */
+    /** Chuỗi đáp án (MySQL correct_answer) */
     private String correctAnswer;
     private String questionType;
     private String audioUrl;

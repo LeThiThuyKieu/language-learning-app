@@ -1,8 +1,8 @@
 import {useEffect, useMemo, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
-import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
-import LessonTopBar from "@/components/user/learn/LessonTopBar";
-import LessonExitModal from "@/components/user/learn/LessonExitModal";
+import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
+import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
+import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import {Sparkles} from "lucide-react";
 
 type Pair = {

@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+// Thông tin của 1 skill tree
+
 @Data
 @Builder
 @NoArgsConstructor

@@ -1,13 +1,11 @@
-import {useEffect, useMemo, useState} from "react";
+import {useMemo, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
-import LessonTopBar from "@/components/user/learn/LessonTopBar";
-import LessonExitModal from "@/components/user/learn/LessonExitModal";
-import LessonResultFooter from "@/components/user/learn/LessonResultFooter";
+import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
+import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
+import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
+import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
 
-/**
- * Giống VocabLessonView nhưng không hiện LessonCompleteView — gọi onComplete khi xong cả cụm.
- */
-export default function ReviewVocabView({
+export default function VocabLessonView({
     node,
     onLeaveLesson,
     onComplete,
@@ -33,6 +31,7 @@ export default function ReviewVocabView({
     }, [current?.questionText]);
 
     const progressPercent = ((index + 1) / total) * 100;
+    const fractionLabel = `${index + 1}/${total}`;
 
     const correctOptionText = useMemo(() => {
         const raw = (current as {correctAnswer?: string})?.correctAnswer as string | undefined;
@@ -54,11 +53,6 @@ export default function ReviewVocabView({
 
     const isCorrect = checked && Boolean(selectedOption) && selectedOption === correctOptionText;
 
-    useEffect(() => {
-        if (isFinished) onComplete();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isFinished]);
-
     function resetForNextQuestion(nextIndex: number) {
         setIndex(nextIndex);
         setSelectedOption(null);
@@ -79,14 +73,16 @@ export default function ReviewVocabView({
         }
     }
 
-    if (isFinished) return null;
+    if (isFinished) {
+        return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             <LessonTopBar
                 onClosePress={() => setExitOpen(true)}
                 progressPercent={progressPercent}
-                rightLabel={`${index + 1}/${total}`}
+                rightLabel={fractionLabel}
             />
 
             <main className="flex-1 w-full">
@@ -119,7 +115,9 @@ export default function ReviewVocabView({
                                             setSelectedOption(opt);
                                         }}
                                         className={[
-                                            "group relative w-full rounded-2xl border-2 px-5 py-6 md:py-7 shadow-sm transition-all duration-150",
+                                            "group relative w-full",
+                                            "rounded-2xl border-2 px-5 py-6 md:py-7 shadow-sm",
+                                            "transition-all duration-150",
                                             "focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-200",
                                             "min-h-[80px] md:min-h-[96px]",
                                             locked
@@ -181,9 +179,7 @@ export default function ReviewVocabView({
                         title={isCorrect ? "Tuyệt vời!" : "Đáp án đúng:"}
                         detail={
                             isCorrect ? undefined : (
-                                <span className="font-bold text-red-900">
-                                    {correctOptionText || "(không có đáp án)"}
-                                </span>
+                                <span className="font-bold text-red-900">{correctOptionText || "(không có đáp án)"}</span>
                             )
                         }
                         onContinue={handleContinue}

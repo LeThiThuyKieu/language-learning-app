@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+// Thông tin đầy đủ của 1 node
+
 @Data
 @Builder
 @NoArgsConstructor
