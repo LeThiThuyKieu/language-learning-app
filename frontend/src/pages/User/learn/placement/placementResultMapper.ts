@@ -24,6 +24,7 @@ export function mapPlacementResultToPayload(
     band,
     bandLabelVi: api.bandLabelVi || band,
     cefrLabel: cefr,
+    detectedLevelId: api.detectedLevelId ?? 1,
     skills,
     weakest,
     analysisVi: analysisForWeakest(weakest),

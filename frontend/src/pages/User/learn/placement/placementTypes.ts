@@ -70,6 +70,8 @@ export type PlacementTestResultPayload = {
   band: PlacementBandResult;
   bandLabelVi: string;
   cefrLabel: string;
+  /** Backend `levels.id` (1–3); drives /learn band (beginner / intermediate / advanced). */
+  detectedLevelId: number;
   skills: Record<
     PlacementSkillKey,
     {

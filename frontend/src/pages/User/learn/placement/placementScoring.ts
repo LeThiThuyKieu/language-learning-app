@@ -85,6 +85,7 @@ export function buildDemoResult(userName: string): PlacementTestResultPayload {
   const band = bandFromTotal(total);
   const {labelVi, cefr} = bandDisplay(band);
   const w = weakestSkill(skills);
+  const detectedLevelId = band === "BEGINNER" ? 1 : band === "INTERMEDIATE" ? 2 : 3;
   return {
     userName,
     totalScore: Math.round(total * 10) / 10,
@@ -92,6 +93,7 @@ export function buildDemoResult(userName: string): PlacementTestResultPayload {
     band,
     bandLabelVi: labelVi,
     cefrLabel: cefr,
+    detectedLevelId,
     skills,
     weakest: w,
     analysisVi: analysisForWeakest(w),

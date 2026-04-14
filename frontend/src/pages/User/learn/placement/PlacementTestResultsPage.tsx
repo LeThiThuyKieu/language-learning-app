@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import {
   Bar,
@@ -18,6 +18,8 @@ import {buildDemoResult} from "@/pages/User/learn/placement/placementScoring.ts"
 import type {PlacementSkillKey, PlacementTestResultPayload} from "@/pages/User/learn/placement/placementTypes.ts";
 import {profileService} from "@/services/profileService.ts";
 import {cn} from "@/utils/cn.ts";
+import toast from "react-hot-toast";
+import {mapLevelIdToKey} from "@/utils/learningLevel.ts";
 
 const YELLOW = "#F9CF15";
 const NAVY = "#0a192f";
@@ -39,6 +41,7 @@ export default function PlacementTestResultsPage() {
   const fromState = (location.state as {placementResult?: PlacementTestResultPayload} | null)?.placementResult;
 
   const [profileName, setProfileName] = useState<string | null>(null);
+  const startLearningOnce = useRef(false);
 
   useEffect(() => {
     let c = false;
@@ -81,6 +84,25 @@ export default function PlacementTestResultsPage() {
   );
 
   const weakestKey = result.weakest;
+
+  // Mở lộ trình học
+  const handleStartLearning = async () => {
+    if (startLearningOnce.current) return;
+    const id = result.detectedLevelId;
+    if (id < 1 || id > 3) {
+      toast.error("Không xác định được trình độ từ kết quả placement.");
+      return;
+    }
+    const level = mapLevelIdToKey(id);
+    startLearningOnce.current = true;
+    try {
+      await profileService.updateMyProfile({currentLevelId: id});
+    } catch (e) {
+      console.error(e);
+      toast.error("Không lưu được trình độ lên hồ sơ. Vẫn mở lộ trình theo kết quả test.");
+    }
+    navigate("/learn", {state: {level}});
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#eef0ff] via-[#f8f7ff] to-[#fff9e6] font-sans text-gray-900">
@@ -163,29 +185,10 @@ export default function PlacementTestResultsPage() {
           </p>
         </section>
 
-        <section className="mt-8 rounded-3xl border border-amber-100 bg-white p-6 shadow-lg md:p-8">
-          <h2 className="text-lg font-extrabold text-[#0a192f]">Lộ trình Lion cá nhân hóa</h2>
-          <p className="mt-1 text-sm text-gray-600">Ba bài gợi ý để bạn mở đầu mạnh mẽ</p>
-          <ol className="mt-5 space-y-3 text-sm font-semibold text-gray-800 md:text-base">
-            <li className="flex gap-3 rounded-2xl bg-amber-50/80 px-4 py-3 ring-1 ring-amber-100">
-              <span className="text-primary-600">1.</span>
-              Beginner Speaking — Tập trung phụ âm & ngữ điệu cơ bản
-            </li>
-            <li className="flex gap-3 rounded-2xl bg-amber-50/80 px-4 py-3 ring-1 ring-amber-100">
-              <span className="text-primary-600">2.</span>
-              Matching Masters — Cụm động từ B1 (phrasal verbs)
-            </li>
-            <li className="flex gap-3 rounded-2xl bg-amber-50/80 px-4 py-3 ring-1 ring-amber-100">
-              <span className="text-primary-600">3.</span>
-              Listening Lab — Hội thoại 2–3 phút có transcript
-            </li>
-          </ol>
-        </section>
-
         <div className="mt-10 flex flex-col items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate("/learn")}
+            onClick={() => void handleStartLearning()}
             className="w-full max-w-md rounded-full bg-[#F9CF15] px-8 py-3.5 text-base font-extrabold text-gray-900 shadow-lg shadow-amber-200/60 transition hover:brightness-95"
           >
             Bắt đầu học ngay
