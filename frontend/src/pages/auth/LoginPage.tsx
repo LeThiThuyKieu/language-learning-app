@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, {useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {Link, useNavigate} from "react-router-dom";
 import {useAuthStore} from "@/store/authStore";
 import {authService} from "@/services/authService";
@@ -7,7 +7,16 @@ import toast from "react-hot-toast";
 import {FcGoogle} from "react-icons/fc";
 import {FaFacebook} from "react-icons/fa";
 import { profileService } from "@/services/profileService";
-import {hasChosenLearningLevel, mapLevelIdToKey} from "@/utils/learningLevel";
+
+const SOCIAL_PROVIDER_STORAGE_KEY = "social-login-provider";
+
+const parseSocialProvider = (value: string | null): "google" | "facebook" | null => {
+    if (value === "google" || value === "facebook") {
+        return value;
+    }
+
+    return null;
+};
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -15,6 +24,138 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const {setAuth} = useAuthStore();
     const navigate = useNavigate();
+
+    const socialConfig = useMemo(
+        () => ({
+            googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            facebookClientId: import.meta.env.VITE_FACEBOOK_CLIENT_ID,
+            redirectUri: `${window.location.origin}/login`,
+        }),
+        []
+    );
+
+    const navigateAfterLogin = async () => {
+        try {
+            const profile = await profileService.getMyProfile();
+            const levelId = profile.currentLevelId;
+
+            if (levelId) {
+                const level =
+                    levelId === 1
+                        ? "beginner"
+                        : levelId === 2
+                            ? "intermediate"
+                            : "advanced";
+                navigate("/learn", { state: { level } });
+            } else {
+                navigate("/welcome");
+            }
+        } catch {
+            navigate("/");
+        }
+    };
+
+    const completeSocialLogin = async (
+        provider: "google" | "facebook",
+        payload: { accessToken?: string; oauthCode?: string }
+    ) => {
+        setLoading(true);
+        try {
+            const redirectUri = `${window.location.origin}/login`;
+            const response = await authService.socialLogin({
+                provider,
+                accessToken: payload.accessToken,
+                oauthCode: payload.oauthCode,
+                redirectUri: payload.oauthCode ? redirectUri : undefined,
+            });
+            setAuth(response.user, response.token);
+            toast.success(`Đăng nhập ${provider === "google" ? "Google" : "Facebook"} thành công!`);
+            await navigateAfterLogin();
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                toast.error(error.response?.data?.message || "Đăng nhập mạng xã hội thất bại");
+            } else {
+                toast.error("Đăng nhập mạng xã hội thất bại");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const hash = window.location.hash.startsWith("#")
+            ? window.location.hash.slice(1)
+            : window.location.hash;
+        const hashParams = new URLSearchParams(hash);
+        const queryParams = new URLSearchParams(window.location.search);
+
+        const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
+        const oauthCode = queryParams.get("code");
+        const state = hashParams.get("state") || queryParams.get("state");
+        const pendingProvider = parseSocialProvider(sessionStorage.getItem(SOCIAL_PROVIDER_STORAGE_KEY));
+        const providerFromState = parseSocialProvider(state) || pendingProvider;
+
+        const socialError = hashParams.get("error") || queryParams.get("error");
+        if (socialError) {
+            sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
+            toast.error("Đăng nhập mạng xã hội không thành công");
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
+        if (oauthCode && providerFromState === "facebook") {
+            sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            void completeSocialLogin("facebook", {oauthCode});
+            return;
+        }
+
+        if (!accessToken || !providerFromState) {
+            return;
+        }
+
+        sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        void completeSocialLogin(providerFromState, {accessToken});
+    }, []);
+
+    const handleGoogleLogin = () => {
+        if (!socialConfig.googleClientId) {
+            toast.error("Thiếu cấu hình Google Client ID");
+            return;
+        }
+
+        sessionStorage.setItem(SOCIAL_PROVIDER_STORAGE_KEY, "google");
+
+        const params = new URLSearchParams({
+            client_id: socialConfig.googleClientId,
+            redirect_uri: socialConfig.redirectUri,
+            response_type: "token",
+            scope: "openid email profile",
+            include_granted_scopes: "true",
+            state: "google",
+        });
+
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    };
+
+    const handleFacebookLogin = () => {
+        if (!socialConfig.facebookClientId) {
+            toast.error("Thiếu cấu hình Facebook App ID");
+            return;
+        }
+
+        sessionStorage.setItem(SOCIAL_PROVIDER_STORAGE_KEY, "facebook");
+
+        const params = new URLSearchParams({
+            client_id: socialConfig.facebookClientId,
+            redirect_uri: socialConfig.redirectUri,
+            response_type: "code",
+            scope: "email,public_profile",
+            state: "facebook",
+        });
+
+        window.location.href = `https://www.facebook.com/v20.0/dialog/oauth?${params.toString()}`;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,17 +165,7 @@ export default function LoginPage() {
             const response = await authService.login({email, password});
             setAuth(response.user, response.token);
             toast.success("Đăng nhập thành công!");
-            try {
-                const profile = await profileService.getMyProfile();
-                if (hasChosenLearningLevel(profile.currentLevelId)) {
-                    const level = mapLevelIdToKey(profile.currentLevelId as number);
-                    navigate("/learn", {state: {level}});
-                } else {
-                    navigate("/welcome");
-                }
-            } catch {
-                navigate("/welcome");
-            }
+            await navigateAfterLogin();
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.message || "Đăng nhập thất bại");
@@ -148,11 +279,13 @@ export default function LoginPage() {
                             <button
                                 type="button"
                                 title="Google"
+                                onClick={handleGoogleLogin}
+                                disabled={loading}
                                 className="group w-14 h-14 flex items-center justify-center rounded-full
                                 bg-transparent
                                 transition-all duration-200 ease-out
                                 hover:bg-transparent hover:shadow-md hover:shadow-black/15
-                                active:scale-95"
+                                active:scale-95 disabled:opacity-50"
                             >
                                 <FcGoogle
                                     size={40}
@@ -164,11 +297,13 @@ export default function LoginPage() {
                             <button
                                 type="button"
                                 title="Facebook"
+                                onClick={handleFacebookLogin}
+                                disabled={loading}
                                 className="group w-14 h-14 flex items-center justify-center rounded-full
                                 bg-transparent
                                 transition-all duration-200 ease-out
                                 hover:bg-transparent hover:shadow-md hover:shadow-black/15
-                                active:scale-95"
+                                active:scale-95 disabled:opacity-50"
                             >
                                 <FaFacebook
                                     size={38}
