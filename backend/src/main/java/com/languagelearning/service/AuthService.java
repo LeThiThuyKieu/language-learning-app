@@ -40,7 +40,7 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setAuthProvider(User.AuthProvider.local);
+        user.setAuthProvider(User.AuthProvider.LOCAL);
         user.setProviderUserId(null);
         user.setStatus(User.UserStatus.active);
 

@@ -389,8 +389,8 @@ function InfoCard({title, subtitle, iconSrc}: {
                 </div>
             )}
             <div className="flex-1">
-                <div className="text-gray-900 font-extrabold text-sm mb-1.5">{title}</div>
-                <div className="text-gray-600 text-sm leading-snug">{subtitle}</div>
+                <div className="text-gray-900 font-extrabold text-basic mb-1.5">{title}</div>
+                <div className="text-gray-600 text-basic leading-snug">{subtitle}</div>
             </div>
         </div>
     </div>);
@@ -404,7 +404,7 @@ function DailyCard() {
     return (
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
             <div className="flex items-center justify-between">
-                <div className="text-gray-900 font-extrabold text-sm">Nhiệm vụ hằng ngày</div>
+                <div className="text-gray-900 font-extrabold text-basic">Nhiệm vụ hằng ngày</div>
                 <button className="text-primary-600 font-semibold text-sm uppercase tracking-wide">
                     Xem tất cả
                 </button>
@@ -436,7 +436,7 @@ function DailyCard() {
 function ProfileCard({onCreateProfile}: { onCreateProfile: () => void }) {
     return (
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
-            <div className="text-gray-900 font-extrabold text-sm mb-1.5">Tạo hồ sơ để lưu tiến trình của bạn!</div>
+            <div className="text-gray-900 font-extrabold text-basic mb-1.5">Tạo hồ sơ lưu tiến trình của bạn!</div>
             <button
                 onClick={onCreateProfile}
                 className="mt-3 w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl transition"

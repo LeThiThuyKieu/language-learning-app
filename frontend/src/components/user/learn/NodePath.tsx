@@ -167,10 +167,10 @@ function LessonBubble({
                 <div
                     className={`rounded-2xl border px-5 py-3.5 shadow-lg min-w-[230px] max-w-[280px] ${containerColor}`}
                 >
-                    <div className="text-[15px] font-extrabold leading-snug line-clamp-2">
+                    <div className="text-[17px] font-extrabold leading-snug line-clamp-2">
                         {finalTitle}
                     </div>
-                    <div className={`mt-1 text-xs leading-snug ${subtitleColor}`}>
+                    <div className={`mt-1 text-sm leading-snug ${subtitleColor}`}>
                         {finalDescription}
                     </div>
                     <button

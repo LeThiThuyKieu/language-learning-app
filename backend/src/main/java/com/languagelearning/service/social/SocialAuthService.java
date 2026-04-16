@@ -105,7 +105,7 @@ public class SocialAuthService {
     }
 
     private User linkExistingUser(User existingUser, User.AuthProvider provider, String providerUserId) {
-        if (existingUser.getAuthProvider() == User.AuthProvider.local) {
+        if (existingUser.getAuthProvider() == User.AuthProvider.LOCAL) {
             throw new BadCredentialsException("Email already registered with password. Please login with email/password first.");
         }
 
@@ -153,8 +153,8 @@ public class SocialAuthService {
 
     private User.AuthProvider toAuthProvider(String providerName) {
         return switch (providerName) {
-            case "google" -> User.AuthProvider.google;
-            case "facebook" -> User.AuthProvider.facebook;
+            case "google" -> User.AuthProvider.GOOGLE;
+            case "facebook" -> User.AuthProvider.FACEBOOK;
             default -> throw new BadCredentialsException("Unsupported social provider: " + providerName);
         };
     }
