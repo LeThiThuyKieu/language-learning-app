@@ -30,7 +30,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false)
-    private AuthProvider authProvider = AuthProvider.local;
+    private AuthProvider authProvider = AuthProvider.LOCAL;
 
     @Column(name = "provider_user_id")
     private String providerUserId;
@@ -59,7 +59,7 @@ public class User {
     }
 
     public enum AuthProvider {
-        local, google, facebook
+        LOCAL, GOOGLE, FACEBOOK
     }
 }
 

@@ -4,6 +4,23 @@ import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
+import WordTooltip from "@/components/user/learn/question_type/vocab/WordTooltip.tsx";
+
+/** Tách câu thành tokens: từ tiếng Anh (isWord=true) và phần còn lại */
+function tokenizeQuestion(text: string): { text: string; isWord: boolean }[] {
+    const tokens: { text: string; isWord: boolean }[] = [];
+    // Match từ tiếng Anh (chỉ chữ cái) hoặc phần không phải từ
+    const regex = /([A-Za-z]+)|([^A-Za-z]+)/g;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text)) !== null) {
+        if (match[1]) {
+            tokens.push({ text: match[1], isWord: true });
+        } else {
+            tokens.push({ text: match[2], isWord: false });
+        }
+    }
+    return tokens;
+}
 
 export default function VocabLessonView({
     node,
@@ -92,8 +109,18 @@ export default function VocabLessonView({
                             <p className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200 mb-4">
                                 Từ vựng mới
                             </p>
-                            <h1 className="min-h-[72px] whitespace-pre-wrap text-xl md:text-2xl font-extrabold text-gray-900 leading-snug">
-                                {questionText || "Câu hỏi đang tải..."}
+                            <h1 className="min-h-[72px] text-xl md:text-2xl font-extrabold text-gray-900 leading-snug">
+                                {questionText
+                                    ? tokenizeQuestion(questionText).map((token, i) =>
+                                        token.isWord ? (
+                                            <WordTooltip key={i} word={token.text}>
+                                                <span>{token.text}</span>
+                                            </WordTooltip>
+                                        ) : (
+                                            <span key={i}>{token.text}</span>
+                                        )
+                                    )
+                                    : "Câu hỏi đang tải..."}
                             </h1>
                         </div>
 
