@@ -7,28 +7,46 @@ interface WordTooltipProps {
     disabled?: boolean;
 }
 
-// Cache dịch để không gọi API lại
-const translateCache: Record<string, string> = {};
+// Cache để không gọi API lại
+const meaningCache: Record<string, string> = {};
 
-// Gọi API dịch nghĩa của từ
-async function translateWord(word: string): Promise<string> {
-    const key = word.toLowerCase();
-    if (translateCache[key]) return translateCache[key];
+/** Fetch với timeout */
+async function fetchWithTimeout(url: string, ms = 3000): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
     try {
-        const res = await fetch(
-            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|vi`
-        );
-        const data = await res.json();
-        const translation: string = data?.responseData?.translatedText ?? "";
-        // MyMemory trả về chữ hoa nếu không dịch được, lọc ra
-        const result = translation && translation.toUpperCase() !== word.toUpperCase()
-            ? translation
-            : "";
-        translateCache[key] = result;
-        return result;
-    } catch {
-        return "";
+        const res = await fetch(url, { signal: controller.signal });
+        return res;
+    } finally {
+        clearTimeout(timer);
     }
+}
+
+/**
+ * Dịch từ tiếng Anh sang tiếng Việt dùng Google Translate
+ */
+async function getMeaning(word: string): Promise<string> {
+    const key = word.toLowerCase().trim();
+    if (key in meaningCache) return meaningCache[key];
+
+    try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(key)}`;
+        const res = await fetchWithTimeout(url, 3000);
+        if (res.ok) {
+            const data = await res.json();
+            // Response: [[[translatedText, originalText, ...]]]
+            const translated: string = data?.[0]?.[0]?.[0] ?? "";
+            if (translated && translated.toLowerCase() !== key) {
+                meaningCache[key] = translated;
+                return translated;
+            }
+        }
+    } catch {
+        // timeout hoặc lỗi mạng
+    }
+
+    meaningCache[key] = "";
+    return "";
 }
 
 function speakWord(word: string) {
@@ -43,27 +61,24 @@ function speakWord(word: string) {
 export default function WordTooltip({ word, children, disabled }: WordTooltipProps) {
     const [visible, setVisible] = useState(false);
     const [speaking, setSpeaking] = useState(false);
-    const [meaning, setMeaning] = useState<string>("");
-    const [loadingMeaning, setLoadingMeaning] = useState(false);
+    const [meaning, setMeaning] = useState<string | null>(null); // null = chưa load
     const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
 
-    // Phát âm + lấy nghĩa khi tooltip hiện
     useEffect(() => {
         if (!visible || !word) return;
+
+        // Phát âm ngay
         speakWord(word);
 
-        // Lấy nghĩa tiếng Việt
-        const cached = translateCache[word.toLowerCase()];
-        if (cached !== undefined) {
-            setMeaning(cached);
+        // Lấy nghĩa (có cache)
+        const key = word.toLowerCase().trim();
+        if (key in meaningCache) {
+            setMeaning(meaningCache[key]);
             return;
         }
-        setLoadingMeaning(true);
-        translateWord(word).then((result) => {
-            setMeaning(result);
-            setLoadingMeaning(false);
-        });
+        setMeaning(null); // loading
+        getMeaning(word).then(setMeaning);
     }, [visible, word]);
 
     function handleMouseEnter() {
@@ -81,7 +96,7 @@ export default function WordTooltip({ word, children, disabled }: WordTooltipPro
         e.preventDefault();
         setSpeaking(true);
         speakWord(word);
-        setTimeout(() => setSpeaking(false), 1000);
+        setTimeout(() => setSpeaking(false), 900);
     }
 
     return (
@@ -100,15 +115,15 @@ export default function WordTooltip({ word, children, disabled }: WordTooltipPro
                     }}
                     onMouseLeave={handleMouseLeave}
                     className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2
-                               rounded-xl bg-gray-900 text-white shadow-xl px-3 py-2
-                               flex items-center gap-2 min-w-[80px] max-w-[220px] w-max"
+                               rounded-xl bg-white border border-gray-200 text-gray-700
+                               shadow-lg px-3 py-2 flex items-center gap-2 w-max max-w-[240px]"
                 >
                     {/* Mũi tên */}
-                    <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white drop-shadow-sm" />
 
-                    {/* Nghĩa tiếng Việt */}
-                    <span className="text-sm font-semibold text-white leading-snug">
-                        {loadingMeaning ? "..." : meaning || "—"}
+                    {/* Nghĩa */}
+                    <span className="text-sm font-medium text-gray-700 leading-snug">
+                        {meaning === null ? "..." : meaning || "—"}
                     </span>
 
                     {/* Nút phát âm */}
@@ -116,10 +131,10 @@ export default function WordTooltip({ word, children, disabled }: WordTooltipPro
                         type="button"
                         onClick={handleSpeakClick}
                         className={[
-                            "flex-shrink-0 rounded-full p-1 transition",
+                            "flex-shrink-0 rounded-full p-1.5 transition",
                             speaking
                                 ? "bg-orange-500 text-white"
-                                : "bg-white/20 hover:bg-white/30 text-white",
+                                : "bg-gray-100 hover:bg-gray-200 text-gray-500",
                         ].join(" ")}
                         title="Phát âm"
                     >
