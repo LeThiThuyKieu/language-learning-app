@@ -47,15 +47,15 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-//    @PostMapping("/logout")
-//    public ResponseEntity<ApiResponse<String>> logout() {
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        if (authentication != null && authentication.isAuthenticated()) {
-//            String email = authentication.getName();
-//            authService.logout(email);
-//        }
-//        return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
-//    }
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String email = authentication.getName();
+            authService.logout(email);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
+    }
 
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser() {

@@ -11,13 +11,15 @@ import {MoreHorizontal} from "lucide-react";
 import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 export default function LearningPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const {isAuthenticated} = useAuthStore();
+    const {isAuthenticated, logout} = useAuthStore();
     const [resolvedLevel, setResolvedLevel] = useState<LevelKey | null>(null);
     const [bootstrapping, setBootstrapping] = useState(true);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     const levelIdMap: Record<LevelKey, number> = useMemo(
         () => ({
@@ -217,17 +219,17 @@ export default function LearningPage() {
                                         </svg>
                                     </button>
 
-                                    {moreOpen && (
-                                        <div
-                                            className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
-                                            <MoreItem label="Cài đặt" onClick={() => navigate("/profile")}/>
-                                            <MoreItem label="Đăng xuất"/>
-                                        </div>
-                                    )}
-                                </div>
-                            </nav>
-                        </div>
-                    </aside>
+                                {moreOpen && (
+                                    <div
+                                        className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
+                                        <MoreItem label="Cài đặt" onClick={() => navigate("/profile")}/>
+                                        <MoreItem label="Đăng xuất" onClick={() => setShowLogoutConfirm(true)}/>
+                                    </div>
+                                )}
+                            </div>
+                        </nav>
+                    </div>
+                </aside>
 
                     <main className="col-span-12 md:col-span-9 lg:col-span-9">
                         <div className="grid grid-cols-12 gap-6">
@@ -344,6 +346,17 @@ export default function LearningPage() {
                     </main>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={() => {
+                    logout();
+                    navigate("/login", { replace: true });
+                    setShowLogoutConfirm(false);
+                }}
+                message="Bạn có chắc chắn muốn đăng xuất không?"
+            />
         </div>
     );
 }

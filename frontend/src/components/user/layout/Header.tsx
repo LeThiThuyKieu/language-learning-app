@@ -4,8 +4,7 @@ import { Menu, X, LogOut, ChevronDown, User } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { profileService } from "@/services/profileService";
 import ConfirmModal from "./ConfirmModal";
-
-const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/thumbs/svg?seed=Bear";
+import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 
 export default function Header() {
     const { user, logout, isAuthenticated } = useAuthStore();
@@ -13,7 +12,7 @@ export default function Header() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR);
+    const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR_URL);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
@@ -43,7 +42,7 @@ export default function Header() {
 
     useEffect(() => {
         if (!isAuthenticated) {
-            setAvatarUrl(DEFAULT_AVATAR);
+            setAvatarUrl(DEFAULT_AVATAR_URL);
             return;
         }
 
@@ -53,11 +52,11 @@ export default function Header() {
             try {
                 const profile = await profileService.getMyProfile();
                 if (isMounted) {
-                    setAvatarUrl(profile.avatarUrl || DEFAULT_AVATAR);
+                    setAvatarUrl(profile.avatarUrl || DEFAULT_AVATAR_URL);
                 }
             } catch {
                 if (isMounted) {
-                    setAvatarUrl(DEFAULT_AVATAR);
+                    setAvatarUrl(DEFAULT_AVATAR_URL);
                 }
             }
         };

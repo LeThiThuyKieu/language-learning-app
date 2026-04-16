@@ -9,17 +9,14 @@ import com.languagelearning.exception.BadCredentialsException;
 import com.languagelearning.repository.mysql.RoleRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
 import com.languagelearning.repository.mysql.UserRepository;
+import com.languagelearning.util.AvatarDefaults;
 import com.languagelearning.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -105,18 +102,12 @@ public class SocialAuthService {
     }
 
     private User linkExistingUser(User existingUser, User.AuthProvider provider, String providerUserId) {
-        if (existingUser.getAuthProvider() == User.AuthProvider.LOCAL) {
-            throw new BadCredentialsException("Email already registered with password. Please login with email/password first.");
-        }
-
-        if (existingUser.getAuthProvider() != provider) {
-            throw new BadCredentialsException("Email already registered with another social provider.");
-        }
-
-        if (existingUser.getProviderUserId() == null || existingUser.getProviderUserId().isBlank()) {
+        // Nếu email đã tồn tại (dù là LOCAL, GOOGLE hay FACEBOOK) → đăng nhập vào tài khoản đó luôn
+        // Cập nhật providerUserId nếu chưa có
+        if (existingUser.getAuthProvider() == provider
+                && (existingUser.getProviderUserId() == null || existingUser.getProviderUserId().isBlank())) {
             existingUser.setProviderUserId(providerUserId);
         }
-
         return userRepository.save(existingUser);
     }
 
@@ -144,6 +135,7 @@ public class SocialAuthService {
         UserProfile profile = new UserProfile();
         profile.setUser(user);
         profile.setFullName(userInfo.fullName());
+        profile.setAvatarUrl(AvatarDefaults.randomAvatarUrl());
         profile.setTotalXp(0);
         profile.setStreakCount(0);
         userProfileRepository.save(profile);
