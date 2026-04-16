@@ -17,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,15 +25,14 @@ public class SocialAuthService {
     private final UserProfileRepository userProfileRepository;
     private final RoleRepository roleRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final List<SocialProviderClient> socialProviderClients;
 
     @Transactional
-    public AuthResponse login(String providerName, String accessToken, String oauthCode, String redirectUri) {
+    public AuthResponse loginWithOAuth2(String providerName, SocialUserInfo userInfo) {
         String normalizedProvider = normalizeProvider(providerName);
-        SocialProviderClient providerClient = findProviderClient(normalizedProvider);
-        String resolvedAccessToken = resolveAccessToken(providerClient, accessToken, oauthCode, redirectUri);
-        SocialUserInfo userInfo = providerClient.getUserInfo(resolvedAccessToken);
+        return loginWithProviderInfo(normalizedProvider, userInfo);
+    }
 
+    private AuthResponse loginWithProviderInfo(String normalizedProvider, SocialUserInfo userInfo) {
         User.AuthProvider provider = toAuthProvider(normalizedProvider);
         User user = userRepository
                 .findByAuthProviderAndProviderUserId(provider, userInfo.providerUserId())
@@ -54,45 +51,11 @@ public class SocialAuthService {
         return new AuthResponse(UserDTO.fromUser(user), token, refreshToken);
     }
 
-    private String resolveAccessToken(
-            SocialProviderClient providerClient,
-            String accessToken,
-            String oauthCode,
-            String redirectUri
-    ) {
-        if (accessToken != null && !accessToken.isBlank()) {
-            return accessToken.trim();
-        }
-        if (oauthCode == null || oauthCode.isBlank()) {
-            throw new BadCredentialsException("Access token is required");
-        }
-        if (!providerClient.supportsOAuthAuthorizationCode()) {
-            throw new BadCredentialsException("Authorization code is not supported for this provider");
-        }
-        if (redirectUri == null || redirectUri.isBlank()) {
-            throw new BadCredentialsException("redirectUri is required for authorization code login");
-        }
-        return providerClient.exchangeOAuthCode(oauthCode.trim(), redirectUri.trim());
-    }
-
     private String normalizeProvider(String providerName) {
         if (providerName == null || providerName.isBlank()) {
-            throw new BadCredentialsException("Provider is required");
+            throw new IllegalArgumentException("Provider is required");
         }
         return providerName.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private SocialProviderClient findProviderClient(String providerName) {
-        Map<String, SocialProviderClient> providers = socialProviderClients
-                .stream()
-                .collect(Collectors.toMap(SocialProviderClient::provider, Function.identity()));
-
-        SocialProviderClient providerClient = providers.get(providerName);
-        if (providerClient == null) {
-            throw new BadCredentialsException("Unsupported social provider: " + providerName);
-        }
-
-        return providerClient;
     }
 
     private User createOrLinkUser(User.AuthProvider provider, SocialUserInfo userInfo) {

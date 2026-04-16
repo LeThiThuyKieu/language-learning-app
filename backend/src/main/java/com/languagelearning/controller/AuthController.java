@@ -2,7 +2,6 @@ package com.languagelearning.controller;
 
 import com.languagelearning.dto.*;
 import com.languagelearning.service.AuthService;
-import com.languagelearning.service.social.SocialAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final SocialAuthService socialAuthService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -33,17 +31,6 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refreshToken(request);
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/social/login")
-    public ResponseEntity<AuthResponse> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
-        AuthResponse response = socialAuthService.login(
-                request.getProvider(),
-                request.getAccessToken(),
-                request.getOauthCode(),
-                request.getRedirectUri()
-        );
         return ResponseEntity.ok(response);
     }
 

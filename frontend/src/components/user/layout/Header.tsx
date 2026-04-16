@@ -12,7 +12,7 @@ export default function Header() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR_URL);
+    const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_AVATAR_URL);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
