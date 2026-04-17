@@ -200,7 +200,7 @@ public class PlacementTestService {
         // check payload từ req
         validateSubmitPayload(req, lvl, level);
 
-        // Tỷ lệ đúng từng phần
+        // Tỷ lệ đúng từng phần (%)
         double rV = scoreVocab(req.getVocabAnswers(), lvl.get("vocabIds"));
         double rM = scoreMatching(req.getMatchingAnswers(), lvl.get("matching"));
         double rL = scoreListening(req.getListeningAnswers(), lvl.get("listeningId"));

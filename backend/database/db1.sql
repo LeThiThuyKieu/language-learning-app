@@ -89,9 +89,7 @@ CREATE TABLE IF NOT EXISTS `placement_test` (
     KEY `fk_placement_session_level` (`detected_level_id`),
     CONSTRAINT `fk_placement_session_level` FOREIGN KEY (`detected_level_id`) REFERENCES `levels` (`id`),
     CONSTRAINT `fk_placement_session_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- DB đã tạo trước đó (cột int): ALTER TABLE `placement_test` MODIFY `total_score` DOUBLE DEFAULT NULL;
+    ) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -174,9 +172,10 @@ CREATE TABLE IF NOT EXISTS `users` (
     `created_at` datetime DEFAULT current_timestamp(),
     `last_login` datetime DEFAULT NULL,
     `status` enum('active','banned') DEFAULT 'active',
+    `provider_user_id` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `email` (`email`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -208,7 +207,7 @@ CREATE TABLE IF NOT EXISTS `user_level_question_snapshot` (
     KEY `level_id` (`level_id`),
     CONSTRAINT `fk_ulqs_level` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ulqs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -263,7 +262,7 @@ CREATE TABLE IF NOT EXISTS `user_profile` (
     KEY `fk_user_level` (`current_level`),
     CONSTRAINT `fk_user_level` FOREIGN KEY (`current_level`) REFERENCES `levels` (`id`),
     CONSTRAINT `user_profile_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 

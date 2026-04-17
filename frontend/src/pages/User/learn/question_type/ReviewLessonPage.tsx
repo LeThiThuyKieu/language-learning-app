@@ -4,7 +4,7 @@ import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import ReviewVocabView from "@/components/user/learn/question_type/review/ReviewVocabView.tsx";
-import {bumpLearnTreeUnlocked} from "@/utils/learnTreeProgress.ts";
+import {bumpLearnTreeUnlocked, completeNodeAndSave} from "@/utils/learnTreeProgress.ts";
 import ReviewListeningView from "@/components/user/learn/question_type/review/ReviewListeningView.tsx";
 import ReviewSpeakingView from "@/components/user/learn/question_type/review/ReviewSpeakingView.tsx";
 import ReviewMatchingView from "@/components/user/learn/question_type/review/ReviewMatchingView.tsx";
@@ -138,8 +138,9 @@ export default function ReviewLessonPage() {
             <div className="min-h-screen w-full bg-gray-50">
                 <LessonCompleteView
                     knGained={20}
-                    onContinue={() => {
-                        const next = bumpLearnTreeUnlocked(treeId, 5);
+                    onContinue={async () => {
+                        const next = await completeNodeAndSave(reviewNode.nodeId, treeId);
+                        bumpLearnTreeUnlocked(treeId, next);
                         navigate("/learn", {state: {treeId, unlockedCount: next}});
                     }}
                 />
