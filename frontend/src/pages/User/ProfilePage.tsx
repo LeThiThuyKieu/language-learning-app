@@ -12,8 +12,7 @@ import { profileService, UserProfileDetail } from "@/services/profileService";
 import ProfileSkeleton from "@/components/user/profile/ProfileSkeleton";
 import { useAuthStore } from "@/store/authStore";
 import GuestProfilePrompt from "@/components/user/GuestPrompt";
-
-const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/thumbs/svg?seed=Bear";
+import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 
 const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
@@ -71,7 +70,7 @@ export default function ProfilePage() {
     const levelDisplay = isLevelUndefined
         ? "Bạn thuộc cấp độ nào? Cùng khám phá nhé!"
         :  profile?.currentLevelName + "";
-    const avatarUrl = profile?.avatarUrl || DEFAULT_AVATAR;
+    const avatarUrl = profile?.avatarUrl || DEFAULT_AVATAR_URL;
 
     const openEditNameModal = () => {
         setNameDraft(profile?.fullName?.trim() || "");

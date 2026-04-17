@@ -8,14 +8,9 @@ import {FcGoogle} from "react-icons/fc";
 import {FaFacebook} from "react-icons/fa";
 import { profileService } from "@/services/profileService";
 
-const SOCIAL_PROVIDER_STORAGE_KEY = "social-login-provider";
-
-const parseSocialProvider = (value: string | null): "google" | "facebook" | null => {
-    if (value === "google" || value === "facebook") {
-        return value;
-    }
-
-    return null;
+const resolveBackendBaseUrl = () => {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+    return apiBaseUrl.replace(/\/api\/?$/, "");
 };
 
 export default function LoginPage() {
@@ -27,9 +22,7 @@ export default function LoginPage() {
 
     const socialConfig = useMemo(
         () => ({
-            googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            facebookClientId: import.meta.env.VITE_FACEBOOK_CLIENT_ID,
-            redirectUri: `${window.location.origin}/login`,
+            backendBaseUrl: resolveBackendBaseUrl(),
         }),
         []
     );
@@ -55,106 +48,52 @@ export default function LoginPage() {
         }
     };
 
-    const completeSocialLogin = async (
-        provider: "google" | "facebook",
-        payload: { accessToken?: string; oauthCode?: string }
-    ) => {
-        setLoading(true);
-        try {
-            const redirectUri = `${window.location.origin}/login`;
-            const response = await authService.socialLogin({
-                provider,
-                accessToken: payload.accessToken,
-                oauthCode: payload.oauthCode,
-                redirectUri: payload.oauthCode ? redirectUri : undefined,
-            });
-            setAuth(response.user, response.token);
-            toast.success(`Đăng nhập ${provider === "google" ? "Google" : "Facebook"} thành công!`);
-            await navigateAfterLogin();
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message || "Đăng nhập mạng xã hội thất bại");
-            } else {
-                toast.error("Đăng nhập mạng xã hội thất bại");
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        const hash = window.location.hash.startsWith("#")
-            ? window.location.hash.slice(1)
-            : window.location.hash;
-        const hashParams = new URLSearchParams(hash);
         const queryParams = new URLSearchParams(window.location.search);
 
-        const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
-        const oauthCode = queryParams.get("code");
-        const state = hashParams.get("state") || queryParams.get("state");
-        const pendingProvider = parseSocialProvider(sessionStorage.getItem(SOCIAL_PROVIDER_STORAGE_KEY));
-        const providerFromState = parseSocialProvider(state) || pendingProvider;
-
-        const socialError = hashParams.get("error") || queryParams.get("error");
+        const token = queryParams.get("token");
+        const socialError = queryParams.get("error");
         if (socialError) {
-            sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
             toast.error("Đăng nhập mạng xã hội không thành công");
             window.history.replaceState({}, document.title, window.location.pathname);
             return;
         }
-        if (oauthCode && providerFromState === "facebook") {
-            sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
-            window.history.replaceState({}, document.title, window.location.pathname);
-            void completeSocialLogin("facebook", {oauthCode});
+
+        if (!token) {
             return;
         }
 
-        if (!accessToken || !providerFromState) {
-            return;
-        }
+        const completeOAuth2Login = async () => {
+            setLoading(true);
+            try {
+                localStorage.setItem("token", token);
+                const response = await authService.getCurrentUser();
+                setAuth(response, token);
+                toast.success("Đăng nhập mạng xã hội thành công!");
+                window.history.replaceState({}, document.title, window.location.pathname);
+                await navigateAfterLogin();
+            } catch (error) {
+                localStorage.removeItem("token");
+                window.history.replaceState({}, document.title, window.location.pathname);
+                if (axios.isAxiosError(error)) {
+                    toast.error(error.response?.data?.message || "Đăng nhập mạng xã hội thất bại");
+                } else {
+                    toast.error("Đăng nhập mạng xã hội thất bại");
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        sessionStorage.removeItem(SOCIAL_PROVIDER_STORAGE_KEY);
-        window.history.replaceState({}, document.title, window.location.pathname);
-        void completeSocialLogin(providerFromState, {accessToken});
+        void completeOAuth2Login();
     }, []);
 
     const handleGoogleLogin = () => {
-        if (!socialConfig.googleClientId) {
-            toast.error("Thiếu cấu hình Google Client ID");
-            return;
-        }
-
-        sessionStorage.setItem(SOCIAL_PROVIDER_STORAGE_KEY, "google");
-
-        const params = new URLSearchParams({
-            client_id: socialConfig.googleClientId,
-            redirect_uri: socialConfig.redirectUri,
-            response_type: "token",
-            scope: "openid email profile",
-            include_granted_scopes: "true",
-            state: "google",
-        });
-
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+        window.location.href = `${socialConfig.backendBaseUrl}/oauth2/authorization/google`;
     };
 
     const handleFacebookLogin = () => {
-        if (!socialConfig.facebookClientId) {
-            toast.error("Thiếu cấu hình Facebook App ID");
-            return;
-        }
-
-        sessionStorage.setItem(SOCIAL_PROVIDER_STORAGE_KEY, "facebook");
-
-        const params = new URLSearchParams({
-            client_id: socialConfig.facebookClientId,
-            redirect_uri: socialConfig.redirectUri,
-            response_type: "code",
-            scope: "email,public_profile",
-            state: "facebook",
-        });
-
-        window.location.href = `https://www.facebook.com/v20.0/dialog/oauth?${params.toString()}`;
+        window.location.href = `${socialConfig.backendBaseUrl}/oauth2/authorization/facebook`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

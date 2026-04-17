@@ -17,6 +17,7 @@ import com.languagelearning.repository.mysql.UserBadgeRepository;
 import com.languagelearning.repository.mysql.UserNodeProgressRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
 import com.languagelearning.repository.mysql.UserRepository;
+import com.languagelearning.util.AvatarDefaults;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,6 +101,7 @@ public class UserProfileService {
     private UserProfile createDefaultProfile(User user) {
         UserProfile profile = new UserProfile();
         profile.setUser(user);
+        profile.setAvatarUrl(AvatarDefaults.randomAvatarUrl());
         profile.setTotalXp(0);
         profile.setStreakCount(0);
         return userProfileRepository.save(profile);

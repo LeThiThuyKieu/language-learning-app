@@ -12,12 +12,6 @@ export interface RegisterRequest {
   fullName?: string;
 }
 
-export interface SocialLoginRequest {
-  provider: "google" | "facebook";
-  accessToken?: string;
-  oauthCode?: string;
-  redirectUri?: string;
-}
 export interface AuthResponse {
   user: User;
   token: string;
@@ -34,14 +28,9 @@ export const authService = {
     return response.data;
   },
 
-  socialLogin: async (data: SocialLoginRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>("/auth/social/login", data);
-    return response.data;
+  logout: async (): Promise<void> => {
+    await apiClient.post("/auth/logout");
   },
-
-  // logout: async (): Promise<void> => {
-  //   await apiClient.post("/auth/logout");
-  // },
 
   getCurrentUser: async (): Promise<User> => {
     const response = await apiClient.get<User>("/auth/me");

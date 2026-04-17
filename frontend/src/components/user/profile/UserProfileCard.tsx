@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 // 1. Định nghĩa Interface (Props)
 interface UserProfileProps {
     name: string;
@@ -11,8 +12,6 @@ interface UserProfileProps {
 
 export default function UserProfileCard({ name, level, showLevelLabel = true, avatarUrl, onAvatarClick, onEditNameClick, onLevelClick }: UserProfileProps) {
 
-    // Link ảnh con gấu mặc định bạn muốn
-    const DEFAULT_AVATAR = "https://api.dicebear.com/9.x/thumbs/svg?seed=Bear";
 
     return (
         <div className="flex items-center justify-between p-10 border-b-2 border-slate-200 mb-7 bg-white">
@@ -62,7 +61,7 @@ export default function UserProfileCard({ name, level, showLevelLabel = true, av
                     onClick={onAvatarClick}
                 >
                     <img
-                        src={avatarUrl || DEFAULT_AVATAR}
+                        src={avatarUrl || DEFAULT_AVATAR_URL}
                         className="w-28 h-28 rounded-full bg-slate-100 border-4 border-white shadow-md transition-all duration-200 group-hover:border-primary-400 object-cover"
                         alt="User Avatar"
                     />

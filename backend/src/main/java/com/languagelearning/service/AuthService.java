@@ -1,6 +1,5 @@
 package com.languagelearning.service;
 
-
 import com.languagelearning.dto.*;
 import com.languagelearning.entity.Role;
 import com.languagelearning.entity.User;
@@ -11,6 +10,7 @@ import com.languagelearning.exception.UserAlreadyExistsException;
 import com.languagelearning.repository.mysql.RoleRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
 import com.languagelearning.repository.mysql.UserRepository;
+import com.languagelearning.util.AvatarDefaults;
 import com.languagelearning.util.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -61,6 +61,7 @@ public class AuthService {
         UserProfile profile = new UserProfile();
         profile.setUser(user);
         profile.setFullName(request.getFullName());
+        profile.setAvatarUrl(AvatarDefaults.randomAvatarUrl());
         profile.setTotalXp(0);
         profile.setStreakCount(0);
         userProfileRepository.save(profile);
@@ -136,6 +137,14 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
         return UserDTO.fromUser(user);
+    }
+
+    @Transactional
+    public void logout(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+        });
     }
 
 }

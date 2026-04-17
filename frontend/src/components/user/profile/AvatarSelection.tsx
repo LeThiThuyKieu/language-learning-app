@@ -1,16 +1,8 @@
 import { ChangeEvent, useCallback, useMemo, useState } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import { profileService } from "@/services/profileService";
+import { AVATAR_OPTIONS, DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 
-// Danh sách gợi ý chuẩn "điệu" và đa dạng
-const SUGGESTIONS = [
-    { id: "1", url: "https://api.dicebear.com/9.x/lorelei/svg?seed=Sophie" },
-    { id: "2", url: "https://api.dicebear.com/9.x/adventurer/svg?seed=Felix" },
-    { id: "3", url: "https://api.dicebear.com/9.x/thumbs/svg?seed=Bear" },
-    { id: "4", url: "https://api.dicebear.com/9.x/thumbs/svg?seed=Rabbit" },
-    { id: "5", url: "https://api.dicebear.com/9.x/big-smile/svg?seed=Cookie" },
-    { id: "6", url: "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Sky" },
-];
 
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set([
@@ -26,7 +18,8 @@ interface AvatarSelectionProps {
 }
 
 export default function AvatarSelection({ onSelect, currentValue }: AvatarSelectionProps) {
-    const defaultImg = SUGGESTIONS[2].url;
+    const suggestions = AVATAR_OPTIONS.map((url, index) => ({ id: String(index + 1), url }));
+    const defaultImg = DEFAULT_AVATAR_URL;
     const [previewAvatar, setPreviewAvatar] = useState(currentValue || defaultImg);
     const [cropSource, setCropSource] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -149,7 +142,7 @@ export default function AvatarSelection({ onSelect, currentValue }: AvatarSelect
 
             {/* Grid danh sách gợi ý - Tất cả hình tròn */}
             <div className="grid grid-cols-3 gap-5 mb-6 justify-items-center">
-                {SUGGESTIONS.map((item) => (
+                {suggestions.map((item) => (
                     <button
                         key={item.id}
                         onClick={() => handleSelect(item.url)}
