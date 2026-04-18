@@ -105,7 +105,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 p-6 md:p-10">
+        <div className="min-h-screen via-white to-amber-50 p-6 md:p-10">
             <div className="max-w-7xl mx-auto">
                 <div>
                     <h1 className="text-4xl font-bold mb-2">Cài đặt</h1>

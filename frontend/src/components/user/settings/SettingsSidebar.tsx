@@ -25,7 +25,7 @@ export default function SettingsSidebar({ activeTab, onSelectTab }: SettingsSide
                             key={item.id}
                             onClick={() => onSelectTab(item.id)}
                             className={`w-full mb-3 p-4 rounded-2xl flex items-center gap-3 transition-all ${
-                                isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-orange-50"
+                                isActive ? "bg-primary-700 text-primary-foreground shadow-md" : "hover:bg-orange-50"
                             }`}
                         >
                             <Icon size={20} />

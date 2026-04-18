@@ -21,7 +21,7 @@ export default function SettingSwitch({ checked, onChange, disabled = false, ari
                 disabled={disabled}
                 aria-label={ariaLabel}
             />
-            <span className="w-12 h-7 rounded-full bg-slate-300 transition-colors peer-checked:bg-primary peer-disabled:opacity-60" />
+            <span className="w-12 h-7 rounded-full bg-slate-300 transition-colors peer-checked:bg-primary-700 peer-disabled:opacity-60" />
             <span className="absolute left-1 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
         </label>
     );
