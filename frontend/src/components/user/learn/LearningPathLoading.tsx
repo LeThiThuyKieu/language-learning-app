@@ -1,4 +1,4 @@
-export default function LearningPathLoading() {
+export default function LearningPathLoading({ title = "Đang tải lộ trình bài học", subtitle = "Lion có các bài học phù hợp với người mới học, người học tầm trung và cả người học nâng cao!" }: { title?: string; subtitle?: string } = {}) {
     return (
         <div
             className="flex min-h-[min(70vh,520px)] w-full flex-col items-center justify-center rounded-2xl px-6 py-14 text-center shadow-inner">
@@ -17,10 +17,10 @@ export default function LearningPathLoading() {
                 />
             </div>
             <p className="text-base font-extrabold text-gray-600">
-                Đang tải lộ trình bài học
+                {title}
             </p>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-gray-600">
-                Lion có các bài học phù hợp với người mới học, người học tầm trung và cả người học nâng cao!
+                {subtitle}
             </p>
         </div>
     );

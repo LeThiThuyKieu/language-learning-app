@@ -1,10 +1,5 @@
 import apiClient from "@/config/api";
-import {
-  Lesson,
-  Question,
-  Vocabulary,
-  SkillTreeQuestionsData,
-} from "@/types";
+import {SkillTreeQuestionsData} from "@/types";
 
 export const learningService = {
   /** Bộ câu theo tất cả tree của một level  */
@@ -23,24 +18,19 @@ export const learningService = {
     return response.data;
   },
 
-  getLesson: async (lessonId: string) => {
-    const response = await apiClient.get<Lesson>(
-      `/learning/lessons/${lessonId}`
+  /** Lấy số node đã unlock của một tree từ DB */
+  getUnlockedCount: async (treeId: number): Promise<number> => {
+    const response = await apiClient.get<{ unlockedCount: number }>(
+      `/progress/trees/${treeId}/unlocked`
     );
-    return response.data;
+    return response.data.unlockedCount;
   },
 
-  getQuestions: async (nodeId: number) => {
-    const response = await apiClient.get<Question[]>(
-      `/learning/nodes/${nodeId}/questions`
+  /** Đánh dấu node hoàn thành, trả về unlockedCount mới */
+  completeNode: async (nodeId: number): Promise<number> => {
+    const response = await apiClient.post<{ unlockedCount: number }>(
+      `/progress/nodes/${nodeId}/complete`
     );
-    return response.data;
-  },
-
-  getVocabularies: async (nodeId: number) => {
-    const response = await apiClient.get<Vocabulary[]>(
-      `/learning/nodes/${nodeId}/vocabularies`
-    );
-    return response.data;
+    return response.data.unlockedCount;
   },
 };

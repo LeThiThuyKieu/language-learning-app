@@ -154,7 +154,7 @@ export default function MatchingLessonView({
                     <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
                         <div className="max-w-2xl">
                             <p className="mb-3 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
-                                Matching game
+                                Nối từ
                             </p>
                             <h1 className="text-2xl font-extrabold leading-snug text-gray-900 md:text-3xl">
                                 Chọn cặp từ tương ứng
