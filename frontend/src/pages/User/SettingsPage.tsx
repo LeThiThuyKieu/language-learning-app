@@ -4,6 +4,7 @@ import AccountSettingsPanel from "@/components/user/settings/AccountSettingsPane
 import LearningSettingsPanel from "@/components/user/settings/LearningSettingsPanel";
 import NotificationSettingsPanel from "@/components/user/settings/NotificationSettingsPanel";
 import AppearanceSettingsPanel from "@/components/user/settings/AppearanceSettingsPanel";
+import ChangePasswordModal from "@/components/user/settings/ChangePassword";
 import {
     AccountSettingsState,
     AppearanceSettingsState,
@@ -11,6 +12,7 @@ import {
     NotificationSettingsState,
     SettingsTab,
 } from "@/components/user/settings/types";
+import { authService } from "@/services/authService";
 import { profileService } from "@/services/profileService";
 import { getStoredAppearanceSettings, saveAppearanceSettings, notifyAppearanceSettingsChanged } from "@/utils/appearanceSettings";
 import {
@@ -18,11 +20,19 @@ import {
     getStoredNotificationSettings,
     saveLearningSettings,
     saveNotificationSettings,
-} from "@/utils/SettingsStorage.ts";
+} from "@/utils/SettingsStorage";
+import axios from "axios";
+
+// Scope backend hiện tại của Settings:
+// - Đã có BE+DB: đổi tên hiển thị (update profile), đổi mật khẩu (api/auth/change-password).
+// - Chưa có BE: đổi email, liên kết/hủy liên kết Google/Facebook.
+// - Chưa có BE riêng cho tab Learning/Notifications và phần còn lại của Appearance (ngoài font size áp dụng toàn hệ thống).
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<SettingsTab>("account");
     const [isAccountSaving, setIsAccountSaving] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [isPasswordSaving, setIsPasswordSaving] = useState(false);
 
     // Nhóm trạng thái tài khoản phục vụ phần thông tin cá nhân, bảo mật và liên kết mạng xã hội.
     const [accountSettings, setAccountSettings] = useState<AccountSettingsState>({
@@ -82,15 +92,7 @@ export default function SettingsPage() {
     }, [appearanceSettings]);
 
     // Handler đổi tên hiển thị: đã nối backend profile và lưu DB qua API hiện có.
-    const handleChangeDisplayName = async () => {
-        const nextName = window.prompt("Nhập tên hiển thị mới", accountSettings.displayName);
-        if (!nextName) return;
-
-        const trimmedName = nextName.trim();
-        if (!trimmedName) {
-            return;
-        }
-
+    const handleSaveDisplayName = async (trimmedName: string): Promise<boolean> => {
         try {
             setIsAccountSaving(true);
             const updatedProfile = await profileService.updateMyProfile({ fullName: trimmedName });
@@ -99,8 +101,10 @@ export default function SettingsPage() {
                 displayName: updatedProfile.fullName?.trim() || trimmedName,
                 email: updatedProfile.email,
             }));
+            return true;
         } catch {
             window.alert("Không thể cập nhật tên hiển thị lúc này. Vui lòng thử lại.");
+            return false;
         } finally {
             setIsAccountSaving(false);
         }
@@ -111,9 +115,48 @@ export default function SettingsPage() {
         window.alert("Chức năng đổi email chưa hoàn thành trong scope hiện tại.");
     };
 
-    // PENDING: Chưa có API đổi mật khẩu trong backend hiện tại.
+    // Đổi mật khẩu: đã nối backend và lưu DB qua API auth.
     const handleChangePassword = () => {
-        window.alert("Chức năng đổi mật khẩu chưa hoàn thành trong scope hiện tại.");
+        setIsPasswordModalOpen(true);
+    };
+
+    const handleSubmitChangePassword = async (
+        payload: {
+            currentPassword: string;
+            newPassword: string;
+            confirmNewPassword: string;
+        }
+    ): Promise<{ success: boolean; message: string }> => {
+
+        try {
+            setIsPasswordSaving(true);
+
+            await authService.changePassword(payload);
+
+            return {
+                success: true,
+                message: "Đổi mật khẩu thành công.",
+            };
+
+        } catch (error: unknown) {
+
+            if (axios.isAxiosError(error)) {
+                return {
+                    success: false,
+                    message:
+                        error.response?.data?.message ||
+                        "Không thể đổi mật khẩu lúc này. Vui lòng thử lại.",
+                };
+            }
+
+            return {
+                success: false,
+                message: "Đã xảy ra lỗi không mong muốn.",
+            };
+
+        } finally {
+            setIsPasswordSaving(false);
+        }
     };
 
     // PENDING: Chưa có backend social-linking, nên chỉ giữ trạng thái UI và đánh dấu pending.
@@ -133,7 +176,7 @@ export default function SettingsPage() {
                 return (
                     <AccountSettingsPanel
                         settings={accountSettings}
-                        onChangeDisplayName={handleChangeDisplayName}
+                        onSaveDisplayName={handleSaveDisplayName}
                         onChangeEmail={handleChangeEmail}
                         onChangePassword={handleChangePassword}
                         onToggleGoogle={handleToggleGoogle}
@@ -156,18 +199,22 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen via-white to-amber-50 p-6 md:p-10">
+        <div className="min-h-screen px-6 pt-2 pb-6 md:px-10 md:pt-3 md:pb-8">
             <div className="max-w-7xl mx-auto">
                 <div>
                     <h1 className="text-4xl font-bold mb-2">Cài đặt</h1>
-                    <p className="text-slate-600 mb-8">Tùy chỉnh tài khoản, học tập, thông báo và trải nghiệm sử dụng của bạn.</p>
+                    <p className="text-slate-600 mb-4">Tùy chỉnh tài khoản, học tập, thông báo và trải nghiệm sử dụng của bạn.</p>
                 </div>
 
                 <div className="grid lg:grid-cols-12 gap-6">
                     <div className="lg:col-span-4 xl:col-span-3">
-                        <SettingsSidebar activeTab={activeTab} onSelectTab={setActiveTab} />
+                        <div className="sticky top-28 self-start">
+                            <SettingsSidebar
+                                activeTab={activeTab}
+                                onSelectTab={setActiveTab}
+                            />
+                        </div>
                     </div>
-
                     <div className="lg:col-span-8 xl:col-span-9">
                         <div key={activeTab}>
                             {renderActivePanel()}
@@ -175,6 +222,13 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
+
+            <ChangePasswordModal
+                isOpen={isPasswordModalOpen}
+                isSubmitting={isPasswordSaving}
+                onClose={() => setIsPasswordModalOpen(false)}
+                onSubmit={handleSubmitChangePassword}
+            />
         </div>
     );
 }

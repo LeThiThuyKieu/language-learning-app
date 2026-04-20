@@ -233,113 +233,259 @@ export default function HelpPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 relative">
-            {/* POPUP MÔ PHỎNG ADMIN NHẬN MAIL */}
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 text-slate-900 relative">
+
+            {/* POPUP */}
             {showAdminPopup && mockPayload && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden border border-slate-200">
-                        <div className="bg-slate-900 p-4 flex justify-between items-center text-white">
+                    <div className="w-full max-w-md rounded-[28px] bg-white shadow-2xl overflow-hidden border border-slate-200">
+
+                        <div className="bg-gradient-to-r from-slate-900 to-blue-900 p-4 flex justify-between items-center text-white">
                             <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-blue-400" />
-                                <span className="text-xs font-mono">Admin View (Simulation)</span>
+                                <Mail className="h-4 w-4 text-cyan-300"/>
+                                <span className="text-xs font-mono">Admin Simulation</span>
                             </div>
-                            <button onClick={() => setShowAdminPopup(false)} className="hover:bg-slate-800 p-1 rounded-lg">
-                                <X className="h-5 w-5" />
+
+                            <button
+                                onClick={()=>setShowAdminPopup(false)}
+                                className="p-2 rounded-xl hover:bg-white/10"
+                            >
+                                <X className="h-5 w-5"/>
                             </button>
                         </div>
+
                         <div className="p-6 space-y-4">
-                            <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-[13px] space-y-1">
-                                <p><strong>To:</strong> {mockPayload.to}</p>
-                                <p><strong>From:</strong> {mockPayload.senderName} ({mockPayload.from})</p>
-                                <p><strong>Subject:</strong> {mockPayload.subject}</p>
+                            <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-sm space-y-1">
+                                <p><b>To:</b> {mockPayload.to}</p>
+                                <p><b>From:</b> {mockPayload.senderName}</p>
+                                <p><b>Subject:</b> {mockPayload.subject}</p>
                             </div>
-                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                <p className="text-[11px] font-bold text-slate-400 mb-1 uppercase">Message:</p>
-                                <p className="text-sm italic">"{mockPayload.content}"</p>
+
+                            <div className="p-5 bg-slate-50 rounded-2xl">
+                                <p className="text-xs font-bold mb-2 text-slate-400 uppercase">Message</p>
+                                <p className="italic">{mockPayload.content}</p>
                             </div>
-                            <button onClick={() => setShowAdminPopup(false)} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold text-sm">Đóng bản xem thử</button>
+
+                            <button
+                                onClick={()=>setShowAdminPopup(false)}
+                                className="w-full py-3 rounded-2xl bg-blue-600 text-white font-bold"
+                            >
+                                Đóng
+                            </button>
                         </div>
+
                     </div>
                 </div>
             )}
 
-            {/* HEADER */}
-            <header className="bg-white border-b border-slate-200 py-12 text-center">
-                <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1 text-xs font-bold text-blue-600 mb-4">
-                    <HelpCircle className="h-4 w-4" /> TRUNG TÂM TRỢ GIÚP
+
+            {/* HERO */}
+            <header className="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-500 to-primary-600 text-white">
+
+                <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/20 blur-3xl rounded-full"/>
+                <div className="absolute bottom-0 right-0 w-80 h-80 bg-cyan-300/20 blur-3xl rounded-full"/>
+
+                <div className="relative py-20 text-center max-w-5xl mx-auto px-6">
+
+                    <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-xl px-5 py-2 text-sm font-bold mb-6">
+                        <HelpCircle className="w-5 h-5"/>
+                        Trung tâm trợ giúp
+                    </div>
+
+                    <h1 className="text-5xl font-black mb-4 tracking-tight">
+                        Chúng tôi có thể giúp gì cho bạn?
+                    </h1>
+
+                    <p className="text-orange-100 max-w-2xl mx-auto text-lg">
+                        Tìm câu trả lời nhanh hoặc gửi yêu cầu hỗ trợ tới admin.
+                    </p>
+
+                    <div className="grid md:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto">
+
+                        <div className="bg-white/15 rounded-3xl p-5 backdrop-blur-xl">
+                            <p className="text-3xl font-black">24/7</p>
+                            <span className="text-sm text-orange-100">Hỗ trợ</span>
+                        </div>
+
+                        <div className="bg-white/15 rounded-3xl p-5 backdrop-blur-xl">
+                            <p className="text-3xl font-black">100+</p>
+                            <span className="text-sm text-orange-100">FAQ</span>
+                        </div>
+
+                        <div className="bg-white/15 rounded-3xl p-5 backdrop-blur-xl">
+                            <p className="text-3xl font-black">&lt;1h</p>
+                            <span className="text-sm text-orange-100">Phản hồi</span>
+                        </div>
+
+                    </div>
+
                 </div>
-                <h1 className="text-4xl font-black tracking-tight">Hỗ trợ học viên</h1>
+
             </header>
 
-            <main className="mx-auto max-w-7xl px-4 pt-[10px] pb-12 lg:px-8 grid gap-8 lg:grid-cols-2">
+
+            <main className="mx-auto max-w-7xl px-4 -mt-10 relative z-10 pb-12 lg:px-8 grid gap-8 lg:grid-cols-2">
+
+
                 {/* FAQ */}
-                <div id="help-faq" className="space-y-4 scroll-mt-24">
-                    <div className="relative mb-6">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Tìm câu hỏi..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/20"
-                        />
-                    </div>
-                    {filteredFaqs.map((item, index) => (
-                        <div key={index} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                            <button onClick={() => setOpenIndex(index)} className="w-full p-4 text-left font-bold flex justify-between items-center hover:bg-slate-50">
-                                {item.question}
-                                <ChevronDown className={`h-4 w-4 transition-transform ${openIndex === index ? 'rotate-180' : ''}`} />
-                            </button>
-                            {openIndex === index && (
-                                <div className="px-4 pb-4 text-sm text-slate-500 border-t border-slate-50 pt-3 leading-relaxed">
-                                    {item.answer.map((a, i) => <p key={i}>{a}</p>)}
-                                </div>
-                            )}
+                <div className="space-y-4">
+
+                    <div className="bg-white rounded-3xl shadow-xl border border-slate-200 p-6">
+                        <div className="relative mb-6">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400"/>
+
+                            <input
+                                value={searchTerm}
+                                onChange={(e)=>setSearchTerm(e.target.value)}
+                                placeholder="Tìm câu hỏi..."
+                                className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-orange-100 outline-none"
+                            />
                         </div>
-                    ))}
-                </div>
 
-                {/* FORM */}
-                <div id="help-chat" className="space-y-6 scroll-mt-24">
-                   <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm lg:sticky lg:top-24 self-start">
-                        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                            <MessageSquare className="h-5 w-5 text-blue-600" /> Gửi tin nhắn
+                        <h2 className="text-2xl font-black mb-5">
+                            Câu hỏi phổ biến
                         </h2>
-                        <form onSubmit={submitQuestion} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="text" placeholder="Tên" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="p-3 bg-slate-50 rounded-xl text-sm outline-none border border-transparent focus:border-blue-500" />
-                                <input type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="p-3 bg-slate-50 rounded-xl text-sm outline-none border border-transparent focus:border-blue-500" />
-                            </div>
-                            <select value={form.topic} onChange={(e) => setForm({...form, topic: e.target.value as SupportTopic})} className="w-full p-3 bg-slate-50 rounded-xl text-sm outline-none border border-transparent focus:border-blue-500">
-                                {SUPPORT_TOPICS.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                            <textarea placeholder="Nội dung..." rows={4} value={form.question} onChange={(e) => setForm({...form, question: e.target.value})} className="w-full p-3 bg-slate-50 rounded-xl text-sm outline-none border border-transparent focus:border-blue-500" />
-                            {formError && <p className="text-xs text-red-500 font-bold">{formError}</p>}
-                            <button type="submit" disabled={isSubmitting} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 disabled:opacity-50 transition-all flex justify-center items-center gap-2">
-                                {isSubmitting ? "Đang gửi..." : <><Send className="h-4 w-4" /> Gửi</>}
-                            </button>
-                        </form>
-                    </div>
 
-                    {/* LỊCH SỬ GỬI */}
-                    {questions.length > 0 && (
-                        <div className="space-y-3">
-                            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Vừa gửi gần đây</h3>
-                            {questions.map(q => (
-                                <div key={q.id} className="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center animate-in fade-in slide-in-from-bottom-2">
-                                    <div>
-                                        <p className="text-xs font-bold text-blue-600 uppercase">{q.topic}</p>
-                                        <p className="text-sm font-medium text-slate-700">{q.question}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md tracking-tighter">SENT</span>
-                                    </div>
+                        <div className="space-y-4">
+                            {filteredFaqs.map((item,index)=>(
+                                <div
+                                    key={index}
+                                    className="rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md transition"
+                                >
+                                    <button
+                                        onClick={()=>setOpenIndex(index)}
+                                        className="w-full px-5 py-5 font-bold flex justify-between items-center bg-gradient-to-r from-slate-50 to-orange-50"
+                                    >
+                                        {item.question}
+
+                                        <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                            <ChevronDown
+                                                className={`h-5 w-5 transition ${openIndex===index ? 'rotate-180 text-orange-600':''}`}
+                                            />
+                                        </div>
+
+                                    </button>
+
+                                    {openIndex===index && (
+                                        <div className="p-5 text-slate-600 leading-relaxed space-y-2">
+                                            {item.answer.map((a,i)=>(
+                                                <p key={i}>• {a}</p>
+                                            ))}
+                                        </div>
+                                    )}
+
                                 </div>
                             ))}
                         </div>
-                    )}
+
+                    </div>
                 </div>
+
+
+                {/* FORM */}
+                <div className="space-y-6">
+
+                    <div className="bg-gradient-to-br from-white to-orange-50 p-8 rounded-[32px] border border-orange-100 shadow-2xl lg:sticky lg:top-24">
+
+                        <h2 className="text-2xl font-black mb-6 flex gap-2 items-center">
+                            <MessageSquare className="w-6 h-6 text-orange-600"/>
+                            Gửi hỗ trợ
+                        </h2>
+
+                        <form onSubmit={submitQuestion} className="space-y-4">
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <input
+                                    value={form.name}
+                                    onChange={(e)=>setForm({...form,name:e.target.value})}
+                                    placeholder="Tên"
+                                    className="p-4 rounded-2xl bg-white border-2 border-transparent focus:border-orange-500 shadow-sm outline-none"
+                                />
+
+                                <input
+                                    value={form.email}
+                                    onChange={(e)=>setForm({...form,email:e.target.value})}
+                                    placeholder="Email"
+                                    className="p-4 rounded-2xl bg-white border-2 border-transparent focus:border-orange-500 shadow-sm outline-none"
+                                />
+                            </div>
+
+                            <select
+                                value={form.topic}
+                                onChange={(e)=>setForm({...form,topic:e.target.value as SupportTopic})}
+                                className="w-full p-4 rounded-2xl bg-white border-2 border-transparent focus:border-orange-500 outline-none"
+                            >
+                                {SUPPORT_TOPICS.map(t=>(
+                                    <option key={t}>{t}</option>
+                                ))}
+                            </select>
+
+                            <textarea
+                                rows={5}
+                                value={form.question}
+                                onChange={(e)=>setForm({...form,question:e.target.value})}
+                                placeholder="Nhập nội dung hỗ trợ..."
+                                className="w-full p-4 rounded-2xl bg-white border-2 border-transparent focus:border-orange-500 outline-none"
+                            />
+
+                            {formError && (
+                                <p className="text-red-500 text-sm font-bold">{formError}</p>
+                            )}
+
+                            <button
+                                disabled={isSubmitting}
+                                type="submit"
+                                className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary-900 to-orange-500 text-white font-bold shadow-lg hover:scale-[1.02] transition"
+                            >
+                                {isSubmitting ? 'Đang gửi...' : (
+                                    <>
+                                        <Send className="inline mr-2"/>
+                                        Gửi yêu cầu
+                                    </>
+                                )}
+                            </button>
+
+                        </form>
+
+                    </div>
+
+
+                    {/* HISTORY */}
+                    {questions.length>0 && (
+                        <div className="space-y-3">
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">
+                                Vừa gửi gần đây
+                            </h3>
+
+                            {questions.map(q=>(
+                                <div
+                                    key={q.id}
+                                    className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex justify-between items-center"
+                                >
+                                    <div>
+                                        <p className="text-xs font-bold text-orange-600 uppercase mb-1">
+                                            {q.topic}
+                                        </p>
+
+                                        <p className="text-sm font-medium text-slate-700">
+                                            {q.question}
+                                        </p>
+                                    </div>
+
+                                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-emerald-400 to-green-500 text-white shadow-md">
+                                        ✓ SENT
+                                        </span>
+
+                                </div>
+                            ))}
+
+                        </div>
+                    )}
+
+                </div>
+
             </main>
+
         </div>
-    );
+    )
 }

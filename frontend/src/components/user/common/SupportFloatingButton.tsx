@@ -18,11 +18,7 @@ const HOVER_MESSAGES = [
 const DISPLAY_MS = 1500;
 const GAP_MS = 500;
 
-/**
- * =========================
- * ICON CHAT
- * =========================
- */
+
 function SupportChatIcon({ className }: { className?: string }) {
     return (
         <svg className={className}
@@ -35,7 +31,12 @@ function SupportChatIcon({ className }: { className?: string }) {
 export default function SupportFloatingButton() {
     const navigate = useNavigate();
     const location = useLocation();
+    const normalizedPath =
+        location.pathname !== "/" && location.pathname.endsWith("/")
+            ? location.pathname.slice(0, -1)
+            : location.pathname;
 
+    const isVisibleOnCurrentPage = ["/", "/profile", "/learn", "/settings", "/help"].includes(normalizedPath);
     /**
      * =========================
      * STATE
@@ -98,7 +99,7 @@ export default function SupportFloatingButton() {
     }, [clearHoverTimers, menuOpen]);
 
     const onPointerEnter = () => {
-        if (!menuOpen) startHoverSequence();
+        if (!menuOpen && !chatOpen) startHoverSequence();
     };
 
     const onPointerLeave = () => {
@@ -137,11 +138,13 @@ export default function SupportFloatingButton() {
     // Cleanup timer
     useEffect(() => () => clearHoverTimers(), [clearHoverTimers]);
 
-    /**
-     * =========================
-     * ACTIONS
-     * =========================
-     */
+    // Khi route không nằm trong scope cho phép thì đóng toàn bộ UI hỗ trợ.
+    useEffect(() => {
+        if (!isVisibleOnCurrentPage) {
+            setMenuOpen(false);
+            setChatOpen(false);
+        }
+    }, [isVisibleOnCurrentPage]);
 
     const toggleMenu = () => setMenuOpen((o) => !o);
 
@@ -162,16 +165,15 @@ export default function SupportFloatingButton() {
         setChatOpen(true);
     };
 
-    /**
-     * =========================
-     * RENDER
-     * =========================
-     */
     const showTooltip =
         hoverLineIndex !== null &&
         hoverLineIndex >= 0 &&
         hoverLineIndex < HOVER_MESSAGES.length &&
-        !menuOpen;
+        !menuOpen &&
+        !chatOpen;
+    if (!isVisibleOnCurrentPage) {
+        return null;
+    }
 
     return (
         <div

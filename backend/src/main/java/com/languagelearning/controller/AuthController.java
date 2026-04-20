@@ -43,7 +43,15 @@ public class AuthController {
         }
         return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
     }
-
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<String>> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        String email = authentication.getName();
+        authService.changePassword(email, request);
+        return ResponseEntity.ok(ApiResponse.success("Change password successfully", null));
+    }
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
