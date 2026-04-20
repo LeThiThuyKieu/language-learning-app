@@ -2,6 +2,7 @@ import {BrowserRouter, Routes, Route} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "react-query";
 import {Toaster} from "react-hot-toast";
 import AdminLayout from "@/components/admin/layout/Layout";
+import AdminGuard from "@/components/admin/layout/AdminGuard.tsx";
 import MainLayout from "@/components/user/layout/MainLayout.tsx";
 import HomePage from "@/pages/User/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
@@ -61,8 +62,9 @@ function App() {
                     <Route path="/placement-test/session" element={<PlacementTestSessionPage />} />
                     <Route path="/placement-test/results" element={<PlacementTestResultsPage />} />
 
-                    {/* Admin Routes - Dashboard */}
-                    <Route path="/admin" element={<AdminLayout/>}>
+                    {/* Admin Routes - chỉ ADMIN mới vào được */}
+                    <Route path="/admin" element={<AdminGuard><AdminLayout/></AdminGuard>}>
+                        <Route index element={<DashboardPage/>}/>
                         <Route path="dashboard" element={<DashboardPage/>}/>
                     </Route>
                 </Routes>

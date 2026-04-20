@@ -84,6 +84,16 @@ const chartData = [
   { month: "Dec", value: 85 },
 ];
 
+type LearnerRow = {
+  id: string;
+  customer: string;
+  date: string;
+  amount: string;
+  status: string;
+  tracking: string;
+  avatar: string;
+};
+
 export default function DashboardPage() {
   const tableColumns = [
     { key: "id", label: "User ID", width: "w-24" },
@@ -91,7 +101,7 @@ export default function DashboardPage() {
       key: "customer",
       label: "Learner",
       width: "w-40",
-      render: (customer: string, row: any) => (
+      render: (customer: string, row: LearnerRow) => (
         <div className="flex items-center gap-3">
           <img
             src={row.avatar}
@@ -127,17 +137,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* UserProfileCard */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Learning Dashboard</h1>
-          <p className="text-gray-600 text-sm mt-1">
-            Welcome back! Here's your learning progress today.
-          </p>
-        </div>
-        <button className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm hover:shadow-md">
-          Download Report
-        </button>
+      {/* Banner giới thiệu */}
+      <div className="rounded-2xl bg-gradient-to-r from-primary-600 to-orange-500 p-6 flex items-center gap-6 shadow-lg">
+          <img src="/logo/lion.png" alt="Lion" className="h-20 w-20 object-contain shrink-0 drop-shadow-md"/>
+          <div className="text-white">
+              <h1 className="text-2xl font-extrabold leading-tight">Chào mừng đến Lion Admin</h1>
+              <p className="mt-1 text-basic text-white/85 max-w-xl leading-relaxed">
+                  Hệ thống quản trị ứng dụng học tiếng Anh Lion — theo dõi tiến trình học viên,
+                  quản lý nội dung bài học, skill trees và kết quả placement test.
+              </p>
+          </div>
+          <button className="ml-auto shrink-0 bg-white/20 hover:bg-white/30 text-white px-5 py-2 rounded-xl font-semibold text-sm transition border border-white/30">
+              Xuất báo cáo
+          </button>
       </div>
 
       {/* Stats Grid - 4 columns */}

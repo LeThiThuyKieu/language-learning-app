@@ -27,7 +27,12 @@ export default function LoginPage() {
         []
     );
 
-    const navigateAfterLogin = async () => {
+    const navigateAfterLogin = async (roles?: string[]) => {
+        // Nếu là ADMIN → vào trang quản trị
+        if (roles?.includes("ADMIN")) {
+            navigate("/admin/dashboard");
+            return;
+        }
         try {
             const profile = await profileService.getMyProfile();
             const levelId = profile.currentLevelId;
@@ -71,7 +76,7 @@ export default function LoginPage() {
                 setAuth(response, token);
                 toast.success("Đăng nhập mạng xã hội thành công!");
                 window.history.replaceState({}, document.title, window.location.pathname);
-                await navigateAfterLogin();
+                await navigateAfterLogin(response.roles);
             } catch (error) {
                 localStorage.removeItem("token");
                 window.history.replaceState({}, document.title, window.location.pathname);
@@ -104,7 +109,7 @@ export default function LoginPage() {
             const response = await authService.login({email, password});
             setAuth(response.user, response.token);
             toast.success("Đăng nhập thành công!");
-            await navigateAfterLogin();
+            await navigateAfterLogin(response.user.roles);
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.message || "Đăng nhập thất bại");
