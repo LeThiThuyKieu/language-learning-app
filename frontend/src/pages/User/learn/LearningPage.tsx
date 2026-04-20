@@ -2,7 +2,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
-import {getLearnTreeUnlockedCount} from "@/utils/learnTreeProgress";
+import {getLearnTreeUnlockedCount, loadProgressFromDB} from "@/utils/learnTreeProgress";
 import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx";
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
@@ -100,7 +100,7 @@ export default function LearningPage() {
         };
     }, [isAuthenticated, navigate, location.state?.level]);
 
-    // Fetch tất cả skill tree + câu hỏi theo level (backend quyết định số tree cho mỗi level)
+    // Fetch tất cả skill tree + câu hỏi theo level
     useEffect(() => {
         if (!isAuthenticated || !resolvedLevel) return;
 
@@ -114,6 +114,9 @@ export default function LearningPage() {
                 const data = await learningService.getLevelQuestions(levelId);
                 if (cancelled) return;
                 setTrees(data);
+                // Load tiến trình từ DB cho tất cả tree
+                await Promise.all(data.map((t) => loadProgressFromDB(t.treeId)));
+                if (!cancelled) setTrees([...data]); // trigger re-render với progress mới
             } catch (e: unknown) {
                 if (cancelled) return;
                 setTreesError(

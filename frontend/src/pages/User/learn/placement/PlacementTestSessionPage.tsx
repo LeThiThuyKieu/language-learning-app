@@ -20,6 +20,7 @@ import {
     type PlacementSpeakingData,
     type PlacementVocabItem,
 } from "@/services/placementTestService.ts";
+import LearningPathLoading from "@/components/user/learn/LearningPathLoading.tsx";
 import {cn} from "@/utils/cn.ts";
 
 const VOCAB_PER_LEVEL = 5;
@@ -382,12 +383,11 @@ export default function PlacementTestSessionPage() {
         );
     }
 
-    // Sẵn sàng chuẩn bị làm test
+    // Load bài test
     if (phase === "boot" || phase === "loading" || !bundle || !step || !listeningBuffer || !speakingBuffer) {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center bg-[#f0f1f3]">
-                <Loader2 className="h-10 w-10 animate-spin text-primary-600"/>
-                <p className="mt-4 text-sm text-gray-600">Đang chuẩn bị bài test…</p>
+                <LearningPathLoading title="Đang chuẩn bị bài test…"/>
             </div>
         );
     }
@@ -493,7 +493,7 @@ export default function PlacementTestSessionPage() {
                     {phase === "ready" && step.kind === "matching" && (
                         <div key={`${currentLevel}-match`}>
                             <p className="mb-6 inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
-                                Matching
+                                Nối từ
                             </p>
                             <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">Ghép nối từ và nghĩa</h2>
                             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-600 md:text-base">
@@ -654,7 +654,10 @@ function ListeningStep({
     );
 }
 
-// Speaking
+// Speaking trong placement test:
+// Bấm mic → ghi âm → nói xong → hiện popup "Thử lại / Kiểm tra"
+// Bấm Thử lại → cho nói lại
+// Bấm Kiểm tra → hiện transcript + kết quả % (tương tự SpeakingLessonView)
 function SpeakingStep({
                           instruction,
                           audioUrl,
@@ -670,76 +673,125 @@ function SpeakingStep({
     onChange: (i: number, v: string) => void;
     onSubmit: (points: number, isWeak: boolean) => void;
 }) {
-    const filled = values.every((v) => v.trim().length > 0);
-    const handleNop = () => {
-        const ratio = scoreSpeakingStep(
-            lines.map((l) => l.text),
-            values
-        );
-        const isWeak = ratio < 0.45;
-        onSubmit(ratio, isWeak);
-    };
+    // lineIndex: dòng đang luyện hiện tại
+    const [lineIndex, setLineIndex] = useState(0);
+    const targetClean = String(lines[lineIndex]?.text ?? "").replace(/^\d+[. ]\s*/, "").trim();
 
-    const [activeMicIndex, setActiveMicIndex] = useState<number | null>(null);
+    const [recording, setRecording] = useState(false);
+    const [transcript, setTranscript] = useState("");
+    const [showPopup, setShowPopup] = useState(false);
+    const [checked, setChecked] = useState(false);
+    const [score, setScore] = useState<number | null>(null);
     const [micError, setMicError] = useState<string | null>(null);
+    const [passedIndices, setPassedIndices] = useState<Set<number>>(new Set());
     const recRef = useRef<SpeechRecognitionLike | null>(null);
 
-    const stopMic = useCallback(() => {
-        try {
-            recRef.current?.stop?.();
-        } catch {
-            // ignore
+    // Tính % similarity word-level Jaccard (giống SpeakingLessonView)
+    function calcSim(a: string, b: string): number {
+        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+        const wa = norm(a).split(/\s+/).filter(Boolean);
+        const wb = norm(b).split(/\s+/).filter(Boolean);
+        if (!wa.length && !wb.length) return 100;
+        if (!wa.length || !wb.length) return 0;
+        const used = new Array(wb.length).fill(false);
+        let matched = 0;
+        for (const w of wa) {
+            const idx = wb.findIndex((x, i) => !used[i] && x === w);
+            if (idx !== -1) { matched++; used[idx] = true; }
         }
+        return Math.round((matched / (wa.length + wb.length - matched)) * 100);
+    }
+
+    const stopMic = useCallback(() => {
+        try { recRef.current?.stop?.(); } catch { /* ignore */ }
         recRef.current = null;
-        setActiveMicIndex(null);
+        setRecording(false);
     }, []);
 
-    useEffect(() => {
-        return () => {
-            stopMic();
+    useEffect(() => { return () => { stopMic(); }; }, [stopMic]);
+
+    const startMic = useCallback(() => {
+        const w = window as Window & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor };
+        const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
+        if (!SR) {
+            setMicError("Trình duyệt chưa hỗ trợ ghi âm. Hãy dùng Chrome.");
+            return;
+        }
+        setMicError(null);
+        setTranscript("");
+        setShowPopup(false);
+        setChecked(false);
+        setScore(null);
+        stopMic();
+
+        const rec = new SR();
+        rec.lang = "en-US";
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
+        rec.onresult = (e) => {
+            const t = e?.results?.[0]?.[0]?.transcript ?? "";
+            setTranscript(String(t));
         };
+        rec.onerror = (e) => {
+            setMicError(`Lỗi mic: ${e?.error ?? "unknown"}`);
+            setRecording(false);
+        };
+        rec.onend = () => {
+            setRecording(false);
+            // Sau khi nói xong → hiện popup
+            setShowPopup(true);
+        };
+        recRef.current = rec as unknown as SpeechRecognitionLike;
+        setRecording(true);
+        try { rec.start(); } catch { setMicError("Không thể bật mic."); }
     }, [stopMic]);
 
-    const startMicFor = useCallback(
-        (idx: number) => {
-            const w = window as Window & {
-                SpeechRecognition?: SpeechRecognitionCtor;
-                webkitSpeechRecognition?: SpeechRecognitionCtor;
-            };
-            const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
-            if (!SR) {
-                setMicError("Trình duyệt chưa hỗ trợ SpeechRecognition. Bạn có thể gõ tay để nộp bài.");
-                toast.error("Trình duyệt chưa hỗ trợ micro (SpeechRecognition).");
-                return;
-            }
+    // Bấm Kiểm tra: tính điểm, hiện kết quả
+    function handleCheck() {
+        const pct = calcSim(transcript, targetClean);
+        setScore(pct);
+        setChecked(true);
+        setShowPopup(false);
+        onChange(lineIndex, transcript);
+        // Lưu pass/fail cho dòng này
+        if (pct >= 70) {
+            setPassedIndices((prev) => new Set(prev).add(lineIndex));
+        }
+    }
+
+    // Bấm Thử lại: cho nói lại
+    function handleRetry() {
+        setShowPopup(false);
+        setTranscript("");
+        setChecked(false);
+        setScore(null);
+        startMic();
+    }
+
+    // Qua dòng tiếp hoặc nộp bài
+    function handleNext() {
+        if (lineIndex < lines.length - 1) {
+            setLineIndex(lineIndex + 1);
+            setTranscript("");
+            setChecked(false);
+            setScore(null);
+            setShowPopup(false);
             setMicError(null);
-            stopMic();
-            const rec = new SR();
-            rec.lang = "en-US";
-            rec.interimResults = false;
-            rec.maxAlternatives = 1;
-            rec.onresult = (e) => {
-                const t = e?.results?.[0]?.[0]?.transcript ?? "";
-                onChange(idx, String(t));
-            };
-            rec.onerror = (e) => {
-                const msg = e?.error ? String(e.error) : "micro_error";
-                setMicError(`Không dùng được mic: ${msg}`);
-            };
-            rec.onend = () => {
-                recRef.current = null;
-                setActiveMicIndex(null);
-            };
-            recRef.current = rec;
-            setActiveMicIndex(idx);
-            try {
-                rec.start();
-            } catch {
-                setMicError("Không thể bật mic. Hãy kiểm tra quyền truy cập micro.");
-            }
-        },
-        [onChange, stopMic]
-    );
+        } else {
+            // Tính điểm tổng và nộp
+            const ratio = scoreSpeakingStep(lines.map((l) => l.text), values);
+            onSubmit(ratio, ratio < 0.45);
+        }
+    }
+
+    const total = lines.length;
+
+    // Màu sắc theo điểm
+    function scoreColor(pct: number) {
+        if (pct >= 70) return { ring: "stroke-emerald-500", text: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" };
+        if (pct >= 50) return { ring: "stroke-amber-400", text: "text-amber-500", bg: "bg-amber-50 border-amber-200" };
+        return { ring: "stroke-red-500", text: "text-red-500", bg: "bg-red-50 border-red-200" };
+    }
 
     return (
         <>
@@ -747,76 +799,160 @@ function SpeakingStep({
                 Nói / Đọc
             </p>
             <h2 className="text-xl font-extrabold text-[#0a192f] md:text-2xl">{instruction}</h2>
+            <p className="mt-1 text-sm text-gray-500">Câu {lineIndex + 1} / {total}</p>
+
+            {/* Audio player */}
             <div className="mt-6">
-                <LessonAudioPlayer src={audioUrl} trackKey={`${instruction}-${lines[0]?.questionId ?? "speak"}`}/>
+                <LessonAudioPlayer
+                    src={audioUrl}
+                    trackKey={`${instruction}-${lines[0]?.questionId ?? "speak"}`}
+                    forcePause={recording}
+                />
             </div>
+
             {micError && <p className="mt-3 text-sm font-semibold text-amber-700">{micError}</p>}
-            <div
-                className="mt-8 rounded-2xl border-2 border-gray-200 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-6 shadow-inner">
+
+            {/* Danh sách dòng */}
+            <div className="mt-8 rounded-2xl border-2 border-gray-200 bg-gradient-to-b from-gray-50/80 to-white p-5 md:p-6 shadow-inner">
                 <p className="mb-4 text-sm font-semibold text-gray-600">
-                    Bấm mic ở mỗi câu để đọc. Hệ thống sẽ ghi lại transcript để chấm điểm (bạn vẫn có thể chỉnh sửa bằng
-                    tay).
+                    Bấm mic để ghi âm, sau đó chọn <strong>Kiểm tra</strong> hoặc <strong>Thử lại</strong>.
                 </p>
                 <div className="space-y-3">
                     {lines.map((line, i) => {
-                        const active = activeMicIndex === i;
+                        const isCurrent = i === lineIndex;
+                        const isDone = i < lineIndex;
+                        const isPassed = passedIndices.has(i);
                         const lineText = String(line.text ?? "").replace(/\\n/g, "\n");
                         return (
-                            <div
-                                key={`${line.questionId}-${line.lineIndex}`}
-                                className={cn(
-                                    "rounded-2xl border-2 px-4 py-4 shadow-sm transition",
-                                    active ? "border-primary-500 bg-primary-100 ring-2 ring-primary-200" : "border-gray-200 bg-white"
-                                )}
-                            >
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="min-w-0 flex-1">
-                                        <span
-                                            className="text-gray-900 font-semibold leading-snug whitespace-pre-wrap">{lineText}</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (active) stopMic();
-                                            else startMicFor(i);
-                                        }}
-                                        className={cn(
-                                            "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 transition shadow-sm",
-                                            active
-                                                ? "border-primary-500 bg-primary-500 text-white hover:bg-primary-600"
-                                                : "border-gray-200 bg-white text-primary-600 hover:border-primary-300 hover:bg-primary-50"
-                                        )}
-                                        aria-label="Bấm để đọc"
-                                        title={active ? "Dừng" : "Bấm để đọc"}
-                                    >
-                                        <Mic className="h-5 w-5" strokeWidth={2.2}/>
-                                    </button>
+                            <div key={`${line.questionId}-${line.lineIndex}`} className="flex flex-col gap-2">
+                                <div className={cn(
+                                    "flex items-center justify-between gap-4 rounded-2xl border-2 px-4 py-4 shadow-sm transition",
+                                    isCurrent && recording ? "border-primary-500 bg-primary-50 ring-2 ring-primary-200"
+                                        : isCurrent && transcript && !checked ? "border-emerald-400 bg-emerald-50"
+                                        : isDone && isPassed ? "border-emerald-300 bg-emerald-50 opacity-70"
+                                        : isDone && !isPassed ? "border-red-200 bg-red-50 opacity-70"
+                                        : isCurrent ? "border-primary-300 bg-white"
+                                        : "border-gray-200 bg-white opacity-40"
+                                )}>
+                                    <span className="text-gray-900 font-semibold leading-snug whitespace-pre-wrap flex-1 min-w-0">
+                                        {isDone && isPassed && <span className="mr-2 text-emerald-500">✓</span>}
+                                        {isDone && !isPassed && <span className="mr-2 text-red-400">✗</span>}
+                                        {lineText}
+                                    </span>
+                                    {/* Nút mic chỉ ở dòng đang luyện */}
+                                    {isCurrent && (
+                                        <button
+                                            type="button"
+                                            disabled={checked}
+                                            onClick={recording ? stopMic : startMic}
+                                            className={cn(
+                                                "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 transition shadow-sm",
+                                                checked ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                    : recording ? "border-red-500 bg-red-500 text-white animate-pulse hover:bg-red-600"
+                                                    : transcript ? "border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600"
+                                                    : "border-gray-200 bg-white text-primary-600 hover:border-primary-300 hover:bg-primary-50"
+                                            )}
+                                            aria-label={recording ? "Dừng ghi âm" : "Bắt đầu ghi âm"}
+                                        >
+                                            <Mic className="h-5 w-5" strokeWidth={2.2}/>
+                                        </button>
+                                    )}
                                 </div>
-                                <input
-                                    type="text"
-                                    value={values[i] ?? ""}
-                                    onChange={(e) => onChange(i, e.target.value)}
-                                    placeholder="Transcript sẽ hiện ở đây..."
-                                    className="mt-3 w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 outline-none focus:border-primary-500"
-                                />
+
+                                {/* Transcript + kết quả % ngay dưới dòng đang luyện (sau khi bấm Kiểm tra) */}
+                                {isCurrent && checked && score !== null && (() => {
+                                    const c = scoreColor(score);
+                                    const radius = 28;
+                                    const circ = 2 * Math.PI * radius;
+                                    const offset = circ - (score / 100) * circ;
+                                    return (
+                                        <div className={`rounded-2xl border-2 ${c.bg} p-4 flex flex-col gap-3`}>
+                                            <div className="flex items-center gap-4">
+                                                {/* Vòng tròn % */}
+                                                <div className="relative shrink-0 w-[68px] h-[68px]">
+                                                    <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
+                                                        <circle cx="34" cy="34" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="6"/>
+                                                        <circle cx="34" cy="34" r={radius} fill="none" strokeWidth="6"
+                                                            strokeLinecap="round"
+                                                            strokeDasharray={circ}
+                                                            strokeDashoffset={offset}
+                                                            className={`${c.ring} transition-all duration-700`}
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                        <span className={`text-base font-extrabold leading-none ${c.text}`}>{score}%</span>
+                                                        <span className="text-[9px] text-gray-500 font-semibold">khớp</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className={`text-sm font-extrabold ${c.text}`}>
+                                                        {score >= 70 ? "Đạt!" : score >= 50 ? "Khá ổn" : "Cần luyện thêm"}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-0.5">
+                                                        {score >= 70 ? "Ngưỡng đạt: 70%" : "Cần ≥ 70% để đạt"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {/* So sánh */}
+                                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                                <div className="rounded-xl bg-white/70 border border-gray-200 px-3 py-2">
+                                                    <p className="font-bold text-gray-400 uppercase tracking-wide mb-1">Bạn nói</p>
+                                                    <p className="text-gray-800 font-medium">{transcript || "—"}</p>
+                                                </div>
+                                                <div className="rounded-xl bg-white/70 border border-gray-200 px-3 py-2">
+                                                    <p className="font-bold text-gray-400 uppercase tracking-wide mb-1">Câu mẫu</p>
+                                                    <p className="text-gray-800 font-medium">{targetClean}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         );
                     })}
                 </div>
             </div>
-            <div className="mt-10 flex justify-center">
-                <button
-                    type="button"
-                    disabled={!filled}
-                    onClick={handleNop}
-                    className={cn(
-                        "min-w-[200px] rounded-full px-10 py-3 text-sm font-bold shadow-md md:text-base",
-                        filled ? "bg-[#F9CF15] text-gray-900 hover:brightness-95" : "cursor-not-allowed bg-gray-300 text-gray-500"
-                    )}
-                >
-                    Nộp bài
-                </button>
-            </div>
+
+            {/* Nút Tiếp tục / Nộp bài (sau khi đã kiểm tra) */}
+            {checked && (
+                <div className="mt-6 flex justify-center">
+                    <button type="button" onClick={handleNext}
+                        className="min-w-[160px] h-11 rounded-2xl px-6 text-sm font-extrabold shadow-sm transition bg-[#F9CF15] text-gray-900 hover:brightness-95">
+                        {lineIndex < lines.length - 1 ? "Câu tiếp theo" : "Nộp bài"}
+                    </button>
+                </div>
+            )}
+
+            {/* Popup sau khi nói xong: Thử lại hoặc Kiểm tra */}
+            {showPopup && !checked && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setShowPopup(false)}/>
+                    <div className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
+                        <p className="text-base font-extrabold text-[#0a192f] mb-1">Bạn vừa nói xong!</p>
+                        <p className="text-sm text-gray-600 mb-5">
+                            Bạn muốn thử lại hay kiểm tra kết quả?
+                        </p>
+                        <div className="flex gap-3">
+                            <button type="button" onClick={handleRetry}
+                                className="flex-1 h-11 rounded-2xl border-2 border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-50 transition">
+                                Thử lại
+                            </button>
+                            <button type="button" onClick={handleCheck}
+                                className="flex-1 h-11 rounded-2xl bg-primary-600 hover:bg-primary-700 text-sm font-extrabold text-white shadow-sm transition">
+                                Kiểm tra
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Trạng thái đang ghi âm */}
+            {recording && (
+                <div className="mt-4 flex items-center gap-2 text-sm text-red-600 font-semibold">
+                    <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-ping"/>
+                    Đang ghi âm... Bấm mic để dừng.
+                </div>
+            )}
         </>
     );
 }

@@ -1,6 +1,7 @@
+import { learningService } from "@/services/learningService";
+
 /**
- * Tiến độ cây bài học tuyến tính (1 node đang mở … 5 sau matching).
- * Lưu sessionStorage — khi học lại node cũ không được ghi đè giá trị nhỏ hơn.
+ * Tiến độ cây bài học — lưu DB là nguồn chính, sessionStorage là cache tạm.
  */
 export function learnTreeUnlockedStorageKey(treeId: number): string {
     return `learn_tree_${treeId}_unlocked`;
@@ -16,16 +17,49 @@ export function getLearnTreeUnlockedCount(treeId: number): number {
     }
 }
 
-/**
- * Sau khi hoàn thành một loại bài, đặt tối thiểu `atLeast` mà không hạ thấp tiến độ hiện có.
- */
-export function bumpLearnTreeUnlocked(treeId: number, atLeast: number): number {
-    const floor = Number.isFinite(atLeast) && atLeast >= 1 ? atLeast : 1;
-    const next = Math.max(getLearnTreeUnlockedCount(treeId), floor);
+function setLearnTreeUnlockedCount(treeId: number, count: number) {
     try {
-        sessionStorage.setItem(learnTreeUnlockedStorageKey(treeId), String(next));
+        sessionStorage.setItem(learnTreeUnlockedStorageKey(treeId), String(count));
     } catch {
         // ignore
     }
+}
+
+/**
+ * Load tiến trình từ DB và cập nhật sessionStorage cache.
+ * Gọi khi vào LearningPage.
+ */
+export async function loadProgressFromDB(treeId: number): Promise<number> {
+    try {
+        const count = await learningService.getUnlockedCount(treeId);
+        setLearnTreeUnlockedCount(treeId, count);
+        return count;
+    } catch {
+        // Nếu lỗi mạng, dùng cache sessionStorage
+        return getLearnTreeUnlockedCount(treeId);
+    }
+}
+
+/**
+ * Sau khi hoàn thành node: gọi API lưu DB, cập nhật cache.
+ */
+export async function completeNodeAndSave(nodeId: number, treeId: number): Promise<number> {
+    try {
+        const count = await learningService.completeNode(nodeId);
+        setLearnTreeUnlockedCount(treeId, count);
+        return count;
+    } catch {
+        // Fallback: chỉ cập nhật local
+        const current = getLearnTreeUnlockedCount(treeId);
+        const next = Math.max(current, 1);
+        setLearnTreeUnlockedCount(treeId, next);
+        return next;
+    }
+}
+
+export function bumpLearnTreeUnlocked(treeId: number, atLeast: number): number {
+    const floor = Number.isFinite(atLeast) && atLeast >= 1 ? atLeast : 1;
+    const next = Math.max(getLearnTreeUnlockedCount(treeId), floor);
+    setLearnTreeUnlockedCount(treeId, next);
     return next;
 }

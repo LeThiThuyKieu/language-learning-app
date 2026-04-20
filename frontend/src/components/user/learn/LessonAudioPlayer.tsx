@@ -13,9 +13,11 @@ type Props = {
     disabled?: boolean;
     /** Gọi khi đổi file audio */
     trackKey?: string;
+    /** Force pause audio (khi mic đang ghi âm) */
+    forcePause?: boolean;
 };
 
-export default function LessonAudioPlayer({src, disabled, trackKey}: Props) {
+export default function LessonAudioPlayer({src, disabled, trackKey, forcePause}: Props) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const [playing, setPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
@@ -63,9 +65,17 @@ export default function LessonAudioPlayer({src, disabled, trackKey}: Props) {
         };
     }, [src, trackKey, resetState]);
 
+    // Pause audio khi mic đang ghi âm
+    useEffect(() => {
+        if (forcePause) {
+            const el = audioRef.current;
+            if (el && !el.paused) el.pause();
+        }
+    }, [forcePause]);
+
     function toggle() {
         const el = audioRef.current;
-        if (!el || !src || disabled) return;
+        if (!el || !src || disabled || forcePause) return;
         if (el.paused) void el.play();
         else el.pause();
     }
@@ -79,7 +89,7 @@ export default function LessonAudioPlayer({src, disabled, trackKey}: Props) {
     }
 
     const pct = duration > 0 ? (current / duration) * 100 : 0;
-    const canUse = Boolean(src) && !disabled;
+    const canUse = Boolean(src) && !disabled && !forcePause;
 
     return (
         <div
@@ -126,7 +136,7 @@ export default function LessonAudioPlayer({src, disabled, trackKey}: Props) {
                 </div>
             </div>
             <p className="mt-3 text-sm text-gray-600">
-                {canUse ? "Kéo thanh để tua tới đoạn cần nghe." : "Chưa có audio cho bài này."}
+                {forcePause ? "Audio tạm dừng khi đang ghi âm." : canUse ? "Kéo thanh để tua tới đoạn cần nghe." : "Chưa có audio cho bài này."}
             </p>
         </div>
     );
