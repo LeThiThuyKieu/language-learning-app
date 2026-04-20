@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LogOut, ChevronDown, User } from "lucide-react";
+import {Menu, X, LogOut, ChevronDown, User, Settings} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { profileService } from "@/services/profileService";
 import ConfirmModal from "./ConfirmModal";
@@ -161,6 +161,9 @@ export default function Header() {
                                         </div>
                                         <Link to="/profile" className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-700 transition">
                                             <User size={16} /> Hồ sơ của tôi
+                                        </Link>
+                                        <Link to="/settings" className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-700 transition">
+                                            <Settings size={16} /> Cài đặt
                                         </Link>
                                         <button
                                             onClick={() => setShowConfirm(true)}

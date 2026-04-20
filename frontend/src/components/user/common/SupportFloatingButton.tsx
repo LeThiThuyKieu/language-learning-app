@@ -18,11 +18,7 @@ const HOVER_MESSAGES = [
 const DISPLAY_MS = 1500;
 const GAP_MS = 500;
 
-/**
- * =========================
- * ICON CHAT
- * =========================
- */
+
 function SupportChatIcon({ className }: { className?: string }) {
     return (
         <svg className={className}
@@ -35,7 +31,12 @@ function SupportChatIcon({ className }: { className?: string }) {
 export default function SupportFloatingButton() {
     const navigate = useNavigate();
     const location = useLocation();
+    const normalizedPath =
+        location.pathname !== "/" && location.pathname.endsWith("/")
+            ? location.pathname.slice(0, -1)
+            : location.pathname;
 
+    const isVisibleOnCurrentPage = ["/", "/profile", "/learn", "/settings", "/help"].includes(normalizedPath);
     /**
      * =========================
      * STATE
@@ -98,7 +99,7 @@ export default function SupportFloatingButton() {
     }, [clearHoverTimers, menuOpen]);
 
     const onPointerEnter = () => {
-        if (!menuOpen) startHoverSequence();
+        if (!menuOpen && !chatOpen) startHoverSequence();
     };
 
     const onPointerLeave = () => {
@@ -137,15 +138,17 @@ export default function SupportFloatingButton() {
     // Cleanup timer
     useEffect(() => () => clearHoverTimers(), [clearHoverTimers]);
 
-    /**
-     * =========================
-     * ACTIONS
-     * =========================
-     */
+    // Khi route không nằm trong scope cho phép thì đóng toàn bộ UI hỗ trợ.
+    useEffect(() => {
+        if (!isVisibleOnCurrentPage) {
+            setMenuOpen(false);
+            setChatOpen(false);
+        }
+    }, [isVisibleOnCurrentPage]);
 
     const toggleMenu = () => setMenuOpen((o) => !o);
 
-    // Đi tới FAQ (giữ nguyên)
+    // Đi tới FAQ
     const goFaq = () => {
         setMenuOpen(false);
 
@@ -156,24 +159,21 @@ export default function SupportFloatingButton() {
         }
     };
 
-    /**
-     * 👉 MỞ CHATBOX (quan trọng)
-     */
+    // MỞ CHATBOX
     const openChat = () => {
         setMenuOpen(false);
         setChatOpen(true);
     };
 
-    /**
-     * =========================
-     * RENDER
-     * =========================
-     */
     const showTooltip =
         hoverLineIndex !== null &&
         hoverLineIndex >= 0 &&
         hoverLineIndex < HOVER_MESSAGES.length &&
-        !menuOpen;
+        !menuOpen &&
+        !chatOpen;
+    if (!isVisibleOnCurrentPage) {
+        return null;
+    }
 
     return (
         <div
@@ -197,11 +197,39 @@ export default function SupportFloatingButton() {
             {/* ================= MENU ================= */}
             {menuOpen && !chatOpen && (
                 <div className="mb-1 flex min-w-[13rem] flex-col rounded-2xl bg-white py-1 shadow-xl">
-                    <button onClick={goFaq} className="px-4 py-3 text-left text-sm hover:bg-slate-50">
+                    <button
+                        onClick={goFaq}
+                        className="
+                            mx-2 my-1
+                            rounded-xl
+                            px-4 py-3
+                            text-left text-sm font-medium text-slate-700
+                            transition-all duration-200
+
+                            hover:bg-primary-100
+                            hover:text-primary-800
+                            hover:shadow-md
+                            hover:translate-x-1
+                          "
+                    >
                         Câu hỏi thường gặp
                     </button>
 
-                    <button onClick={openChat} className="px-4 py-3 text-left text-sm hover:bg-slate-50">
+                    <button
+                        onClick={openChat}
+                        className="
+                            mx-2 my-1
+                            rounded-xl
+                            px-4 py-3
+                            text-left text-sm font-medium text-slate-700
+                            transition-all duration-200
+
+                            hover:bg-orange-200
+                            hover:text-orange-800
+                            hover:shadow-md
+                            hover:translate-x-1
+                          "
+                    >
                         Chat hỗ trợ
                     </button>
                 </div>

@@ -25,6 +25,9 @@ import PlacementTestResultsPage from "@/pages/User/learn/placement/PlacementTest
 import LevelConfirmPage from "@/pages/User/learn/LevelConfirmPage.tsx";
 import HelpPage from "@/pages/User/HelpPage.tsx";
 import SupportFloatingButton from "@/components/user/common/SupportFloatingButton.tsx";
+import SettingsPage from "@/pages/User/SettingsPage.tsx";
+import { applyAppearanceSettings, getStoredAppearanceSettings } from "@/utils/appearanceSettings";
+import {useEffect} from "react";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +71,20 @@ function TokenGuard() {
 }
 
 function App() {
+    useEffect(() => {
+        const syncAppearanceSettings = () => {
+            applyAppearanceSettings(getStoredAppearanceSettings());
+        };
+
+        syncAppearanceSettings();
+        window.addEventListener("lion-appearance-settings-changed", syncAppearanceSettings);
+        window.addEventListener("storage", syncAppearanceSettings);
+
+        return () => {
+            window.removeEventListener("lion-appearance-settings-changed", syncAppearanceSettings);
+            window.removeEventListener("storage", syncAppearanceSettings);
+        };
+    }, []);
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
@@ -81,6 +98,7 @@ function App() {
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
+                        <Route path="settings" element={<SettingsPage/>}/>
                         <Route path="help" element={<HelpPage/>}/>
                     </Route>
 
