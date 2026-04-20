@@ -145,7 +145,7 @@ export default function SupportFloatingButton() {
 
     const toggleMenu = () => setMenuOpen((o) => !o);
 
-    // Đi tới FAQ (giữ nguyên)
+    // Đi tới FAQ
     const goFaq = () => {
         setMenuOpen(false);
 
@@ -156,9 +156,7 @@ export default function SupportFloatingButton() {
         }
     };
 
-    /**
-     * 👉 MỞ CHATBOX (quan trọng)
-     */
+    // MỞ CHATBOX
     const openChat = () => {
         setMenuOpen(false);
         setChatOpen(true);
@@ -197,11 +195,39 @@ export default function SupportFloatingButton() {
             {/* ================= MENU ================= */}
             {menuOpen && !chatOpen && (
                 <div className="mb-1 flex min-w-[13rem] flex-col rounded-2xl bg-white py-1 shadow-xl">
-                    <button onClick={goFaq} className="px-4 py-3 text-left text-sm hover:bg-slate-50">
+                    <button
+                        onClick={goFaq}
+                        className="
+                            mx-2 my-1
+                            rounded-xl
+                            px-4 py-3
+                            text-left text-sm font-medium text-slate-700
+                            transition-all duration-200
+
+                            hover:bg-primary-100
+                            hover:text-primary-800
+                            hover:shadow-md
+                            hover:translate-x-1
+                          "
+                    >
                         Câu hỏi thường gặp
                     </button>
 
-                    <button onClick={openChat} className="px-4 py-3 text-left text-sm hover:bg-slate-50">
+                    <button
+                        onClick={openChat}
+                        className="
+                            mx-2 my-1
+                            rounded-xl
+                            px-4 py-3
+                            text-left text-sm font-medium text-slate-700
+                            transition-all duration-200
+
+                            hover:bg-orange-200
+                            hover:text-orange-800
+                            hover:shadow-md
+                            hover:translate-x-1
+                          "
+                    >
                         Chat hỗ trợ
                     </button>
                 </div>

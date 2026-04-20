@@ -46,9 +46,9 @@ export const saveAppearanceSettings = (settings: AppearanceSettingsState) => {
 
 export const applyAppearanceSettings = (settings: AppearanceSettingsState) => {
     const rootElement = document.documentElement;
-    rootElement.dataset.theme = settings.theme;
     rootElement.style.fontSize = fontSizeClassMap[settings.fontSize];
-    document.body.dataset.theme = settings.theme;
+    delete rootElement.dataset.theme;
+    delete document.body.dataset.theme;
 };
 
 export const notifyAppearanceSettingsChanged = () => {

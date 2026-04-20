@@ -8,6 +8,7 @@ interface AccountSettingsPanelProps {
     onChangePassword: () => void;
     onToggleGoogle: () => void;
     onToggleFacebook: () => void;
+    isSaving?: boolean;
 }
 
 export default function AccountSettingsPanel({
@@ -17,6 +18,7 @@ export default function AccountSettingsPanel({
                                                  onChangePassword,
                                                  onToggleGoogle,
                                                  onToggleFacebook,
+                                                 isSaving = false,
                                              }: AccountSettingsPanelProps) {
 
     const primaryButtonClass =
@@ -24,6 +26,9 @@ export default function AccountSettingsPanel({
 
     const outlineButtonClass =
         "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors border border-slate-300 bg-white text-slate-900 hover:bg-slate-50";
+
+    const pendingButtonClass =
+        "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold border border-dashed border-slate-300 bg-slate-50 text-slate-500 cursor-not-allowed";
 
     const iconButtonClass = `
         w-10 h-10
@@ -64,6 +69,7 @@ export default function AccountSettingsPanel({
                     right={
                         <button
                             onClick={onChangeDisplayName}
+                            disabled={isSaving}
                             className={iconButtonClass}
                             aria-label="Đổi tên hiển thị"
                         >
@@ -116,46 +122,48 @@ export default function AccountSettingsPanel({
 
                 <SettingRow
                     title="Google"
-                    description={
-                        settings.googleLinked
-                            ? "Đã liên kết"
-                            : "Chưa liên kết"
-                    }
+                    description="Chưa hoàn thành / pending"
                     right={
                         <button
                             className={
-                                settings.googleLinked
+                                settings.googleLinkStatus === "linked"
                                     ? outlineButtonClass
-                                    : primaryButtonClass
+                                    : settings.googleLinkStatus === "pending"
+                                        ? pendingButtonClass
+                                        : primaryButtonClass
                             }
-                            onClick={onToggleGoogle}
+                            onClick={settings.googleLinkStatus === "pending" ? undefined : onToggleGoogle}
+                            disabled={settings.googleLinkStatus === "pending"}
                         >
-                            {settings.googleLinked
+                            {settings.googleLinkStatus === "linked"
                                 ? "Hủy liên kết Google"
-                                : "Liên kết Google"}
+                                : settings.googleLinkStatus === "pending"
+                                    ? "Chưa hỗ trợ"
+                                    : "Liên kết Google"}
                         </button>
                     }
                 />
 
                 <SettingRow
                     title="Facebook"
-                    description={
-                        settings.facebookLinked
-                            ? "Đã liên kết"
-                            : "Chưa liên kết"
-                    }
+                    description="Chưa hoàn thành / pending"
                     right={
                         <button
                             className={
-                                settings.facebookLinked
+                                settings.facebookLinkStatus === "linked"
                                     ? outlineButtonClass
-                                    : primaryButtonClass
+                                    : settings.facebookLinkStatus === "pending"
+                                        ? pendingButtonClass
+                                        : primaryButtonClass
                             }
-                            onClick={onToggleFacebook}
+                            onClick={settings.facebookLinkStatus === "pending" ? undefined : onToggleFacebook}
+                            disabled={settings.facebookLinkStatus === "pending"}
                         >
-                            {settings.facebookLinked
+                            {settings.facebookLinkStatus === "linked"
                                 ? "Hủy liên kết Facebook"
-                                : "Liên kết Facebook"}
+                                : settings.facebookLinkStatus === "pending"
+                                    ? "Chưa hỗ trợ"
+                                    : "Liên kết Facebook"}
                         </button>
                     }
                 />
