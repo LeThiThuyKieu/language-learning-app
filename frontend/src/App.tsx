@@ -27,7 +27,6 @@ import HelpPage from "@/pages/User/HelpPage.tsx";
 import SupportFloatingButton from "@/components/user/common/SupportFloatingButton.tsx";
 import SettingsPage from "@/pages/User/SettingsPage.tsx";
 import { applyAppearanceSettings, getStoredAppearanceSettings } from "@/utils/appearanceSettings";
-import {useEffect} from "react";
 
 const queryClient = new QueryClient();
 

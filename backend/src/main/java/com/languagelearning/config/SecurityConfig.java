@@ -42,6 +42,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/social/**").permitAll()
                 .requestMatchers("/api/auth/**").authenticated()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/vocabulary/details").permitAll()
                 .anyRequest().authenticated()
             )
                 .oauth2Login(oauth2 -> oauth2
