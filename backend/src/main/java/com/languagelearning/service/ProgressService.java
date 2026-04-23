@@ -4,6 +4,7 @@ import com.languagelearning.entity.*;
 import com.languagelearning.exception.BadCredentialsException;
 import com.languagelearning.repository.mysql.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProgressService {
@@ -20,6 +22,7 @@ public class ProgressService {
     private final SkillTreeRepository skillTreeRepository;
     private final UserNodeProgressRepository userNodeProgressRepository;
     private final UserSkillTreeProgressRepository userSkillTreeProgressRepository;
+    private final SkillTreeQuestionService skillTreeQuestionService;
 
     /** Lấy số node đã unlock của một tree */
     @Transactional(readOnly = true)
@@ -51,7 +54,7 @@ public class ProgressService {
         return Math.min(completedCount + 1, nodes.size());
     }
 
-    /** Đánh dấu node đã hoàn thành, cập nhật tree progress */
+    /** Đánh dấu node đã hoàn thành, cập nhật tree progress, invalidate Redis cache */
     @Transactional
     public int completeNode(String email, int nodeId) {
         User user = getUser(email);
@@ -77,6 +80,12 @@ public class ProgressService {
         // Cập nhật UserSkillTreeProgress
         int treeId = node.getSkillTree().getId();
         updateTreeProgress(user, treeId);
+
+        // Invalidate Redis cache để lần sau load lại progress mới nhất
+        Integer levelId = node.getSkillTree().getLevel() != null ? node.getSkillTree().getLevel().getId() : null;
+        if (levelId != null) {
+            skillTreeQuestionService.invalidateLevelCache(user.getId(), levelId);
+        }
 
         return getUnlockedCount(email, treeId);
     }

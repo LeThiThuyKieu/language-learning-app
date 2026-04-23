@@ -18,12 +18,15 @@ import com.languagelearning.repository.mysql.SkillNodeRepository;
 import com.languagelearning.repository.mysql.SkillTreeRepository;
 import com.languagelearning.repository.mysql.UserLevelQuestionSnapshotRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Lấy bộ câu hỏi mẫu cho một skill tree (và theo level)
@@ -31,15 +34,22 @@ import java.util.*;
  *   VOCAB: 10 câu; LISTENING: 1; SPEAKING: 1; MATCHING: 10 (theo node_id trong MySQL)
  *   REVIEW: 4 VOCAB + 4 MATCHING + 1 LISTENING + 1 SPEAKING ngẫu nhiên trong cùng level,
  *   không trùng id với câu đã dùng ở 4 node trước của cùng tree
+ *
+ * Cache: Redis (TTL 1h) → MySQL snapshot → Build fresh
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SkillTreeQuestionService {
+    private static final String REDIS_KEY_PREFIX = "level:questions:";
+    private static final long REDIS_TTL_HOURS = 1;
+
     private final SkillTreeRepository skillTreeRepository;
     private final SkillNodeRepository skillNodeRepository;
     private final QuestionIndexRepository questionIndexRepository;
     private final QuestionRepository questionRepository;
     private final UserLevelQuestionSnapshotRepository userLevelQuestionSnapshotRepository;
+    private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
 
     /**
@@ -62,32 +72,71 @@ public class SkillTreeQuestionService {
 
     /**
      * Sinh ngẫu nhiên một lần cho (user, level), sau đó luôn trả về JSON đã lưu.
+     * Cache: Redis (1h) → MySQL snapshot → Build fresh
      */
     @Transactional
     public List<SkillTreeQuestionsResponse> getOrCreateLevelSnapshot(Integer userId, Integer levelId) {
+        String redisKey = REDIS_KEY_PREFIX + userId + ":" + levelId;
+
+        // Layer 1: Redis
+        String cached = redisTemplate.opsForValue().get(redisKey);
+        if (cached != null) {
+            try {
+                log.debug("[Redis HIT] level questions userId={} levelId={}", userId, levelId);
+                return objectMapper.readValue(cached, new TypeReference<List<SkillTreeQuestionsResponse>>() {});
+            } catch (JsonProcessingException e) {
+                log.warn("[Redis] deserialize failed, fallback to MySQL: {}", e.getMessage());
+            }
+        }
+
+        // Layer 2: MySQL snapshot
         Optional<UserLevelQuestionSnapshot> existing = userLevelQuestionSnapshotRepository.findByUserIdAndLevelId(userId, levelId);
+        List<SkillTreeQuestionsResponse> result;
         if (existing.isPresent()) {
             try {
-                return objectMapper.readValue(
+                result = objectMapper.readValue(
                         existing.get().getPayloadJson(),
                         new TypeReference<List<SkillTreeQuestionsResponse>>() {}
                 );
+                log.debug("[MySQL HIT] level questions userId={} levelId={}", userId, levelId);
             } catch (JsonProcessingException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid stored lesson snapshot");
             }
+        } else {
+            // Layer 3: Build fresh
+            log.info("[Build fresh] level questions userId={} levelId={}", userId, levelId);
+            result = buildSampleQuestionsByLevel(levelId);
+            try {
+                String json = objectMapper.writeValueAsString(result);
+                UserLevelQuestionSnapshot row = new UserLevelQuestionSnapshot();
+                row.setUserId(userId);
+                row.setLevelId(levelId);
+                row.setPayloadJson(json);
+                userLevelQuestionSnapshotRepository.save(row);
+            } catch (JsonProcessingException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cannot save lesson snapshot");
+            }
         }
-        List<SkillTreeQuestionsResponse> fresh = buildSampleQuestionsByLevel(levelId);
+
+        // Write-back to Redis
         try {
-            String json = objectMapper.writeValueAsString(fresh);
-            UserLevelQuestionSnapshot row = new UserLevelQuestionSnapshot();
-            row.setUserId(userId);
-            row.setLevelId(levelId);
-            row.setPayloadJson(json);
-            userLevelQuestionSnapshotRepository.save(row);
+            String json = objectMapper.writeValueAsString(result);
+            redisTemplate.opsForValue().set(redisKey, json, REDIS_TTL_HOURS, TimeUnit.HOURS);
+            log.debug("[Redis] cached level questions userId={} levelId={}", userId, levelId);
         } catch (JsonProcessingException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cannot save lesson snapshot");
+            log.warn("[Redis] cache write failed: {}", e.getMessage());
         }
-        return fresh;
+
+        return result;
+    }
+
+    /**
+     * Invalidate Redis cache khi user complete node — gọi từ ProgressService
+     */
+    public void invalidateLevelCache(Integer userId, Integer levelId) {
+        String redisKey = REDIS_KEY_PREFIX + userId + ":" + levelId;
+        redisTemplate.delete(redisKey);
+        log.info("[Redis] invalidated level questions userId={} levelId={}", userId, levelId);
     }
 
     @Transactional(readOnly = true)

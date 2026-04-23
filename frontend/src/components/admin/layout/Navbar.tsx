@@ -10,8 +10,16 @@ export default function Navbar() {
       <div className="mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-primary-600">
-            Lion
+          <Link to="/admin/dashboard" className="group flex items-center gap-2 shrink-0">
+              <div className="relative w-10 h-10 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+                  <img src="/logo/lion.png" alt="Lion Logo" className="w-full h-full object-contain drop-shadow-xl"/>
+              </div>
+              <div className="relative">
+                  <span className="text-2xl font-black tracking-tighter text-gray-900 transition-all group-hover:tracking-normal">
+                      L<span className="text-primary-600 italic">i</span>on
+                  </span>
+                  <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary-600 to-orange-400 transition-all duration-300 group-hover:w-full rounded-full"/>
+              </div>
           </Link>
 
           {/* Center Search */}

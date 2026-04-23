@@ -1,7 +1,10 @@
 import {BrowserRouter, Routes, Route} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "react-query";
 import {Toaster} from "react-hot-toast";
+import {useEffect} from "react";
+import {useAuthStore} from "@/store/authStore.ts";
 import AdminLayout from "@/components/admin/layout/Layout";
+import AdminGuard from "@/components/admin/layout/AdminGuard.tsx";
 import MainLayout from "@/components/user/layout/MainLayout.tsx";
 import HomePage from "@/pages/User/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
@@ -24,9 +27,47 @@ import HelpPage from "@/pages/User/HelpPage.tsx";
 import SupportFloatingButton from "@/components/user/common/SupportFloatingButton.tsx";
 import SettingsPage from "@/pages/User/SettingsPage.tsx";
 import { applyAppearanceSettings, getStoredAppearanceSettings } from "@/utils/appearanceSettings";
-import {useEffect} from "react";
 
 const queryClient = new QueryClient();
+
+/** Decode JWT payload (không verify signature) để lấy exp */
+function getTokenExpiry(token: string): number | null {
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return typeof payload.exp === "number" ? payload.exp * 1000 : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Kiểm tra token hết hạn khi app load và khi tab được focus lại */
+function TokenGuard() {
+    const { token, logout } = useAuthStore();
+
+    useEffect(() => {
+        function checkExpiry() {
+            if (!token) return;
+            const expiry = getTokenExpiry(token);
+            if (expiry && Date.now() > expiry) {
+                logout();
+            }
+        }
+
+        checkExpiry(); // kiểm tra ngay khi mount
+
+        // Kiểm tra lại khi user quay lại tab
+        window.addEventListener("focus", checkExpiry);
+        // Kiểm tra định kỳ mỗi phút
+        const interval = setInterval(checkExpiry, 60_000);
+
+        return () => {
+            window.removeEventListener("focus", checkExpiry);
+            clearInterval(interval);
+        };
+    }, [token, logout]);
+
+    return null;
+}
 
 function App() {
     useEffect(() => {
@@ -46,6 +87,7 @@ function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
+                <TokenGuard />
                 <Routes>
                     <Route path="/login" element={<LoginPage/>}/>
                     <Route path="/register" element={<RegisterPage/>}/>
@@ -79,8 +121,9 @@ function App() {
                     <Route path="/placement-test/session" element={<PlacementTestSessionPage />} />
                     <Route path="/placement-test/results" element={<PlacementTestResultsPage />} />
 
-                    {/* Admin Routes - Dashboard */}
-                    <Route path="/admin" element={<AdminLayout/>}>
+                    {/* Admin Routes - chỉ ADMIN mới vào được */}
+                    <Route path="/admin" element={<AdminGuard><AdminLayout/></AdminGuard>}>
+                        <Route index element={<DashboardPage/>}/>
                         <Route path="dashboard" element={<DashboardPage/>}/>
                     </Route>
                 </Routes>
