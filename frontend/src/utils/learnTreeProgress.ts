@@ -41,12 +41,16 @@ export async function loadProgressFromDB(treeId: number): Promise<number> {
 }
 
 /**
- * Sau khi hoàn thành node: gọi API lưu DB, cập nhật cache.
+ * Sau khi hoàn thành node: gọi API lưu DB, cập nhật cache, invalidate level questions cache.
  */
-export async function completeNodeAndSave(nodeId: number, treeId: number): Promise<number> {
+export async function completeNodeAndSave(nodeId: number, treeId: number, levelId?: number): Promise<number> {
     try {
         const count = await learningService.completeNode(nodeId);
         setLearnTreeUnlockedCount(treeId, count);
+        // Invalidate level questions cache để lần sau load lại progress mới
+        if (levelId != null) {
+            learningService.invalidateLevelQuestionsCache(levelId);
+        }
         return count;
     } catch {
         // Fallback: chỉ cập nhật local
