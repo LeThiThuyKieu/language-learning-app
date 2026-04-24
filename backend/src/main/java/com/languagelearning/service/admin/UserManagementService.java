@@ -5,17 +5,20 @@ import com.languagelearning.dto.admin.UserStatsDto;
 import com.languagelearning.entity.Role;
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserProfile;
+import com.languagelearning.repository.mysql.RoleRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
 import com.languagelearning.repository.mysql.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +28,8 @@ public class UserManagementService {
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Lấy danh sách người dùng có phân trang, sắp xếp theo ngày tạo mới nhất.
@@ -107,5 +112,40 @@ public class UserManagementService {
                 .currentLevel(profileOpt.map(UserProfile::getCurrentLevel).orElse(null))
                 .role(role)
                 .build();
+    }
+
+    /**
+     * Tạo người dùng mới từ trang Admin.
+     * Hash password, gán role, tạo UserProfile mặc định.
+     */
+    @Transactional
+    public UserDto createUser(String email, String password, String roleName,
+                                   String status, String authProvider) {
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email đã tồn tại: " + email);
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setAuthProvider(User.AuthProvider.valueOf(authProvider));
+        user.setStatus(User.UserStatus.valueOf(status.toLowerCase()));
+
+        Role role = roleRepository.findByRoleName(roleName.toUpperCase())
+                .orElseGet(() -> {
+                    Role r = new Role();
+                    r.setRoleName(roleName.toUpperCase());
+                    return roleRepository.save(r);
+                });
+        user.setRoles(new HashSet<>(List.of(role)));
+        user = userRepository.save(user);
+
+        UserProfile profile = new UserProfile();
+        profile.setUser(user);
+        profile.setTotalXp(0);
+        profile.setStreakCount(0);
+        userProfileRepository.save(profile);
+
+        return toDto(user);
     }
 }

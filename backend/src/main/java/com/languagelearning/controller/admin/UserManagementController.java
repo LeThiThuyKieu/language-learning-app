@@ -4,6 +4,7 @@ import com.languagelearning.dto.admin.UserDto;
 import com.languagelearning.dto.admin.UserStatsDto;
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.service.admin.UserManagementService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -41,5 +42,24 @@ public class UserManagementController {
     @PutMapping("/{id}/unban")
     public ResponseEntity<ApiResponse<UserDto>> unbanUser(@PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success("Đã bỏ cấm người dùng", userManagementService.unbanUser(id)));
+    }
+
+    /** Tạo người dùng mới từ Admin */
+    @PostMapping
+    public ResponseEntity<ApiResponse<UserDto>> createUser(@RequestBody CreateUserRequest req) {
+        UserDto created = userManagementService.createUser(
+                req.getEmail(), req.getPassword(),
+                req.getRole(), req.getStatus(), req.getAuthProvider()
+        );
+        return ResponseEntity.ok(ApiResponse.success("Tạo người dùng thành công", created));
+    }
+
+    @Data
+    static class CreateUserRequest {
+        private String email;
+        private String password;
+        private String role;         // Admin | User
+        private String status;       // Active | Inactive
+        private String authProvider; // LOCAL | GOOGLE | FACEBOOK
     }
 }

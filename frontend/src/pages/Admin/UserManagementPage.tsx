@@ -91,9 +91,21 @@ export default function UserManagementPage() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    function handleAddUser(_data: AddUserForm) {
-        setShowAddModal(false);
-        fetchData(page);
+    async function handleAddUser(data: AddUserForm) {
+        try {
+            await userManagementService.createUser({
+                email: data.email,
+                password: data.password,
+                role: data.role,
+                status: data.status,
+                authProvider: data.authProvider,
+            });
+            setShowAddModal(false);
+            fetchData(page);
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : "Tạo người dùng thất bại";
+            alert(msg);
+        }
     }
 
     return (

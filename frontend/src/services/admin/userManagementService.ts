@@ -128,4 +128,20 @@ export const userManagementService = {
         const res = await apiClient.put<{ data: BackendUser }>(`/admin/user_management/${id}/unban`);
         return mapUser(res.data.data);
     },
+
+    /**
+     * Tạo người dùng mới từ trang Admin.
+     * POST /api/admin/user_management
+     * @returns thông tin user vừa tạo
+     */
+    async createUser(data: {
+        email: string;
+        password: string;
+        role: string;
+        status: string;
+        authProvider: string;
+    }): Promise<AdminUser> {
+        const res = await apiClient.post<{ data: BackendUser }>("/admin/user_management", data);
+        return mapUser(res.data.data);
+    },
 };
