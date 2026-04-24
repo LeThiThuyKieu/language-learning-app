@@ -10,6 +10,7 @@ import HomePage from "@/pages/User/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
+import UserManagementPage from "@/pages/Admin/UserManagementPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
 import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";
@@ -125,6 +126,7 @@ function App() {
                     <Route path="/admin" element={<AdminGuard><AdminLayout/></AdminGuard>}>
                         <Route index element={<DashboardPage/>}/>
                         <Route path="dashboard" element={<DashboardPage/>}/>
+                        <Route path="user_management" element={<UserManagementPage/>}/>
                     </Route>
                 </Routes>
                 <SupportFloatingButton />

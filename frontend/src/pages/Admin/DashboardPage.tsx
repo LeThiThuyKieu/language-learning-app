@@ -8,7 +8,7 @@ import {
     TrendingUp, Rocket, FileBarChart2, Sparkles,
 } from "lucide-react";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 type StatItem = {
     label: string;
     value: string;
@@ -29,19 +29,19 @@ type LearnerRow = {
     avatar: string;
 };
 
-// ── Data ─────────────────────────────────────────────────────────────────────
+// Data
 const statsRow1: StatItem[] = [
-    { label: "Total Users",      value: "2,543",   pct: "+12%", up: true, icon: <Users size={20} className="text-orange-500" />,    iconBg: "bg-orange-50",  bar: "bg-orange-500" },
-    { label: "Active Learners",  value: "1,842",   pct: "+18%", up: true, icon: <Flame size={20} className="text-blue-500" />,      iconBg: "bg-blue-50",    bar: "bg-blue-500" },
-    { label: "Total XP Earned",  value: "125,432", pct: "+25%", up: true, icon: <Star size={20} className="text-yellow-500" />,     iconBg: "bg-yellow-50",  bar: "bg-yellow-400" },
-    { label: "Lesson Progress",  value: "68.5%",   pct: "+15%", up: true, icon: <BookOpen size={20} className="text-green-600" />,  iconBg: "bg-green-50",   bar: "bg-green-500" },
+    { label: "Tổng người dùng",   value: "2,543",   pct: "+12%", up: true, icon: <Users size={20} className="text-orange-500" />,    iconBg: "bg-orange-50",  bar: "bg-orange-500" },
+    { label: "Đang học",          value: "1,842",   pct: "+18%", up: true, icon: <Flame size={20} className="text-blue-500" />,      iconBg: "bg-blue-50",    bar: "bg-blue-500" },
+    { label: "Tổng XP tích lũy",  value: "125,432", pct: "+25%", up: true, icon: <Star size={20} className="text-yellow-500" />,     iconBg: "bg-yellow-50",  bar: "bg-yellow-400" },
+    { label: "Tiến độ bài học",   value: "68.5%",   pct: "+15%", up: true, icon: <BookOpen size={20} className="text-green-600" />,  iconBg: "bg-green-50",   bar: "bg-green-500" },
 ];
 
 const statsRow2: StatItem[] = [
-    { label: "Completion Rate",    value: "72.3%",   pct: "+8%",  up: true, icon: <CheckCircle2 size={20} className="text-purple-500" />,  iconBg: "bg-purple-50",  bar: "bg-purple-500" },
-    { label: "Avg Study Time",     value: "45 mins", pct: "+22%", up: true, icon: <Clock size={20} className="text-indigo-500" />,          iconBg: "bg-indigo-50",  bar: "bg-indigo-500" },
-    { label: "Daily Active",       value: "892",     pct: "+15%", up: true, icon: <Users2 size={20} className="text-pink-500" />,           iconBg: "bg-pink-50",    bar: "bg-pink-500" },
-    { label: "Certification Rate", value: "38.2%",   pct: "+9%",  up: true, icon: <GraduationCap size={20} className="text-teal-600" />,   iconBg: "bg-teal-50",    bar: "bg-teal-500" },
+    { label: "Tỉ lệ hoàn thành",  value: "72.3%",   pct: "+8%",  up: true, icon: <CheckCircle2 size={20} className="text-purple-500" />,  iconBg: "bg-purple-50",  bar: "bg-purple-500" },
+    { label: "Thời gian học TB",  value: "45 phút", pct: "+22%", up: true, icon: <Clock size={20} className="text-indigo-500" />,          iconBg: "bg-indigo-50",  bar: "bg-indigo-500" },
+    { label: "Hoạt động hôm nay", value: "892",     pct: "+15%", up: true, icon: <Users2 size={20} className="text-pink-500" />,           iconBg: "bg-pink-50",    bar: "bg-pink-500" },
+    { label: "Tỉ lệ chứng chỉ",  value: "38.2%",   pct: "+9%",  up: true, icon: <GraduationCap size={20} className="text-teal-600" />,   iconBg: "bg-teal-50",    bar: "bg-teal-500" },
 ];
 
 const incomeOutcomeData = [
@@ -69,7 +69,7 @@ const recentOrders: LearnerRow[] = [
     { id: "#USR005", customer: "Đỗ Anh E",     date: "16 Dec 2025", amount: "78/100 XP",  status: "Completed",   tracking: "LESSON-05", avatar: "https://i.pravatar.cc/150?img=5" },
 ];
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// Sub-components
 function StatCard({ item }: { item: StatItem }) {
     return (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px]">
@@ -99,13 +99,13 @@ function StatCard({ item }: { item: StatItem }) {
     );
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// Page
 export default function DashboardPage() {
     const tableColumns = [
-        { key: "id", label: "User ID", width: "w-24" },
+        { key: "id", label: "ID", width: "w-24" },
         {
             key: "customer",
-            label: "Learner",
+            label: "Học viên",
             width: "w-44",
             render: (customer: string, row: LearnerRow) => (
                 <div className="flex items-center gap-3">
@@ -114,11 +114,11 @@ export default function DashboardPage() {
                 </div>
             ),
         },
-        { key: "date",     label: "Last Activity", width: "w-28" },
-        { key: "amount",   label: "XP Progress",   width: "w-28" },
+        { key: "date",     label: "Hoạt động cuối", width: "w-28" },
+        { key: "amount",   label: "Tiến độ XP",     width: "w-28" },
         {
             key: "status",
-            label: "Status",
+            label: "Trạng thái",
             width: "w-32",
             render: (status: string) => (
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${
@@ -126,16 +126,16 @@ export default function DashboardPage() {
                     status === "In Progress" ? "bg-amber-100 text-amber-700"    :
                                               "bg-rose-100 text-rose-700"
                 }`}>
-                    {status}
+                    {status === "Completed" ? "Hoàn thành" : status === "In Progress" ? "Đang học" : "Chưa bắt đầu"}
                 </span>
             ),
         },
-        { key: "tracking", label: "Lesson ID", width: "w-28" },
+        { key: "tracking", label: "Mã bài học", width: "w-28" },
     ];
 
     return (
         <div className="space-y-6">
-            {/* ── Banner ── */}
+            {/* Banner */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-primary-600 p-7 shadow-lg">
                 {/* decorative circle */}
                 <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
@@ -164,41 +164,41 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* ── Stats Row 1 ── */}
+            {/* Stats Row 1 */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {statsRow1.map((item) => <StatCard key={item.label} item={item} />)}
             </div>
 
-            {/* ── Stats Row 2 ── */}
+            {/* Stats Row 2 */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {statsRow2.map((item) => <StatCard key={item.label} item={item} />)}
             </div>
 
-            {/* ── Charts ── */}
+            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <div className="lg:col-span-2">
-                    <ChartCard title="Daily Learning Activity">
+                    <ChartCard title="Hoạt động học tập hàng ngày">
                         <div className="flex gap-5 mb-4">
                             <div className="flex items-center gap-2">
                                 <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
-                                <span className="text-xs text-gray-500 font-medium">Time Spent (mins)</span>
+                                <span className="text-xs text-gray-500 font-medium">Thời gian học (phút)</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-                                <span className="text-xs text-gray-500 font-medium">XP Earned</span>
+                                <span className="text-xs text-gray-500 font-medium">XP tích lũy</span>
                             </div>
                         </div>
                         <IncomeOutcomeChart data={incomeOutcomeData} height={260} />
                     </ChartCard>
                 </div>
 
-                <ChartCard title="Lesson Status">
+                <ChartCard title="Trạng thái bài học">
                     <StatusPieChart data={statusData} height={220} />
                     <div className="mt-4 space-y-2.5">
                         {[
-                            { label: "Not Started", count: "253",  dot: "bg-orange-500" },
-                            { label: "In Progress",  count: "1,732", dot: "bg-amber-400" },
-                            { label: "Completed",    count: "50",   dot: "bg-emerald-500" },
+                            { label: "Chưa bắt đầu", count: "253",   dot: "bg-orange-500" },
+                            { label: "Đang học",      count: "1,732", dot: "bg-amber-400" },
+                            { label: "Hoàn thành",    count: "50",    dot: "bg-emerald-500" },
                         ].map((s) => (
                             <div key={s.label} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -212,8 +212,8 @@ export default function DashboardPage() {
                 </ChartCard>
             </div>
 
-            {/* ── Table ── */}
-            <DataTable title="Student Learning Progress" columns={tableColumns} data={recentOrders} />
+            {/* Table */}
+            <DataTable title="Tiến độ học tập của học viên" columns={tableColumns} data={recentOrders} />
         </div>
     );
 }

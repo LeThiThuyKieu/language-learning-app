@@ -13,7 +13,7 @@ import { useAuthStore } from "@/store/authStore.ts";
 
 const menuItems = [
     { path: "/admin/dashboard",       icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/admin/users",           icon: Users,           label: "User Management" },
+    { path: "/admin/user_management",           icon: Users,           label: "User Management" },
     { path: "/admin/skill-trees",     icon: GitBranch,       label: "Skill Trees" },
     { path: "/admin/lessons",         icon: BookOpen,        label: "Lessons" },
     { path: "/admin/placement-tests", icon: ClipboardList,   label: "Placement Tests" },
