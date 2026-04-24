@@ -5,6 +5,10 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    volumes:
+      - redis_data:/data # Lưu dữ liệu vào ổ cứng
+    networks:
+      - redis_net
 
   redisinsight:
     image: redis/redisinsight:latest
@@ -12,3 +16,12 @@ services:
     ports:
       - "5540:5540"
     restart: unless-stopped
+    networks:
+      - redis_net
+
+networks:
+  redis_net:
+    driver: bridge
+
+volumes:
+  redis_data: # Định nghĩa volume để lưu trữ
