@@ -1,273 +1,219 @@
-import StatCard from "@/components/admin/dashboard/StatCard.tsx";
 import ChartCard from "@/components/admin/dashboard/ChartCard.tsx";
 import DataTable from "@/components/admin/dashboard/DataTable.tsx";
-import { IncomeOutcomeChart, SimpleBarChart } from "@/components/admin/dashboard/Charts.tsx";
+import { IncomeOutcomeChart } from "@/components/admin/dashboard/Charts.tsx";
 import StatusPieChart from "@/components/admin/dashboard/PieChart.tsx";
+import {
+    Users, Flame, Star, BookOpen,
+    CheckCircle2, Clock, Users2, GraduationCap,
+    TrendingUp, Rocket, FileBarChart2, Sparkles,
+} from "lucide-react";
 
-// Dummy data for charts
+// ── Types ────────────────────────────────────────────────────────────────────
+type StatItem = {
+    label: string;
+    value: string;
+    pct: string;
+    up: boolean;
+    icon: React.ReactNode;
+    iconBg: string;
+    bar: string;
+};
+
+type LearnerRow = {
+    id: string;
+    customer: string;
+    date: string;
+    amount: string;
+    status: string;
+    tracking: string;
+    avatar: string;
+};
+
+// ── Data ─────────────────────────────────────────────────────────────────────
+const statsRow1: StatItem[] = [
+    { label: "Total Users",      value: "2,543",   pct: "+12%", up: true, icon: <Users size={20} className="text-orange-500" />,    iconBg: "bg-orange-50",  bar: "bg-orange-500" },
+    { label: "Active Learners",  value: "1,842",   pct: "+18%", up: true, icon: <Flame size={20} className="text-blue-500" />,      iconBg: "bg-blue-50",    bar: "bg-blue-500" },
+    { label: "Total XP Earned",  value: "125,432", pct: "+25%", up: true, icon: <Star size={20} className="text-yellow-500" />,     iconBg: "bg-yellow-50",  bar: "bg-yellow-400" },
+    { label: "Lesson Progress",  value: "68.5%",   pct: "+15%", up: true, icon: <BookOpen size={20} className="text-green-600" />,  iconBg: "bg-green-50",   bar: "bg-green-500" },
+];
+
+const statsRow2: StatItem[] = [
+    { label: "Completion Rate",    value: "72.3%",   pct: "+8%",  up: true, icon: <CheckCircle2 size={20} className="text-purple-500" />,  iconBg: "bg-purple-50",  bar: "bg-purple-500" },
+    { label: "Avg Study Time",     value: "45 mins", pct: "+22%", up: true, icon: <Clock size={20} className="text-indigo-500" />,          iconBg: "bg-indigo-50",  bar: "bg-indigo-500" },
+    { label: "Daily Active",       value: "892",     pct: "+15%", up: true, icon: <Users2 size={20} className="text-pink-500" />,           iconBg: "bg-pink-50",    bar: "bg-pink-500" },
+    { label: "Certification Rate", value: "38.2%",   pct: "+9%",  up: true, icon: <GraduationCap size={20} className="text-teal-600" />,   iconBg: "bg-teal-50",    bar: "bg-teal-500" },
+];
+
 const incomeOutcomeData = [
-  { time: "00:00", income: 30, outcome: 20 },
-  { time: "01:00", income: 40, outcome: 25 },
-  { time: "02:00", income: 35, outcome: 30 },
-  { time: "03:00", income: 50, outcome: 35 },
-  { time: "04:00", income: 80, outcome: 40 },
-  { time: "05:00", income: 100, outcome: 45 },
-  { time: "06:00", income: 95, outcome: 50 },
+    { time: "00:00", income: 30, outcome: 20 },
+    { time: "03:00", income: 50, outcome: 35 },
+    { time: "06:00", income: 95, outcome: 50 },
+    { time: "09:00", income: 110, outcome: 60 },
+    { time: "12:00", income: 130, outcome: 75 },
+    { time: "15:00", income: 115, outcome: 65 },
+    { time: "18:00", income: 140, outcome: 80 },
+    { time: "21:00", income: 120, outcome: 70 },
 ];
 
 const statusData = [
-  { name: "Not Started", value: 253, fill: "#fe4d01" },
-  { name: "In Progress", value: 1732, fill: "#fbbf24" },
-  { name: "Completed", value: 50, fill: "#10b981" },
+    { name: "Not Started", value: 253,  fill: "#fe4d01" },
+    { name: "In Progress",  value: 1732, fill: "#fbbf24" },
+    { name: "Completed",    value: 50,   fill: "#10b981" },
 ];
 
-const recentOrders = [
-  {
-    id: "#USR001",
-    customer: "Nguyễn Văn A",
-    date: "10 Jan 2026",
-    amount: "45/100 XP",
-    status: "In Progress",
-    tracking: "LESSON-01",
-    avatar: "https://i.pravatar.cc/150?img=1",
-  },
-  {
-    id: "#USR002",
-    customer: "Trần Thị B",
-    date: "08 Jan 2026",
-    amount: "89/100 XP",
-    status: "Completed",
-    tracking: "LESSON-02",
-    avatar: "https://i.pravatar.cc/150?img=2",
-  },
-  {
-    id: "#USR003",
-    customer: "Phạm Minh C",
-    date: "05 Jan 2026",
-    amount: "23/100 XP",
-    status: "In Progress",
-    tracking: "LESSON-03",
-    avatar: "https://i.pravatar.cc/150?img=3",
-  },
-  {
-    id: "#USR004",
-    customer: "Lê Hồng D",
-    date: "20 Dec 2025",
-    amount: "0/100 XP",
-    status: "Not Started",
-    tracking: "LESSON-04",
-    avatar: "https://i.pravatar.cc/150?img=4",
-  },
-  {
-    id: "#USR005",
-    customer: "Đỗ Anh E",
-    date: "16 Dec 2025",
-    amount: "78/100 XP",
-    status: "Completed",
-    tracking: "LESSON-05",
-    avatar: "https://i.pravatar.cc/150?img=5",
-  },
+const recentOrders: LearnerRow[] = [
+    { id: "#USR001", customer: "Nguyễn Văn A", date: "10 Jan 2026", amount: "45/100 XP",  status: "In Progress", tracking: "LESSON-01", avatar: "https://i.pravatar.cc/150?img=1" },
+    { id: "#USR002", customer: "Trần Thị B",   date: "08 Jan 2026", amount: "89/100 XP",  status: "Completed",   tracking: "LESSON-02", avatar: "https://i.pravatar.cc/150?img=2" },
+    { id: "#USR003", customer: "Phạm Minh C",  date: "05 Jan 2026", amount: "23/100 XP",  status: "In Progress", tracking: "LESSON-03", avatar: "https://i.pravatar.cc/150?img=3" },
+    { id: "#USR004", customer: "Lê Hồng D",    date: "20 Dec 2025", amount: "0/100 XP",   status: "Not Started", tracking: "LESSON-04", avatar: "https://i.pravatar.cc/150?img=4" },
+    { id: "#USR005", customer: "Đỗ Anh E",     date: "16 Dec 2025", amount: "78/100 XP",  status: "Completed",   tracking: "LESSON-05", avatar: "https://i.pravatar.cc/150?img=5" },
 ];
 
-const chartData = [
-  { month: "Jan", value: 45 },
-  { month: "Feb", value: 52 },
-  { month: "Mar", value: 48 },
-  { month: "Apr", value: 61 },
-  { month: "May", value: 55 },
-  { month: "Jun", value: 67 },
-  { month: "Jul", value: 72 },
-  { month: "Aug", value: 68 },
-  { month: "Sep", value: 75 },
-  { month: "Oct", value: 80 },
-  { month: "Nov", value: 78 },
-  { month: "Dec", value: 85 },
-];
+// ── Sub-components ────────────────────────────────────────────────────────────
+function StatCard({ item }: { item: StatItem }) {
+    return (
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px]">
+            {/* Top row: label + icon */}
+            <div className="flex items-start justify-between">
+                <span className="text-sm font-medium text-slate-400">{item.label}</span>
+                {/* Icon: filled, trong rounded square màu nhạt */}
+                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.iconBg}`}>
+                    {item.icon}
+                </span>
+            </div>
 
-type LearnerRow = {
-  id: string;
-  customer: string;
-  date: string;
-  amount: string;
-  status: string;
-  tracking: string;
-  avatar: string;
-};
+            {/* Value + % */}
+            <div className="flex items-end gap-2 mt-2">
+                <span className="text-3xl font-extrabold text-[#1a2332] leading-none">{item.value}</span>
+                <span className="flex items-center gap-0.5 text-xs font-semibold text-emerald-500 mb-1">
+                    <TrendingUp size={11} />
+                    {item.pct}
+                </span>
+            </div>
 
+            {/* Bottom progress bar: nền xám + thanh màu */}
+            <div className="mt-4 w-full h-2 rounded-full bg-gray-100">
+                <div className={`h-2 w-3/5 rounded-full ${item.bar}`} />
+            </div>
+        </div>
+    );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const tableColumns = [
-    { key: "id", label: "User ID", width: "w-24" },
-    {
-      key: "customer",
-      label: "Learner",
-      width: "w-40",
-      render: (customer: string, row: LearnerRow) => (
-        <div className="flex items-center gap-3">
-          <img
-            src={row.avatar}
-            alt={customer}
-            className="w-8 h-8 rounded-full"
-          />
-          <span className="text-gray-900 font-medium text-sm">{customer}</span>
+    const tableColumns = [
+        { key: "id", label: "User ID", width: "w-24" },
+        {
+            key: "customer",
+            label: "Learner",
+            width: "w-44",
+            render: (customer: string, row: LearnerRow) => (
+                <div className="flex items-center gap-3">
+                    <img src={row.avatar} alt={customer} className="w-8 h-8 rounded-full object-cover" />
+                    <span className="text-gray-900 font-medium text-sm">{customer}</span>
+                </div>
+            ),
+        },
+        { key: "date",     label: "Last Activity", width: "w-28" },
+        { key: "amount",   label: "XP Progress",   width: "w-28" },
+        {
+            key: "status",
+            label: "Status",
+            width: "w-32",
+            render: (status: string) => (
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                    status === "Completed"   ? "bg-emerald-100 text-emerald-700" :
+                    status === "In Progress" ? "bg-amber-100 text-amber-700"    :
+                                              "bg-rose-100 text-rose-700"
+                }`}>
+                    {status}
+                </span>
+            ),
+        },
+        { key: "tracking", label: "Lesson ID", width: "w-28" },
+    ];
+
+    return (
+        <div className="space-y-6">
+            {/* ── Banner ── */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-primary-600 p-7 shadow-lg">
+                {/* decorative circle */}
+                <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
+                <div className="absolute right-16 bottom-0 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
+
+                <div className="relative flex items-center gap-6">
+                    <div className="flex-1">
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight">
+                            Chào mừng đến Lion Admin
+                        </h1>
+                        <p className="mt-2 text-sm text-white/85 max-w-lg leading-relaxed">
+                            Hệ thống quản lý học tập thông minh. Theo dõi tiến độ, tối ưu hóa nội dung và xây dựng tương lai giáo dục ngôn ngữ.
+                        </p>
+                        <div className="mt-5 flex items-center gap-3">
+                            <button className="flex items-center gap-2 bg-white text-orange-600 hover:bg-orange-50 px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">
+                                <FileBarChart2 size={16} /> Xuất báo cáo
+                            </button>
+                            <button className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white border border-white/30 px-5 py-2.5 rounded-xl font-semibold text-sm transition">
+                                <Sparkles size={16} /> Xem phân tích AI
+                            </button>
+                        </div>
+                    </div>
+                    <div className="hidden md:flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/20">
+                        <Rocket size={40} className="text-white" />
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Stats Row 1 ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {statsRow1.map((item) => <StatCard key={item.label} item={item} />)}
+            </div>
+
+            {/* ── Stats Row 2 ── */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {statsRow2.map((item) => <StatCard key={item.label} item={item} />)}
+            </div>
+
+            {/* ── Charts ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div className="lg:col-span-2">
+                    <ChartCard title="Daily Learning Activity">
+                        <div className="flex gap-5 mb-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                                <span className="text-xs text-gray-500 font-medium">Time Spent (mins)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                                <span className="text-xs text-gray-500 font-medium">XP Earned</span>
+                            </div>
+                        </div>
+                        <IncomeOutcomeChart data={incomeOutcomeData} height={260} />
+                    </ChartCard>
+                </div>
+
+                <ChartCard title="Lesson Status">
+                    <StatusPieChart data={statusData} height={220} />
+                    <div className="mt-4 space-y-2.5">
+                        {[
+                            { label: "Not Started", count: "253",  dot: "bg-orange-500" },
+                            { label: "In Progress",  count: "1,732", dot: "bg-amber-400" },
+                            { label: "Completed",    count: "50",   dot: "bg-emerald-500" },
+                        ].map((s) => (
+                            <div key={s.label} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${s.dot}`} />
+                                    <span className="text-xs text-gray-500 font-medium">{s.label}</span>
+                                </div>
+                                <span className="text-xs font-bold text-gray-800">{s.count}</span>
+                            </div>
+                        ))}
+                    </div>
+                </ChartCard>
+            </div>
+
+            {/* ── Table ── */}
+            <DataTable title="Student Learning Progress" columns={tableColumns} data={recentOrders} />
         </div>
-      ),
-    },
-    { key: "date", label: "Last Activity", width: "w-28" },
-    { key: "amount", label: "XP Progress", width: "w-24" },
-    {
-      key: "status",
-      label: "Lesson Status",
-      width: "w-32",
-      render: (status: string) => (
-        <span
-          className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold ${
-            status === "Completed"
-              ? "bg-emerald-100 text-emerald-700"
-              : status === "In Progress"
-              ? "bg-amber-100 text-amber-700"
-              : "bg-rose-100 text-rose-700"
-          }`}
-        >
-          {status}
-        </span>
-      ),
-    },
-    { key: "tracking", label: "Lesson ID", width: "w-32" },
-  ];
-
-  return (
-    <div className="space-y-8">
-      {/* Banner giới thiệu */}
-      <div className="rounded-2xl bg-gradient-to-r from-primary-600 to-orange-500 p-6 flex items-center gap-6 shadow-lg">
-          <img src="/logo/lion.png" alt="Lion" className="h-20 w-20 object-contain shrink-0 drop-shadow-md"/>
-          <div className="text-white">
-              <h1 className="text-2xl font-extrabold leading-tight">Chào mừng đến Lion Admin</h1>
-              <p className="mt-1 text-basic text-white/85 max-w-xl leading-relaxed">
-                  Hệ thống quản trị ứng dụng học tiếng Anh Lion — theo dõi tiến trình học viên,
-                  quản lý nội dung bài học, skill trees và kết quả placement test.
-              </p>
-          </div>
-          <button className="ml-auto shrink-0 bg-white/20 hover:bg-white/30 text-white px-5 py-2 rounded-xl font-semibold text-sm transition border border-white/30">
-              Xuất báo cáo
-          </button>
-      </div>
-
-      {/* Stats Grid - 4 columns */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard
-          title="Total Users"
-          value="2,543"
-          percentage={12}
-          isIncrease={true}
-          icon="👥"
-          chart={<SimpleBarChart data={chartData} height={60} />}
-        />
-        <StatCard
-          title="Active Learners"
-          value="1,842"
-          percentage={18}
-          isIncrease={true}
-          icon="📚"
-          chart={<SimpleBarChart data={chartData} height={60} />}
-        />
-        <StatCard
-          title="Total XP Earned"
-          value="125,432"
-          percentage={25}
-          isIncrease={true}
-          icon="⭐"
-        />
-        <StatCard
-          title="Lesson Progress"
-          value="68.5%"
-          percentage={15}
-          isIncrease={true}
-          icon="📈"
-        />
-      </div>
-
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard
-          title="Completion Rate"
-          value="72.3%"
-          percentage={8}
-          isIncrease={true}
-          icon="✅"
-          chart={<SimpleBarChart data={chartData} height={40} />}
-        />
-        <StatCard
-          title="Avg Study Time"
-          value="45 mins"
-          percentage={22}
-          isIncrease={true}
-          icon="⏱️"
-          chart={<SimpleBarChart data={chartData} height={40} />}
-        />
-        <StatCard
-          title="Daily Active"
-          value="892"
-          percentage={15}
-          isIncrease={true}
-          icon="🔥"
-        />
-        <StatCard
-          title="Certification Rate"
-          value="38.2%"
-          percentage={9}
-          isIncrease={true}
-          icon="🎓"
-        />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2">
-          <ChartCard title="Daily Learning Activity">
-            <div className="flex gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary-600"></div>
-                <span className="text-xs text-gray-600 font-medium">Time Spent (mins)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                <span className="text-xs text-gray-600 font-medium">XP Earned</span>
-              </div>
-            </div>
-            <IncomeOutcomeChart data={incomeOutcomeData} height={280} />
-          </ChartCard>
-        </div>
-
-        <ChartCard title="Lesson Status">
-          <StatusPieChart data={statusData} height={280} />
-          <div className="mt-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary-600"></div>
-                <span className="text-xs text-gray-600 font-medium">Not Started</span>
-              </div>
-              <span className="text-xs font-semibold text-gray-900">253</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-400"></div>
-                <span className="text-xs text-gray-600 font-medium">In Progress</span>
-              </div>
-              <span className="text-xs font-semibold text-gray-900">1732</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-600"></div>
-                <span className="text-xs text-gray-600 font-medium">Completed</span>
-              </div>
-              <span className="text-xs font-semibold text-gray-900">50</span>
-            </div>
-          </div>
-        </ChartCard>
-      </div>
-
-      {/* Recent Orders Table */}
-      <DataTable title="Student Learning Progress" columns={tableColumns} data={recentOrders} />
-    </div>
-  );
+    );
 }
