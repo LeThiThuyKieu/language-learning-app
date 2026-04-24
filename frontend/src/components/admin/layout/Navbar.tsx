@@ -11,11 +11,11 @@ export default function Navbar() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link to="/admin/dashboard" className="group flex items-center gap-2 shrink-0">
-              <div className="relative w-10 h-10 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+              <div className="relative w-12 h-12 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
                   <img src="/logo/lion.png" alt="Lion Logo" className="w-full h-full object-contain drop-shadow-xl"/>
               </div>
               <div className="relative">
-                  <span className="text-2xl font-black tracking-tighter text-gray-900 transition-all group-hover:tracking-normal">
+                  <span className="text-4xl font-black tracking-tighter text-gray-900 transition-all group-hover:tracking-normal">
                       L<span className="text-primary-600 italic">i</span>on
                   </span>
                   <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary-600 to-orange-400 transition-all duration-300 group-hover:w-full rounded-full"/>
@@ -27,8 +27,8 @@ export default function Navbar() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search"
-                className="w-full px-4 py-2 bg-gray-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:bg-white transition-all border border-gray-100"
+                placeholder="Tìm kiếm"
+                className="w-full px-4 py-2 bg-gray-50 rounded-lg text-basic focus:outline-none focus:ring-2 focus:ring-primary-400 focus:bg-white transition-all border border-gray-100"
               />
               <Search className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
             </div>

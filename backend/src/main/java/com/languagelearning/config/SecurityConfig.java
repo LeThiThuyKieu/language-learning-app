@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").authenticated()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/vocabulary/details").permitAll()
+                .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated()
             )
                 .oauth2Login(oauth2 -> oauth2
