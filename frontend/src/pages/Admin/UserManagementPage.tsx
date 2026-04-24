@@ -3,6 +3,7 @@ import { UserPlus } from "lucide-react";
 import UserStatsCard from "@/components/admin/user_management/UserStatsCard";
 import UserTable from "@/components/admin/user_management/UserTable";
 import UserDetailModal from "@/components/admin/user_management/UserDetailModal";
+import AddUserModal, { type AddUserForm } from "@/components/admin/user_management/AddUserModal";
 
 // Types
 type UserStatus = "Active" | "Inactive" | "Banned";
@@ -116,6 +117,13 @@ const mockUsers: AdminUser[] = [
 
 export default function UserManagementPage() {
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+
+    function handleAddUser(data: AddUserForm) {
+        // Sau này: gọi API tạo user ở đây
+        console.log("Thêm người dùng:", data);
+        setShowAddModal(false);
+    }
 
     return (
         <div className="space-y-6">
@@ -125,7 +133,10 @@ export default function UserManagementPage() {
                     <h1 className="text-2xl font-extrabold text-gray-900">Quản lý người dùng</h1>
                     <p className="text-sm text-gray-500 mt-1">Quản lý và theo dõi tất cả thành viên trên nền tảng.</p>
                 </div>
-                <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">
+                <button
+                    onClick={() => setShowAddModal(true)}
+                    className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-sm"
+                >
                     <UserPlus size={16} />
                     Thêm người dùng
                 </button>
@@ -144,6 +155,11 @@ export default function UserManagementPage() {
             {/* Modal chi tiết */}
             {selectedUser && (
                 <UserDetailModal user={selectedUser} onClose={() => setSelectedUser(null)} />
+            )}
+
+            {/* Modal thêm người dùng */}
+            {showAddModal && (
+                <AddUserModal onClose={() => setShowAddModal(false)} onSubmit={handleAddUser} />
             )}
         </div>
     );
