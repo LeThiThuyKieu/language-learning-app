@@ -143,10 +143,10 @@ export default function DashboardPage() {
 
                 <div className="relative flex items-center gap-6">
                     <div className="flex-1">
-                        <h1 className="text-2xl md:text-3xl font-extrabold text-white leading-tight">
+                        <h1 className="text-3xl md:text-3xl font-extrabold text-white leading-tight">
                             Chào mừng đến Lion Admin
                         </h1>
-                        <p className="mt-2 text-sm text-white/85 max-w-lg leading-relaxed">
+                        <p className="mt-2 text-basic text-white/85 max-w-lg leading-relaxed">
                             Hệ thống quản lý học tập thông minh. Theo dõi tiến độ, tối ưu hóa nội dung và xây dựng tương lai giáo dục ngôn ngữ.
                         </p>
                         <div className="mt-5 flex items-center gap-3">

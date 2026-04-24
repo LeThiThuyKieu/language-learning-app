@@ -87,7 +87,7 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                                 <th className="px-6 py-4">Người dùng</th>
                                 <th className="px-4 py-4">Vai trò</th>
                                 <th className="px-4 py-4">Trạng thái</th>

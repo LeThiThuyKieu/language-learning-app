@@ -13,7 +13,7 @@ import { useAuthStore } from "@/store/authStore.ts";
 
 const menuItems = [
     { path: "/admin/dashboard",       icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/admin/user_management",           icon: Users,           label: "User Management" },
+    { path: "/admin/user_management", icon: Users,           label: "User Management" },
     { path: "/admin/skill-trees",     icon: GitBranch,       label: "Skill Trees" },
     { path: "/admin/lessons",         icon: BookOpen,        label: "Lessons" },
     { path: "/admin/placement-tests", icon: ClipboardList,   label: "Placement Tests" },
@@ -43,7 +43,7 @@ export default function Sidebar() {
                                 key={item.path}
                                 to={item.path}
                                 className={[
-                                    "relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all text-sm font-medium overflow-hidden",
+                                    "relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all text-basic font-medium overflow-hidden",
                                     isActive
                                         ? "bg-white shadow-md text-orange-500 font-semibold"
                                         : "text-slate-500 hover:bg-white/60 hover:text-slate-700",
