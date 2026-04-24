@@ -1,13 +1,19 @@
 import { useState } from "react";
 import {
     Eye, Edit2, Trash2, FileDown, RefreshCw, Filter,
-    Flame, ChevronLeft, ChevronRight, RotateCcw,
+    Flame, ChevronLeft, ChevronRight, RotateCcw, Loader2,
 } from "lucide-react";
 import type { AdminUser } from "@/pages/Admin/UserManagementPage";
 
 interface UserTableProps {
     users: AdminUser[];
+    total: number;
+    page: number;
+    loading: boolean;
     onUserSelect: (user: AdminUser) => void;
+    onBan: (id: number) => void;
+    onUnban: (id: number) => void;
+    onPageChange: (page: number) => void;
 }
 
 const authLabel: Record<string, string> = {
@@ -22,7 +28,12 @@ const statusLabel: Record<string, string> = {
     Banned: "Bị cấm",
 };
 
-export default function UserTable({ users, onUserSelect }: UserTableProps) {
+const PAGE_SIZE = 10;
+
+export default function UserTable({
+    users, total, page, loading,
+    onUserSelect, onBan, onUnban, onPageChange,
+}: UserTableProps) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("Tất cả");
     const [providerFilter, setProviderFilter] = useState("Tất cả");
@@ -36,6 +47,8 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
         return matchSearch && matchStatus && matchProvider;
     });
 
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+
     return (
         <div className="space-y-4">
             {/* Thanh công cụ */}
@@ -47,14 +60,14 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Tìm theo tên, email hoặc ID..."
+                            placeholder="Tìm theo tên, email..."
                             className="pl-10 pr-4 py-2 w-full bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 transition-all"
                         />
                     </div>
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20 cursor-pointer"
+                        className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none cursor-pointer"
                     >
                         <option value="Tất cả">Tất cả trạng thái</option>
                         <option value="Active">Hoạt động</option>
@@ -64,7 +77,7 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                     <select
                         value={providerFilter}
                         onChange={(e) => setProviderFilter(e.target.value)}
-                        className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20 cursor-pointer"
+                        className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none cursor-pointer"
                     >
                         <option value="Tất cả">Tất cả nhà cung cấp</option>
                         <option value="GOOGLE">Google</option>
@@ -76,7 +89,11 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                     <button className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 transition-colors" title="Xuất dữ liệu">
                         <FileDown className="w-5 h-5" />
                     </button>
-                    <button className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 transition-colors" title="Làm mới">
+                    <button
+                        onClick={() => onPageChange(page)}
+                        className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 transition-colors"
+                        title="Làm mới"
+                    >
                         <RefreshCw className="w-5 h-5" />
                     </button>
                 </div>
@@ -87,7 +104,7 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                            <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                 <th className="px-6 py-4">Người dùng</th>
                                 <th className="px-4 py-4">Vai trò</th>
                                 <th className="px-4 py-4">Trạng thái</th>
@@ -98,13 +115,27 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filtered.map((user) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7} className="py-16 text-center">
+                                        <div className="flex items-center justify-center gap-2 text-gray-400">
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <span className="text-sm">Đang tải...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filtered.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="py-16 text-center text-sm text-gray-400">
+                                        Không tìm thấy người dùng nào
+                                    </td>
+                                </tr>
+                            ) : filtered.map((user) => (
                                 <tr
                                     key={user.id}
                                     onClick={() => onUserSelect(user)}
                                     className="group hover:bg-orange-50/30 transition-all cursor-pointer"
                                 >
-                                    {/* Hồ sơ */}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <img
@@ -119,7 +150,6 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                                         </div>
                                     </td>
 
-                                    {/* Vai trò */}
                                     <td className="px-4 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                                             user.role === "Admin"
@@ -130,7 +160,6 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                                         </span>
                                     </td>
 
-                                    {/* Trạng thái */}
                                     <td className="px-4 py-4">
                                         <div className="flex items-center gap-1.5">
                                             <div className={`w-1.5 h-1.5 rounded-full ${
@@ -146,7 +175,6 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                                         </div>
                                     </td>
 
-                                    {/* Auth provider */}
                                     <td className="px-4 py-4">
                                         <div className="flex justify-center">
                                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 py-1 border border-gray-100 rounded-md">
@@ -155,7 +183,6 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                                         </div>
                                     </td>
 
-                                    {/* XP / Streak */}
                                     <td className="px-4 py-4">
                                         <p className="text-xs font-bold text-gray-700">{user.xp.toLocaleString()} XP</p>
                                         <div className="flex items-center gap-1 mt-0.5">
@@ -164,26 +191,36 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                                         </div>
                                     </td>
 
-                                    {/* Đăng nhập cuối */}
                                     <td className="px-4 py-4">
                                         <p className="text-xs font-medium text-gray-500">{user.lastLogin}</p>
                                     </td>
 
-                                    {/* Hành động */}
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                                            <button className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Xem">
+                                            <button
+                                                onClick={() => onUserSelect(user)}
+                                                className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                title="Xem"
+                                            >
                                                 <Eye className="w-4 h-4" />
                                             </button>
                                             <button className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all" title="Chỉnh sửa">
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             {user.status === "Banned" ? (
-                                                <button className="p-2 text-green-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Bỏ cấm">
+                                                <button
+                                                    onClick={() => onUnban(user.id)}
+                                                    className="p-2 text-green-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                                                    title="Bỏ cấm"
+                                                >
                                                     <RotateCcw className="w-4 h-4" />
                                                 </button>
                                             ) : (
-                                                <button className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Cấm">
+                                                <button
+                                                    onClick={() => onBan(user.id)}
+                                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Cấm"
+                                                >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             )}
@@ -198,30 +235,43 @@ export default function UserTable({ users, onUserSelect }: UserTableProps) {
                 {/* Phân trang */}
                 <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
                     <p className="text-xs font-medium text-gray-400">
-                        Hiển thị <span className="font-bold text-gray-800">1–{filtered.length}</span> trong{" "}
-                        <span className="font-bold text-gray-800">12,482</span> người dùng
+                        Trang <span className="font-bold text-gray-800">{page + 1}</span> / <span className="font-bold text-gray-800">{totalPages || 1}</span>
+                        {" · "}Tổng <span className="font-bold text-gray-800">{total.toLocaleString()}</span> người dùng
                     </p>
                     <div className="flex items-center gap-2">
-                        <button disabled className="p-2 border border-gray-100 rounded-lg text-gray-300">
+                        <button
+                            disabled={page === 0}
+                            onClick={() => onPageChange(page - 1)}
+                            className="p-2 border border-gray-100 rounded-lg text-gray-400 hover:bg-white disabled:text-gray-200 disabled:cursor-not-allowed transition-colors"
+                        >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        {[1, 2, 3].map((p) => (
-                            <button
-                                key={p}
-                                className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
-                                    p === 1
-                                        ? "bg-orange-500 text-white shadow-sm shadow-orange-500/30"
-                                        : "text-gray-500 hover:bg-white border border-transparent hover:border-gray-100"
-                                }`}
-                            >
-                                {p}
-                            </button>
-                        ))}
-                        <span className="text-gray-300 px-1 text-xs">...</span>
-                        <button className="w-12 h-8 flex items-center justify-center rounded-lg text-xs font-bold text-gray-500 hover:bg-white border border-transparent hover:border-gray-100">
-                            1248
-                        </button>
-                        <button className="p-2 border border-gray-100 rounded-lg text-gray-400 hover:bg-white transition-colors shadow-sm">
+
+                        {/* Page numbers */}
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            const p = i;
+                            return (
+                                <button
+                                    key={p}
+                                    onClick={() => onPageChange(p)}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
+                                        p === page
+                                            ? "bg-orange-500 text-white shadow-sm shadow-orange-500/30"
+                                            : "text-gray-500 hover:bg-white border border-transparent hover:border-gray-100"
+                                    }`}
+                                >
+                                    {p + 1}
+                                </button>
+                            );
+                        })}
+
+                        {totalPages > 5 && <span className="text-gray-300 text-xs">...</span>}
+
+                        <button
+                            disabled={page >= totalPages - 1}
+                            onClick={() => onPageChange(page + 1)}
+                            className="p-2 border border-gray-100 rounded-lg text-gray-400 hover:bg-white disabled:text-gray-200 disabled:cursor-not-allowed transition-colors shadow-sm"
+                        >
                             <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>

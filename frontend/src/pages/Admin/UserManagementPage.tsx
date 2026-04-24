@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserPlus } from "lucide-react";
 import UserStatsCard from "@/components/admin/user_management/UserStatsCard";
 import UserTable from "@/components/admin/user_management/UserTable";
 import UserDetailModal from "@/components/admin/user_management/UserDetailModal";
 import AddUserModal, { type AddUserForm } from "@/components/admin/user_management/AddUserModal";
+import { userManagementService, type AdminUserStats } from "@/services/admin/userManagementService.ts";
 
 // Types
-type UserStatus = "Active" | "Inactive" | "Banned";
-type AuthProvider = "LOCAL" | "GOOGLE" | "FACEBOOK";
+export type UserStatus = "Active" | "Inactive" | "Banned";
+export type AuthProvider = "LOCAL" | "GOOGLE" | "FACEBOOK";
 
 export type AdminUser = {
     id: number;
@@ -37,92 +38,62 @@ export type StatMetric = {
     pulsing?: boolean;
 };
 
-const stats: StatMetric[] = [
-    { label: "Tổng người dùng", value: "12,482", icon: "Users",    color: "orange", change: "+12% so với tháng trước", trend: "up" },
-    { label: "Đang hoạt động",  value: "842",    icon: "Zap",      color: "blue",   change: "Theo dõi thời gian thực", pulsing: true },
-    { label: "Bị cấm",          value: "156",    icon: "Ban",      color: "red",    change: "24 đang chờ xét duyệt",   trend: "down" },
-    { label: "Người dùng mới",  value: "1,024",  icon: "UserPlus", color: "green",  change: "+42 hôm nay",             trend: "up" },
-];
-
-const mockUsers: AdminUser[] = [
-    {
-        id: 1,
-        name: "Nguyễn Văn An",
-        email: "an.nguyen@example.com",
-        avatar: "https://i.pravatar.cc/150?img=12",
-        role: "Admin",
-        status: "Active",
-        authProvider: "GOOGLE",
-        xp: 2450,
-        streak: 14,
-        lastLogin: "2 phút trước",
-        level: 12,
-        accuracy: 98.4,
-        phone: "+84 901 234 567",
-        location: "Hồ Chí Minh, Việt Nam",
-        joinedDate: "Tháng 6/2023",
-    },
-    {
-        id: 2,
-        name: "Trần Thị Bình",
-        email: "binh.tran@provider.net",
-        avatar: "https://i.pravatar.cc/150?img=33",
-        role: "User",
-        status: "Inactive",
-        authProvider: "LOCAL",
-        xp: 1120,
-        streak: 0,
-        lastLogin: "3 giờ trước",
-        level: 8,
-        accuracy: 92.1,
-        phone: "+84 912 345 678",
-        location: "Hà Nội, Việt Nam",
-        joinedDate: "Tháng 8/2023",
-    },
-    {
-        id: 3,
-        name: "Lê Minh Cường",
-        email: "cuong.le@studio.com",
-        avatar: "https://i.pravatar.cc/150?img=68",
-        role: "User",
-        status: "Banned",
-        authProvider: "FACEBOOK",
-        xp: 450,
-        streak: 0,
-        lastLogin: "2 ngày trước",
-        level: 4,
-        accuracy: 76.3,
-        phone: "+84 923 456 789",
-        location: "Đà Nẵng, Việt Nam",
-        joinedDate: "Tháng 10/2023",
-    },
-    {
-        id: 4,
-        name: "Phạm Thị Dung",
-        email: "dung.pham@future.io",
-        avatar: "https://i.pravatar.cc/150?img=45",
-        role: "User",
-        status: "Active",
-        authProvider: "GOOGLE",
-        xp: 8920,
-        streak: 42,
-        lastLogin: "Vừa xong",
-        level: 18,
-        accuracy: 99.2,
-        phone: "+84 934 567 890",
-        location: "Cần Thơ, Việt Nam",
-        joinedDate: "Tháng 1/2023",
-    },
-];
+function buildStats(s: AdminUserStats): StatMetric[] {
+    return [
+        { label: "Tổng người dùng", value: s.totalUsers.toLocaleString(),    icon: "Users",    color: "orange", change: "Tổng số tài khoản",          trend: "up" },
+        { label: "Đang hoạt động",  value: s.activeUsers.toLocaleString(),   icon: "Zap",      color: "blue",   change: "Theo dõi thời gian thực",     pulsing: true },
+        { label: "Bị cấm",          value: s.bannedUsers.toLocaleString(),   icon: "Ban",      color: "red",    change: "Tài khoản bị hạn chế",        trend: "down" },
+        { label: "Người dùng mới",  value: s.newUsersToday.toLocaleString(), icon: "UserPlus", color: "green",  change: "Đăng ký hôm nay",             trend: "up" },
+    ];
+}
 
 export default function UserManagementPage() {
+    const [users, setUsers] = useState<AdminUser[]>([]);
+    const [stats, setStats] = useState<StatMetric[]>([]);
+    const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(0);
+    const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
 
-    function handleAddUser(data: AddUserForm) {
-        // Sau này: gọi API tạo user ở đây
-        console.log("Thêm người dùng:", data);
+    async function fetchData(p = 0) {
+        setLoading(true);
+        try {
+            const [usersRes, statsRes] = await Promise.all([
+                userManagementService.getUsers(p, 10),
+                userManagementService.getStats(),
+            ]);
+            setUsers(usersRes.users);
+            setTotal(usersRes.total);
+            setStats(buildStats(statsRes));
+        } catch (e) {
+            console.error("Lỗi tải dữ liệu:", e);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => { fetchData(0); }, []);
+
+    async function handleBan(userId: number) {
+        await userManagementService.banUser(userId);
+        fetchData(page);
+    }
+
+    async function handleUnban(userId: number) {
+        await userManagementService.unbanUser(userId);
+        fetchData(page);
+    }
+
+    function handlePageChange(p: number) {
+        setPage(p);
+        fetchData(p);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    function handleAddUser(_data: AddUserForm) {
         setShowAddModal(false);
+        fetchData(page);
     }
 
     return (
@@ -150,7 +121,16 @@ export default function UserManagementPage() {
             </div>
 
             {/* Bảng người dùng */}
-            <UserTable users={mockUsers} onUserSelect={setSelectedUser} />
+            <UserTable
+                users={users}
+                total={total}
+                page={page}
+                loading={loading}
+                onUserSelect={setSelectedUser}
+                onBan={handleBan}
+                onUnban={handleUnban}
+                onPageChange={handlePageChange}
+            />
 
             {/* Modal chi tiết */}
             {selectedUser && (
