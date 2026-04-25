@@ -1,6 +1,7 @@
 {
   "name": "language-learning-app",
   "version": "1.0.0",
+  "type": "module",
   "description": "Ứng dụng web học ngoại ngữ trực tuyến",
   "private": true,
   "scripts": {
