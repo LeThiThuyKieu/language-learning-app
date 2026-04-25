@@ -1,4 +1,4 @@
-import { Filter, Inbox, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Filter, Inbox, Search } from "lucide-react";
 import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS } from "./supportTypes.ts";
 
 type SupportThreadListProps = {
@@ -6,8 +6,11 @@ type SupportThreadListProps = {
     selectedThreadId: number | null;
     query: string;
     statusFilter: "Tất cả" | SupportStatus;
+    timeSort: "desc" | "asc";
+    isTwoColumn: boolean;
     onQueryChange: (value: string) => void;
     onStatusFilterChange: (value: "Tất cả" | SupportStatus) => void;
+    onToggleTimeSort: () => void;
     onSelectThread: (threadId: number) => void;
 };
 
@@ -20,8 +23,11 @@ const statusStyles: Record<SupportStatus, string> = {
 const categoryStyles: Record<SupportThread["category"], string> = {
     "Tài khoản": "bg-orange-100 text-orange-700",
     "Thanh toán": "bg-blue-100 text-blue-700",
-    "Lỗi kỹ thuật": "bg-violet-100 text-violet-700",
+    "Kỹ thuật": "bg-violet-100 text-violet-700",
+    "Bắt đầu học": "bg-orange-100 text-orange-700",
+    "Bài học": "bg-emerald-100 text-emerald-700",
     "Nội dung học": "bg-emerald-100 text-emerald-700",
+    "Khác": "bg-gray-100 text-gray-700",
 };
 
 export default function SupportThreadList({
@@ -29,8 +35,11 @@ export default function SupportThreadList({
     selectedThreadId,
     query,
     statusFilter,
+    timeSort,
+    isTwoColumn,
     onQueryChange,
     onStatusFilterChange,
+    onToggleTimeSort,
     onSelectThread,
 }: SupportThreadListProps) {
     return (
@@ -66,6 +75,19 @@ export default function SupportThreadList({
                             </button>
                         );
                     })}
+
+                    <button
+                        type="button"
+                        onClick={onToggleTimeSort}
+                        className={[
+                            "ml-auto inline-flex items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700",
+                            isTwoColumn ? "px-2.5" : "gap-2 px-3",
+                        ].join(" ")}
+                        title="Sắp xếp theo thời gian gửi"
+                    >
+                        {!isTwoColumn ? <span>Theo thời gian</span> : null}
+                        {timeSort === "desc" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
+                    </button>
                 </div>
             </div>
 
@@ -93,45 +115,29 @@ export default function SupportThreadList({
                                         : "border-gray-100 bg-white hover:border-orange-100 hover:bg-orange-50/40",
                                 ].join(" ")}
                             >
-                                <div className="flex items-start gap-3">
-                                    <div className="relative shrink-0">
-                                        <img
-                                            src={thread.avatar}
-                                            alt={thread.name}
-                                            className="h-12 w-12 rounded-full object-cover ring-2 ring-white shadow-sm"
-                                        />
-                                        {thread.unread && (
-                                            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-rose-500" />
-                                        )}
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p className="truncate text-sm font-bold text-slate-900">{thread.name}</p>
+                                            <p className="truncate text-xs text-slate-400">{thread.email}</p>
+                                        </div>
+                                        <span className="shrink-0 text-xs font-medium text-slate-400">{thread.createdAt}</span>
                                     </div>
 
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div>
-                                                <p className="truncate text-sm font-bold text-slate-900">{thread.name}</p>
-                                                <p className="truncate text-xs text-slate-400">{thread.email}</p>
-                                            </div>
-                                            <span className={[
-                                                "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                                                statusStyles[thread.status],
-                                            ].join(" ")}>{thread.createdAt}</span>
-                                        </div>
-
-                                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                                            <span className={[
-                                                "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                                                categoryStyles[thread.category],
-                                            ].join(" ")}>{thread.category}</span>
-                                            <span className={[
-                                                "rounded-full px-2.5 py-1 text-[11px] font-semibold",
-                                                statusStyles[thread.status],
-                                            ].join(" ")}>{thread.status}</span>
-                                        </div>
-
-                                        <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
-                                            {thread.subject} - {thread.message}
-                                        </p>
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                        <span className={[
+                                            "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                                            categoryStyles[thread.category],
+                                        ].join(" ")}>{thread.category}</span>
+                                        <span className={[
+                                            "rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                                            statusStyles[thread.status],
+                                        ].join(" ")}>{thread.status}</span>
                                     </div>
+
+                                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
+                                        {thread.message}
+                                    </p>
                                 </div>
                             </button>
                         );
