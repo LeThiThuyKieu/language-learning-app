@@ -325,6 +325,57 @@ CREATE TABLE IF NOT EXISTS `xp_history` (
     CONSTRAINT `xp_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS support_category (
+                                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                                name VARCHAR(50) NOT NULL UNIQUE,
+    display_name VARCHAR(100) NOT NULL,
+    color_bg VARCHAR(50),
+    color_text VARCHAR(50)
+    );
+
+INSERT IGNORE INTO support_category (id, name, display_name, color_bg, color_text) VALUES
+(1, 'START_LEARNING', 'Bắt đầu học', 'bg-orange-100', 'text-orange-700'),
+(2, 'ACCOUNT', 'Tài khoản', 'bg-blue-100', 'text-blue-700'),
+(3, 'LESSON', 'Bài học', 'bg-emerald-100', 'text-emerald-700'),
+(4, 'TECHNICAL', 'Kỹ thuật', 'bg-violet-100', 'text-violet-700'),
+(5, 'OTHER', 'Khác', 'bg-gray-100', 'text-gray-700');
+
+CREATE TABLE IF NOT EXISTS support_ticket (
+                                              id INT AUTO_INCREMENT PRIMARY KEY,
+                                              user_id INT NULL,
+                                              guest_email VARCHAR(100) NULL,
+    guest_name VARCHAR(100) NULL,
+    category_id INT NOT NULL,
+    status ENUM('OPEN','IN_PROGRESS','RESOLVED','CLOSED') DEFAULT 'OPEN',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (category_id) REFERENCES support_category(id)
+    );
+
+CREATE TABLE IF NOT EXISTS support_message (
+                                               id INT AUTO_INCREMENT PRIMARY KEY,
+                                               ticket_id INT NOT NULL,
+                                               sender_type ENUM('USER','ADMIN') NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES support_ticket(id) ON DELETE CASCADE
+    );
+
+CREATE TABLE IF NOT EXISTS support_email_log (
+                                                 id INT AUTO_INCREMENT PRIMARY KEY,
+                                                 ticket_id INT,
+                                                 to_email VARCHAR(100),
+    subject VARCHAR(255),
+    status ENUM('SUCCESS','FAILED'),
+    error_message TEXT,
+    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES support_ticket(id)
+    );
+
+
+CREATE INDEX idx_ticket_status ON support_ticket(status);
+CREATE INDEX idx_ticket_category ON support_ticket(category_id);
+CREATE INDEX idx_message_ticket ON support_message(ticket_id);
 -- Data exporting was unselected.
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
