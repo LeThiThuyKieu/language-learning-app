@@ -162,27 +162,6 @@ export const userManagementService = {
         const res = await apiClient.get<{ data: ActivityLog[] }>(`/admin/user_management/${id}/activity`);
         return res.data.data;
     },
-
-    /**
-     * Xuất toàn bộ danh sách user ra file CSV và tải về.
-     * GET /api/admin/user_management/export
-     */
-    exportCsv(): void {
-        const token = localStorage.getItem("token");
-        const url = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/admin/user_management/export`;
-        const a = document.createElement("a");
-        a.href = url;
-        // Gắn token qua header không được với thẻ <a>, dùng fetch + blob
-        fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-            .then((r) => r.blob())
-            .then((blob) => {
-                const blobUrl = URL.createObjectURL(blob);
-                a.href = blobUrl;
-                a.download = "users.csv";
-                a.click();
-                URL.revokeObjectURL(blobUrl);
-            });
-    },
 };
 
 export interface ActivityLog {

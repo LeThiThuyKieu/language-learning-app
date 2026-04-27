@@ -4,7 +4,7 @@ import {
     Flame, ChevronLeft, ChevronRight, RotateCcw, Loader2,
 } from "lucide-react";
 import type { AdminUser } from "@/pages/Admin/UserManagementPage";
-import { userManagementService } from "@/services/admin/userManagementService";
+import ExportImageModal from "./ExportImageModal";
 
 interface UserTableProps {
     users: AdminUser[];
@@ -39,6 +39,7 @@ export default function UserTable({
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("Tất cả");
     const [providerFilter, setProviderFilter] = useState("Tất cả");
+    const [showExport, setShowExport] = useState(false);
 
     const filtered = users.filter((u) => {
         const matchSearch =
@@ -88,7 +89,7 @@ export default function UserTable({
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => userManagementService.exportCsv()}
+                        onClick={() => setShowExport(true)}
                         className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-orange-500 transition-colors"
                         title="Xuất dữ liệu CSV"
                     >
@@ -284,6 +285,10 @@ export default function UserTable({
                     </div>
                 </div>
             </div>
+
+            {showExport && (
+                <ExportImageModal users={users} onClose={() => setShowExport(false)} />
+            )}
         </div>
     );
 }
