@@ -4,6 +4,7 @@ import {
     Flame, ChevronLeft, ChevronRight, RotateCcw, Loader2,
 } from "lucide-react";
 import type { AdminUser } from "@/pages/Admin/UserManagementPage";
+import { userManagementService } from "@/services/admin/userManagementService";
 
 interface UserTableProps {
     users: AdminUser[];
@@ -11,6 +12,7 @@ interface UserTableProps {
     page: number;
     loading: boolean;
     onUserSelect: (user: AdminUser) => void;
+    onEdit: (user: AdminUser) => void;
     onBan: (id: number) => void;
     onUnban: (id: number) => void;
     onPageChange: (page: number) => void;
@@ -32,7 +34,7 @@ const PAGE_SIZE = 10;
 
 export default function UserTable({
     users, total, page, loading,
-    onUserSelect, onBan, onUnban, onPageChange,
+    onUserSelect, onEdit, onBan, onUnban, onPageChange,
 }: UserTableProps) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("Tất cả");
@@ -71,7 +73,6 @@ export default function UserTable({
                     >
                         <option value="Tất cả">Tất cả trạng thái</option>
                         <option value="Active">Hoạt động</option>
-                        <option value="Inactive">Không hoạt động</option>
                         <option value="Banned">Bị cấm</option>
                     </select>
                     <select
@@ -86,7 +87,11 @@ export default function UserTable({
                     </select>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 transition-colors" title="Xuất dữ liệu">
+                    <button
+                        onClick={() => userManagementService.exportCsv()}
+                        className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-orange-500 transition-colors"
+                        title="Xuất dữ liệu CSV"
+                    >
                         <FileDown className="w-5 h-5" />
                     </button>
                     <button
@@ -204,7 +209,9 @@ export default function UserTable({
                                             >
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            <button className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all" title="Chỉnh sửa">
+                                            <button
+                                                onClick={() => onEdit(user)}
+                                                className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all" title="Chỉnh sửa">
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             {user.status === "Banned" ? (

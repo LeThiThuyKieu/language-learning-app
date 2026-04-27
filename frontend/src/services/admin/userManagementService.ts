@@ -144,4 +144,49 @@ export const userManagementService = {
         const res = await apiClient.post<{ data: BackendUser }>("/admin/user_management", data);
         return mapUser(res.data.data);
     },
+
+    /**
+     * Cập nhật thông tin người dùng (fullName, role, status).
+     * PUT /api/admin/user_management/{id}
+     */
+    async updateUser(id: number, data: { fullName?: string; role?: string; status?: string }): Promise<AdminUser> {
+        const res = await apiClient.put<{ data: BackendUser }>(`/admin/user_management/${id}`, data);
+        return mapUser(res.data.data);
+    },
+
+    /**
+     * Lấy lịch sử hoạt động của user (đăng nhập, hoàn thành node...).
+     * GET /api/admin/user_management/{id}/activity
+     */
+    async getActivityLog(id: number): Promise<ActivityLog[]> {
+        const res = await apiClient.get<{ data: ActivityLog[] }>(`/admin/user_management/${id}/activity`);
+        return res.data.data;
+    },
+
+    /**
+     * Xuất toàn bộ danh sách user ra file CSV và tải về.
+     * GET /api/admin/user_management/export
+     */
+    exportCsv(): void {
+        const token = localStorage.getItem("token");
+        const url = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/admin/user_management/export`;
+        const a = document.createElement("a");
+        a.href = url;
+        // Gắn token qua header không được với thẻ <a>, dùng fetch + blob
+        fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+            .then((r) => r.blob())
+            .then((blob) => {
+                const blobUrl = URL.createObjectURL(blob);
+                a.href = blobUrl;
+                a.download = "users.csv";
+                a.click();
+                URL.revokeObjectURL(blobUrl);
+            });
+    },
 };
+
+export interface ActivityLog {
+    action: string;
+    detail: string;
+    timestamp: string;
+}
