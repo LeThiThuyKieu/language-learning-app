@@ -167,7 +167,7 @@ export default function DashboardPage() {
                         {statsRow2.map((item) => <AdminStatCard key={item.label} {...item} />)}
                     </div>
 
-                    {/* Charts hàng trên: XP chart (2/3) + Level chart (1/3) */}
+                    {/* XP chart + Level chart */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                         <div className="lg:col-span-2">
                             <ChartCard title="XP tích lũy theo ngày">
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                         </ChartCard>
                     </div>
 
-                    {/* Người dùng gần đây — full width */}
+                    {/* Người dùng gần đây */}
                     <DataTable title="Người dùng gần đây" columns={tableColumns} data={recentUsers} />
                 </>
             )}
