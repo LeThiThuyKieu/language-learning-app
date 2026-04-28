@@ -194,8 +194,26 @@ export default function HelpPage() {
         event.preventDefault();
         const { name, email, topic, question } = form;
 
-        if (!name.trim() || !email.trim() || !question.trim()) {
-            setFormError("Vui lòng nhập đầy đủ thông tin.");
+        // Validate từng field riêng với thông báo cụ thể
+        if (!name.trim()) {
+            setFormError("Vui lòng nhập tên của bạn.");
+            return;
+        }
+        if (!email.trim()) {
+            setFormError("Vui lòng nhập địa chỉ email.");
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            setFormError("Địa chỉ email không đúng định dạng (ví dụ: ten@gmail.com).");
+            return;
+        }
+        if (!question.trim()) {
+            setFormError("Vui lòng nhập nội dung câu hỏi.");
+            return;
+        }
+        if (question.trim().length < 10) {
+            setFormError("Nội dung quá ngắn, vui lòng mô tả chi tiết hơn (ít nhất 10 ký tự).");
             return;
         }
 
@@ -203,7 +221,11 @@ export default function HelpPage() {
         setFormError(null);
 
         try {
-            await supportService.createUserTicket(topic, question);
+            if (isAuthenticated) {
+                await supportService.createUserTicket(topic, question);
+            } else {
+                await supportService.createGuestTicket(name, email, topic, question);
+            }
 
             setSubmittedPayload({
                 from: email,
@@ -228,7 +250,16 @@ export default function HelpPage() {
             toast.success("Đã gửi yêu cầu thành công!");
         } catch (error) {
             console.error("Gửi hỗ trợ thất bại", error);
-            setFormError("Không thể gửi yêu cầu lúc này, vui lòng thử lại.");
+            // Lấy message lỗi cụ thể từ server nếu có
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            const serverMsg = axiosError?.response?.data?.message;
+            if (serverMsg) {
+                setFormError(serverMsg);
+            } else if (error instanceof Error) {
+                setFormError(`Gửi thất bại: ${error.message}`);
+            } else {
+                setFormError("Không thể gửi yêu cầu lúc này, vui lòng thử lại sau.");
+            }
         } finally {
             setIsSubmitting(false);
         }

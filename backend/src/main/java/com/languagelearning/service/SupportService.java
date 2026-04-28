@@ -50,6 +50,36 @@ public class SupportService {
         return toDetailDto(ticket);
     }
 
+    // Tạo ticket hỗ trợ mới cho guest (chưa đăng nhập) với tên và email được cung cấp.
+    @Transactional
+    public SupportTicketDetailDto createTicketForGuest(SupportCreateTicketRequest request) {
+        if (request.getGuestEmail() == null || request.getGuestEmail().isBlank()) {
+            throw new IllegalArgumentException("Email là bắt buộc khi gửi hỗ trợ không đăng nhập");
+        }
+        if (request.getGuestName() == null || request.getGuestName().isBlank()) {
+            throw new IllegalArgumentException("Tên là bắt buộc khi gửi hỗ trợ không đăng nhập");
+        }
+
+        SupportCategory category = supportCategoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy category hỗ trợ: " + request.getCategoryId()));
+
+        SupportTicket ticket = new SupportTicket();
+        ticket.setUser(null);
+        ticket.setRequesterEmail(request.getGuestEmail().trim());
+        ticket.setRequesterName(request.getGuestName().trim());
+        ticket.setCategory(category);
+        ticket.setStatus(SupportTicket.SupportStatus.OPEN);
+        ticket = supportTicketRepository.save(ticket);
+
+        SupportMessage firstMessage = new SupportMessage();
+        firstMessage.setTicket(ticket);
+        firstMessage.setSenderType(SupportMessage.SenderType.USER);
+        firstMessage.setMessage(request.getMessage().trim());
+        supportMessageRepository.save(firstMessage);
+
+        return toDetailDto(ticket);
+    }
+
     // Lấy danh sách ticket của user hiện tại theo thời gian tạo mới nhất.
     @Transactional(readOnly = true)
     public List<SupportTicketListItemDto> getMyTickets(String email) {
@@ -126,6 +156,24 @@ public class SupportService {
         return toDetailDto(ticket);
     }
 
+    // Admin xem ticket lần đầu → tự động chuyển từ OPEN sang IN_PROGRESS
+    @Transactional
+    public SupportTicketDetailDto viewTicketAsAdmin(String adminEmail, Integer ticketId) {
+        User admin = getUserByEmail(adminEmail);
+        ensureAdminUser(admin);
+
+        SupportTicket ticket = supportTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ticket: " + ticketId));
+
+        // Tự động chuyển từ OPEN sang IN_PROGRESS khi admin xem
+        if (ticket.getStatus() == SupportTicket.SupportStatus.OPEN) {
+            ticket.setStatus(SupportTicket.SupportStatus.IN_PROGRESS);
+            supportTicketRepository.save(ticket);
+        }
+
+        return toDetailDto(ticket);
+    }
+
     // Admin gửi phản hồi vào ticket và có thể cập nhật trạng thái ticket trong cùng request.
     @Transactional
     public SupportTicketDetailDto replyTicketAsAdmin(String adminEmail, Integer ticketId, SupportReplyRequest request) {
@@ -143,8 +191,9 @@ public class SupportService {
 
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
             ticket.setStatus(parseStatus(request.getStatus()));
-        } else if (ticket.getStatus() == SupportTicket.SupportStatus.OPEN) {
-            ticket.setStatus(SupportTicket.SupportStatus.IN_PROGRESS);
+        } else {
+            // Khi admin reply, luôn chuyển sang RESOLVED (Đã phản hồi)
+            ticket.setStatus(SupportTicket.SupportStatus.RESOLVED);
         }
 
         supportTicketRepository.save(ticket);
@@ -202,8 +251,10 @@ public class SupportService {
     }
 
     // Chuyển SupportTicket thành item dùng cho danh sách ticket.
+    // latestMessage luôn là câu hỏi đầu tiên của user, không bao giờ là reply của admin.
     private SupportTicketListItemDto toListItemDto(SupportTicket ticket) {
-        String latestMessage = supportMessageRepository.findTopByTicketIdOrderByCreatedAtDesc(ticket.getId())
+        String firstUserMessage = supportMessageRepository
+                .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
                 .map(SupportMessage::getMessage)
                 .orElse("");
 
@@ -217,7 +268,7 @@ public class SupportService {
                 .categoryDisplayName(ticket.getCategory().getDisplayName())
                 .status(ticket.getStatus().name())
                 .createdAt(ticket.getCreatedAt())
-                .latestMessage(latestMessage)
+                .latestMessage(firstUserMessage)
                 .build();
     }
 

@@ -93,17 +93,23 @@ function mapListItemToThread(item: BackendSupportListItem): SupportThread {
 }
 
 function mapDetailToThread(detail: BackendSupportDetail): SupportThread {
-    const firstUserMessage = detail.messages.find((m) => m.senderType === "USER")?.message;
+    const firstUserMessage = detail.messages.find((m) => m.senderType === "USER")?.message ?? "";
     return {
         id: detail.id,
         userId: detail.userId,
         name: detail.requesterName || detail.requesterEmail?.split("@")[0] || "Người dùng",
         email: detail.requesterEmail,
         category: toSupportCategory(detail.categoryDisplayName),
-        message: firstUserMessage || detail.messages[0]?.message || "",
+        // message luôn là câu hỏi đầu tiên của user — dùng cho list bên trái
+        message: firstUserMessage,
         createdAt: toRelativeTime(detail.createdAt),
         sentAt: detail.createdAt,
         status: toSupportStatus(detail.status),
+        messages: detail.messages.map((m) => ({
+            senderType: m.senderType,
+            message: m.message,
+            createdAt: toRelativeTime(m.createdAt),
+        })),
     };
 }
 
@@ -120,6 +126,12 @@ export const supportService = {
         return mapDetailToThread(res.data.data);
     },
 
+    // Gọi khi admin click mở ticket — tự động chuyển OPEN → IN_PROGRESS và trả về full conversation
+    async viewAdminTicket(ticketId: number): Promise<SupportThread> {
+        const res = await apiClient.post<ApiResponse<BackendSupportDetail>>(`/admin/support-management/tickets/${ticketId}/view`);
+        return mapDetailToThread(res.data.data);
+    },
+
     async replyAdminTicket(ticketId: number, message: string): Promise<SupportThread> {
         const res = await apiClient.post<ApiResponse<BackendSupportDetail>>(
             `/admin/support-management/tickets/${ticketId}/reply`,
@@ -133,6 +145,16 @@ export const supportService = {
         await apiClient.post<ApiResponse<unknown>>("/users/support/tickets", {
             categoryId,
             message,
+        });
+    },
+
+    async createGuestTicket(name: string, email: string, topic: string, message: string): Promise<void> {
+        const categoryId = CATEGORY_ID_BY_TOPIC[topic] ?? CATEGORY_ID_BY_TOPIC["Khác"];
+        await apiClient.post<ApiResponse<unknown>>("/public/support/tickets", {
+            categoryId,
+            message,
+            guestName: name,
+            guestEmail: email,
         });
     },
 };

@@ -32,7 +32,7 @@ public class AdminSupportController {
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách ticket thành công", data));
     }
 
-    // Lấy chi tiết ticket cho admin.
+    // Lấy chi tiết ticket cho admin (chỉ đọc, không đổi status).
     @GetMapping("/tickets/{ticketId}")
     public ResponseEntity<ApiResponse<SupportTicketDetailDto>> getTicketDetail(
             Authentication authentication,
@@ -40,6 +40,17 @@ public class AdminSupportController {
     ) {
         String email = authentication.getName();
         SupportTicketDetailDto data = supportService.getAdminTicketDetail(email, ticketId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết ticket thành công", data));
+    }
+
+    // Admin mở xem ticket → tự động chuyển OPEN sang IN_PROGRESS.
+    @PostMapping("/tickets/{ticketId}/view")
+    public ResponseEntity<ApiResponse<SupportTicketDetailDto>> viewTicket(
+            Authentication authentication,
+            @PathVariable Integer ticketId
+    ) {
+        String email = authentication.getName();
+        SupportTicketDetailDto data = supportService.viewTicketAsAdmin(email, ticketId);
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết ticket thành công", data));
     }
 

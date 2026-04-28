@@ -10,4 +10,7 @@ public interface SupportMessageRepository extends JpaRepository<SupportMessage, 
     List<SupportMessage> findByTicketIdOrderByCreatedAtAsc(Integer ticketId);
 
     Optional<SupportMessage> findTopByTicketIdOrderByCreatedAtDesc(Integer ticketId);
+
+    // Lấy tin nhắn đầu tiên của user (không phải admin) trong ticket
+    Optional<SupportMessage> findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(Integer ticketId, SupportMessage.SenderType senderType);
 }
