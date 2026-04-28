@@ -12,7 +12,6 @@ interface Props {
 const statusLabel: Record<string, string> = {
     Active: "Hoạt động",
     Banned: "Bị cấm",
-    Inactive: "Không hoạt động",
 };
 
 const authLabel: Record<string, string> = {

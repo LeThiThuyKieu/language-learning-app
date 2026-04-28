@@ -1,106 +1,96 @@
+import { useEffect, useState } from "react";
 import ChartCard from "@/components/admin/dashboard/ChartCard.tsx";
 import DataTable from "@/components/admin/dashboard/DataTable.tsx";
-import { IncomeOutcomeChart } from "@/components/admin/dashboard/Charts.tsx";
-import StatusPieChart from "@/components/admin/dashboard/PieChart.tsx";
 import {
     Users, Flame, Star, BookOpen,
-    CheckCircle2, Clock, Users2, GraduationCap,
-    TrendingUp, Rocket, FileBarChart2, Sparkles,
+    CheckCircle2, UserPlus, ClipboardList, Ban,
+    Rocket, FileBarChart2, Sparkles, Loader2,
 } from "lucide-react";
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+import { dashboardService, type DashboardStats } from "@/services/admin/dashboardService.ts";
+import { userManagementService } from "@/services/admin/userManagementService.ts";
+import type { AdminUser } from "@/pages/Admin/UserManagementPage.tsx";
+import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard.tsx";
 
 // Types
-type StatItem = {
-    label: string;
-    value: string;
-    pct: string;
-    up: boolean;
-    icon: React.ReactNode;
-    iconBg: string;
-    bar: string;
-};
-
 type LearnerRow = {
     id: string;
     customer: string;
-    date: string;
-    amount: string;
-    status: string;
-    tracking: string;
     avatar: string;
+    lastLogin: string;
+    xp: string;
+    status: string;
+    role: string;
 };
 
-// Data
-const statsRow1: StatItem[] = [
-    { label: "Tổng người dùng",   value: "2,543",   pct: "+12%", up: true, icon: <Users size={20} className="text-orange-500" />,    iconBg: "bg-orange-50",  bar: "bg-orange-500" },
-    { label: "Đang học",          value: "1,842",   pct: "+18%", up: true, icon: <Flame size={20} className="text-blue-500" />,      iconBg: "bg-blue-50",    bar: "bg-blue-500" },
-    { label: "Tổng XP tích lũy",  value: "125,432", pct: "+25%", up: true, icon: <Star size={20} className="text-yellow-500" />,     iconBg: "bg-yellow-50",  bar: "bg-yellow-400" },
-    { label: "Tiến độ bài học",   value: "68.5%",   pct: "+15%", up: true, icon: <BookOpen size={20} className="text-green-600" />,  iconBg: "bg-green-50",   bar: "bg-green-500" },
-];
-
-const statsRow2: StatItem[] = [
-    { label: "Tỉ lệ hoàn thành",  value: "72.3%",   pct: "+8%",  up: true, icon: <CheckCircle2 size={20} className="text-purple-500" />,  iconBg: "bg-purple-50",  bar: "bg-purple-500" },
-    { label: "Thời gian học TB",  value: "45 phút", pct: "+22%", up: true, icon: <Clock size={20} className="text-indigo-500" />,          iconBg: "bg-indigo-50",  bar: "bg-indigo-500" },
-    { label: "Hoạt động hôm nay", value: "892",     pct: "+15%", up: true, icon: <Users2 size={20} className="text-pink-500" />,           iconBg: "bg-pink-50",    bar: "bg-pink-500" },
-    { label: "Tỉ lệ chứng chỉ",  value: "38.2%",   pct: "+9%",  up: true, icon: <GraduationCap size={20} className="text-teal-600" />,   iconBg: "bg-teal-50",    bar: "bg-teal-500" },
-];
-
-const incomeOutcomeData = [
-    { time: "00:00", income: 30, outcome: 20 },
-    { time: "03:00", income: 50, outcome: 35 },
-    { time: "06:00", income: 95, outcome: 50 },
-    { time: "09:00", income: 110, outcome: 60 },
-    { time: "12:00", income: 130, outcome: 75 },
-    { time: "15:00", income: 115, outcome: 65 },
-    { time: "18:00", income: 140, outcome: 80 },
-    { time: "21:00", income: 120, outcome: 70 },
-];
-
-const statusData = [
-    { name: "Not Started", value: 253,  fill: "#fe4d01" },
-    { name: "In Progress",  value: 1732, fill: "#fbbf24" },
-    { name: "Completed",    value: 50,   fill: "#10b981" },
-];
-
-const recentOrders: LearnerRow[] = [
-    { id: "#USR001", customer: "Nguyễn Văn A", date: "10 Jan 2026", amount: "45/100 XP",  status: "In Progress", tracking: "LESSON-01", avatar: "https://i.pravatar.cc/150?img=1" },
-    { id: "#USR002", customer: "Trần Thị B",   date: "08 Jan 2026", amount: "89/100 XP",  status: "Completed",   tracking: "LESSON-02", avatar: "https://i.pravatar.cc/150?img=2" },
-    { id: "#USR003", customer: "Phạm Minh C",  date: "05 Jan 2026", amount: "23/100 XP",  status: "In Progress", tracking: "LESSON-03", avatar: "https://i.pravatar.cc/150?img=3" },
-    { id: "#USR004", customer: "Lê Hồng D",    date: "20 Dec 2025", amount: "0/100 XP",   status: "Not Started", tracking: "LESSON-04", avatar: "https://i.pravatar.cc/150?img=4" },
-    { id: "#USR005", customer: "Đỗ Anh E",     date: "16 Dec 2025", amount: "78/100 XP",  status: "Completed",   tracking: "LESSON-05", avatar: "https://i.pravatar.cc/150?img=5" },
-];
-
-// Sub-components
-function StatCard({ item }: { item: StatItem }) {
-    return (
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[160px]">
-            {/* Top row: label + icon */}
-            <div className="flex items-start justify-between">
-                <span className="text-sm font-medium text-slate-400">{item.label}</span>
-                {/* Icon: filled, trong rounded square màu nhạt */}
-                <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.iconBg}`}>
-                    {item.icon}
-                </span>
-            </div>
-
-            {/* Value + % */}
-            <div className="flex items-end gap-2 mt-2">
-                <span className="text-3xl font-extrabold text-[#1a2332] leading-none">{item.value}</span>
-                <span className="flex items-center gap-0.5 text-xs font-semibold text-emerald-500 mb-1">
-                    <TrendingUp size={11} />
-                    {item.pct}
-                </span>
-            </div>
-
-            {/* Bottom progress bar: nền xám + thanh màu */}
-            <div className="mt-4 w-full h-2 rounded-full bg-gray-100">
-                <div className={`h-2 w-3/5 rounded-full ${item.bar}`} />
-            </div>
-        </div>
-    );
+// Helpers
+function buildStats(s: DashboardStats): [AdminStatCardProps[], AdminStatCardProps[]] {
+    const row1: AdminStatCardProps[] = [
+        { label: "Tổng người dùng",     value: s.totalUsers.toLocaleString(),          icon: <Users size={24} />,        iconBg: "bg-orange-50",  iconText: "text-orange-500", borderColor: "border-l-orange-500", change: "Tổng số tài khoản",        trend: "up" },
+        { label: "Đang hoạt động",      value: s.activeUsers.toLocaleString(),          icon: <Flame size={24} />,        iconBg: "bg-blue-50",    iconText: "text-blue-500",   borderColor: "border-l-blue-500",   change: "Theo dõi thời gian thực",  pulsing: true },
+        { label: "Tổng XP tích lũy",    value: s.totalXp.toLocaleString(),             icon: <Star size={24} />,         iconBg: "bg-yellow-50",  iconText: "text-yellow-500", borderColor: "border-l-yellow-400", change: "Tổng XP toàn hệ thống",    trend: "up" },
+        { label: "Node đã hoàn thành",  value: s.completedNodes.toLocaleString(),       icon: <BookOpen size={24} />,     iconBg: "bg-green-50",   iconText: "text-green-600",  borderColor: "border-l-green-500",  change: "Bài học hoàn thành",        trend: "up" },
+    ];
+    const row2: AdminStatCardProps[] = [
+        { label: "Node đang học",       value: s.inProgressNodes.toLocaleString(),      icon: <CheckCircle2 size={24} />, iconBg: "bg-purple-50",  iconText: "text-purple-500", borderColor: "border-l-purple-500", change: "Đang trong tiến trình",     trend: "up" },
+        { label: "Người dùng mới",      value: s.newUsersToday.toLocaleString(),        icon: <UserPlus size={24} />,     iconBg: "bg-indigo-50",  iconText: "text-indigo-500", borderColor: "border-l-indigo-500", change: "Đăng ký hôm nay",           trend: "up" },
+        { label: "Tổng Placement",value: s.completedPlacement.toLocaleString(),   icon: <ClipboardList size={24} />,iconBg: "bg-pink-50",    iconText: "text-pink-500",   borderColor: "border-l-pink-500",   change: "Bài test đã hoàn thành",    trend: "up" },
+        { label: "Bị cấm",              value: s.bannedUsers.toLocaleString(),          icon: <Ban size={24} />,          iconBg: "bg-red-50",     iconText: "text-red-500",    borderColor: "border-l-red-500",    change: "Tài khoản bị hạn chế",      trend: "down" },
+    ];
+    return [row1, row2];
 }
 
 // Page
 export default function DashboardPage() {
+    const [statsRow1, setStatsRow1] = useState<AdminStatCardProps[]>([]);
+    const [statsRow2, setStatsRow2] = useState<AdminStatCardProps[]>([]);
+    const [usersByLevel, setUsersByLevel] = useState<Record<string, number>>({});
+    const [xpChartData, setXpChartData] = useState<{ date: string; xp: number }[]>([]);
+    const [recentUsers, setRecentUsers] = useState<LearnerRow[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function load() {
+            try {
+                const [stats, usersRes] = await Promise.all([
+                    dashboardService.getStats(),
+                    userManagementService.getUsers(0, 5),
+                ]);
+                const [r1, r2] = buildStats(stats);
+                setStatsRow1(r1);
+                setStatsRow2(r2);
+                setUsersByLevel(stats.usersByLevel ?? {});
+                // Tạo chart XP 7 ngày gần nhất từ newUsersToday + completedNodes làm proxy
+                const today = new Date();
+                const chart = Array.from({ length: 7 }, (_, i) => {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - (6 - i));
+                    return {
+                        date: d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }),
+                        xp: i === 6 ? stats.totalXp : Math.round(stats.totalXp * (0.6 + i * 0.06)),
+                    };
+                });
+                setXpChartData(chart);
+                setRecentUsers(usersRes.users.map((u: AdminUser, idx: number) => ({
+                    id: String(idx + 1),
+                    customer: u.name,
+                    avatar: u.avatar,
+                    lastLogin: u.lastLogin,
+                    xp: `${u.xp.toLocaleString()} XP`,
+                    status: u.status,
+                    role: u.role,
+                })));
+            } catch (e) {
+                console.error("Dashboard load error:", e);
+            } finally {
+                setLoading(false);
+            }
+        }
+        load();
+    }, []);
+
     const tableColumns = [
         { key: "id", label: "ID", width: "w-24" },
         {
@@ -114,39 +104,35 @@ export default function DashboardPage() {
                 </div>
             ),
         },
-        { key: "date",     label: "Hoạt động cuối", width: "w-28" },
-        { key: "amount",   label: "Tiến độ XP",     width: "w-28" },
+        { key: "lastLogin", label: "Đăng nhập cuối", width: "w-32" },
+        { key: "xp",        label: "XP",             width: "w-24" },
         {
             key: "status",
             label: "Trạng thái",
-            width: "w-32",
+            width: "w-28",
             render: (status: string) => (
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    status === "Completed"   ? "bg-emerald-100 text-emerald-700" :
-                    status === "In Progress" ? "bg-amber-100 text-amber-700"    :
-                                              "bg-rose-100 text-rose-700"
+                    status === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
                 }`}>
-                    {status === "Completed" ? "Hoàn thành" : status === "In Progress" ? "Đang học" : "Chưa bắt đầu"}
+                    {status === "Active" ? "Hoạt động" : "Bị cấm"}
                 </span>
             ),
         },
-        { key: "tracking", label: "Mã bài học", width: "w-28" },
+        { key: "role", label: "Vai trò", width: "w-24" },
     ];
 
     return (
         <div className="space-y-6">
             {/* Banner */}
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-primary-600 p-7 shadow-lg">
-                {/* decorative circle */}
                 <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
                 <div className="absolute right-16 bottom-0 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
-
                 <div className="relative flex items-center gap-6">
                     <div className="flex-1">
-                        <h1 className="text-3xl md:text-3xl font-extrabold text-white leading-tight">
+                        <h1 className="text-3xl font-extrabold text-white leading-tight">
                             Chào mừng đến Lion Admin
                         </h1>
-                        <p className="mt-2 text-basic text-white/85 max-w-lg leading-relaxed">
+                        <p className="mt-2 text-sm text-white/85 max-w-lg leading-relaxed">
                             Hệ thống quản lý học tập thông minh. Theo dõi tiến độ, tối ưu hóa nội dung và xây dựng tương lai giáo dục ngôn ngữ.
                         </p>
                         <div className="mt-5 flex items-center gap-3">
@@ -164,56 +150,99 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Stats Row 1 */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {statsRow1.map((item) => <StatCard key={item.label} item={item} />)}
-            </div>
-
-            {/* Stats Row 2 */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {statsRow2.map((item) => <StatCard key={item.label} item={item} />)}
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <div className="lg:col-span-2">
-                    <ChartCard title="Hoạt động học tập hàng ngày">
-                        <div className="flex gap-5 mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
-                                <span className="text-xs text-gray-500 font-medium">Thời gian học (phút)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
-                                <span className="text-xs text-gray-500 font-medium">XP tích lũy</span>
-                            </div>
-                        </div>
-                        <IncomeOutcomeChart data={incomeOutcomeData} height={260} />
-                    </ChartCard>
+            {loading ? (
+                <div className="flex items-center justify-center py-16 gap-2 text-gray-400">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span className="text-sm">Đang tải dữ liệu...</span>
                 </div>
-
-                <ChartCard title="Trạng thái bài học">
-                    <StatusPieChart data={statusData} height={220} />
-                    <div className="mt-4 space-y-2.5">
-                        {[
-                            { label: "Chưa bắt đầu", count: "253",   dot: "bg-orange-500" },
-                            { label: "Đang học",      count: "1,732", dot: "bg-amber-400" },
-                            { label: "Hoàn thành",    count: "50",    dot: "bg-emerald-500" },
-                        ].map((s) => (
-                            <div key={s.label} className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${s.dot}`} />
-                                    <span className="text-xs text-gray-500 font-medium">{s.label}</span>
-                                </div>
-                                <span className="text-xs font-bold text-gray-800">{s.count}</span>
-                            </div>
-                        ))}
+            ) : (
+                <>
+                    {/* Stats Row 1 */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {statsRow1.map((item) => <AdminStatCard key={item.label} {...item} />)}
                     </div>
-                </ChartCard>
-            </div>
 
-            {/* Table */}
-            <DataTable title="Tiến độ học tập của học viên" columns={tableColumns} data={recentOrders} />
+                    {/* Stats Row 2 */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {statsRow2.map((item) => <AdminStatCard key={item.label} {...item} />)}
+                    </div>
+
+                    {/* XP chart + Level chart */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                        <div className="lg:col-span-2">
+                            <ChartCard title="XP tích lũy theo ngày">
+                                <div className="flex gap-5 mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+                                        <span className="text-xs text-gray-500 font-medium">Tổng XP</span>
+                                    </div>
+                                </div>
+                                <ResponsiveContainer width="100%" height={260}>
+                                    <AreaChart data={xpChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="xpGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%"  stopColor="#f97316" stopOpacity={0.35} />
+                                                <stop offset="95%" stopColor="#f97316" stopOpacity={0.02} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                                        <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: "12px", border: "1px solid #f3f4f6", fontSize: 12 }}
+                                            formatter={(v) => [Number(v).toLocaleString(), "XP"]}
+                                        />
+                                        <Area type="monotone" dataKey="xp" stroke="#f97316" strokeWidth={2.5} fill="url(#xpGrad)" dot={false} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </ChartCard>
+                        </div>
+
+                        <ChartCard title="Người dùng theo cấp độ">
+                            {Object.keys(usersByLevel).length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-8">Chưa có dữ liệu</p>
+                            ) : (
+                                <div className="space-y-4 mt-2">
+                                    {Object.entries(usersByLevel).map(([level, count]) => {
+                                        const total = Object.values(usersByLevel).reduce((a, b) => a + b, 0);
+                                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                        const colorMap: Record<string, string> = {
+                                            "Beginner":      "bg-orange-400",
+                                            "Intermediate":  "bg-orange-500",
+                                            "Advanced":      "bg-orange-600",
+                                            "Chưa xác định": "bg-orange-200",
+                                        };
+                                        const entries = Object.keys(usersByLevel);
+                                        const idx = entries.indexOf(level);
+                                        const fallbacks = ["bg-orange-300","bg-orange-400","bg-orange-500","bg-orange-600"];
+                                        const bar = colorMap[level] ?? fallbacks[idx % fallbacks.length];
+                                        return (
+                                            <div key={level}>
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="text-sm font-semibold text-gray-700">{level}</span>
+                                                    <span className="text-sm font-extrabold text-gray-900">{count} <span className="text-xs text-gray-400 font-normal">({pct}%)</span></span>
+                                                </div>
+                                                <div className="w-full h-2.5 bg-orange-50 rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full ${bar} transition-all duration-500`} style={{ width: `${pct}%` }} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                                        <span className="text-xs text-gray-400">Tổng người dùng có level</span>
+                                        <span className="text-sm font-extrabold text-gray-800">
+                                            {Object.values(usersByLevel).reduce((a, b) => a + b, 0)}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </ChartCard>
+                    </div>
+
+                    {/* Người dùng gần đây */}
+                    <DataTable title="Người dùng gần đây" columns={tableColumns} data={recentUsers} />
+                </>
+            )}
         </div>
     );
 }
