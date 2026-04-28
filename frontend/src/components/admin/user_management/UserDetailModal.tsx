@@ -1,17 +1,21 @@
 import { createPortal } from "react-dom";
-import { X, Mail, Phone, MapPin, Flame, ShieldCheck, ArrowRight, TrendingUp, CircleSlash } from "lucide-react";
+import { useState } from "react";
+import { X, Mail, Flame, ShieldCheck, ArrowRight, TrendingUp } from "lucide-react";
 import type { AdminUser } from "@/pages/Admin/UserManagementPage";
+import ActivityLogModal from "./ActivityLogModal";
 
 interface Props {
     user: AdminUser;
     onClose: () => void;
+    onEdit: (user: AdminUser) => void;
 }
 
-export default function UserDetailModal({ user, onClose }: Props) {
+export default function UserDetailModal({ user, onClose, onEdit }: Props) {
+    const [showActivity, setShowActivity] = useState(false);
     const maxXp = (user.level ?? 12) * 150;
     const xpPercent = Math.min((user.xp / maxXp) * 100, 100);
 
-    return createPortal(
+    const modal = createPortal(
         <div
             className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-gray-900/60 backdrop-blur-sm"
             onClick={onClose}
@@ -32,24 +36,14 @@ export default function UserDetailModal({ user, onClose }: Props) {
 
                 {/* Body */}
                 <div className="px-8 -mt-14 pb-0">
-                    {/* Avatar + nút hành động */}
-                    <div className="flex items-end justify-between">
-                        <div className="relative">
-                            <img
-                                src={user.avatar}
-                                alt={user.name}
-                                className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-xl"
-                            />
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full" />
-                        </div>
-                        <div className="flex gap-2 mb-1">
-                            <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors border border-gray-100">
-                                Chỉnh sửa
-                            </button>
-                            <button className="p-2 bg-gray-50 text-gray-300 rounded-xl hover:text-red-500 transition-colors border border-gray-100">
-                                <CircleSlash className="w-4 h-4" />
-                            </button>
-                        </div>
+                    {/* Avatar */}
+                    <div className="relative w-fit">
+                        <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-xl"
+                        />
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full" />
                     </div>
 
                     {/* Tên + thông tin */}
@@ -101,32 +95,33 @@ export default function UserDetailModal({ user, onClose }: Props) {
                                 <TrendingUp className="w-5 h-5 text-blue-500" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">Độ chính xác</p>
-                                <p className="text-lg font-extrabold text-gray-800">{user.accuracy ?? 98.4}%</p>
+                                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">Tổng XP</p>
+                                <p className="text-lg font-extrabold text-gray-800">{user.xp.toLocaleString()} XP</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Thông tin liên hệ */}
+                    {/* Email */}
                     <div className="mt-5 space-y-3">
                         <div className="flex items-center gap-3 text-gray-500">
                             <Mail className="w-4 h-4 shrink-0" />
                             <span className="text-sm">{user.email}</span>
                         </div>
-                        <div className="flex items-center gap-3 text-gray-500">
-                            <Phone className="w-4 h-4 shrink-0" />
-                            <span className="text-sm">{user.phone ?? "+84 000 000 000"}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-gray-500">
-                            <MapPin className="w-4 h-4 shrink-0" />
-                            <span className="text-sm">{user.location ?? "Hồ Chí Minh, Việt Nam"}</span>
-                        </div>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="mt-6 px-8 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end">
-                    <button className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-orange-500 transition-colors">
+                <div className="mt-6 px-8 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                    <button
+                        onClick={() => onEdit(user)}
+                        className="text-xs font-bold text-gray-400 hover:text-orange-500 transition-colors"
+                    >
+                        Chỉnh sửa hồ sơ
+                    </button>
+                    <button
+                        onClick={() => setShowActivity(true)}
+                        className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-orange-500 transition-colors"
+                    >
                         Xem lịch sử hoạt động
                         <ArrowRight className="w-4 h-4" />
                     </button>
@@ -134,5 +129,14 @@ export default function UserDetailModal({ user, onClose }: Props) {
             </div>
         </div>,
         document.body
+    );
+
+    return (
+        <>
+            {modal}
+            {showActivity && (
+                <ActivityLogModal user={user} onClose={() => setShowActivity(false)} />
+            )}
+        </>
     );
 }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { UserPlus } from "lucide-react";
+import toast from "react-hot-toast";
 import UserStatsCard from "@/components/admin/user_management/UserStatsCard";
 import UserTable from "@/components/admin/user_management/UserTable";
 import UserDetailModal from "@/components/admin/user_management/UserDetailModal";
 import AddUserModal, { type AddUserForm } from "@/components/admin/user_management/AddUserModal";
+import EditUserModal from "@/components/admin/user_management/EditUserModal";
 import { userManagementService, type AdminUserStats } from "@/services/admin/userManagementService.ts";
 
 // Types
@@ -54,6 +56,7 @@ export default function UserManagementPage() {
     const [page, setPage] = useState(0);
     const [loading, setLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+    const [editUser, setEditUser] = useState<AdminUser | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
 
     async function fetchData(p = 0) {
@@ -76,13 +79,23 @@ export default function UserManagementPage() {
     useEffect(() => { fetchData(0); }, []);
 
     async function handleBan(userId: number) {
-        await userManagementService.banUser(userId);
-        fetchData(page);
+        try {
+            await userManagementService.banUser(userId);
+            toast.success("Đã cấm người dùng thành công!");
+            fetchData(page);
+        } catch {
+            toast.error("Cấm người dùng thất bại, vui lòng thử lại.");
+        }
     }
 
     async function handleUnban(userId: number) {
-        await userManagementService.unbanUser(userId);
-        fetchData(page);
+        try {
+            await userManagementService.unbanUser(userId);
+            toast.success("Đã bỏ cấm người dùng thành công!");
+            fetchData(page);
+        } catch {
+            toast.error("Bỏ cấm thất bại, vui lòng thử lại.");
+        }
     }
 
     function handlePageChange(p: number) {
@@ -90,7 +103,6 @@ export default function UserManagementPage() {
         fetchData(p);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async function handleAddUser(data: AddUserForm) {
         try {
             await userManagementService.createUser({
@@ -100,11 +112,12 @@ export default function UserManagementPage() {
                 status: data.status,
                 authProvider: data.authProvider,
             });
+            toast.success("Thêm người dùng thành công!");
             setShowAddModal(false);
             fetchData(page);
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : "Tạo người dùng thất bại";
-            alert(msg);
+            toast.error(msg);
         }
     }
 
@@ -139,6 +152,7 @@ export default function UserManagementPage() {
                 page={page}
                 loading={loading}
                 onUserSelect={setSelectedUser}
+                onEdit={(u) => setEditUser(u)}
                 onBan={handleBan}
                 onUnban={handleUnban}
                 onPageChange={handlePageChange}
@@ -146,7 +160,23 @@ export default function UserManagementPage() {
 
             {/* Modal chi tiết */}
             {selectedUser && (
-                <UserDetailModal user={selectedUser} onClose={() => setSelectedUser(null)} />
+                <UserDetailModal
+                    user={selectedUser}
+                    onClose={() => setSelectedUser(null)}
+                    onEdit={(u) => { setSelectedUser(null); setEditUser(u); }}
+                />
+            )}
+
+            {/* Modal chỉnh sửa */}
+            {editUser && (
+                <EditUserModal
+                    user={editUser}
+                    onClose={() => setEditUser(null)}
+                    onSaved={() => {
+                        setEditUser(null);
+                        fetchData(page);
+                    }}
+                />
             )}
 
             {/* Modal thêm người dùng */}
