@@ -144,4 +144,28 @@ export const userManagementService = {
         const res = await apiClient.post<{ data: BackendUser }>("/admin/user_management", data);
         return mapUser(res.data.data);
     },
+
+    /**
+     * Cập nhật thông tin người dùng (fullName, role, status).
+     * PUT /api/admin/user_management/{id}
+     */
+    async updateUser(id: number, data: { fullName?: string; role?: string; status?: string }): Promise<AdminUser> {
+        const res = await apiClient.put<{ data: BackendUser }>(`/admin/user_management/${id}`, data);
+        return mapUser(res.data.data);
+    },
+
+    /**
+     * Lấy lịch sử hoạt động của user (đăng nhập, hoàn thành node...).
+     * GET /api/admin/user_management/{id}/activity
+     */
+    async getActivityLog(id: number): Promise<ActivityLog[]> {
+        const res = await apiClient.get<{ data: ActivityLog[] }>(`/admin/user_management/${id}/activity`);
+        return res.data.data;
+    },
 };
+
+export interface ActivityLog {
+    action: string;
+    detail: string;
+    timestamp: string;
+}
