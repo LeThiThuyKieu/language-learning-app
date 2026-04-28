@@ -1,8 +1,8 @@
 package com.languagelearning.service.admin;
 
-import com.languagelearning.dto.admin.UserActivityLogDto;
-import com.languagelearning.dto.admin.UserDto;
-import com.languagelearning.dto.admin.UserStatsDto;
+import com.languagelearning.dto.admin.user_management.UserActivityLogDto;
+import com.languagelearning.dto.admin.user_management.UserDto;
+import com.languagelearning.dto.admin.user_management.UserStatsDto;
 import com.languagelearning.entity.Role;
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserNodeProgress;
@@ -19,7 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -174,31 +173,6 @@ public class UserManagementService {
         // Sắp xếp mới nhất trước
         logs.sort((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()));
         return logs;
-    }
-
-    /**
-     * Xuất toàn bộ danh sách user ra CSV.
-     */
-    @Transactional(readOnly = true)
-    public void exportCsv(PrintWriter writer) {
-        writer.println("ID,Email,Họ tên,Vai trò,Trạng thái,Đăng nhập qua,XP,Streak,Ngày tạo");
-        List<User> all = userRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
-        for (User u : all) {
-            Optional<UserProfile> p = userProfileRepository.findByUserId(u.getId());
-            String role = u.getRoles().stream().map(Role::getRoleName).findFirst().orElse("USER");
-            writer.printf("%d,%s,%s,%s,%s,%s,%d,%d,%s%n",
-                    u.getId(),
-                    u.getEmail(),
-                    p.map(UserProfile::getFullName).orElse(""),
-                    role,
-                    u.getStatus().name(),
-                    u.getAuthProvider().name(),
-                    p.map(UserProfile::getTotalXp).orElse(0),
-                    p.map(UserProfile::getStreakCount).orElse(0),
-                    u.getCreatedAt() != null ? u.getCreatedAt().toLocalDate() : ""
-            );
-        }
-        writer.flush();
     }
 
     /**

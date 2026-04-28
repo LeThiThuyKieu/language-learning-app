@@ -1,18 +1,16 @@
 package com.languagelearning.controller.admin;
 
-import com.languagelearning.dto.admin.UserDto;
-import com.languagelearning.dto.admin.UserStatsDto;
-import com.languagelearning.dto.admin.UserActivityLogDto;
+import com.languagelearning.dto.admin.user_management.UserDto;
+import com.languagelearning.dto.admin.user_management.UserStatsDto;
+import com.languagelearning.dto.admin.user_management.UserActivityLogDto;
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.service.admin.UserManagementService;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -67,16 +65,6 @@ public class UserManagementController {
     @GetMapping("/{id}/activity")
     public ResponseEntity<ApiResponse<List<UserActivityLogDto>>> getActivity(@PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success("OK", userManagementService.getActivityLog(id)));
-    }
-
-    /** Xuất toàn bộ danh sách user ra file CSV */
-    @GetMapping("/export")
-    public void exportCsv(HttpServletResponse response) throws IOException {
-        response.setContentType("text/csv; charset=UTF-8");
-        response.setHeader("Content-Disposition", "attachment; filename=users.csv");
-        // BOM UTF-8 để Excel đọc đúng tiếng Việt
-        response.getOutputStream().write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
-        userManagementService.exportCsv(response.getWriter());
     }
 
     @Data

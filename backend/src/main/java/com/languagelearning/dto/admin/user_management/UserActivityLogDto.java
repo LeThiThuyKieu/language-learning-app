@@ -1,4 +1,4 @@
-package com.languagelearning.dto.admin;
+package com.languagelearning.dto.admin.user_management;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
