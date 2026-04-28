@@ -8,12 +8,14 @@ import {
     MessageSquare,
     Trophy,
     ClipboardList,
+    Mail,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore.ts";
 
 const menuItems = [
     { path: "/admin/dashboard",       icon: LayoutDashboard, label: "Dashboard" },
     { path: "/admin/user_management", icon: Users,           label: "User Management" },
+    { path: "/admin/support-management/email-support", icon: Mail, label: "Email Support" },
     { path: "/admin/skill-trees",     icon: GitBranch,       label: "Skill Trees" },
     { path: "/admin/lessons",         icon: BookOpen,        label: "Lessons" },
     { path: "/admin/placement-tests", icon: ClipboardList,   label: "Placement Tests" },
