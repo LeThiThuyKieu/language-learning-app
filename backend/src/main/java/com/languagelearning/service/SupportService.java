@@ -23,6 +23,7 @@ public class SupportService {
     private final SupportCategoryRepository supportCategoryRepository;
     private final SupportTicketRepository supportTicketRepository;
     private final SupportMessageRepository supportMessageRepository;
+    private final EmailService emailService;
 
     // Tạo ticket hỗ trợ mới cho user hiện tại và thêm tin nhắn đầu tiên từ user.
     @Transactional
@@ -183,6 +184,13 @@ public class SupportService {
         SupportTicket ticket = supportTicketRepository.findById(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ticket: " + ticketId));
 
+        // Đếm số lần admin đã reply TRƯỚC khi lưu message mới này
+        long previousAdminReplies = supportMessageRepository
+                .findByTicketIdOrderByCreatedAtAsc(ticket.getId())
+                .stream()
+                .filter(m -> m.getSenderType() == SupportMessage.SenderType.ADMIN)
+                .count();
+
         SupportMessage adminMessage = new SupportMessage();
         adminMessage.setTicket(ticket);
         adminMessage.setSenderType(SupportMessage.SenderType.ADMIN);
@@ -197,6 +205,24 @@ public class SupportService {
         }
 
         supportTicketRepository.save(ticket);
+
+        // Lấy câu hỏi đầu tiên của user để đưa vào email
+        String userQuestion = supportMessageRepository
+                .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
+                .map(SupportMessage::getMessage)
+                .orElse("");
+
+        // Gửi email thông báo phản hồi tới người dùng (async, không block)
+        // isFollowUp = true nếu đây không phải lần reply đầu tiên
+        emailService.sendSupportReply(
+                ticket.getRequesterEmail(),
+                ticket.getRequesterName(),
+                userQuestion,
+                request.getMessage().trim(),
+                ticket.getCategory().getDisplayName(),
+                previousAdminReplies > 0
+        );
+
         return toDetailDto(ticket);
     }
 
