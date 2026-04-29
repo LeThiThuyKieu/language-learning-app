@@ -50,4 +50,16 @@ export const authService = {
   changePassword: async (payload: ChangePasswordPayload): Promise<void> => {
     await apiClient.post<ApiResponse<null>>("/auth/change-password", payload);
   },
+
+  forgotPassword: async (email: string): Promise<void> => {
+    await apiClient.post<ApiResponse<null>>("/auth/forgot-password", { email });
+  },
+
+  verifyOtp: async (email: string, otp: string): Promise<void> => {
+    await apiClient.post<ApiResponse<null>>("/auth/verify-otp", { email, otp });
+  },
+
+  resetPassword: async (email: string, otp: string, newPassword: string): Promise<void> => {
+    await apiClient.post<ApiResponse<null>>("/auth/reset-password", { email, otp, newPassword });
+  },
 };
