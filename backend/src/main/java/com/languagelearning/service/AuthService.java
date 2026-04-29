@@ -29,6 +29,8 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final OtpService otpService;
+    private final EmailService emailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -169,6 +171,43 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    // Gửi OTP qua email để đặt lại mật khẩu — OTP có hiệu lực 1 phút.
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new BadCredentialsException("Tài khoản này đăng nhập qua mạng xã hội, không thể đặt lại mật khẩu");
+        }
+
+        String otp = otpService.generateAndStore(request.getEmail());
+        emailService.sendOtpEmail(request.getEmail(), otp);
+    }
+
+    // Xác thực OTP người dùng nhập có đúng với OTP đã gửi hay không.
+    public void verifyOtp(VerifyOtpRequest request) {
+        if (!otpService.verify(request.getEmail(), request.getOtp())) {
+            throw new BadCredentialsException("Mã OTP không đúng hoặc đã hết hạn");
+        }
+    }
+
+    // Đặt lại mật khẩu mới sau khi xác thực OTP thành công.
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!otpService.verify(request.getEmail(), request.getOtp())) {
+            throw new BadCredentialsException("Mã OTP không đúng hoặc đã hết hạn");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Xóa OTP sau khi đã dùng xong
+        otpService.invalidate(request.getEmail());
     }
 
 }

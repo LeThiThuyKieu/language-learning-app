@@ -27,6 +27,121 @@ public class EmailService {
     private String frontendUrl;
 
     /**
+     * Gửi email OTP quên mật khẩu.
+     */
+    @Async
+    public void sendOtpEmail(String toEmail, String otp) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromAddress, fromName);
+            helper.setTo(toEmail);
+            // Đưa mã OTP lên đầu tiêu đề để người dùng thấy ngay trên thông báo điện thoại
+            helper.setSubject("[Lion] " + otp + " là mã xác thực của bạn");
+            helper.setText(buildOtpHtml(otp), true);
+
+            mailSender.send(message);
+            log.info("Đã gửi OTP tới: {}", toEmail);
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+            log.error("Gửi OTP thất bại tới {}: {}", toEmail, e.getMessage());
+        }
+    }
+
+    private String buildOtpHtml(String otp) {
+        return """
+                <!DOCTYPE html>
+                <html lang="vi">
+                <head>
+                  <meta charset="UTF-8"/>
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                </head>
+                <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 0;">
+                    <tr><td align="center">
+                      <table width="480" cellpadding="0" cellspacing="0"
+                             style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+                        <!-- Header -->
+                        <tr>
+                          <td style="background:linear-gradient(135deg,#f97316,#ea580c);padding:28px 40px;">
+                            <table cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td style="vertical-align:middle;">
+                                  <img src="%s/logo/lion.png" alt="Lion" width="44" height="44"
+                                       style="border-radius:10px;display:block;"/>
+                                </td>
+                                <td style="vertical-align:middle;padding-left:12px;">
+                                  <p style="margin:0;color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-0.3px;">Lion</p>
+                                  <p style="margin:2px 0 0;color:rgba(255,255,255,0.8);font-size:11px;">Bảo mật tài khoản</p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+
+                        <!-- Body -->
+                        <tr>
+                          <td style="padding:36px 40px;text-align:center;">
+
+                            <!-- Lời chào -->
+                            <p style="margin:0 0 8px;font-size:16px;color:#374151;text-align:left;">
+                              Chào bạn,
+                            </p>
+
+                            <!-- Mục đích -->
+                            <p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.7;text-align:left;">
+                              Chúng tôi nhận được yêu cầu <strong style="color:#1f2937;">đặt lại mật khẩu</strong>
+                              cho tài khoản của bạn. Sử dụng mã xác thực dưới đây để tiếp tục.
+                            </p>
+
+                            <!-- Vùng hiển thị OTP -->
+                            <div style="background:#FFF3E0;border:2px dashed #FFB44C;border-radius:12px;
+                                        padding:24px 20px;margin:0 0 24px;">
+                              <p style="margin:0 0 8px;font-size:13px;color:#92400e;">Mã xác thực của bạn là:</p>
+                              <span style="font-size:36px;font-weight:bold;letter-spacing:12px;
+                                           color:#1f2937;font-family:'Courier New',Courier,monospace;">
+                                %s
+                              </span>
+                            </div>
+
+                            <!-- Thời gian hiệu lực -->
+                            <p style="margin:0 0 16px;font-size:13px;color:#6b7280;">
+                              Mã này có hiệu lực trong <strong style="color:#d84315;">5 phút</strong>.
+                            </p>
+
+                            <!-- Cảnh báo bảo mật -->
+                            <div style="background:#fff7ed;border-radius:10px;padding:12px 20px;margin-bottom:8px;">
+                              <p style="margin:0;font-size:12px;color:#92400e;line-height:1.6;">
+                                ⚠️ Để đảm bảo an toàn, tuyệt đối không chia sẻ mã này với bất kỳ ai.<br/>
+                                Lion sẽ không bao giờ chủ động hỏi mã xác thực của bạn.
+                              </p>
+                            </div>
+
+                          </td>
+                        </tr>
+
+                        <!-- Footer / Lời kết -->
+                        <tr>
+                          <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #f3f4f6;">
+                            <p style="margin:0 0 4px;font-size:13px;color:#374151;">Trân trọng,</p>
+                            <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#ea580c;">Lion Learning Team</p>
+                            <p style="margin:0;font-size:11px;color:#9ca3af;">
+                              Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.
+                              Tài khoản của bạn vẫn an toàn.
+                            </p>
+                          </td>
+                        </tr>
+
+                      </table>
+                    </td></tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(frontendUrl, otp);
+    }
+
+    /**
      * Gửi email phản hồi support tới user/guest sau khi admin reply.
      *
      * @param isFollowUp true nếu đây là lần reply thứ 2 trở đi

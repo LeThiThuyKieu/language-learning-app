@@ -42,7 +42,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         setLoading(true);
         try {
             // TODO: bỏ comment khi BE sẵn sàng
-            // await authService.forgotPassword(email.trim());
+            await authService.forgotPassword(email.trim());
             toast.success("Mã OTP đã được gửi tới email của bạn");
             setStep("otp");
             setCountdown(60);
@@ -62,7 +62,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         setLoading(true);
         try {
             // TODO: bỏ comment khi BE sẵn sàng
-            // await authService.forgotPassword(email.trim());
+            await authService.forgotPassword(email.trim());
             toast.success("Đã gửi lại mã OTP");
             setCountdown(60);
         } catch {
@@ -101,7 +101,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         setLoading(true);
         try {
             // TODO: bỏ comment khi BE sẵn sàng
-            // await authService.verifyOtp(email.trim(), code);
+            await authService.verifyOtp(email.trim(), code);
             setStep("reset");
         } catch (err) {
             if (axios.isAxiosError(err)) {
@@ -124,7 +124,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         setLoading(true);
         try {
             // TODO: bỏ comment khi BE sẵn sàng
-            // await authService.resetPassword(email.trim(), otp.join(""), newPassword);
+            await authService.resetPassword(email.trim(), otp.join(""), newPassword);
             toast.success("Đặt lại mật khẩu thành công! Vui lòng đăng nhập.");
             onClose();
         } catch (err) {

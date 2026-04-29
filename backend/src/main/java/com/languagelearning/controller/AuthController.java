@@ -52,6 +52,33 @@ public class AuthController {
         authService.changePassword(email, request);
         return ResponseEntity.ok(ApiResponse.success("Change password successfully", null));
     }
+
+    // Gửi OTP về email để bắt đầu quy trình đặt lại mật khẩu.
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Mã OTP đã được gửi tới email của bạn", null));
+    }
+
+    // Xác thực mã OTP người dùng nhập vào.
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ApiResponse<String>> verifyOtp(
+            @Valid @RequestBody VerifyOtpRequest request
+    ) {
+        authService.verifyOtp(request);
+        return ResponseEntity.ok(ApiResponse.success("Xác thực OTP thành công", null));
+    }
+
+    // Đặt lại mật khẩu mới sau khi OTP đã được xác thực.
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<String>> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Đặt lại mật khẩu thành công", null));
+    }
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
