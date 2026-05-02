@@ -10,6 +10,7 @@ import {
     Mail,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { supportService } from "@/services/supportService.ts";
 
 // --- TYPES ---
 type FAQItem = { category: string; question: string; answer: string[]; };
@@ -17,14 +18,11 @@ type SupportTopic = "Bắt đầu học" | "Tài khoản" | "Bài học" | "Kỹ
 type SupportQuestion = { id: string; name: string; email: string; topic: SupportTopic; question: string; createdAt: string; status: string; };
 
 // Định nghĩa interface cho Payload để tránh lỗi "Unexpected any"
-interface MockEmailPayload {
-    subject: string;
-    to: string;
+interface SubmittedSupportPayload {
     from: string;
     senderName: string;
+    topic: string;
     content: string;
-    timestamp: string;
-    deviceInfo: string;
 }
 
 const FAQ_DATA: FAQItem[] = [
@@ -173,7 +171,7 @@ export default function HelpPage() {
 
     // --- FIX LỖI ANY & NAME ---
     const [showAdminPopup, setShowAdminPopup] = useState(false);
-    const [mockPayload, setMockPayload] = useState<MockEmailPayload | null>(null);
+    const [submittedPayload, setSubmittedPayload] = useState<SubmittedSupportPayload | null>(null);
 
     useEffect(() => {
         if (isAuthenticated && user?.email) {
@@ -196,54 +194,90 @@ export default function HelpPage() {
         event.preventDefault();
         const { name, email, topic, question } = form;
 
-        if (!name.trim() || !email.trim() || !question.trim()) {
-            setFormError("Vui lòng nhập đầy đủ thông tin.");
+        // Validate từng field riêng với thông báo cụ thể
+        if (!name.trim()) {
+            setFormError("Vui lòng nhập tên của bạn.");
+            return;
+        }
+        if (!email.trim()) {
+            setFormError("Vui lòng nhập địa chỉ email.");
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            setFormError("Địa chỉ email không đúng định dạng (ví dụ: ten@gmail.com).");
+            return;
+        }
+        if (!question.trim()) {
+            setFormError("Vui lòng nhập nội dung câu hỏi.");
+            return;
+        }
+        if (question.trim().length < 10) {
+            setFormError("Nội dung quá ngắn, vui lòng mô tả chi tiết hơn (ít nhất 10 ký tự).");
             return;
         }
 
         setIsSubmitting(true);
         setFormError(null);
 
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            if (isAuthenticated) {
+                await supportService.createUserTicket(topic, question);
+            } else {
+                await supportService.createGuestTicket(name, email, topic, question);
+            }
 
-        const dataToAdmin: MockEmailPayload = {
-            subject: `Hỗ trợ: ${topic}`,
-            to: "admin@tienganh.com",
-            from: email,
-            senderName: name,
-            content: question,
-            timestamp: new Date().toLocaleString("vi-VN"),
-            deviceInfo: navigator.userAgent.slice(0, 50) + "..."
-        };
+            setSubmittedPayload({
+                from: email,
+                senderName: name,
+                topic,
+                content: question,
+            });
+            setShowAdminPopup(true);
 
-        setMockPayload(dataToAdmin);
-        setShowAdminPopup(true);
+            const newEntry: SupportQuestion = {
+                id: Date.now().toString(),
+                name,
+                email,
+                topic,
+                question,
+                createdAt: new Date().toLocaleTimeString("vi-VN"),
+                status: "Đang chờ Admin duyệt",
+            };
+            setQuestions([newEntry, ...questions].slice(0, 5));
 
-        const newEntry: SupportQuestion = {
-            id: Date.now().toString(),
-            name, email, topic, question,
-            createdAt: new Date().toLocaleTimeString("vi-VN"),
-            status: "Đang chờ Admin duyệt",
-        };
-        setQuestions([newEntry, ...questions].slice(0, 5));
-
-        setForm(emptyForm);
-        setIsSubmitting(false);
-        toast.success("Đã gửi yêu cầu thành công!");
+            setForm(emptyForm);
+            toast.success("Đã gửi yêu cầu thành công!");
+        } catch (error) {
+            console.error("Gửi hỗ trợ thất bại", error);
+            // Lấy message lỗi cụ thể từ server nếu có
+            const axiosError = error as { response?: { data?: { message?: string } } };
+            const serverMsg = axiosError?.response?.data?.message;
+            if (serverMsg) {
+                setFormError(serverMsg);
+            } else if (error instanceof Error) {
+                setFormError(`Gửi thất bại: ${error.message}`);
+            } else {
+                setFormError("Không thể gửi yêu cầu lúc này, vui lòng thử lại sau.");
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 text-slate-900 relative">
 
             {/* POPUP */}
-            {showAdminPopup && mockPayload && (
+            {showAdminPopup && submittedPayload && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="w-full max-w-md rounded-[28px] bg-white shadow-2xl overflow-hidden border border-slate-200">
 
-                        <div className="bg-gradient-to-r from-slate-900 to-blue-900 p-4 flex justify-between items-center text-white">
+                        {/* HEADER */}
+                        <div className="bg-gradient-to-r from-primary-900 to-orange-500 p-4 flex justify-between items-center text-white">
                             <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-cyan-300"/>
-                                <span className="text-xs font-mono">Admin Simulation</span>
+                                <Mail className="h-4 w-4"/>
+                                <span className="text-sm font-bold">Gửi thành công</span>
                             </div>
 
                             <button
@@ -254,24 +288,43 @@ export default function HelpPage() {
                             </button>
                         </div>
 
+                        {/* CONTENT */}
                         <div className="p-6 space-y-4">
-                            <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-sm space-y-1">
-                                <p><b>To:</b> {mockPayload.to}</p>
-                                <p><b>From:</b> {mockPayload.senderName}</p>
-                                <p><b>Subject:</b> {mockPayload.subject}</p>
+
+                            {/* THÔNG BÁO */}
+                            <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-sm">
+                                <p className="font-bold text-orange-600">
+                                    ✅ Yêu cầu của bạn đã được gửi!
+                                </p>
+                                <p className="text-slate-600 text-xs mt-1">
+                                    Admin sẽ phản hồi qua email trong thời gian sớm nhất.
+                                </p>
                             </div>
 
-                            <div className="p-5 bg-slate-50 rounded-2xl">
-                                <p className="text-xs font-bold mb-2 text-slate-400 uppercase">Message</p>
-                                <p className="italic">{mockPayload.content}</p>
+                            {/* INFO */}
+                            <div className="p-4 bg-slate-50 rounded-2xl text-sm space-y-2">
+                                <p><b>Email:</b> {submittedPayload.from}</p>
+                                <p><b>Danh mục:</b> {submittedPayload.topic}</p>
                             </div>
 
+                            {/* MESSAGE */}
+                            <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                                <p className="text-xs font-bold mb-2 text-slate-400 uppercase">
+                                    Nội dung
+                                </p>
+                                <p className="italic text-slate-700">
+                                    {submittedPayload.content}
+                                </p>
+                            </div>
+
+                            {/* BUTTON */}
                             <button
                                 onClick={()=>setShowAdminPopup(false)}
-                                className="w-full py-3 rounded-2xl bg-blue-600 text-white font-bold"
+                                className="w-full py-3 rounded-2xl bg-primary-800 text-white font-bold"
                             >
-                                Đóng
+                                OK
                             </button>
+
                         </div>
 
                     </div>
@@ -444,43 +497,10 @@ export default function HelpPage() {
                                     </>
                                 )}
                             </button>
-
                         </form>
 
                     </div>
-
-
-                    {/* HISTORY */}
-                    {questions.length>0 && (
-                        <div className="space-y-3">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">
-                                Vừa gửi gần đây
-                            </h3>
-
-                            {questions.map(q=>(
-                                <div
-                                    key={q.id}
-                                    className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex justify-between items-center"
-                                >
-                                    <div>
-                                        <p className="text-xs font-bold text-orange-600 uppercase mb-1">
-                                            {q.topic}
-                                        </p>
-
-                                        <p className="text-sm font-medium text-slate-700">
-                                            {q.question}
-                                        </p>
-                                    </div>
-
-                                    <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-gradient-to-r from-emerald-400 to-green-500 text-white shadow-md">
-                                        ✓ SENT
-                                        </span>
-
-                                </div>
-                            ))}
-
-                        </div>
-                    )}
+                    
 
                 </div>
 
