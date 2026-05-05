@@ -4,6 +4,7 @@ import {
     ChevronLeft, ChevronRight, Loader2,
 } from "lucide-react";
 import type { PlacementTestRecord } from "@/services/admin/placementTestManagementService.ts";
+import ExportPlacementModal from "@/components/admin/placement_test_management/ExportPlacementModal.tsx";
 
 interface PlacementTestTableProps {
     tests: PlacementTestRecord[];
@@ -34,6 +35,7 @@ export default function PlacementTestTable({
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("Tất cả");
     const [levelFilter, setLevelFilter] = useState("Tất cả");
+    const [showExport, setShowExport] = useState(false);
 
     const filtered = tests.filter((t) => {
         const matchSearch =
@@ -86,9 +88,9 @@ export default function PlacementTestTable({
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => {/* TODO: Export logic */}}
+                        onClick={() => setShowExport(true)}
                         className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-orange-500 transition-colors"
-                        title="Xuất dữ liệu CSV"
+                        title="Xuất dữ liệu PNG"
                     >
                         <FileDown className="w-5 h-5" />
                     </button>
@@ -272,6 +274,13 @@ export default function PlacementTestTable({
                     </div>
                 </div>
             </div>
+
+            {showExport && (
+                <ExportPlacementModal
+                    tests={filtered}
+                    onClose={() => setShowExport(false)}
+                />
+            )}
         </div>
     );
 }
