@@ -60,6 +60,10 @@ const COLUMNS: ExportColumn<PlacementTestRecord>[] = [
         header: "Hoàn thành",
         render: (t) => <span className="text-xs text-gray-500">{t.completedAt ?? "—"}</span>,
     },
+    {
+        header: "Thời lượng",
+        render: (t) => <span className="text-xs text-gray-500">{t.duration ?? "—"}</span>,
+    },
 ];
 
 interface Props {
