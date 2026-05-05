@@ -2,6 +2,7 @@ package com.languagelearning.controller.admin;
 
 import com.languagelearning.dto.admin.placement_test_management.PlacementTestDto;
 import com.languagelearning.dto.admin.placement_test_management.PlacementTestStatsDto;
+import com.languagelearning.dto.admin.placement_test_management.PlacementTestAttemptDto;
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.service.admin.PlacementTestManagementService;
 import lombok.RequiredArgsConstructor;
@@ -54,5 +55,17 @@ public class PlacementTestManagementController {
     public ResponseEntity<ApiResponse<Void>> deleteTest(@PathVariable Integer id) {
         placementTestManagementService.deleteTest(id);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa placement test thành công", null));
+    }
+
+    /**
+     * Lịch sử tất cả các lần làm bài của một user.
+     * GET /api/admin/placement-tests/user/{userId}/history
+     */
+    @GetMapping("/user/{userId}/history")
+    public ResponseEntity<ApiResponse<java.util.List<PlacementTestAttemptDto>>> getUserHistory(
+            @PathVariable Integer userId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("OK",
+                placementTestManagementService.getUserHistory(userId)));
     }
 }

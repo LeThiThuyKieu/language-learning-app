@@ -2,10 +2,13 @@ package com.languagelearning.service.admin;
 
 import com.languagelearning.dto.admin.placement_test_management.PlacementTestDto;
 import com.languagelearning.dto.admin.placement_test_management.PlacementTestStatsDto;
+import com.languagelearning.dto.admin.placement_test_management.PlacementTestAttemptDto;
 import com.languagelearning.entity.PlacementTest;
+import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserProfile;
 import com.languagelearning.repository.mysql.PlacementTestRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
+import com.languagelearning.repository.mysql.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -23,6 +26,7 @@ public class PlacementTestManagementService {
 
     private final PlacementTestRepository placementTestRepository;
     private final UserProfileRepository userProfileRepository;
+    private final UserRepository userRepository;
 
     /**
      * Lấy danh sách placement tests — mỗi user chỉ hiển thị lần thi MỚI NHẤT,
@@ -95,7 +99,39 @@ public class PlacementTestManagementService {
         placementTestRepository.delete(test);
     }
 
-    // ─── helpers ────────────────────────────────────────────────────────────────
+    /**
+     * Lịch sử tất cả các lần làm bài của một user, mới nhất trước.
+     */
+    @Transactional(readOnly = true)
+    public List<PlacementTestAttemptDto> getUserHistory(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        return placementTestRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(t -> {
+                    LocalDateTime completedAt = "COMPLETED".equals(t.getStatus()) ? t.getUpdatedAt() : null;
+                    String levelName = null;
+                    if (t.getDetectedLevel() != null) {
+                        levelName = switch (t.getDetectedLevel().getId()) {
+                            case 1 -> "Beginner";
+                            case 2 -> "Intermediate";
+                            case 3 -> "Advanced";
+                            default -> t.getDetectedLevel().getLevelName();
+                        };
+                    }
+                    return PlacementTestAttemptDto.builder()
+                            .id(t.getId())
+                            .status(t.getStatus())
+                            .totalScore(t.getTotalScore())
+                            .detectedLevelName(levelName)
+                            .createdAt(t.getCreatedAt())
+                            .completedAt(completedAt)
+                            .build();
+                })
+                .toList();
+    }
+
+    // helpers
 
     private PlacementTestDto toDto(PlacementTest test) {
         Optional<UserProfile> profileOpt = userProfileRepository.findByUserId(test.getUser().getId());
@@ -110,15 +146,22 @@ public class PlacementTestManagementService {
             avatarUrl = "https://ui-avatars.com/api/?name=" + userName + "&background=f97316&color=fff";
         }
 
-        String detectedLevelName = test.getDetectedLevel() != null
-                ? test.getDetectedLevel().getLevelName()
-                : null;
+        String detectedLevelName = null;
+        if (test.getDetectedLevel() != null) {
+            // Map theo id vì level_name trong DB có thể khác với giá trị frontend dùng để filter
+            detectedLevelName = switch (test.getDetectedLevel().getId()) {
+                case 1 -> "Beginner";
+                case 2 -> "Intermediate";
+                case 3 -> "Advanced";
+                default -> test.getDetectedLevel().getLevelName();
+            };
+        }
 
         // completedAt: chỉ có khi COMPLETED
         LocalDateTime completedAt = "COMPLETED".equals(test.getStatus()) ? test.getUpdatedAt() : null;
 
         // Tổng số lần user đã làm (cả hoàn thành lẫn bỏ dở)
-        long totalAttempts = placementTestRepository.countByUser(test.getUser());
+        long totalAttempts = placementTestRepository.countDistinctByUserId(test.getUser().getId());
 
         return PlacementTestDto.builder()
                 .id(test.getId())

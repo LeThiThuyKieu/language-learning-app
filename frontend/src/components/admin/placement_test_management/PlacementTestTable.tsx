@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-    Eye, Trash2, FileDown, RefreshCw, Filter,
+    Eye, FileDown, RefreshCw, Filter,
     ChevronLeft, ChevronRight, Loader2,
 } from "lucide-react";
 import type { PlacementTestRecord } from "@/services/admin/placementTestManagementService.ts";
@@ -11,7 +11,6 @@ interface PlacementTestTableProps {
     page: number;
     loading: boolean;
     onTestSelect: (test: PlacementTestRecord) => void;
-    onDelete: (testId: number) => void;
     onPageChange: (page: number) => void;
     onRefresh: () => void;
 }
@@ -29,7 +28,6 @@ export default function PlacementTestTable({
     page,
     loading,
     onTestSelect,
-    onDelete,
     onPageChange,
     onRefresh,
 }: PlacementTestTableProps) {
@@ -42,7 +40,10 @@ export default function PlacementTestTable({
             t.userName.toLowerCase().includes(search.toLowerCase()) ||
             t.userEmail.toLowerCase().includes(search.toLowerCase());
         const matchStatus = statusFilter === "Tất cả" || t.status === statusFilter;
-        const matchLevel = levelFilter === "Tất cả" || t.detectedLevel === levelFilter;
+        // Khi lọc theo level: chỉ giữ các bài COMPLETED có detectedLevel khớp
+        const matchLevel =
+            levelFilter === "Tất cả" ||
+            (t.detectedLevel != null && t.detectedLevel === levelFilter);
         return matchSearch && matchStatus && matchLevel;
     });
 
@@ -155,34 +156,30 @@ export default function PlacementTestTable({
 
                                         <td className="px-4 py-4">
                                             <div className="flex items-center gap-1.5">
-                                                <div
-                                                    className={`w-1.5 h-1.5 rounded-full ${
-                                                        test.status === "COMPLETED" ? "bg-green-500" : "bg-blue-500"
-                                                    }`}
-                                                />
-                                                <span
-                                                    className={`text-xs font-bold ${
-                                                        test.status === "COMPLETED"
-                                                            ? "text-green-600"
-                                                            : "text-blue-600"
-                                                    }`}
-                                                >
+                                                <div className={`w-1.5 h-1.5 rounded-full ${
+                                                    test.status === "COMPLETED" ? "bg-green-500" : "bg-blue-500"
+                                                }`} />
+                                                <span className={`text-xs font-bold ${
+                                                    test.status === "COMPLETED" ? "text-green-600" : "text-blue-600"
+                                                }`}>
                                                     {statusLabel[test.status]}
                                                 </span>
                                             </div>
                                         </td>
 
                                         <td className="px-4 py-4">
-                                            <p className="text-xs font-bold text-gray-700">
-                                                {test.totalScore !== null
-                                                    ? `${test.totalScore.toFixed(1)}/160`
-                                                    : "N/A"}
-                                            </p>
+                                            {test.totalScore !== null ? (
+                                                <p className="text-xs font-bold text-gray-700">
+                                                    {test.totalScore.toFixed(1)}/160
+                                                </p>
+                                            ) : (
+                                                <span className="text-gray-300 text-sm">—</span>
+                                            )}
                                         </td>
 
                                         <td className="px-4 py-4">
-                                            <span
-                                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                            {test.detectedLevel ? (
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                                                     test.detectedLevel === "Beginner"
                                                         ? "bg-orange-100 text-orange-600"
                                                         : test.detectedLevel === "Intermediate"
@@ -190,10 +187,12 @@ export default function PlacementTestTable({
                                                         : test.detectedLevel === "Advanced"
                                                         ? "bg-purple-100 text-purple-600"
                                                         : "bg-gray-100 text-gray-500"
-                                                }`}
-                                            >
-                                                {test.detectedLevel || "N/A"}
-                                            </span>
+                                                }`}>
+                                                    {test.detectedLevel}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-300 text-sm">—</span>
+                                            )}
                                         </td>
 
                                         <td className="px-4 py-4">
@@ -201,29 +200,25 @@ export default function PlacementTestTable({
                                         </td>
 
                                         <td className="px-4 py-4">
-                                            <p className="text-xs font-medium text-gray-500">
-                                                {test.completedAt || "N/A"}
-                                            </p>
+                                            {test.completedAt ? (
+                                                <p className="text-xs font-medium text-gray-500">{test.completedAt}</p>
+                                            ) : (
+                                                <span className="text-gray-300 text-sm">—</span>
+                                            )}
                                         </td>
 
+                                        {/* Chỉ còn nút Xem, bỏ nút Xóa */}
                                         <td className="px-6 py-4 text-right">
                                             <div
-                                                className="flex items-center justify-end gap-1"
+                                                className="flex items-center justify-end"
                                                 onClick={(e) => e.stopPropagation()}
                                             >
                                                 <button
                                                     onClick={() => onTestSelect(test)}
                                                     className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
-                                                    title="Xem"
+                                                    title="Xem chi tiết"
                                                 >
                                                     <Eye className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => onDelete(test.id)}
-                                                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </td>
@@ -251,23 +246,19 @@ export default function PlacementTestTable({
                             <ChevronLeft className="w-4 h-4" />
                         </button>
 
-                        {/* Page numbers */}
-                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                            const p = i;
-                            return (
-                                <button
-                                    key={p}
-                                    onClick={() => onPageChange(p)}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
-                                        p === page
-                                            ? "bg-orange-500 text-white shadow-sm shadow-orange-500/30"
-                                            : "text-gray-500 hover:bg-white border border-transparent hover:border-gray-100"
-                                    }`}
-                                >
-                                    {p + 1}
-                                </button>
-                            );
-                        })}
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => onPageChange(i)}
+                                className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all ${
+                                    i === page
+                                        ? "bg-orange-500 text-white shadow-sm shadow-orange-500/30"
+                                        : "text-gray-500 hover:bg-white border border-transparent hover:border-gray-100"
+                                }`}
+                            >
+                                {i + 1}
+                            </button>
+                        ))}
 
                         {totalPages > 5 && <span className="text-gray-300 text-xs">...</span>}
 

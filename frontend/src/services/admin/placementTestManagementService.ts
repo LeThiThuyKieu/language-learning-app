@@ -1,5 +1,14 @@
 import apiClient from "@/config/api.ts";
 
+export interface PlacementTestAttempt {
+    id: number;
+    status: "IN_PROGRESS" | "COMPLETED";
+    totalScore: number | null;
+    detectedLevelName: string | null;
+    createdAt: string;
+    completedAt: string | null;
+}
+
 export interface PlacementTestStats {
     totalTests: number;
     completedTests: number;
@@ -115,5 +124,33 @@ export const placementTestManagementService = {
      */
     async deleteTest(id: number): Promise<void> {
         await apiClient.delete(`/admin/placement-tests/${id}`);
+    },
+
+    /**
+     * Lịch sử tất cả các lần làm bài của một user
+     * GET /api/admin/placement-tests/user/{userId}/history
+     */
+    async getUserHistory(userId: number): Promise<PlacementTestAttempt[]> {
+        const res = await apiClient.get<{ data: Array<{
+            id: number;
+            status: string;
+            totalScore: number | null;
+            detectedLevelName: string | null;
+            createdAt: string;
+            completedAt: string | null;
+        }> }>(`/admin/placement-tests/user/${userId}/history`);
+
+        return res.data.data.map(t => ({
+            id: t.id,
+            status: t.status as PlacementTestAttempt["status"],
+            totalScore: t.totalScore,
+            detectedLevelName: t.detectedLevelName,
+            createdAt: t.createdAt
+                ? new Date(t.createdAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+                : "N/A",
+            completedAt: t.completedAt
+                ? new Date(t.completedAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+                : null,
+        }));
     },
 };

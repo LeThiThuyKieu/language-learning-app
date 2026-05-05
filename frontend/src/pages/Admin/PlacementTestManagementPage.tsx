@@ -129,7 +129,6 @@ export default function PlacementTestManagementPage() {
                 page={page}
                 loading={loading}
                 onTestSelect={setSelectedTest}
-                onDelete={handleDelete}
                 onPageChange={handlePageChange}
                 onRefresh={handleRefresh}
             />
