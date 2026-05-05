@@ -7,6 +7,7 @@ export interface PlacementTestAttempt {
     detectedLevelName: string | null;
     createdAt: string;
     completedAt: string | null;
+    duration: string | null;
 }
 
 export interface PlacementTestStats {
@@ -27,6 +28,8 @@ export interface PlacementTestRecord {
     detectedLevel: string | null;
     createdAt: string;
     completedAt: string | null;
+    /** Thời lượng làm bài, ví dụ "12p 34s" hoặc "1g 02p 15s" */
+    duration: string | null;
     /** Tổng số lần user đã làm placement test */
     totalAttempts: number;
 }
@@ -57,16 +60,30 @@ interface BackendPlacementTest {
  * Chuyển đổi dữ liệu placement test từ backend sang định dạng UI
  */
 function mapPlacementTest(t: BackendPlacementTest): PlacementTestRecord {
-    let createdAt = "N/A";
-    if (t.createdAt) {
-        const d = new Date(t.createdAt);
-        createdAt = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+    function formatDatetime(raw: string | null): string | null {
+        if (!raw) return null;
+        const d = new Date(raw);
+        const date = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+        const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+        return `${date} ${time}`;
     }
 
-    let completedAt = null;
-    if (t.completedAt) {
-        const d = new Date(t.completedAt);
-        completedAt = d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const createdAt  = formatDatetime(t.createdAt)  ?? "N/A";
+    const completedAt = formatDatetime(t.completedAt);
+
+    // Tính thời lượng làm bài (createdAt → completedAt)
+    let duration: string | null = null;
+    if (t.createdAt && t.completedAt) {
+        const diffMs = new Date(t.completedAt).getTime() - new Date(t.createdAt).getTime();
+        if (diffMs > 0) {
+            const totalSec = Math.floor(diffMs / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            duration = h > 0
+                ? `${h}g ${String(m).padStart(2, "0")}p ${String(s).padStart(2, "0")}s`
+                : `${String(m).padStart(2, "0")}p ${String(s).padStart(2, "0")}s`;
+        }
     }
 
     return {
@@ -80,6 +97,7 @@ function mapPlacementTest(t: BackendPlacementTest): PlacementTestRecord {
         detectedLevel: t.detectedLevelName,
         createdAt,
         completedAt,
+        duration,
         totalAttempts: t.totalAttempts ?? 0,
     };
 }
@@ -140,17 +158,41 @@ export const placementTestManagementService = {
             completedAt: string | null;
         }> }>(`/admin/placement-tests/user/${userId}/history`);
 
-        return res.data.data.map(t => ({
-            id: t.id,
-            status: t.status as PlacementTestAttempt["status"],
-            totalScore: t.totalScore,
-            detectedLevelName: t.detectedLevelName,
-            createdAt: t.createdAt
-                ? new Date(t.createdAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
-                : "N/A",
-            completedAt: t.completedAt
-                ? new Date(t.completedAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
-                : null,
-        }));
+        return res.data.data.map(t => {
+            const createdAt = t.createdAt
+                ? (() => {
+                    const d = new Date(t.createdAt);
+                    return `${d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })} ${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}`;
+                })()
+                : "N/A";
+            const completedAt = t.completedAt
+                ? (() => {
+                    const d = new Date(t.completedAt!);
+                    return `${d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })} ${d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}`;
+                })()
+                : null;
+            let duration: string | null = null;
+            if (t.createdAt && t.completedAt) {
+                const diffMs = new Date(t.completedAt).getTime() - new Date(t.createdAt).getTime();
+                if (diffMs > 0) {
+                    const totalSec = Math.floor(diffMs / 1000);
+                    const h = Math.floor(totalSec / 3600);
+                    const m = Math.floor((totalSec % 3600) / 60);
+                    const s = totalSec % 60;
+                    duration = h > 0
+                        ? `${h}g ${String(m).padStart(2, "0")}p ${String(s).padStart(2, "0")}s`
+                        : `${String(m).padStart(2, "0")}p ${String(s).padStart(2, "0")}s`;
+                }
+            }
+            return {
+                id: t.id,
+                status: t.status as PlacementTestAttempt["status"],
+                totalScore: t.totalScore,
+                detectedLevelName: t.detectedLevelName,
+                createdAt,
+                completedAt,
+                duration,
+            };
+        });
     },
 };

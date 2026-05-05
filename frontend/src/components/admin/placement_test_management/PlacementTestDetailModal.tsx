@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Timer } from "lucide-react";
 import type { PlacementTestRecord, PlacementTestAttempt } from "@/services/admin/placementTestManagementService.ts";
 import { placementTestManagementService } from "@/services/admin/placementTestManagementService.ts";
 
@@ -41,7 +41,7 @@ export default function PlacementTestDetailModal({ test, onClose }: PlacementTes
                     </button>
                 </div>
 
-                {/* 1. Thông tin học viên — sát header, nền xám phủ full width */}
+                {/* 1. Thông tin học viên */}
                 <div className="flex items-center gap-4 bg-gray-50 px-6 py-5 border-b border-gray-100">
                     <img
                         src={test.userAvatar}
@@ -75,9 +75,17 @@ export default function PlacementTestDetailModal({ test, onClose }: PlacementTes
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-600">Ngày hoàn thành:</span>
-                            <span className="text-sm font-medium text-gray-900">
-                                {test.completedAt ?? <span className="text-gray-300">—</span>}
-                            </span>
+                            <div className="text-right">
+                                <span className="text-sm font-medium text-gray-900">
+                                    {test.completedAt ?? <span className="text-gray-300">—</span>}
+                                </span>
+                                {test.duration && (
+                                    <p className="text-xs text-orange-500 font-semibold mt-0.5">
+                                        <Timer className="inline w-3 h-3 mr-0.5 -mt-0.5" />
+                                        {test.duration}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -134,6 +142,7 @@ export default function PlacementTestDetailModal({ test, onClose }: PlacementTes
                                             <th className="px-4 py-3">Điểm</th>
                                             <th className="px-4 py-3">Level</th>
                                             <th className="px-4 py-3">Ngày làm</th>
+                                            <th className="px-4 py-3">Thời lượng</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
@@ -174,7 +183,17 @@ export default function PlacementTestDetailModal({ test, onClose }: PlacementTes
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-xs text-gray-500">
-                                                    {attempt.createdAt}
+                                                    <p>{attempt.createdAt.split(" ")[0]}</p>
+                                                    <p className="text-[10px] text-gray-400">{attempt.createdAt.split(" ")[1]}</p>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {attempt.duration ? (
+                                                        <span className="inline-flex items-center gap-0.5 text-xs text-orange-500 font-semibold">
+                                                            <Timer className="w-3 h-3" />{attempt.duration}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-gray-300 text-sm">—</span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

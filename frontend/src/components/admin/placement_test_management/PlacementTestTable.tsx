@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
     Eye, FileDown, RefreshCw, Filter,
-    ChevronLeft, ChevronRight, Loader2,
+    ChevronLeft, ChevronRight, Loader2, Timer,
 } from "lucide-react";
 import type { PlacementTestRecord } from "@/services/admin/placementTestManagementService.ts";
 import ExportPlacementModal from "@/components/admin/placement_test_management/ExportPlacementModal.tsx";
@@ -116,13 +116,14 @@ export default function PlacementTestTable({
                                 <th className="px-4 py-4">Level</th>
                                 <th className="px-4 py-4">Ngày tạo</th>
                                 <th className="px-4 py-4">Hoàn thành</th>
+                                <th className="px-4 py-4">Thời lượng</th>
                                 <th className="px-6 py-4 text-right">Hành động</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="py-16 text-center">
+                                    <td colSpan={8} className="py-16 text-center">
                                         <div className="flex items-center justify-center gap-2 text-gray-400">
                                             <Loader2 className="w-5 h-5 animate-spin" />
                                             <span className="text-sm">Đang tải...</span>
@@ -131,7 +132,7 @@ export default function PlacementTestTable({
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="py-16 text-center text-sm text-gray-400">
+                                    <td colSpan={8} className="py-16 text-center text-sm text-gray-400">
                                         Không tìm thấy placement test nào
                                     </td>
                                 </tr>
@@ -198,12 +199,27 @@ export default function PlacementTestTable({
                                         </td>
 
                                         <td className="px-4 py-4">
-                                            <p className="text-xs font-medium text-gray-500">{test.createdAt}</p>
+                                            <p className="text-xs font-medium text-gray-700">{test.createdAt.split(" ")[0]}</p>
+                                            <p className="text-[10px] text-gray-400 mt-0.5">{test.createdAt.split(" ")[1]}</p>
                                         </td>
 
                                         <td className="px-4 py-4">
                                             {test.completedAt ? (
-                                                <p className="text-xs font-medium text-gray-500">{test.completedAt}</p>
+                                                <>
+                                                    <p className="text-xs font-medium text-gray-700">{test.completedAt.split(" ")[0]}</p>
+                                                    <p className="text-[10px] text-gray-400 mt-0.5">{test.completedAt.split(" ")[1]}</p>
+                                                </>
+                                            ) : (
+                                                <span className="text-gray-300 text-sm">—</span>
+                                            )}
+                                        </td>
+
+                                        <td className="px-4 py-4">
+                                            {test.duration ? (
+                                                <div className="flex items-center gap-1 text-orange-500">
+                                                    <Timer className="w-3.5 h-3.5 shrink-0" />
+                                                    <span className="text-xs font-semibold">{test.duration}</span>
+                                                </div>
                                             ) : (
                                                 <span className="text-gray-300 text-sm">—</span>
                                             )}
