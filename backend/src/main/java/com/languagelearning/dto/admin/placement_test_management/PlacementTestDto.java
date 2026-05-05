@@ -22,4 +22,6 @@ public class PlacementTestDto {
     private String detectedLevelName;
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
+    /** Tổng số lần user đã làm placement test (cả hoàn thành lẫn chưa hoàn thành- chưa hoàn thành tức đang làm giữa chừng mà thoát ra ko làm nữa) */
+    private long totalAttempts;
 }

@@ -18,7 +18,7 @@ interface PlacementTestTableProps {
 
 const statusLabel: Record<string, string> = {
     COMPLETED: "Hoàn thành",
-    IN_PROGRESS: "Đang làm",
+    IN_PROGRESS: "Chưa hoàn thành",
 };
 
 const PAGE_SIZE = 10;
@@ -70,7 +70,7 @@ export default function PlacementTestTable({
                     >
                         <option value="Tất cả">Tất cả trạng thái</option>
                         <option value="COMPLETED">Hoàn thành</option>
-                        <option value="IN_PROGRESS">Đang làm</option>
+                        <option value="IN_PROGRESS">Chưa hoàn thành</option>
                     </select>
                     <select
                         value={levelFilter}

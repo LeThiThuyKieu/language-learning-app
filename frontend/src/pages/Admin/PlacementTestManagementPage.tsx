@@ -33,13 +33,13 @@ function buildStats(s: PlacementTestStats): AdminStatCardProps[] {
             trend: "up",
         },
         {
-            label: "Đang làm",
+            label: "Chưa hoàn thành",
             value: s.inProgressTests.toLocaleString(),
             icon: <Clock size={24} />,
             iconBg: "bg-blue-50",
             iconText: "text-blue-500",
             borderColor: "border-l-blue-500",
-            change: "Đang trong tiến trình",
+            change: "Bỏ dở giữa chừng",
             pulsing: true,
         },
         {

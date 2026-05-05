@@ -8,8 +8,8 @@ import com.languagelearning.repository.mysql.PlacementTestRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,28 +25,44 @@ public class PlacementTestManagementService {
     private final UserProfileRepository userProfileRepository;
 
     /**
-     * Lấy danh sách placement tests có phân trang, sắp xếp theo ngày tạo mới nhất.
+     * Lấy danh sách placement tests — mỗi user chỉ hiển thị lần thi MỚI NHẤT,
+     * sắp xếp theo createdAt DESC, có phân trang.
      */
     @Transactional(readOnly = true)
     public Page<PlacementTestDto> getTests(int page, int size) {
-        Page<PlacementTest> tests = placementTestRepository.findAll(
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
-        return tests.map(this::toDto);
+        // Lấy bản ghi mới nhất của mỗi user
+        List<PlacementTest> latest = placementTestRepository.findLatestPerUser();
+
+        // Phân trang thủ công
+        int start = page * size;
+        int end   = Math.min(start + size, latest.size());
+        List<PlacementTest> pageContent = start < latest.size()
+                ? latest.subList(start, end)
+                : List.of();
+
+        List<PlacementTestDto> dtos = pageContent.stream()
+                .map(this::toDto)
+                .toList();
+
+        return new PageImpl<>(dtos, PageRequest.of(page, size), latest.size());
     }
 
     /**
-     * Thống kê tổng quan: tổng tests, đã hoàn thành, đang làm, điểm trung bình.
+     * Thống kê tổng quan:
+     * - totalTests      : tổng số bản ghi (mọi lần thi)
+     * - completedTests  : số bản ghi COMPLETED
+     * - inProgressTests : số bản ghi IN_PROGRESS (chưa hoàn thành / bỏ dở)
+     * - averageScore    : điểm TB của các bài COMPLETED
      */
     @Transactional(readOnly = true)
     public PlacementTestStatsDto getStats() {
         List<PlacementTest> all = placementTestRepository.findAll();
-        long total = all.size();
-        long completed = all.stream().filter(t -> "COMPLETED".equals(t.getStatus())).count();
+        long total      = all.size();
+        long completed  = all.stream().filter(t -> "COMPLETED".equals(t.getStatus())).count();
         long inProgress = all.stream().filter(t -> "IN_PROGRESS".equals(t.getStatus())).count();
-        
+
         double averageScore = all.stream()
-                .filter(t -> t.getTotalScore() != null)
+                .filter(t -> "COMPLETED".equals(t.getStatus()) && t.getTotalScore() != null)
                 .mapToDouble(PlacementTest::getTotalScore)
                 .average()
                 .orElse(0.0);
@@ -79,12 +95,11 @@ public class PlacementTestManagementService {
         placementTestRepository.delete(test);
     }
 
-    /**
-     * Chuyển đổi entity sang DTO.
-     */
+    // ─── helpers ────────────────────────────────────────────────────────────────
+
     private PlacementTestDto toDto(PlacementTest test) {
         Optional<UserProfile> profileOpt = userProfileRepository.findByUserId(test.getUser().getId());
-        
+
         String userName = profileOpt.map(UserProfile::getFullName).orElse(null);
         if (userName == null || userName.isBlank()) {
             userName = test.getUser().getEmail().split("@")[0];
@@ -95,16 +110,15 @@ public class PlacementTestManagementService {
             avatarUrl = "https://ui-avatars.com/api/?name=" + userName + "&background=f97316&color=fff";
         }
 
-        String detectedLevelName = null;
-        if (test.getDetectedLevel() != null) {
-            detectedLevelName = test.getDetectedLevel().getLevelName();
-        }
+        String detectedLevelName = test.getDetectedLevel() != null
+                ? test.getDetectedLevel().getLevelName()
+                : null;
 
-        // completedAt: nếu status là COMPLETED thì lấy updatedAt
-        LocalDateTime completedAt = null;
-        if ("COMPLETED".equals(test.getStatus()) && test.getUpdatedAt() != null) {
-            completedAt = test.getUpdatedAt();
-        }
+        // completedAt: chỉ có khi COMPLETED
+        LocalDateTime completedAt = "COMPLETED".equals(test.getStatus()) ? test.getUpdatedAt() : null;
+
+        // Tổng số lần user đã làm (cả hoàn thành lẫn bỏ dở)
+        long totalAttempts = placementTestRepository.countByUser(test.getUser());
 
         return PlacementTestDto.builder()
                 .id(test.getId())
@@ -117,6 +131,7 @@ public class PlacementTestManagementService {
                 .detectedLevelName(detectedLevelName)
                 .createdAt(test.getCreatedAt())
                 .completedAt(completedAt)
+                .totalAttempts(totalAttempts)
                 .build();
     }
 }

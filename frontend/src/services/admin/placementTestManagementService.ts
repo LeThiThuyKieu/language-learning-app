@@ -18,6 +18,8 @@ export interface PlacementTestRecord {
     detectedLevel: string | null;
     createdAt: string;
     completedAt: string | null;
+    /** Tổng số lần user đã làm placement test */
+    totalAttempts: number;
 }
 
 interface PageResponse<T> {
@@ -39,6 +41,7 @@ interface BackendPlacementTest {
     detectedLevelName: string | null;
     createdAt: string;
     completedAt: string | null;
+    totalAttempts: number;
 }
 
 /**
@@ -68,6 +71,7 @@ function mapPlacementTest(t: BackendPlacementTest): PlacementTestRecord {
         detectedLevel: t.detectedLevelName,
         createdAt,
         completedAt,
+        totalAttempts: t.totalAttempts ?? 0,
     };
 }
 
