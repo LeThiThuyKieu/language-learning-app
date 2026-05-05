@@ -11,6 +11,7 @@ import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
 import UserManagementPage from "@/pages/Admin/UserManagementPage.tsx";
+import PlacementTestManagementPage from "@/pages/Admin/PlacementTestManagementPage.tsx";
 import EmailSupportPage from "@/pages/Admin/support_management/EmailSupportPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
@@ -127,7 +128,8 @@ function App() {
                     <Route path="/admin" element={<AdminGuard><AdminLayout/></AdminGuard>}>
                         <Route index element={<DashboardPage/>}/>
                         <Route path="dashboard" element={<DashboardPage/>}/>
-                        <Route path="user_management" element={<UserManagementPage/>}/>
+                        <Route path="user-management" element={<UserManagementPage/>}/>
+                        <Route path="placement-test-management" element={<PlacementTestManagementPage/>}/>
                         <Route path="support-management/email-support" element={<EmailSupportPage/>}/>
                     </Route>
                 </Routes>
