@@ -7,7 +7,7 @@ import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
-import {MoreHorizontal} from "lucide-react";
+import {Flame, Medal, MoreHorizontal, Zap} from "lucide-react";
 import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
@@ -465,20 +465,32 @@ function ProfileCard({onCreateProfile}: { onCreateProfile: () => void }) {
 }
 
 function TopStats() {
+    const [profile, setProfile] = useState<{ streakCount: number; totalKn: number; badgeCount: number } | null>(null);
+
+    useEffect(() => {
+        profileService.getMyProfile()
+            .then((p) => setProfile({
+                streakCount: p.streakCount,
+                totalKn: p.totalKn ?? 0,
+                badgeCount: p.badges?.length ?? 0,
+            }))
+            .catch(() => {/* ignore */});
+    }, []);
+
     const stats = [
-        {label: "Điểm thưởng", value: "120"},
-        {label: "Streak", value: "7"},
-        {label: "Badges", value: "5"},
-        {label: "Tim", value: "5"},
+        { label: "Streak", value: profile?.streakCount ?? "—", icon: <Flame className="h-5 w-5 text-orange-500" /> },
+        { label: "Tổng KN", value: profile?.totalKn ?? "—", icon: <Zap className="h-5 w-5 text-yellow-400" /> },
+        { label: "Badges", value: profile?.badgeCount ?? "—", icon: <Medal className="h-5 w-5 text-blue-500" /> },
     ];
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm">
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
                 {stats.map((item) => (
                     <div key={item.label} className="text-center">
-                        <div className="text-sm text-gray-500 font-semibold">{item.label}</div>
+                        <div className="flex justify-center mb-0.5">{item.icon}</div>
                         <div className="text-lg font-extrabold text-gray-900">{item.value}</div>
+                        <div className="text-xs text-gray-500 font-semibold">{item.label}</div>
                     </div>
                 ))}
             </div>

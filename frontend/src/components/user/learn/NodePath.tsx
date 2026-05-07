@@ -403,7 +403,9 @@ export default function NodePath({
                                 title={meta.title || label || ""}
                                 description={meta.description}
                                 buttonLabel={
-                                    status === "completed" ? "HỌC LẠI + 10 KN" : meta.button
+                                    status === "completed"
+                                        ? (n.nodeType === "REVIEW" ? "HỌC LẠI +20 KN" : "HỌC LẠI +10 KN")
+                                        : meta.button
                                 }
                                 onStart={startHandlerForNode()}
                                 accentKey={accentKey}

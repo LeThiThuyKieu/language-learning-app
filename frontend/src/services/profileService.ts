@@ -27,6 +27,7 @@ export interface UserProfileDetail {
     totalXp: number;
     streakCount: number;
     rankPosition: number | null;
+    totalKn: number;
     completedNodes: number;
     totalNodes: number;
     completionRate: number;
