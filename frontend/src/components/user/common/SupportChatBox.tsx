@@ -5,8 +5,6 @@ import { supportService } from "@/services/supportService";
 import { toast } from "react-hot-toast";
 import type { SupportThread } from "@/components/admin/support_management/supportTypes";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type Step =
     | "category"   // Bước 1: chọn chủ đề
     | "chat";      // Bước 2: chat
@@ -18,7 +16,7 @@ interface Category {
     colorText: string;
 }
 
-// Map category → lucide icon component (không hardcode icon trực tiếp vào JSX)
+// Map category → lucide icon component
 const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
     "Bắt đầu học": GraduationCap,
     "Tài khoản":   User,
@@ -27,13 +25,9 @@ const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
     "Khác":        MessageCircle,
 };
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
 interface SupportChatBoxProps {
     onClose: () => void;
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function SupportChatBox({ onClose }: SupportChatBoxProps) {
     const { isAuthenticated } = useAuthStore();
@@ -98,8 +92,6 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
             if (pollRef.current) clearInterval(pollRef.current);
         };
     }, []);
-
-    // ── Handlers ──────────────────────────────────────────────────────────────
 
     const handleSelectCategory = async (cat: Category) => {
         if (!isAuthenticated) {
@@ -177,8 +169,6 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
         }
     };
 
-    // ── Render ────────────────────────────────────────────────────────────────
-
     return (
         <div className="mb-3 flex h-[480px] w-[min(calc(100vw-3rem),380px)] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/90">
 
@@ -208,7 +198,7 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                 </button>
             </div>
 
-            {/* ── Bước 1: Chọn category ── */}
+             {/*Bước 1: Chọn category*/}
             {step === "category" && (
                 <div className="flex-1 overflow-y-auto p-4">
                     <p className="text-sm text-slate-500 mb-4 text-center">
@@ -262,7 +252,7 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                 </div>
             )}
 
-            {/* ── Bước 2: Chat ── */}
+            {/* Bước 2: Chat */}
             {step === "chat" && (
                 <>
                     {/* Messages */}
@@ -315,7 +305,7 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                 onKeyDown={handleKeyDown}
                                 placeholder="Nhập tin nhắn..."
                                 rows={1}
-                                className="flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-400 transition"
+                                className="flex-1 resize-none overflow-hidden rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-400 transition"
                                 style={{ maxHeight: 100 }}
                             />
                             <button
@@ -326,9 +316,6 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                 <Send className="h-4 w-4" />
                             </button>
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-1.5 text-right">
-                            <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[9px] font-mono">Enter</kbd> để gửi
-                        </p>
                     </div>
                 </>
             )}

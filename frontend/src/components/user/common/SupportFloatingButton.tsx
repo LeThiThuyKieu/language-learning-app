@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
-import { SupportChatBox } from "./SupportChatBox"; // import chatbox
+import { SupportChatBox } from "./SupportChatBox";
 
-/**
- * =========================
- * HOVER MESSAGES
- * =========================
- */
+//HOVER MESSAGES
 const HOVER_MESSAGES = [
     "Có thắc mắc gì? Hỏi mình nhé",
     "Mình luôn sẵn sàng giúp bạn!",
@@ -37,11 +33,8 @@ export default function SupportFloatingButton() {
             : location.pathname;
 
     const isVisibleOnCurrentPage = ["/", "/profile", "/learn", "/settings", "/help"].includes(normalizedPath);
-    /**
-     * =========================
-     * STATE
-     * =========================
-     */
+
+    // STATE
     const [menuOpen, setMenuOpen] = useState(false); // menu nhỏ
     const [chatOpen, setChatOpen] = useState(false); // chatbox
 
@@ -51,11 +44,8 @@ export default function SupportFloatingButton() {
     const hoverCycleDoneRef = useRef(false);
     const rootRef = useRef<HTMLDivElement>(null);
 
-    /**
-     * =========================
-     * HOVER LOGIC
-     * =========================
-     */
+
+    // HOVER LOGIC
     const clearHoverTimers = useCallback(() => {
         hoverTimersRef.current.forEach(clearTimeout);
         hoverTimersRef.current = [];
@@ -107,12 +97,7 @@ export default function SupportFloatingButton() {
         hoverCycleDoneRef.current = false;
     };
 
-    /**
-     * =========================
-     * EFFECTS
-     * =========================
-     */
-
+             // EFFECTS
     // Khi mở menu thì dừng hover
     useEffect(() => {
         if (menuOpen) {
@@ -182,19 +167,19 @@ export default function SupportFloatingButton() {
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
         >
-            {/* ================= TOOLTIP ================= */}
+            {/* TOOLTIP  */}
             {showTooltip && (
                 <div className="rounded-2xl bg-white px-4 py-3 text-sm shadow-lg">
                     {HOVER_MESSAGES[hoverLineIndex]}
                 </div>
             )}
 
-            {/* ================= CHATBOX ================= */}
+            {/* CHATBOX */}
             {chatOpen && (
                 <SupportChatBox onClose={() => setChatOpen(false)} />
             )}
 
-            {/* ================= MENU ================= */}
+            {/* MENU  */}
             {menuOpen && !chatOpen && (
                 <div className="mb-1 flex min-w-[13rem] flex-col rounded-2xl bg-white py-1 shadow-xl">
                     <button
@@ -235,7 +220,7 @@ export default function SupportFloatingButton() {
                 </div>
             )}
 
-            {/* ================= BUTTON ================= */}
+             {/*Button*/}
             <button
                 onClick={toggleMenu}
                 className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:scale-105"
