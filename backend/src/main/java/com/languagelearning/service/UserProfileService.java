@@ -171,6 +171,7 @@ public class UserProfileService {
                 ))
                 .toList();
 
+<<<<<<< HEAD
         return new UserProfileResponse(
                 user.getId(),
                 user.getEmail(),
@@ -194,5 +195,31 @@ public class UserProfileService {
                 user.getLastLogin(),
                 badgeItems
         );
+=======
+        UserProfileResponse resp = new UserProfileResponse();
+        resp.setUserId(user.getId());
+        resp.setEmail(user.getEmail());
+        resp.setFullName(profile.getFullName());
+        resp.setAvatarUrl(profile.getAvatarUrl());
+        resp.setTargetGoal(profile.getTargetGoal());
+        resp.setCurrentLevelId(profile.getCurrentLevel());
+        resp.setCurrentLevelName(currentLevel.map(Level::getLevelName).orElse(null));
+        resp.setCurrentLevelCefr(currentLevel.map(Level::getCefrCode).orElse(null));
+        resp.setTotalXp(profile.getTotalXp() == null ? 0 : profile.getTotalXp());
+        resp.setStreakCount(profile.getStreakCount() == null ? 0 : profile.getStreakCount());
+        resp.setRankPosition(rankPosition);
+        resp.setCompletedNodes(completedNodes);
+        resp.setTotalNodes(totalNodes);
+        resp.setCompletionRate(completionRate);
+        resp.setTotalAttempts(totalAttempts);
+        resp.setWeeklyActivityXp(weeklyActivityXp);
+        resp.setTodayXp(todayXp);
+        resp.setCreatedAt(user.getCreatedAt());
+        resp.setLastLogin(user.getLastLogin());
+        resp.setBadges(badgeItems);
+        resp.setHasPassword(user.getPasswordHash() != null && !user.getPasswordHash().isBlank());
+        resp.setAuthProvider(user.getAuthProvider().name());
+        return resp;
+>>>>>>> 297b3c73784d1c19080798601c3c96950d9a31ba
     }
 }

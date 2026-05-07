@@ -6,6 +6,8 @@ export interface User {
   lastLogin?: string;
   status: "active" | "banned";
   roles?: string[];
+  hasPassword: boolean;
+  authProvider: "LOCAL" | "GOOGLE" | "FACEBOOK";
 }
 
 export interface UserProfile {

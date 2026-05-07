@@ -1,5 +1,6 @@
 package com.languagelearning.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.languagelearning.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +21,13 @@ public class UserDTO {
     private String status;
     private List<String> roles;
 
+    // Dùng Boolean (wrapper) + @JsonProperty để Jackson luôn serialize đúng tên,
+    // kể cả khi giá trị là false (primitive boolean có thể bị Lombok đổi tên getter thành isHasPassword)
+    @JsonProperty("hasPassword")
+    private Boolean hasPassword;
+
+    private String authProvider;
+
     public static UserDTO fromUser(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
@@ -30,6 +38,8 @@ public class UserDTO {
         dto.setRoles(user.getRoles().stream()
                 .map(role -> role.getRoleName())
                 .collect(Collectors.toList()));
+        dto.setHasPassword(user.getPasswordHash() != null && !user.getPasswordHash().isBlank());
+        dto.setAuthProvider(user.getAuthProvider().name());
         return dto;
     }
 }
