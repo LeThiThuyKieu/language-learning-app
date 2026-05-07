@@ -114,9 +114,11 @@ function mapDetailToThread(detail: BackendSupportDetail): SupportThread {
 }
 
 export const supportService = {
-    async getAdminTickets(page = 0, size = 100, sort: "asc" | "desc" = "desc"): Promise<SupportThread[]> {
+    async getAdminTickets(page = 0, size = 100, sort: "asc" | "desc" = "desc", source?: "CHAT" | "EMAIL"): Promise<SupportThread[]> {
+        const params = new URLSearchParams({ page: String(page), size: String(size), sort });
+        if (source) params.set("source", source);
         const res = await apiClient.get<ApiResponse<PageResponse<BackendSupportListItem>>>(
-            `/admin/support-management/tickets?page=${page}&size=${size}&sort=${sort}`,
+            `/admin/support-management/tickets?${params.toString()}`,
         );
         return res.data.data.content.map(mapListItemToThread);
     },
@@ -140,12 +142,13 @@ export const supportService = {
         return mapDetailToThread(res.data.data);
     },
 
-    async createUserTicket(topic: string, message: string): Promise<void> {
+    async createUserTicket(topic: string, message: string): Promise<{ id: number }> {
         const categoryId = CATEGORY_ID_BY_TOPIC[topic] ?? CATEGORY_ID_BY_TOPIC["Khác"];
-        await apiClient.post<ApiResponse<unknown>>("/users/support/tickets", {
+        const res = await apiClient.post<ApiResponse<{ id: number }>>("/users/support/tickets", {
             categoryId,
             message,
         });
+        return { id: res.data.data?.id ?? 0 };
     },
 
     async createGuestTicket(name: string, email: string, topic: string, message: string): Promise<void> {
@@ -156,5 +159,26 @@ export const supportService = {
             guestName: name,
             guestEmail: email,
         });
+    },
+
+    // Lấy danh sách category (public, không cần auth)
+    async getCategories(): Promise<{ id: number; displayName: string; colorBg: string; colorText: string }[]> {
+        const res = await apiClient.get<ApiResponse<{ id: number; displayName: string; colorBg: string; colorText: string }[]>>("/public/support/categories");
+        return res.data.data ?? [];
+    },
+
+    // User gửi thêm tin nhắn vào ticket
+    async sendUserMessage(ticketId: number, message: string): Promise<SupportThread> {
+        const res = await apiClient.post<ApiResponse<BackendSupportDetail>>(
+            `/users/support/tickets/${ticketId}/messages`,
+            { message },
+        );
+        return mapDetailToThread(res.data.data);
+    },
+
+    // Lấy chi tiết ticket của user (để poll tin nhắn mới từ admin)
+    async getMyTicketDetail(ticketId: number): Promise<SupportThread> {
+        const res = await apiClient.get<ApiResponse<BackendSupportDetail>>(`/users/support/tickets/${ticketId}`);
+        return mapDetailToThread(res.data.data);
     },
 };

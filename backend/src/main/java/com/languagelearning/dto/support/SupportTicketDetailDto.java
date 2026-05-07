@@ -21,6 +21,7 @@ public class SupportTicketDetailDto {
     private String categoryName;
     private String categoryDisplayName;
     private String status;
+    private String source;
     private LocalDateTime createdAt;
     private List<SupportMessageDto> messages;
 }

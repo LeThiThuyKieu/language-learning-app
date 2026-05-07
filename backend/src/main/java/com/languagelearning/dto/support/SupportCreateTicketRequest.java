@@ -9,10 +9,13 @@ import lombok.Data;
 public class SupportCreateTicketRequest {
     private @NotNull Integer categoryId;
     private @NotBlank String message;
-    
+
+    // "CHAT" hoặc "EMAIL" — mặc định EMAIL nếu không truyền
+    private String source;
+
     // Fields for guest users (optional, only used when not authenticated)
     private String guestName;
-    
+
     @Email(message = "Email không hợp lệ")
     private String guestEmail;
 }

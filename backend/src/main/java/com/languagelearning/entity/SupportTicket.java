@@ -38,11 +38,19 @@ public class SupportTicket {
     @Column(name = "status", nullable = false)
     private SupportStatus status = SupportStatus.OPEN;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false)
+    private TicketSource source = TicketSource.EMAIL;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public enum SupportStatus {
         OPEN, IN_PROGRESS, RESOLVED, CLOSED
+    }
+
+    public enum TicketSource {
+        CHAT, EMAIL
     }
 }

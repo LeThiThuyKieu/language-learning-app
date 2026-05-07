@@ -376,6 +376,26 @@ CREATE TABLE IF NOT EXISTS support_email_log (
 CREATE INDEX idx_ticket_status ON support_ticket(status);
 CREATE INDEX idx_ticket_category ON support_ticket(category_id);
 CREATE INDEX idx_message_ticket ON support_message(ticket_id);
+
+-- Phân biệt ticket từ chatbox hay form email
+ALTER TABLE support_ticket
+    ADD COLUMN source ENUM('CHAT', 'EMAIL') NOT NULL DEFAULT 'EMAIL';
+
+CREATE INDEX idx_ticket_source ON support_ticket(source);
+
+-- Nhận diện guest session
+ALTER TABLE support_ticket
+    ADD COLUMN guest_id VARCHAR(36) NULL AFTER user_id;
+
+CREATE INDEX idx_ticket_guest ON support_ticket(guest_id);
+
+-- Subject tự sinh
+ALTER TABLE support_ticket
+    ADD COLUMN subject VARCHAR(255) NULL AFTER guest_name;
+    
+ALTER TABLE support_ticket
+ADD COLUMN source ENUM('CHAT', 'EMAIL') NOT NULL DEFAULT 'EMAIL';
+
 -- Data exporting was unselected.
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;

@@ -20,6 +20,7 @@ public class SupportTicketListItemDto {
     private String categoryName;
     private String categoryDisplayName;
     private String status;
+    private String source;
     private LocalDateTime createdAt;
     private String latestMessage;
 }

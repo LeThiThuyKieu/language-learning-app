@@ -23,12 +23,13 @@ public class SupportManagementController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String source,
             @RequestParam(defaultValue = "desc") String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         String email = authentication.getName();
-        Page<SupportTicketListItemDto> data = supportService.getAdminTickets(email, status, categoryId, keyword, sort, page, size);
+        Page<SupportTicketListItemDto> data = supportService.getAdminTickets(email, status, categoryId, keyword, source, sort, page, size);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách ticket thành công", data));
     }
 

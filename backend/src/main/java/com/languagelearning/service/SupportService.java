@@ -25,6 +25,52 @@ public class SupportService {
     private final SupportMessageRepository supportMessageRepository;
     private final EmailService emailService;
 
+    // Lấy danh sách tất cả category hỗ trợ (dùng cho chatbox chọn category).
+    @Transactional(readOnly = true)
+    public List<SupportCategoryDto> getCategories() {
+        return supportCategoryRepository.findAll().stream()
+                .map(c -> SupportCategoryDto.builder()
+                        .id(c.getId())
+                        .name(c.getName())
+                        .displayName(c.getDisplayName())
+                        .colorBg(c.getColorBg())
+                        .colorText(c.getColorText())
+                        .build())
+                .toList();
+    }
+
+    // User gửi thêm tin nhắn vào ticket đang mở (follow-up message).
+    @Transactional
+    public SupportTicketDetailDto sendUserMessage(String email, Integer ticketId, SupportReplyRequest request) {
+        User user = getUserByEmail(email);
+        SupportTicket ticket = supportTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ticket: " + ticketId));
+
+        // Kiểm tra quyền sở hữu
+        if (ticket.getUser() == null || !ticket.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Bạn không có quyền gửi tin nhắn vào ticket này");
+        }
+
+        // Không cho gửi nếu ticket đã đóng
+        if (ticket.getStatus() == SupportTicket.SupportStatus.CLOSED) {
+            throw new IllegalArgumentException("Ticket này đã đóng, không thể gửi thêm tin nhắn");
+        }
+
+        SupportMessage message = new SupportMessage();
+        message.setTicket(ticket);
+        message.setSenderType(SupportMessage.SenderType.USER);
+        message.setMessage(request.getMessage().trim());
+        supportMessageRepository.save(message);
+
+        // Nếu ticket đang RESOLVED, chuyển lại OPEN khi user nhắn thêm
+        if (ticket.getStatus() == SupportTicket.SupportStatus.RESOLVED) {
+            ticket.setStatus(SupportTicket.SupportStatus.OPEN);
+            supportTicketRepository.save(ticket);
+        }
+
+        return toDetailDto(ticket);
+    }
+
     // Tạo ticket hỗ trợ mới cho user hiện tại và thêm tin nhắn đầu tiên từ user.
     @Transactional
     public SupportTicketDetailDto createTicketForUser(String email, SupportCreateTicketRequest request) {
@@ -40,6 +86,7 @@ public class SupportService {
         ticket.setRequesterName(requesterName);
         ticket.setCategory(category);
         ticket.setStatus(SupportTicket.SupportStatus.OPEN);
+        ticket.setSource(parseSource(request.getSource()));
         ticket = supportTicketRepository.save(ticket);
 
         SupportMessage firstMessage = new SupportMessage();
@@ -70,6 +117,7 @@ public class SupportService {
         ticket.setRequesterName(request.getGuestName().trim());
         ticket.setCategory(category);
         ticket.setStatus(SupportTicket.SupportStatus.OPEN);
+        ticket.setSource(parseSource(request.getSource()));
         ticket = supportTicketRepository.save(ticket);
 
         SupportMessage firstMessage = new SupportMessage();
@@ -112,6 +160,7 @@ public class SupportService {
             String status,
             Integer categoryId,
             String keyword,
+            String source,
             String sort,
             int page,
             int size
@@ -123,6 +172,12 @@ public class SupportService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
 
         Specification<SupportTicket> specification = Specification.where(null);
+
+        // Filter theo source (CHAT / EMAIL) — quan trọng để phân biệt 2 trang admin
+        if (source != null && !source.isBlank()) {
+            SupportTicket.TicketSource parsedSource = parseSource(source);
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("source"), parsedSource));
+        }
 
         if (status != null && !status.isBlank()) {
             SupportTicket.SupportStatus parsedStatus = parseStatus(status);
@@ -276,6 +331,16 @@ public class SupportService {
         }
     }
 
+    // Parse chuỗi source, mặc định EMAIL nếu null/blank/không hợp lệ.
+    private SupportTicket.TicketSource parseSource(String source) {
+        if (source == null || source.isBlank()) return SupportTicket.TicketSource.EMAIL;
+        try {
+            return SupportTicket.TicketSource.valueOf(source.trim().toUpperCase());
+        } catch (Exception ex) {
+            return SupportTicket.TicketSource.EMAIL;
+        }
+    }
+
     // Chuyển SupportTicket thành item dùng cho danh sách ticket.
     // latestMessage luôn là câu hỏi đầu tiên của user, không bao giờ là reply của admin.
     private SupportTicketListItemDto toListItemDto(SupportTicket ticket) {
@@ -293,6 +358,7 @@ public class SupportService {
                 .categoryName(ticket.getCategory().getName())
                 .categoryDisplayName(ticket.getCategory().getDisplayName())
                 .status(ticket.getStatus().name())
+                .source(ticket.getSource().name())
                 .createdAt(ticket.getCreatedAt())
                 .latestMessage(firstUserMessage)
                 .build();
@@ -318,6 +384,7 @@ public class SupportService {
                 .categoryName(ticket.getCategory().getName())
                 .categoryDisplayName(ticket.getCategory().getDisplayName())
                 .status(ticket.getStatus().name())
+                .source(ticket.getSource().name())
                 .createdAt(ticket.getCreatedAt())
                 .messages(messageDtos)
                 .build();

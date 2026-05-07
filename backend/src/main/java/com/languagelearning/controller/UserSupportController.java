@@ -2,6 +2,7 @@ package com.languagelearning.controller;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.support.SupportCreateTicketRequest;
+import com.languagelearning.dto.support.SupportReplyRequest;
 import com.languagelearning.dto.support.SupportTicketDetailDto;
 import com.languagelearning.dto.support.SupportTicketListItemDto;
 import com.languagelearning.service.SupportService;
@@ -47,5 +48,17 @@ public class UserSupportController {
         String email = authentication.getName();
         SupportTicketDetailDto data = supportService.getMyTicketDetail(email, ticketId);
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết ticket thành công", data));
+    }
+
+    // User gửi thêm tin nhắn vào ticket đang mở.
+    @PostMapping("/tickets/{ticketId}/messages")
+    public ResponseEntity<ApiResponse<SupportTicketDetailDto>> sendMessage(
+            Authentication authentication,
+            @PathVariable Integer ticketId,
+            @Valid @RequestBody SupportReplyRequest request
+    ) {
+        String email = authentication.getName();
+        SupportTicketDetailDto data = supportService.sendUserMessage(email, ticketId, request);
+        return ResponseEntity.ok(ApiResponse.success("Gửi tin nhắn thành công", data));
     }
 }
