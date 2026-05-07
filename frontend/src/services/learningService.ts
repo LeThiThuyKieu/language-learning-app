@@ -58,11 +58,11 @@ export const learningService = {
     return response.data.unlockedCount;
   },
 
-  /** Đánh dấu node hoàn thành, trả về unlockedCount mới */
-  completeNode: async (nodeId: number): Promise<number> => {
-    const response = await apiClient.post<{ unlockedCount: number }>(
+  /** Đánh dấu node hoàn thành, trả về unlockedCount và knEarned */
+  completeNode: async (nodeId: number): Promise<{ unlockedCount: number; knEarned: number }> => {
+    const response = await apiClient.post<{ unlockedCount: number; knEarned: number }>(
       `/progress/nodes/${nodeId}/complete`
     );
-    return response.data.unlockedCount;
+    return response.data;
   },
 };
