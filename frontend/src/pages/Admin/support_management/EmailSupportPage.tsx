@@ -59,7 +59,7 @@ export default function EmailSupportPage() {
     useEffect(() => {
         let mounted = true;
         setIsLoading(true);
-        supportService.getAdminTickets()
+        supportService.getAdminTickets(0, 100, "desc", "EMAIL")
             .then((data) => { if (mounted) setThreads(data); })
             .catch(() => toast.error("Không tải được danh sách hỗ trợ"))
             .finally(() => { if (mounted) setIsLoading(false); });

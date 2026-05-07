@@ -142,11 +142,12 @@ export const supportService = {
         return mapDetailToThread(res.data.data);
     },
 
-    async createUserTicket(topic: string, message: string): Promise<{ id: number }> {
+    async createUserTicket(topic: string, message: string, source: "CHAT" | "EMAIL" = "EMAIL"): Promise<{ id: number }> {
         const categoryId = CATEGORY_ID_BY_TOPIC[topic] ?? CATEGORY_ID_BY_TOPIC["Khác"];
         const res = await apiClient.post<ApiResponse<{ id: number }>>("/users/support/tickets", {
             categoryId,
             message,
+            source,
         });
         return { id: res.data.data?.id ?? 0 };
     },

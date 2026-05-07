@@ -496,12 +496,14 @@ export default function LoginPage() {
                 <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-20 bg-white">
                     <div className="w-full max-w-md">
 
-                        {/* Nút home */}
+                        {/* Nút home — góc trên phải */}
                         <button
                             onClick={() => navigate("/")}
-                            className="p-2 rounded-xl text-gray-400 hover:text-[#FE4D01] hover:bg-orange-50 transition-all mb-8"
+                            className="fixed top-5 right-6 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-white shadow-sm hover:-translate-y-0.5 hover:bg-[#FFE0B2] transition-all duration-300"
+                            style={{ boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}
                         >
-                            <Home className="w-5 h-5" />
+                            <Home className="w-5 h-5 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-600">Trang chủ</span>
                         </button>
 
                         <div className="text-center mb-10">
