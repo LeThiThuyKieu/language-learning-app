@@ -91,7 +91,7 @@ export default function UserTable({
                     <button
                         onClick={() => setShowExport(true)}
                         className="p-2 border border-gray-100 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-orange-500 transition-colors"
-                        title="Xuất dữ liệu CSV"
+                        title="Xuất dữ liệu"
                     >
                         <FileDown className="w-5 h-5" />
                     </button>
