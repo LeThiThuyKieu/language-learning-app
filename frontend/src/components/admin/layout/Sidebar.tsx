@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
     Users,
@@ -9,65 +10,146 @@ import {
     Trophy,
     ClipboardList,
     Mail,
+    MessageCircle,
+    Headphones,
+    ChevronDown,
+    LogOut,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore.ts";
-
-const menuItems = [
-    { path: "/admin/dashboard",       icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/admin/user-management", icon: Users,           label: "User Management" },
-    { path: "/admin/support-management/email-support", icon: Mail, label: "Email Support" },
-    { path: "/admin/support-management/chat-support",  icon: MessagesSquare,  label: "Chat Support" },
-    { path: "/admin/skill-trees",     icon: GitBranch,       label: "Skill Trees" },
-    { path: "/admin/lessons",         icon: BookOpen,        label: "Lessons" },
-    { path: "/admin/placement-test-management", icon: ClipboardList,   label: "Placement Tests" },
-    { path: "/admin/leaderboard",     icon: Trophy,          label: "Rankings" },
-    { path: "/admin/feedback",        icon: MessageSquare,   label: "Feedback" },
-    { path: "/admin/reports",         icon: BarChart2,       label: "Reports" },
-];
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 export default function Sidebar() {
     const location = useLocation();
-    const { isAuthenticated } = useAuthStore();
+    const navigate = useNavigate();
+    const { isAuthenticated, logout } = useAuthStore();
+
+    const isSupportActive = location.pathname.startsWith("/admin/support-management");
+    const [supportOpen, setSupportOpen] = useState(isSupportActive);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+    // Đóng group Support khi navigate sang trang khác
+    useEffect(() => {
+        if (!location.pathname.startsWith("/admin/support-management")) {
+            setSupportOpen(false);
+        }
+    }, [location.pathname]);
 
     if (!isAuthenticated) return null;
 
-    return (
-        <aside className="w-56 bg-gray-50 border-r border-gray-100 min-h-screen flex flex-col shrink-0">
-            <div className="flex-1 px-3 py-4 overflow-y-auto">
-                <nav className="space-y-1">
-                    {menuItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive =
-                            location.pathname === item.path ||
-                            location.pathname.startsWith(item.path + "/");
+    const handleLogout = () => {
+        logout();
+        navigate("/login");
+    };
 
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
+    const navLink = (path: string, Icon: React.ElementType, label: string) => {
+        const isActive = location.pathname === path || location.pathname.startsWith(path + "/");
+        return (
+            <Link
+                key={path}
+                to={path}
+                className={[
+                    "flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all text-sm font-medium",
+                    isActive
+                        ? "bg-white shadow-md text-orange-500 font-semibold"
+                        : "text-slate-500 hover:bg-white/60 hover:text-slate-700",
+                ].join(" ")}
+            >
+                <Icon
+                    className={`w-5 h-5 shrink-0 ${isActive ? "text-orange-500" : "text-slate-400"}`}
+                    strokeWidth={1.8}
+                />
+                <span>{label}</span>
+            </Link>
+        );
+    };
+
+    return (
+        <>
+            <aside className="w-56 bg-gray-50 border-r border-gray-100 h-full flex flex-col shrink-0">
+                <div className="flex-1 px-3 py-4 overflow-y-auto">
+                    <nav className="space-y-1">
+                        {navLink("/admin/dashboard",                 LayoutDashboard, "Dashboard")}
+                        {navLink("/admin/user-management",           Users,           "User Management")}
+
+                        {/* ── Support group ── */}
+                        <div>
+                            <button
+                                onClick={() => setSupportOpen((v) => !v)}
                                 className={[
-                                    "relative flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all text-sm font-medium overflow-hidden",
-                                    isActive
+                                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all text-sm font-medium",
+                                    isSupportActive
                                         ? "bg-white shadow-md text-orange-500 font-semibold"
                                         : "text-slate-500 hover:bg-white/60 hover:text-slate-700",
                                 ].join(" ")}
                             >
-                                {/* Active: icon màu cam | Inactive: icon trần màu slate */}
-                                {isActive ? (
-                                    <Icon
-                                        className="w-5 h-5 shrink-0 text-orange-500"
-                                        strokeWidth={1.8}
-                                    />
-                                ) : (
-                                    <Icon className="w-5 h-5 shrink-0 text-slate-400" strokeWidth={1.8} />
-                                )}
+                                <Headphones
+                                    className={`w-5 h-5 shrink-0 ${isSupportActive ? "text-orange-500" : "text-slate-400"}`}
+                                    strokeWidth={1.8}
+                                />
+                                <span className="flex-1 text-left">Support</span>
+                                <ChevronDown
+                                    className={`w-4 h-4 shrink-0 transition-transform duration-200 ${supportOpen ? "rotate-180" : ""} ${isSupportActive ? "text-orange-400" : "text-slate-400"}`}
+                                    strokeWidth={2}
+                                />
+                            </button>
 
-                                <span>{item.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-            </div>
-        </aside>
+                            {supportOpen && (
+                                <div className="mt-1 ml-4 pl-3 border-l-2 border-orange-100 space-y-1">
+                                    {[
+                                        { path: "/admin/support-management/email-support", icon: Mail,          label: "Email" },
+                                        { path: "/admin/support-management/chat-support",  icon: MessageCircle, label: "Chat" },
+                                    ].map(({ path, icon: Icon, label }) => {
+                                        const isActive = location.pathname === path || location.pathname.startsWith(path + "/");
+                                        return (
+                                            <Link
+                                                key={path}
+                                                to={path}
+                                                className={[
+                                                    "flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all text-sm font-medium",
+                                                    isActive
+                                                        ? "bg-white shadow-sm text-orange-500 font-semibold"
+                                                        : "text-slate-500 hover:bg-white/60 hover:text-slate-700",
+                                                ].join(" ")}
+                                            >
+                                                <Icon
+                                                    className={`w-4 h-4 shrink-0 ${isActive ? "text-orange-500" : "text-slate-400"}`}
+                                                    strokeWidth={1.8}
+                                                />
+                                                <span>{label}</span>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {navLink("/admin/skill-trees",               GitBranch,       "Skill Trees")}
+                        {navLink("/admin/lessons",                   BookOpen,        "Lessons")}
+                        {navLink("/admin/placement-test-management", ClipboardList,   "Placement Tests")}
+                        {navLink("/admin/leaderboard",               Trophy,          "Rankings")}
+                        {navLink("/admin/feedback",                  MessageSquare,   "Feedback")}
+                        {navLink("/admin/reports",                   BarChart2,       "Reports")}
+                    </nav>
+                </div>
+
+                {/* Logout */}
+                <div className="px-3 py-4 border-t border-gray-100">
+                    <button
+                        onClick={() => setShowLogoutConfirm(true)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all"
+                    >
+                        <LogOut className="w-5 h-5 shrink-0 text-slate-400" strokeWidth={1.8} />
+                        <span>Đăng xuất</span>
+                    </button>
+                </div>
+            </aside>
+
+            <ConfirmModal
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={handleLogout}
+                message="Bạn có chắc chắn muốn đăng xuất không?"
+            />
+        </>
     );
 }

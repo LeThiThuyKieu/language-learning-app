@@ -85,6 +85,7 @@ export default function PlacementTestManagementPage() {
         fetchData(0);
     }, []);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async function handleDelete(testId: number) {
         if (!confirm("Bạn có chắc muốn xóa placement test này?")) return;
         try {

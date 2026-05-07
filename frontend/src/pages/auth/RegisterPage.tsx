@@ -8,7 +8,7 @@ import {FcGoogle} from "react-icons/fc";
 import {FaFacebook} from "react-icons/fa";
 import { profileService } from "@/services/profileService";
 import {hasChosenLearningLevel, mapLevelIdToKey} from "@/utils/learningLevel";
-
+import { Home } from "lucide-react";
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -66,6 +66,15 @@ export default function RegisterPage() {
             {/* BÊN PHẢI: FORM ĐĂNG KÝ */}
             <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-20 bg-white">
                 <div className="w-full max-w-md">
+
+                    {/* Nút home */}
+                    <button
+                        onClick={() => navigate("/")}
+                        className="p-2 rounded-xl text-gray-400 hover:text-[#FE4D01] hover:bg-orange-50 transition-all mb-8"
+                    >
+                        <Home className="w-5 h-5" />
+                    </button>
+
                     <div className="text-center mb-10">
                         <h2 className="text-4xl font-black text-[#1F2937] tracking-tight">
                             Đăng ký

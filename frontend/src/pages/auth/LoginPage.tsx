@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { profileService } from "@/services/profileService";
-import { Eye, EyeOff, ArrowLeft, KeyRound, Mail, ShieldCheck, Lock } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Mail, ShieldCheck, Lock, Home, ArrowLeft } from "lucide-react";
 
 const resolveBackendBaseUrl = () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
@@ -495,6 +495,15 @@ export default function LoginPage() {
                 {/* BÊN PHẢI */}
                 <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-20 bg-white">
                     <div className="w-full max-w-md">
+
+                        {/* Nút home */}
+                        <button
+                            onClick={() => navigate("/")}
+                            className="p-2 rounded-xl text-gray-400 hover:text-[#FE4D01] hover:bg-orange-50 transition-all mb-8"
+                        >
+                            <Home className="w-5 h-5" />
+                        </button>
+
                         <div className="text-center mb-10">
                             <h2 className="text-4xl font-black text-[#1F2937] tracking-tight">Đăng nhập</h2>
                         </div>

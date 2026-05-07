@@ -8,7 +8,6 @@ import {
     CheckCheck,
     Clock,
     AlertCircle,
-    ChevronDown,
     Filter,
     Inbox,
     User,
@@ -289,7 +288,8 @@ export default function ChatSupportPage() {
                         filteredTickets.map((ticket) => {
                             const isSelected = ticket.id === selectedId;
                             const cfg = STATUS_CONFIG[ticket.status];
-                            const lastMsg = (messages[ticket.id] ?? ticket.messages).at(-1);
+                            const msgs = messages[ticket.id] ?? ticket.messages;
+                            const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : undefined;
                             return (
                                 <button
                                     key={ticket.id}
