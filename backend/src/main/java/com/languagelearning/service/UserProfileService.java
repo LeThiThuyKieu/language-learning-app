@@ -171,31 +171,6 @@ public class UserProfileService {
                 ))
                 .toList();
 
-<<<<<<< HEAD
-        return new UserProfileResponse(
-                user.getId(),
-                user.getEmail(),
-                profile.getFullName(),
-                profile.getAvatarUrl(),
-                profile.getTargetGoal(),
-                profile.getCurrentLevel(),
-                currentLevel.map(Level::getLevelName).orElse(null),
-                currentLevel.map(Level::getCefrCode).orElse(null),
-                profile.getTotalXp() == null ? 0 : profile.getTotalXp(),
-                profile.getStreakCount() == null ? 0 : profile.getStreakCount(),
-                rankPosition,
-                totalKn,
-                completedNodes,
-                totalNodes,
-                completionRate,
-                totalAttempts,
-                                weeklyActivityXp,
-                                todayXp,
-                user.getCreatedAt(),
-                user.getLastLogin(),
-                badgeItems
-        );
-=======
         UserProfileResponse resp = new UserProfileResponse();
         resp.setUserId(user.getId());
         resp.setEmail(user.getEmail());
@@ -220,6 +195,5 @@ public class UserProfileService {
         resp.setHasPassword(user.getPasswordHash() != null && !user.getPasswordHash().isBlank());
         resp.setAuthProvider(user.getAuthProvider().name());
         return resp;
->>>>>>> 297b3c73784d1c19080798601c3c96950d9a31ba
     }
 }
