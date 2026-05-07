@@ -153,8 +153,9 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
+        // Social user chưa có password → dùng setPassword thay thế
         if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
-            throw new BadCredentialsException("This account uses social login. Please continue with Google/Facebook.");
+            throw new BadCredentialsException("Tài khoản chưa có mật khẩu. Vui lòng dùng chức năng 'Tạo mật khẩu'.");
         }
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
@@ -173,17 +174,36 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    // Gửi OTP qua email để đặt lại mật khẩu — OTP có hiệu lực 1 phút.
+    /**
+     * Tạo mật khẩu lần đầu cho social user (Google/Facebook).
+     * Yêu cầu: account chưa có passwordHash.
+     */
+    @Transactional
+    public void setPassword(String email, SetPasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+        if (user.getPasswordHash() != null && !user.getPasswordHash().isBlank()) {
+            throw new IllegalStateException("Tài khoản đã có mật khẩu. Vui lòng dùng chức năng 'Đổi mật khẩu'.");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    // Gửi OTP qua email — hoạt động cho cả LOCAL lẫn social account.
+    // Subject email sẽ khác nhau tùy account đã có password chưa.
     public void forgotPassword(ForgotPasswordRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
 
-        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
-            throw new BadCredentialsException("Tài khoản này đăng nhập qua mạng xã hội, không thể đặt lại mật khẩu");
-        }
-
+        boolean hasPassword = user.getPasswordHash() != null && !user.getPasswordHash().isBlank();
         String otp = otpService.generateAndStore(request.getEmail());
-        emailService.sendOtpEmail(request.getEmail(), otp);
+        emailService.sendOtpEmail(request.getEmail(), otp, hasPassword);
     }
 
     // Xác thực OTP người dùng nhập có đúng với OTP đã gửi hay không.

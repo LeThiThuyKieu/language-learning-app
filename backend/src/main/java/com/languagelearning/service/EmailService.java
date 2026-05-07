@@ -27,10 +27,11 @@ public class EmailService {
     private String frontendUrl;
 
     /**
-     * Gửi email OTP quên mật khẩu.
+     * Gửi email OTP.
+     * @param hasPassword true = đặt lại mật khẩu, false = thiết lập mật khẩu lần đầu
      */
     @Async
-    public void sendOtpEmail(String toEmail, String otp) {
+    public void sendOtpEmail(String toEmail, String otp, boolean hasPassword) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -38,8 +39,8 @@ public class EmailService {
             helper.setFrom(fromAddress, fromName);
             helper.setTo(toEmail);
             // Đưa mã OTP lên đầu tiêu đề để người dùng thấy ngay trên thông báo điện thoại
-            helper.setSubject("[Lion] " + otp + " là mã xác thực của bạn");
-            helper.setText(buildOtpHtml(otp), true);
+            helper.setSubject("[Lion] " + otp + (hasPassword ? " là mã đặt lại mật khẩu của bạn" : " là mã thiết lập mật khẩu của bạn"));
+            helper.setText(buildOtpHtml(otp, hasPassword), true);
 
             mailSender.send(message);
             log.info("Đã gửi OTP tới: {}", toEmail);
@@ -48,7 +49,11 @@ public class EmailService {
         }
     }
 
-    private String buildOtpHtml(String otp) {
+    private String buildOtpHtml(String otp, boolean hasPassword) {
+        String purpose = hasPassword ? "đặt lại mật khẩu" : "thiết lập mật khẩu";
+        String purposeDetail = hasPassword
+                ? "Sử dụng mã xác thực dưới đây để <strong style=\"color:#1f2937;\">đặt lại mật khẩu</strong> cho tài khoản của bạn."
+                : "Sử dụng mã xác thực dưới đây để <strong style=\"color:#1f2937;\">thiết lập mật khẩu</strong> cho tài khoản của bạn lần đầu tiên.";
         return """
                 <!DOCTYPE html>
                 <html lang="vi">
@@ -56,79 +61,69 @@ public class EmailService {
                   <meta charset="UTF-8"/>
                   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
                 </head>
-                <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;">
-                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 0;">
+                <body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',Arial,sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
                     <tr><td align="center">
                       <table width="480" cellpadding="0" cellspacing="0"
-                             style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+                             style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
 
                         <!-- Header -->
                         <tr>
-                          <td style="background:linear-gradient(135deg,#f97316,#ea580c);padding:28px 40px;">
-                            <table cellpadding="0" cellspacing="0">
-                              <tr>
-                                <td style="vertical-align:middle;">
-                                  <img src="%s/logo/lion.png" alt="Lion" width="44" height="44"
-                                       style="border-radius:10px;display:block;"/>
-                                </td>
-                                <td style="vertical-align:middle;padding-left:12px;">
-                                  <p style="margin:0;color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-0.3px;">Lion</p>
-                                  <p style="margin:2px 0 0;color:rgba(255,255,255,0.8);font-size:11px;">Bảo mật tài khoản</p>
-                                </td>
-                              </tr>
-                            </table>
+                          <td style="background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);padding:32px 40px;">
+                            <p style="margin:0;color:#ffffff;font-size:26px;font-weight:900;letter-spacing:-0.5px;">🦁 Lion</p>
+                            <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:12px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;">Bảo mật tài khoản</p>
                           </td>
                         </tr>
 
                         <!-- Body -->
                         <tr>
-                          <td style="padding:36px 40px;text-align:center;">
+                          <td style="padding:36px 40px;">
 
-                            <!-- Lời chào -->
-                            <p style="margin:0 0 8px;font-size:16px;color:#374151;text-align:left;">
+                            <p style="margin:0 0 6px;font-size:16px;font-weight:600;color:#111827;">
                               Chào bạn,
                             </p>
-
-                            <!-- Mục đích -->
-                            <p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.7;text-align:left;">
-                              Chúng tôi nhận được yêu cầu <strong style="color:#1f2937;">đặt lại mật khẩu</strong>
-                              cho tài khoản của bạn. Sử dụng mã xác thực dưới đây để tiếp tục.
+                            <p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.8;">
+                              Chúng tôi nhận được yêu cầu <strong style="color:#ea580c;">%s</strong>
+                              cho tài khoản của bạn. %s
                             </p>
 
-                            <!-- Vùng hiển thị OTP -->
-                            <div style="background:#FFF3E0;border:2px dashed #FFB44C;border-radius:12px;
-                                        padding:24px 20px;margin:0 0 24px;">
-                              <p style="margin:0 0 8px;font-size:13px;color:#92400e;">Mã xác thực của bạn là:</p>
-                              <span style="font-size:36px;font-weight:bold;letter-spacing:12px;
-                                           color:#1f2937;font-family:'Courier New',Courier,monospace;">
-                                %s
-                              </span>
-                            </div>
+                            <!-- OTP box -->
+                            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                              <tr>
+                                <td align="center" style="background:#fff7ed;border:2px dashed #fb923c;border-radius:14px;padding:28px 20px;">
+                                  <p style="margin:0 0 10px;font-size:12px;font-weight:700;color:#9a3412;text-transform:uppercase;letter-spacing:1px;">Mã xác thực của bạn</p>
+                                  <p style="margin:0;font-size:40px;font-weight:900;letter-spacing:14px;color:#1f2937;font-family:'Courier New',Courier,monospace;line-height:1;">%s</p>
+                                </td>
+                              </tr>
+                            </table>
 
-                            <!-- Thời gian hiệu lực -->
-                            <p style="margin:0 0 16px;font-size:13px;color:#6b7280;">
-                              Mã này có hiệu lực trong <strong style="color:#d84315;">5 phút</strong>.
+                            <!-- Hiệu lực -->
+                            <p style="margin:0 0 20px;font-size:13px;color:#6b7280;text-align:center;">
+                              Mã có hiệu lực trong <strong style="color:#dc2626;">5 phút</strong>
                             </p>
 
-                            <!-- Cảnh báo bảo mật -->
-                            <div style="background:#fff7ed;border-radius:10px;padding:12px 20px;margin-bottom:8px;">
-                              <p style="margin:0;font-size:12px;color:#92400e;line-height:1.6;">
-                                ⚠️ Để đảm bảo an toàn, tuyệt đối không chia sẻ mã này với bất kỳ ai.<br/>
-                                Lion sẽ không bao giờ chủ động hỏi mã xác thực của bạn.
-                              </p>
-                            </div>
+                            <!-- Cảnh báo -->
+                            <table width="100%%" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td style="background:#fef2f2;border-radius:10px;padding:14px 18px;">
+                                  <p style="margin:0;font-size:12px;color:#991b1b;line-height:1.7;">
+                                    ⚠️ <strong>Lưu ý bảo mật:</strong> Tuyệt đối không chia sẻ mã này với bất kỳ ai.
+                                    Lion sẽ không bao giờ chủ động hỏi mã xác thực của bạn.
+                                  </p>
+                                </td>
+                              </tr>
+                            </table>
 
                           </td>
                         </tr>
 
-                        <!-- Footer / Lời kết -->
+                        <!-- Footer -->
                         <tr>
                           <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #f3f4f6;">
-                            <p style="margin:0 0 4px;font-size:13px;color:#374151;">Trân trọng,</p>
-                            <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#ea580c;">Lion Learning Team</p>
-                            <p style="margin:0;font-size:11px;color:#9ca3af;">
-                              Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.
-                              Tài khoản của bạn vẫn an toàn.
+                            <p style="margin:0 0 2px;font-size:13px;color:#374151;">Trân trọng,</p>
+                            <p style="margin:0 0 14px;font-size:13px;font-weight:700;color:#ea580c;">Lion Learning Team</p>
+                            <p style="margin:0;font-size:11px;color:#9ca3af;line-height:1.6;">
+                              Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email. Tài khoản của bạn vẫn an toàn.
                             </p>
                           </td>
                         </tr>
@@ -138,7 +133,7 @@ public class EmailService {
                   </table>
                 </body>
                 </html>
-                """.formatted(frontendUrl, otp);
+                """.formatted(purpose, purposeDetail, otp);
     }
 
     /**
@@ -172,26 +167,24 @@ public class EmailService {
 
     private String buildHtmlBody(String name, String userQuestion, String adminReply,
                                   String category, boolean isFollowUp) {
-        String logoUrl = frontendUrl + "/logo/lion.png";
-
-        // Dòng mở đầu khác nhau tùy lần đầu hay follow-up
         String introLine = isFollowUp
-                ? "Chúng tôi có thêm thông tin mới cập nhật cho bạn:"
+                ? "Chúng tôi có thêm thông tin mới cập nhật cho yêu cầu của bạn:"
                 : "Yêu cầu hỗ trợ của bạn trong danh mục <span style=\"background:#fff7ed;color:#ea580c;padding:2px 10px;border-radius:20px;font-weight:600;font-size:13px;\">%s</span> đã được phản hồi.".formatted(category);
 
-        String replyLabel = isFollowUp ? "Thông tin cập nhật" : "Phản hồi từ đội ngũ hỗ trợ";
+        String replyLabel = isFollowUp ? "THÔNG TIN CẬP NHẬT" : "PHẢN HỒI TỪ ĐỘI NGŨ HỖ TRỢ";
         String replyLabelColor = isFollowUp ? "#0369a1" : "#ea580c";
         String replyBg = isFollowUp ? "#eff6ff" : "#fff7ed";
         String replyBorder = isFollowUp ? "#0ea5e9" : "#f97316";
 
-        // Luôn hiển thị câu hỏi gốc của user ở cả email đầu và follow-up
         String questionBlock = """
-                <div style="background:#f9fafb;border-left:4px solid #d1d5db;border-radius:8px;padding:16px 20px;margin-bottom:20px;">
-                  <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.8px;">
-                    Câu hỏi của bạn
-                  </p>
-                  <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">%s</p>
-                </div>
+                <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                  <tr>
+                    <td style="background:#f9fafb;border-left:4px solid #d1d5db;border-radius:8px;padding:16px 20px;">
+                      <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.8px;">Câu hỏi của bạn</p>
+                      <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">%s</p>
+                    </td>
+                  </tr>
+                </table>
                 """.formatted(escapeHtml(userQuestion));
 
         return """
@@ -201,67 +194,56 @@ public class EmailService {
                   <meta charset="UTF-8"/>
                   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
                 </head>
-                <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;">
-                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 0;">
+                <body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',Arial,sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
                     <tr><td align="center">
                       <table width="600" cellpadding="0" cellspacing="0"
-                             style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+                             style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
 
                         <!-- Header -->
                         <tr>
-                          <td style="background:linear-gradient(135deg,#f97316,#ea580c);padding:28px 40px;">
-                            <table width="100%%" cellpadding="0" cellspacing="0">
-                              <tr>
-                                <td style="vertical-align:middle;">
-                                  <img src="%s" alt="LionLearn"
-                                       width="48" height="48"
-                                       style="border-radius:12px;display:block;"/>
-                                </td>
-                                <td style="vertical-align:middle;padding-left:14px;">
-                                  <p style="margin:0;color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-0.3px;">
-                                    LionLearn
-                                  </p>
-                                  <p style="margin:2px 0 0;color:rgba(255,255,255,0.8);font-size:12px;">
-                                    Trung tâm hỗ trợ
-                                  </p>
-                                </td>
-                              </tr>
-                            </table>
+                          <td style="background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);padding:32px 40px;">
+                            <p style="margin:0;color:#ffffff;font-size:26px;font-weight:900;letter-spacing:-0.5px;">🦁 Lion</p>
+                            <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:12px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;">Trung tâm hỗ trợ</p>
                           </td>
                         </tr>
 
                         <!-- Body -->
                         <tr>
                           <td style="padding:36px 40px;">
-                            <p style="margin:0 0 8px;font-size:16px;color:#374151;">
+                            <p style="margin:0 0 6px;font-size:16px;font-weight:600;color:#111827;">
                               Xin chào <strong>%s</strong>,
                             </p>
-                            <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.6;">
+                            <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.8;">
                               %s
                             </p>
 
                             %s
 
-                            <!-- Phản hồi / Cập nhật -->
-                            <div style="background:%s;border-left:4px solid %s;border-radius:8px;padding:16px 20px;margin-bottom:28px;">
-                              <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:%s;text-transform:uppercase;letter-spacing:0.8px;">
-                                %s
-                              </p>
-                              <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">%s</p>
-                            </div>
+                            <!-- Phản hồi -->
+                            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                              <tr>
+                                <td style="background:%s;border-left:4px solid %s;border-radius:8px;padding:16px 20px;">
+                                  <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:%s;text-transform:uppercase;letter-spacing:0.8px;">%s</p>
+                                  <p style="margin:0;font-size:14px;color:#374151;line-height:1.7;">%s</p>
+                                </td>
+                              </tr>
+                            </table>
 
                             <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.6;">
                               Nếu bạn cần hỗ trợ thêm, hãy truy cập
-                              <a href="%s/help" style="color:#f97316;text-decoration:none;font-weight:600;">Trung tâm trợ giúp</a>.
+                              <a href="%s/help" style="color:#ea580c;text-decoration:none;font-weight:600;">Trung tâm trợ giúp</a>.
                             </p>
                           </td>
                         </tr>
 
                         <!-- Footer -->
                         <tr>
-                          <td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #f3f4f6;">
-                            <p style="margin:0;font-size:12px;color:#9ca3af;">
-                              © 2025 LionLearn · Email này được gửi tự động, vui lòng không reply trực tiếp.
+                          <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #f3f4f6;">
+                            <p style="margin:0 0 2px;font-size:13px;color:#374151;">Trân trọng,</p>
+                            <p style="margin:0 0 14px;font-size:13px;font-weight:700;color:#ea580c;">Lion Learning Team</p>
+                            <p style="margin:0;font-size:11px;color:#9ca3af;">
+                              © 2025 Lion Learning · Email này được gửi tự động, vui lòng không reply trực tiếp.
                             </p>
                           </td>
                         </tr>
@@ -272,16 +254,13 @@ public class EmailService {
                 </body>
                 </html>
                 """.formatted(
-                logoUrl,                // img src
-                name,                   // Xin chào
-                introLine,              // dòng giới thiệu
-                questionBlock,          // block câu hỏi
-                replyBg,                // background reply block
-                replyBorder,            // border reply block
-                replyLabelColor,        // màu label
-                replyLabel,             // label text
-                escapeHtml(adminReply), // nội dung reply
-                frontendUrl             // link help
+                name,
+                introLine,
+                questionBlock,
+                replyBg, replyBorder,
+                replyLabelColor, replyLabel,
+                escapeHtml(adminReply),
+                frontendUrl
         );
     }
 

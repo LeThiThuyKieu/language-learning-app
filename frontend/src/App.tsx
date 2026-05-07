@@ -12,6 +12,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
 import UserManagementPage from "@/pages/Admin/UserManagementPage.tsx";
 import EmailSupportPage from "@/pages/Admin/support_management/EmailSupportPage.tsx";
+import ChatSupportPage from "@/pages/Admin/support_management/ChatSupportPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
 import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";
@@ -129,6 +130,7 @@ function App() {
                         <Route path="dashboard" element={<DashboardPage/>}/>
                         <Route path="user_management" element={<UserManagementPage/>}/>
                         <Route path="support-management/email-support" element={<EmailSupportPage/>}/>
+                        <Route path="support-management/chat-support" element={<ChatSupportPage/>}/>
                     </Route>
                 </Routes>
                 <SupportFloatingButton />

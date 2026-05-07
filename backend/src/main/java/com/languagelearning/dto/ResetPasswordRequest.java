@@ -13,6 +13,6 @@ public class ResetPasswordRequest {
     @NotBlank @Size(min = 6, max = 6)
     private String otp;
 
-    @NotBlank @Size(min = 8)
+    @NotBlank @Size(min = 6)
     private String newPassword;
 }

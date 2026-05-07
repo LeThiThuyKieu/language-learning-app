@@ -53,6 +53,17 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Change password successfully", null));
     }
 
+    // Tạo mật khẩu lần đầu cho social user (Google/Facebook).
+    @PostMapping("/set-password")
+    public ResponseEntity<ApiResponse<String>> setPassword(
+            Authentication authentication,
+            @Valid @RequestBody SetPasswordRequest request
+    ) {
+        String email = authentication.getName();
+        authService.setPassword(email, request);
+        return ResponseEntity.ok(ApiResponse.success("Tạo mật khẩu thành công", null));
+    }
+
     // Gửi OTP về email để bắt đầu quy trình đặt lại mật khẩu.
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<String>> forgotPassword(
