@@ -89,8 +89,8 @@ export default function ListeningLessonPage() {
             <ListeningLessonView
                 node={listeningNode}
                 onLeaveLesson={() => navigate("/learn")}
-                onComplete={async () => {
-                    const next = await completeNodeAndSave(listeningNode.nodeId, treeId);
+                onComplete={async (correctCount: number, attempts) => {
+                    const next = await completeNodeAndSave(listeningNode.nodeId, treeId, undefined, correctCount, attempts);
                     bumpLearnTreeUnlocked(treeId, next);
                     navigate("/learn", {state: {treeId, unlockedCount: next}});
                 }}

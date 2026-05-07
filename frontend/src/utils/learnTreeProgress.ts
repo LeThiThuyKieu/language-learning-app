@@ -1,4 +1,4 @@
-import { learningService } from "@/services/learningService";
+import { learningService, type AttemptItem } from "@/services/learningService";
 
 /**
  * Tiến độ cây bài học — lưu DB là nguồn chính, sessionStorage là cache tạm.
@@ -41,21 +41,32 @@ export async function loadProgressFromDB(treeId: number): Promise<number> {
 }
 
 /**
- * Sau khi hoàn thành node: gọi API lưu DB, cập nhật cache, invalidate level questions cache.
+ * Sau khi hoàn thành node: ghi lại attempts + complete node.
  * Trả về unlockedCount mới.
  */
-export async function completeNodeAndSave(nodeId: number, treeId: number, levelId?: number): Promise<number> {
+export async function completeNodeAndSave(
+    nodeId: number,
+    treeId: number,
+    levelId?: number,
+    correctCount = 0,
+    attempts?: AttemptItem[]
+): Promise<number> {
     try {
-        const result = await learningService.completeNode(nodeId);
+        let result: { unlockedCount: number; knEarned: number };
+
+        if (attempts && attempts.length > 0) {
+            result = await learningService.submitAttempts({ nodeId, attempts });
+        } else {
+            result = await learningService.completeNode(nodeId, correctCount);
+        }
+
         const count = result.unlockedCount;
         setLearnTreeUnlockedCount(treeId, count);
-        // Invalidate level questions cache để lần sau load lại progress mới
         if (levelId != null) {
             learningService.invalidateLevelQuestionsCache(levelId);
         }
         return count;
     } catch {
-        // Fallback: chỉ cập nhật local
         const current = getLearnTreeUnlockedCount(treeId);
         const next = Math.max(current, 1);
         setLearnTreeUnlockedCount(treeId, next);

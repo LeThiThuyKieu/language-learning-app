@@ -1,6 +1,7 @@
 import {useEffect, useMemo, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService.ts";
+import type {AttemptItem} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import ReviewVocabView from "@/components/user/learn/question_type/review/ReviewVocabView.tsx";
@@ -31,6 +32,7 @@ export default function ReviewLessonPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [stage, setStage] = useState<Stage>("VOCAB");
+    const [allAttempts, setAllAttempts] = useState<AttemptItem[]>([]);
 
     useEffect(() => {
         // Nếu pass node REVIEW từ LearningPage thì khỏi fetch lại
@@ -134,12 +136,15 @@ export default function ReviewLessonPage() {
     }
 
     if (stage === "DONE") {
+        const correctTotal = allAttempts.filter(a => a.correct).length;
+        const accuracy = allAttempts.length > 0 ? Math.round((correctTotal / allAttempts.length) * 100) : 0;
         return (
             <div className="min-h-screen w-full bg-gray-50">
                 <LessonCompleteView
                     knGained={20}
+                    accuracy={accuracy}
                     onContinue={async () => {
-                        const next = await completeNodeAndSave(reviewNode.nodeId, treeId);
+                        const next = await completeNodeAndSave(reviewNode.nodeId, treeId, undefined, 0, allAttempts);
                         bumpLearnTreeUnlocked(treeId, next);
                         navigate("/learn", {state: {treeId, unlockedCount: next}});
                     }}
@@ -154,28 +159,40 @@ export default function ReviewLessonPage() {
                 <ReviewVocabView
                     node={vocabNode}
                     onLeaveLesson={() => navigate("/learn")}
-                    onComplete={() => setStage("LISTENING")}
+                    onComplete={(attempts) => {
+                        setAllAttempts((prev) => [...prev, ...attempts]);
+                        setStage("LISTENING");
+                    }}
                 />
             )}
             {stage === "LISTENING" && listeningNode && (
                 <ReviewListeningView
                     node={listeningNode}
                     onLeaveLesson={() => navigate("/learn")}
-                    onComplete={() => setStage("SPEAKING")}
+                    onComplete={(attempts) => {
+                        setAllAttempts((prev) => [...prev, ...attempts]);
+                        setStage("SPEAKING");
+                    }}
                 />
             )}
             {stage === "SPEAKING" && speakingNode && (
                 <ReviewSpeakingView
                     node={speakingNode}
                     onLeaveLesson={() => navigate("/learn")}
-                    onComplete={() => setStage("MATCHING")}
+                    onComplete={(attempts) => {
+                        setAllAttempts((prev) => [...prev, ...attempts]);
+                        setStage("MATCHING");
+                    }}
                 />
             )}
             {stage === "MATCHING" && matchingNode && (
                 <ReviewMatchingView
                     node={matchingNode}
                     onLeaveLesson={() => navigate("/learn")}
-                    onComplete={() => setStage("DONE")}
+                    onComplete={(attempts) => {
+                        setAllAttempts((prev) => [...prev, ...attempts]);
+                        setStage("DONE");
+                    }}
                 />
             )}
         </div>

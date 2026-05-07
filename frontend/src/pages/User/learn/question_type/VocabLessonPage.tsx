@@ -90,8 +90,8 @@ export default function VocabLessonPage() {
             <VocabLessonView
                 node={vocabNode}
                 onLeaveLesson={() => navigate("/learn")}
-                onComplete={async () => {
-                    const next = await completeNodeAndSave(vocabNode.nodeId, treeId);
+                onComplete={async (correctCount: number, attempts) => {
+                    const next = await completeNodeAndSave(vocabNode.nodeId, treeId, undefined, correctCount, attempts);
                     bumpLearnTreeUnlocked(treeId, next);
                     navigate("/learn", {state: {treeId, unlockedCount: next}});
                 }}

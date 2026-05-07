@@ -89,8 +89,8 @@ export default function SpeakingLessonPage() {
             <SpeakingLessonView
                 node={speakingNode}
                 onLeaveLesson={() => navigate("/learn")}
-                onComplete={async () => {
-                    const next = await completeNodeAndSave(speakingNode.nodeId, treeId);
+                onComplete={async (correctCount: number, attempts) => {
+                    const next = await completeNodeAndSave(speakingNode.nodeId, treeId, undefined, correctCount, attempts);
                     bumpLearnTreeUnlocked(treeId, next);
                     navigate("/learn", {state: {treeId, unlockedCount: next}});
                 }}

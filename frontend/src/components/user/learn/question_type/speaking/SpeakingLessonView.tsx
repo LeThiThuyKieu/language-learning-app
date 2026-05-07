@@ -6,6 +6,7 @@ import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import {Mic, MicOff, Star, ThumbsUp, TrendingUp, AlertCircle, RefreshCw, CheckCircle2, XCircle} from "lucide-react";
+import type {AttemptItem} from "@/services/learningService";
 
 // Helpers
 
@@ -166,7 +167,7 @@ export default function SpeakingLessonView({
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => void;
 }) {
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
@@ -190,6 +191,8 @@ export default function SpeakingLessonView({
     const [exitOpen, setExitOpen] = useState(false);          // modal thoát
     const [sttError, setSttError] = useState("");             // lỗi ghi âm
     const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set()); // câu bị bỏ qua
+    const [passedCount, setPassedCount] = useState(0); // số câu pass (≥70%)
+    const [speakingAttempts, setSpeakingAttempts] = useState<AttemptItem[]>([]);
 
     const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
@@ -203,6 +206,8 @@ export default function SpeakingLessonView({
         setIsFinished(false);
         setSttError("");
         setSkippedIndices(new Set());
+        setPassedCount(0);
+        setSpeakingAttempts([]);
     }, [q?.mongoQuestionId]);
 
     // Dọn dẹp SpeechRecognition khi component unmount
@@ -263,17 +268,28 @@ export default function SpeakingLessonView({
     // Tiếp tục: nếu pass (≥70%) thì qua câu tiếp, nếu fail thì cho thử lại
     function handleContinue() {
         if (score !== null && score >= 70) {
+            const passed = true;
+            const newAttempt: AttemptItem = {
+                mongoQuestionId: q?.mongoQuestionId ?? "",
+                userAnswer: transcript,
+                correct: passed,
+            };
+            const nextPassed = passedCount + 1;
+            const nextAttempts = [...speakingAttempts, newAttempt];
             if (lineIndex < lines.length - 1) {
+                setPassedCount(nextPassed);
+                setSpeakingAttempts(nextAttempts);
                 setLineIndex(lineIndex + 1);
                 setChecked(false);
                 setTranscript("");
                 setScore(null);
                 setSttError("");
             } else {
+                setPassedCount(nextPassed);
+                setSpeakingAttempts(nextAttempts);
                 setIsFinished(true);
             }
         } else {
-            // Fail: reset để thử lại câu hiện tại
             setChecked(false);
             setTranscript("");
             setScore(null);
@@ -281,9 +297,16 @@ export default function SpeakingLessonView({
         }
     }
 
-    // Bỏ qua câu hiện tại (tính là sai/chưa hoàn thành), chuyển sang câu tiếp
+    // Bỏ qua câu hiện tại (tính là sai), chuyển sang câu tiếp
     function handleSkip() {
+        const newAttempt: AttemptItem = {
+            mongoQuestionId: q?.mongoQuestionId ?? "",
+            userAnswer: transcript,
+            correct: false,
+        };
+        const nextAttempts = [...speakingAttempts, newAttempt];
         setSkippedIndices((prev) => new Set(prev).add(lineIndex));
+        setSpeakingAttempts(nextAttempts);
         if (lineIndex < lines.length - 1) {
             setLineIndex(lineIndex + 1);
             setChecked(false);
@@ -297,7 +320,10 @@ export default function SpeakingLessonView({
 
     // Hoàn thành tất cả câu → hiện màn hình kết thúc bài
     if (isFinished) {
-        return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
+        const accuracy = speakingAttempts.length > 0
+            ? Math.round((passedCount / speakingAttempts.length) * 100)
+            : 0;
+        return <LessonCompleteView knGained={10} accuracy={accuracy} onContinue={() => onComplete(passedCount, speakingAttempts)}/>;
     }
 
     const pass = score !== null && score >= 70;

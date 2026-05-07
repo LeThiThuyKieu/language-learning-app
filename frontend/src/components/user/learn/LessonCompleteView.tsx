@@ -1,8 +1,10 @@
 export default function LessonCompleteView({
                                               knGained,
+                                              accuracy,
                                               onContinue,
                                           }: {
     knGained: number;
+    accuracy?: number; // 0-100, nếu không truyền thì không hiển thị
     onContinue: () => void;
 }) {
     return (
@@ -17,7 +19,7 @@ export default function LessonCompleteView({
                     <h1 className="text-3xl md:text-4xl font-extrabold text-primary-600 mb-3">
                         Hoàn thành bài học!
                     </h1>
-                    <div className="mx-auto mt-6 grid grid-cols-2 gap-4 max-w-md">
+                    <div className={`mx-auto mt-6 grid gap-4 max-w-md ${accuracy !== undefined ? "grid-cols-2" : "grid-cols-1"}`}>
                         <div className="rounded-2xl border-2 border-primary-300 overflow-hidden">
                             <div className="bg-primary-500 text-white text-xs font-extrabold uppercase tracking-wide py-2">
                                 Tổng điểm KN
@@ -26,14 +28,16 @@ export default function LessonCompleteView({
                                 +{knGained}
                             </div>
                         </div>
-                        <div className="rounded-2xl border-2 border-emerald-300 overflow-hidden">
-                            <div className="bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wide py-2">
-                                Đỉnh cao
+                        {accuracy !== undefined && (
+                            <div className="rounded-2xl border-2 border-emerald-300 overflow-hidden">
+                                <div className="bg-emerald-500 text-white text-xs font-extrabold uppercase tracking-wide py-2">
+                                    Chính xác
+                                </div>
+                                <div className="py-5 font-extrabold text-gray-900 text-xl">
+                                    {accuracy}%
+                                </div>
                             </div>
-                            <div className="py-5 font-extrabold text-gray-900 text-xl">
-                                100%
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -5,6 +5,7 @@ import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
+import type {AttemptItem} from "@/services/learningService";
 
 function parseExpectedTokens(correctAnswer?: string): string[] {
     const raw = (correctAnswer ?? "").trim();
@@ -37,7 +38,7 @@ export default function ListeningLessonView({
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => void;
 }) {
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
@@ -77,7 +78,16 @@ export default function ListeningLessonView({
     }
 
     if (isFinished) {
-        return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
+        // Mỗi từ trong expected là 1 attempt riêng
+        const mongoId = (q as {mongoQuestionId?: string})?.mongoQuestionId ?? String(q?.id ?? "");
+        const attempts: AttemptItem[] = expected.map((exp, i) => ({
+            mongoQuestionId: mongoId,
+            userAnswer: inputs[i] ?? "",
+            correct: tokenMatches(inputs[i] ?? "", exp),
+        }));
+        const correctCount = attempts.filter(a => a.correct).length;
+        const accuracy = expected.length > 0 ? Math.round((correctCount / expected.length) * 100) : 0;
+        return <LessonCompleteView knGained={10} accuracy={accuracy} onContinue={() => onComplete(correctCount, attempts)}/>;
     }
 
     const answerListDetail =

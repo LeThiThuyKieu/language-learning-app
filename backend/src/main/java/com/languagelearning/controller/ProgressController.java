@@ -1,5 +1,6 @@
 package com.languagelearning.controller;
 
+import com.languagelearning.dto.SubmitAttemptsRequest;
 import com.languagelearning.service.ProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +30,25 @@ public class ProgressController {
     @PostMapping("/nodes/{nodeId}/complete")
     public ResponseEntity<Map<String, Integer>> completeNode(
             @PathVariable int nodeId,
+            @RequestParam(defaultValue = "0") int correctCount,
             @AuthenticationPrincipal UserDetails userDetails) {
-        ProgressService.CompleteNodeResult result = progressService.completeNode(userDetails.getUsername(), nodeId);
+        ProgressService.CompleteNodeResult result = progressService.completeNode(userDetails.getUsername(), nodeId, correctCount);
+        return ResponseEntity.ok(Map.of(
+                "unlockedCount", result.unlockedCount(),
+                "knEarned", result.knEarned()
+        ));
+    }
+
+    /**
+     * Ghi lại kết quả từng câu hỏi + hoàn thành node.
+     * Thay thế /nodes/{nodeId}/complete khi có dữ liệu chi tiết từng câu.
+     * POST /api/progress/nodes/submit
+     */
+    @PostMapping("/nodes/submit")
+    public ResponseEntity<Map<String, Integer>> submitAttempts(
+            @RequestBody SubmitAttemptsRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        ProgressService.CompleteNodeResult result = progressService.submitAttempts(userDetails.getUsername(), request);
         return ResponseEntity.ok(Map.of(
                 "unlockedCount", result.unlockedCount(),
                 "knEarned", result.knEarned()

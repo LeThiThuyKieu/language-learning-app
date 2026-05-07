@@ -7,7 +7,7 @@ import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
-import {Flame, Medal, MoreHorizontal, Zap} from "lucide-react";
+import {Flame, Medal, MoreHorizontal, Star, Zap} from "lucide-react";
 import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
@@ -465,13 +465,14 @@ function ProfileCard({onCreateProfile}: { onCreateProfile: () => void }) {
 }
 
 function TopStats() {
-    const [profile, setProfile] = useState<{ streakCount: number; totalKn: number; badgeCount: number } | null>(null);
+    const [profile, setProfile] = useState<{ streakCount: number; totalKn: number; totalXp: number; badgeCount: number } | null>(null);
 
     useEffect(() => {
         profileService.getMyProfile()
             .then((p) => setProfile({
                 streakCount: p.streakCount,
                 totalKn: p.totalKn ?? 0,
+                totalXp: p.totalXp ?? 0,
                 badgeCount: p.badges?.length ?? 0,
             }))
             .catch(() => {/* ignore */});
@@ -480,12 +481,13 @@ function TopStats() {
     const stats = [
         { label: "Streak", value: profile?.streakCount ?? "—", icon: <Flame className="h-5 w-5 text-orange-500" /> },
         { label: "Tổng KN", value: profile?.totalKn ?? "—", icon: <Zap className="h-5 w-5 text-yellow-400" /> },
+        { label: "Tổng XP", value: profile?.totalXp ?? "—", icon: <Star className="h-5 w-5 text-primary-500" /> },
         { label: "Badges", value: profile?.badgeCount ?? "—", icon: <Medal className="h-5 w-5 text-blue-500" /> },
     ];
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
                 {stats.map((item) => (
                     <div key={item.label} className="text-center">
                         <div className="flex justify-center mb-0.5">{item.icon}</div>
