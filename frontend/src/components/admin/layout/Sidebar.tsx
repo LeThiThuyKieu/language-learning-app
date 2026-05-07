@@ -16,6 +16,7 @@ const menuItems = [
     { path: "/admin/dashboard",       icon: LayoutDashboard, label: "Dashboard" },
     { path: "/admin/user-management", icon: Users,           label: "User Management" },
     { path: "/admin/support-management/email-support", icon: Mail, label: "Email Support" },
+    { path: "/admin/support-management/chat-support",  icon: MessagesSquare,  label: "Chat Support" },
     { path: "/admin/skill-trees",     icon: GitBranch,       label: "Skill Trees" },
     { path: "/admin/lessons",         icon: BookOpen,        label: "Lessons" },
     { path: "/admin/placement-test-management", icon: ClipboardList,   label: "Placement Tests" },

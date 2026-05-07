@@ -1,12 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {authService} from "@/services/authService.ts";
-
-interface User {
-  id: number;
-  email: string;
-  roles?: string[];
-}
+import { authService } from "@/services/authService.ts";
+import { User } from "@/types";
 
 interface AuthState {
   user: User | null;

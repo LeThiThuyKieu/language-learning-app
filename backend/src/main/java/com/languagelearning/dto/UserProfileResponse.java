@@ -1,6 +1,7 @@
 package com.languagelearning.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,6 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class UserProfileResponse {
 
     private Integer userId;
@@ -42,6 +42,11 @@ public class UserProfileResponse {
     private LocalDateTime lastLogin;
 
     private List<BadgeItem> badges;
+
+    // Thông tin auth — dùng để hiển thị UI mật khẩu đúng
+    @JsonProperty("hasPassword")
+    private Boolean hasPassword;
+    private String authProvider;
 
     @Data
     @NoArgsConstructor

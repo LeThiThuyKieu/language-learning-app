@@ -29,6 +29,8 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final OtpService otpService;
+    private final EmailService emailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -151,8 +153,9 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
+        // Social user chưa có password → dùng setPassword thay thế
         if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
-            throw new BadCredentialsException("This account uses social login. Please continue with Google/Facebook.");
+            throw new BadCredentialsException("Tài khoản chưa có mật khẩu. Vui lòng dùng chức năng 'Tạo mật khẩu'.");
         }
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
@@ -169,6 +172,62 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    /**
+     * Tạo mật khẩu lần đầu cho social user (Google/Facebook).
+     * Yêu cầu: account chưa có passwordHash.
+     */
+    @Transactional
+    public void setPassword(String email, SetPasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+        if (user.getPasswordHash() != null && !user.getPasswordHash().isBlank()) {
+            throw new IllegalStateException("Tài khoản đã có mật khẩu. Vui lòng dùng chức năng 'Đổi mật khẩu'.");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    // Gửi OTP qua email — hoạt động cho cả LOCAL lẫn social account.
+    // Subject email sẽ khác nhau tùy account đã có password chưa.
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        boolean hasPassword = user.getPasswordHash() != null && !user.getPasswordHash().isBlank();
+        String otp = otpService.generateAndStore(request.getEmail());
+        emailService.sendOtpEmail(request.getEmail(), otp, hasPassword);
+    }
+
+    // Xác thực OTP người dùng nhập có đúng với OTP đã gửi hay không.
+    public void verifyOtp(VerifyOtpRequest request) {
+        if (!otpService.verify(request.getEmail(), request.getOtp())) {
+            throw new BadCredentialsException("Mã OTP không đúng hoặc đã hết hạn");
+        }
+    }
+
+    // Đặt lại mật khẩu mới sau khi xác thực OTP thành công.
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!otpService.verify(request.getEmail(), request.getOtp())) {
+            throw new BadCredentialsException("Mã OTP không đúng hoặc đã hết hạn");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Xóa OTP sau khi đã dùng xong
+        otpService.invalidate(request.getEmail());
     }
 
 }

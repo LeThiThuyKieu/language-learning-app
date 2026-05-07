@@ -164,27 +164,29 @@ public class UserProfileService {
                 ))
                 .toList();
 
-        return new UserProfileResponse(
-                user.getId(),
-                user.getEmail(),
-                profile.getFullName(),
-                profile.getAvatarUrl(),
-                profile.getTargetGoal(),
-                profile.getCurrentLevel(),
-                currentLevel.map(Level::getLevelName).orElse(null),
-                currentLevel.map(Level::getCefrCode).orElse(null),
-                profile.getTotalXp() == null ? 0 : profile.getTotalXp(),
-                profile.getStreakCount() == null ? 0 : profile.getStreakCount(),
-                rankPosition,
-                completedNodes,
-                totalNodes,
-                completionRate,
-                totalAttempts,
-                                weeklyActivityXp,
-                                todayXp,
-                user.getCreatedAt(),
-                user.getLastLogin(),
-                badgeItems
-        );
+        UserProfileResponse resp = new UserProfileResponse();
+        resp.setUserId(user.getId());
+        resp.setEmail(user.getEmail());
+        resp.setFullName(profile.getFullName());
+        resp.setAvatarUrl(profile.getAvatarUrl());
+        resp.setTargetGoal(profile.getTargetGoal());
+        resp.setCurrentLevelId(profile.getCurrentLevel());
+        resp.setCurrentLevelName(currentLevel.map(Level::getLevelName).orElse(null));
+        resp.setCurrentLevelCefr(currentLevel.map(Level::getCefrCode).orElse(null));
+        resp.setTotalXp(profile.getTotalXp() == null ? 0 : profile.getTotalXp());
+        resp.setStreakCount(profile.getStreakCount() == null ? 0 : profile.getStreakCount());
+        resp.setRankPosition(rankPosition);
+        resp.setCompletedNodes(completedNodes);
+        resp.setTotalNodes(totalNodes);
+        resp.setCompletionRate(completionRate);
+        resp.setTotalAttempts(totalAttempts);
+        resp.setWeeklyActivityXp(weeklyActivityXp);
+        resp.setTodayXp(todayXp);
+        resp.setCreatedAt(user.getCreatedAt());
+        resp.setLastLogin(user.getLastLogin());
+        resp.setBadges(badgeItems);
+        resp.setHasPassword(user.getPasswordHash() != null && !user.getPasswordHash().isBlank());
+        resp.setAuthProvider(user.getAuthProvider().name());
+        return resp;
     }
 }

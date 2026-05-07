@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/support-management")
 @RequiredArgsConstructor
-public class AdminSupportController {
+public class SupportManagementController {
     private final SupportService supportService;
 
     // Lấy danh sách ticket cho admin với filter và phân trang.
