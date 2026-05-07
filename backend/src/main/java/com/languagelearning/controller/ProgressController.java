@@ -30,7 +30,10 @@ public class ProgressController {
     public ResponseEntity<Map<String, Integer>> completeNode(
             @PathVariable int nodeId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        int unlockedCount = progressService.completeNode(userDetails.getUsername(), nodeId);
-        return ResponseEntity.ok(Map.of("unlockedCount", unlockedCount));
+        ProgressService.CompleteNodeResult result = progressService.completeNode(userDetails.getUsername(), nodeId);
+        return ResponseEntity.ok(Map.of(
+                "unlockedCount", result.unlockedCount(),
+                "knEarned", result.knEarned()
+        ));
     }
 }

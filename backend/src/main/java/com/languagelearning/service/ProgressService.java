@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,12 +18,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProgressService {
 
+    /** Kết quả trả về sau khi hoàn thành node */
+    public record CompleteNodeResult(int unlockedCount, int knEarned) {}
+
     private final UserRepository userRepository;
     private final SkillNodeRepository skillNodeRepository;
     private final SkillTreeRepository skillTreeRepository;
     private final UserNodeProgressRepository userNodeProgressRepository;
     private final UserSkillTreeProgressRepository userSkillTreeProgressRepository;
     private final SkillTreeQuestionService skillTreeQuestionService;
+    private final UserKnRepository userKnRepository;
+    private final UserStreakRepository userStreakRepository;
+    private final UserProfileRepository userProfileRepository;
 
     /** Lấy số node đã unlock của một tree */
     @Transactional(readOnly = true)
@@ -56,7 +63,7 @@ public class ProgressService {
 
     /** Đánh dấu node đã hoàn thành, cập nhật tree progress, invalidate Redis cache */
     @Transactional
-    public int completeNode(String email, int nodeId) {
+    public CompleteNodeResult completeNode(String email, int nodeId) {
         User user = getUser(email);
         SkillNode node = skillNodeRepository.findById(nodeId)
                 .orElseThrow(() -> new IllegalArgumentException("Node not found: " + nodeId));
@@ -77,6 +84,13 @@ public class ProgressService {
         progress.setAttemptCount((progress.getAttemptCount() == null ? 0 : progress.getAttemptCount()) + 1);
         userNodeProgressRepository.save(progress);
 
+        // Cộng KN: +20 cho REVIEW, +10 cho các node khác (kể cả học lại)
+        int knReward = (node.getNodeType() == SkillNode.NodeType.REVIEW) ? 20 : 10;
+        addKn(user, knReward);
+
+        // Cập nhật streak: ghi nhận ngày hôm nay user có học
+        recordStreak(user);
+
         // Cập nhật UserSkillTreeProgress
         int treeId = node.getSkillTree().getId();
         updateTreeProgress(user, treeId);
@@ -87,7 +101,7 @@ public class ProgressService {
             skillTreeQuestionService.invalidateLevelCache(user.getId(), levelId);
         }
 
-        return getUnlockedCount(email, treeId);
+        return new CompleteNodeResult(getUnlockedCount(email, treeId), knReward);
     }
 
     /** Cập nhật Tree Progress */
@@ -130,5 +144,50 @@ public class ProgressService {
     private User getUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
+    }
+
+    /** Cộng KN cho user */
+    private void addKn(User user, int amount) {
+        UserKn userKn = userKnRepository.findByUser(user).orElseGet(() -> {
+            UserKn kn = new UserKn();
+            kn.setUser(user);
+            kn.setTotalKn(0);
+            return kn;
+        });
+        userKn.setTotalKn(userKn.getTotalKn() + amount);
+        userKnRepository.save(userKn);
+    }
+
+    /**
+     * Ghi nhận ngày hôm nay user có học (dùng để tính streak).
+     * Nếu đã có bản ghi cho ngày hôm nay thì bỏ qua.
+     * Cập nhật streak_count trong user_profile.
+     */
+    private void recordStreak(User user) {
+        LocalDate today = LocalDate.now();
+        if (userStreakRepository.findByUserAndDate(user, today).isPresent()) {
+            return; // đã ghi nhận hôm nay rồi
+        }
+
+        // Tạo bản ghi streak cho hôm nay
+        UserStreak streak = new UserStreak();
+        streak.setUser(user);
+        streak.setDate(today);
+        streak.setEarnedXp(0);
+        userStreakRepository.save(streak);
+
+        // Tính lại streak_count liên tiếp và cập nhật vào user_profile
+        int streakCount = 1;
+        LocalDate checkDate = today.minusDays(1);
+        while (userStreakRepository.findByUserAndDate(user, checkDate).isPresent()) {
+            streakCount++;
+            checkDate = checkDate.minusDays(1);
+        }
+
+        final int finalStreakCount = streakCount;
+        userProfileRepository.findByUser(user).ifPresent(profile -> {
+            profile.setStreakCount(finalStreakCount);
+            userProfileRepository.save(profile);
+        });
     }
 }

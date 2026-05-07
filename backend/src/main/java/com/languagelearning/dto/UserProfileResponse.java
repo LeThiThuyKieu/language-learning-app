@@ -26,6 +26,7 @@ public class UserProfileResponse {
     private Integer totalXp;
     private Integer streakCount;
     private Integer rankPosition;
+    private Integer totalKn;
 
     private Integer completedNodes;
     private Integer totalNodes;

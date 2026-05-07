@@ -6,13 +6,15 @@ import com.languagelearning.entity.Leaderboard;
 import com.languagelearning.entity.Level;
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserBadge;
+import com.languagelearning.entity.UserKn;
 import com.languagelearning.entity.UserNodeProgress;
 import com.languagelearning.entity.UserProfile;
-import com.languagelearning.entity.StreakHistory;
+import com.languagelearning.entity.UserStreak;
 import com.languagelearning.exception.BadCredentialsException;
 import com.languagelearning.repository.mysql.LeaderboardRepository;
 import com.languagelearning.repository.mysql.LevelRepository;
-import com.languagelearning.repository.mysql.StreakHistoryRepository;
+import com.languagelearning.repository.mysql.UserKnRepository;
+import com.languagelearning.repository.mysql.UserStreakRepository;
 import com.languagelearning.repository.mysql.UserBadgeRepository;
 import com.languagelearning.repository.mysql.UserNodeProgressRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
@@ -40,7 +42,8 @@ public class UserProfileService {
     private final UserBadgeRepository userBadgeRepository;
     private final UserNodeProgressRepository userNodeProgressRepository;
     private final LeaderboardRepository leaderboardRepository;
-    private final StreakHistoryRepository streakHistoryRepository;
+    private final UserStreakRepository userStreakRepository;
+    private final UserKnRepository userKnRepository;
     private final AvatarUploadService avatarUploadService;
 
 
@@ -133,15 +136,19 @@ public class UserProfileService {
                 .map(Leaderboard::getRankPosition)
                 .orElse(null);
 
+        int totalKn = userKnRepository.findByUser(user)
+                .map(UserKn::getTotalKn)
+                .orElse(0);
+
         LocalDate today = LocalDate.now();
         LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
         LocalDate endOfWeek = startOfWeek.plusDays(6);
 
-        Map<LocalDate, Integer> activityByDate = streakHistoryRepository
+        Map<LocalDate, Integer> activityByDate = userStreakRepository
                 .findByUserAndDateBetween(user, startOfWeek, endOfWeek)
                 .stream()
                 .collect(Collectors.toMap(
-                        StreakHistory::getDate,
+                        UserStreak::getDate,
                         item -> item.getEarnedXp() == null ? 0 : item.getEarnedXp(),
                         Integer::sum
                 ));
@@ -176,6 +183,7 @@ public class UserProfileService {
                 profile.getTotalXp() == null ? 0 : profile.getTotalXp(),
                 profile.getStreakCount() == null ? 0 : profile.getStreakCount(),
                 rankPosition,
+                totalKn,
                 completedNodes,
                 totalNodes,
                 completionRate,

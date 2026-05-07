@@ -4,7 +4,6 @@ import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
-import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import {Mic, MicOff, Star, ThumbsUp, TrendingUp, AlertCircle, RefreshCw, CheckCircle2, XCircle} from "lucide-react";
 
 // Helpers (giống SpeakingLessonView)
@@ -148,7 +147,6 @@ export default function ReviewSpeakingView({
     const [transcript, setTranscript] = useState("");
     const [score, setScore] = useState<number | null>(null);
     const [checked, setChecked] = useState(false);
-    const [isFinished, setIsFinished] = useState(false);
     const [exitOpen, setExitOpen] = useState(false);
     const [sttError, setSttError] = useState("");
     const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set());
@@ -162,7 +160,6 @@ export default function ReviewSpeakingView({
         setTranscript("");
         setScore(null);
         setChecked(false);
-        setIsFinished(false);
         setSttError("");
         setSkippedIndices(new Set());
     }, [q?.mongoQuestionId]);
@@ -211,7 +208,7 @@ export default function ReviewSpeakingView({
                 setLineIndex(lineIndex + 1);
                 setChecked(false); setTranscript(""); setScore(null); setSttError("");
             } else {
-                setIsFinished(true);
+                onComplete();
             }
         } else {
             setChecked(false); setTranscript(""); setScore(null); setSttError("");
@@ -224,13 +221,11 @@ export default function ReviewSpeakingView({
             setLineIndex(lineIndex + 1);
             setChecked(false); setTranscript(""); setScore(null); setSttError("");
         } else {
-            setIsFinished(true);
+            onComplete();
         }
     }
 
-    if (isFinished) {
-        return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
-    }
+    if (!q) return null;
 
     const pass = score !== null && score >= 70;
 
