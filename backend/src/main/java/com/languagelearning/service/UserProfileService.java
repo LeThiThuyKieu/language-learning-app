@@ -165,7 +165,7 @@ public class UserProfileService {
                         userBadge.getBadge().getId(),
                         userBadge.getBadge().getBadgeName(),
                         userBadge.getBadge().getDescription(),
-                        userBadge.getBadge().getRequiredXp(),
+                        userBadge.getBadge().getRequiredKn(),
                         userBadge.getBadge().getIconUrl(),
                         userBadge.getEarnedAt()
                 ))
@@ -183,6 +183,7 @@ public class UserProfileService {
         resp.setTotalXp(profile.getTotalXp() == null ? 0 : profile.getTotalXp());
         resp.setStreakCount(profile.getStreakCount() == null ? 0 : profile.getStreakCount());
         resp.setRankPosition(rankPosition);
+        resp.setTotalKn(totalKn);
         resp.setCompletedNodes(completedNodes);
         resp.setTotalNodes(totalNodes);
         resp.setCompletionRate(completionRate);

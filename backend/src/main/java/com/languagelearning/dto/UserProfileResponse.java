@@ -57,7 +57,7 @@ public class UserProfileResponse {
         private Integer id;
         private String badgeName;
         private String description;
-        private Integer requiredXp;
+        private Integer requiredKn;
         private String iconUrl;
 
         @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
