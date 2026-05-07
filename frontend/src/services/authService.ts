@@ -62,4 +62,9 @@ export const authService = {
   resetPassword: async (email: string, otp: string, newPassword: string): Promise<void> => {
     await apiClient.post<ApiResponse<null>>("/auth/reset-password", { email, otp, newPassword });
   },
+
+  // Tạo mật khẩu lần đầu cho social user (Google/Facebook)
+  setPassword: async (newPassword: string, confirmNewPassword: string): Promise<void> => {
+    await apiClient.post<ApiResponse<null>>("/auth/set-password", { newPassword, confirmNewPassword });
+  },
 };

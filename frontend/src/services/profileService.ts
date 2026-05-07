@@ -36,6 +36,8 @@ export interface UserProfileDetail {
     createdAt: string;
     lastLogin: string | null;
     badges: ProfileBadge[];
+    hasPassword: boolean;
+    authProvider: "LOCAL" | "GOOGLE" | "FACEBOOK";
 }
 
 export interface UpdateProfilePayload {

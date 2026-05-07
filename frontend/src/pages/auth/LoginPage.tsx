@@ -72,35 +72,75 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         }
     };
 
-    const handleOtpChange = (idx: number, val: string) => {
-        if (!/^\d?$/.test(val)) return;
+    const handleOtpChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        // Chỉ lấy ký tự số, bỏ mọi thứ khác
+        const raw = e.target.value.replace(/\D/g, "");
+        if (!raw) {
+            const next = [...otp];
+            next[idx] = "";
+            setOtp(next);
+            return;
+        }
+        // Lấy ký tự cuối cùng (phòng trường hợp browser ghép "1"+"2"="12")
+        const digit = raw[raw.length - 1];
         const next = [...otp];
-        next[idx] = val;
+        next[idx] = digit;
         setOtp(next);
-        if (val && idx < 5) otpRefs.current[idx + 1]?.focus();
+
+        if (idx < 5) {
+            // Defer focus để React flush DOM trước — tránh browser vẫn giữ event ở ô cũ
+            setTimeout(() => otpRefs.current[idx + 1]?.focus(), 0);
+        } else {
+            // Ô cuối — tự động submit nếu đủ 6 số
+            const code = next.join("");
+            if (code.length === 6) {
+                submitOtp(code);
+            }
+        }
     };
 
-    const handleOtpKeyDown = (idx: number, e: React.KeyboardEvent) => {
-        if (e.key === "Backspace" && !otp[idx] && idx > 0) {
+    const handleOtpKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Backspace") {
+            if (otp[idx]) {
+                // Xóa ký tự hiện tại, giữ focus
+                const next = [...otp];
+                next[idx] = "";
+                setOtp(next);
+            } else if (idx > 0) {
+                // Ô trống → lùi về ô trước
+                const next = [...otp];
+                next[idx - 1] = "";
+                setOtp(next);
+                otpRefs.current[idx - 1]?.focus();
+            }
+            e.preventDefault();
+        } else if (e.key === "ArrowLeft" && idx > 0) {
             otpRefs.current[idx - 1]?.focus();
+        } else if (e.key === "ArrowRight" && idx < 5) {
+            otpRefs.current[idx + 1]?.focus();
         }
     };
 
     const handleOtpPaste = (e: React.ClipboardEvent) => {
+        e.preventDefault();
         const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+        if (!pasted) return;
+        const next = ["", "", "", "", "", ""];
+        pasted.split("").forEach((ch, i) => { next[i] = ch; });
+        setOtp(next);
+        const focusIdx = Math.min(pasted.length - 1, 5);
+        otpRefs.current[focusIdx]?.focus();
+        // Tự submit nếu paste đủ 6 số
         if (pasted.length === 6) {
-            setOtp(pasted.split(""));
-            otpRefs.current[5]?.focus();
+            submitOtp(pasted);
         }
     };
 
-    const handleVerifyOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const code = otp.join("");
-        if (code.length < 6) { toast.error("Vui lòng nhập đủ 6 số"); return; }
+    // Hàm submit OTP nhận code trực tiếp — tránh stale closure khi đọc từ state
+    const submitOtp = async (code: string) => {
+        if (loading) return;
         setLoading(true);
         try {
-            // TODO: bỏ comment khi BE sẵn sàng
             await authService.verifyOtp(email.trim(), code);
             setStep("reset");
         } catch (err) {
@@ -114,12 +154,18 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         }
     };
 
-    const hasMinLength = newPassword.length >= 8;
-    const hasAlphanumeric = /[a-zA-Z]/.test(newPassword) && /\d/.test(newPassword);
+    const handleVerifyOtp = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        const code = otp.join("");
+        if (code.length < 6) { toast.error("Vui lòng nhập đủ 6 số"); return; }
+        await submitOtp(code);
+    };
+
+    const hasMinLength = newPassword.length >= 6;
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!hasMinLength || !hasAlphanumeric) { toast.error("Mật khẩu chưa đáp ứng yêu cầu"); return; }
+        if (!hasMinLength) { toast.error("Mật khẩu phải có ít nhất 6 ký tự"); return; }
         if (newPassword !== confirmPassword) { toast.error("Mật khẩu xác nhận không khớp"); return; }
         setLoading(true);
         try {
@@ -220,8 +266,9 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
                                         inputMode="numeric"
                                         maxLength={1}
                                         value={digit}
-                                        onChange={(e) => handleOtpChange(idx, e.target.value)}
+                                        onChange={(e) => handleOtpChange(idx, e)}
                                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                                        onFocus={(e) => e.target.select()}
                                         className="w-12 h-14 text-center text-xl font-bold bg-[#F3F4F6] rounded-[14px] outline-none focus:ring-2 focus:ring-[#FE4D01] transition-all"
                                     />
                                 ))}
@@ -316,22 +363,14 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
                                         {hasMinLength && <span className="text-white text-[10px] font-bold">✓</span>}
                                     </div>
                                     <span className={`text-xs font-medium ${hasMinLength ? "text-emerald-600" : "text-gray-500"}`}>
-                                        Ít nhất 8 ký tự
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasAlphanumeric ? "bg-emerald-500" : "bg-gray-200"}`}>
-                                        {hasAlphanumeric && <span className="text-white text-[10px] font-bold">✓</span>}
-                                    </div>
-                                    <span className={`text-xs font-medium ${hasAlphanumeric ? "text-emerald-600" : "text-gray-500"}`}>
-                                        Bao gồm chữ cái và số
+                                        Ít nhất 6 ký tự
                                     </span>
                                 </div>
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={loading || !hasMinLength || !hasAlphanumeric || newPassword !== confirmPassword}
+                                disabled={loading || !hasMinLength || newPassword !== confirmPassword}
                                 className="w-full py-4 rounded-full font-semibold text-orange-100 bg-[#D84315] hover:bg-[#BF360C] shadow-md shadow-black/20 active:scale-[0.97] transition-all disabled:opacity-50"
                             >
                                 {loading ? "Đang xử lý..." : "Đổi mật khẩu"}
@@ -360,6 +399,8 @@ export default function LoginPage() {
     const navigate = useNavigate();
 
     const socialConfig = useMemo(() => ({ backendBaseUrl: resolveBackendBaseUrl() }), []);
+    // Guard chống StrictMode chạy useEffect 2 lần trong dev
+    const oauthHandled = useRef(false);
 
     const navigateAfterLogin = async (roles?: string[]) => {
         if (roles?.includes("ADMIN")) { navigate("/admin/dashboard"); return; }
@@ -381,6 +422,7 @@ export default function LoginPage() {
         const queryParams = new URLSearchParams(window.location.search);
         const token = queryParams.get("token");
         const socialError = queryParams.get("error");
+
         if (socialError) {
             toast.error("Đăng nhập mạng xã hội không thành công");
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -388,18 +430,23 @@ export default function LoginPage() {
         }
         if (!token) return;
 
+        // Xóa token khỏi URL ngay lập tức để StrictMode không xử lý lần 2
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Guard: chỉ xử lý 1 lần dù StrictMode mount 2 lần
+        if (oauthHandled.current) return;
+        oauthHandled.current = true;
+
         const completeOAuth2Login = async () => {
             setLoading(true);
             try {
                 localStorage.setItem("token", token);
                 const response = await authService.getCurrentUser();
                 setAuth(response, token);
-                toast.success("Đăng nhập mạng xã hội thành công!");
-                window.history.replaceState({}, document.title, window.location.pathname);
+                toast.success("Đăng nhập thành công!");
                 await navigateAfterLogin(response.roles);
             } catch (error) {
                 localStorage.removeItem("token");
-                window.history.replaceState({}, document.title, window.location.pathname);
                 if (axios.isAxiosError(error)) {
                     toast.error(error.response?.data?.message || "Đăng nhập mạng xã hội thất bại");
                 } else {
@@ -422,7 +469,13 @@ export default function LoginPage() {
             await navigateAfterLogin(response.user.roles);
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                toast.error(error.response?.data?.message || "Đăng nhập thất bại");
+                const msg: string = error.response?.data?.message ?? "";
+                // Social account chưa có password → gợi ý đặt mật khẩu
+                if (msg.toLowerCase().includes("social login") || msg.toLowerCase().includes("google") || msg.toLowerCase().includes("facebook")) {
+                    toast.error("Tài khoản này đang đăng nhập bằng Google/Facebook. Bạn có thể đặt mật khẩu qua 'Quên mật khẩu?' để đăng nhập bằng email.", { duration: 5000 });
+                } else {
+                    toast.error(msg || "Đăng nhập thất bại");
+                }
             } else {
                 toast.error("Đăng nhập thất bại");
             }
