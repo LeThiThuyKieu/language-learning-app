@@ -55,15 +55,37 @@ export default function EmailSupportPage() {
         [threads, selectedThreadId],
     );
 
-    // Load danh sách ticket lần đầu
+    // Load danh sách ticket + poll mỗi 15s để nhận ticket mới
     useEffect(() => {
         let mounted = true;
+
+        const fetchList = () => {
+            supportService.getAdminTickets(0, 100, "desc", "EMAIL")
+                .then((data) => {
+                    if (!mounted) return;
+                    setThreads((prev) => {
+                        const prevMap = new Map(prev.map((t) => [t.id, t]));
+                        return data.map((t) => {
+                            const existing = prevMap.get(t.id);
+                            return existing?.messages ? { ...t, messages: existing.messages } : t;
+                        });
+                    });
+                })
+                .catch(() => { /* bỏ qua lỗi poll */ });
+        };
+
         setIsLoading(true);
         supportService.getAdminTickets(0, 100, "desc", "EMAIL")
             .then((data) => { if (mounted) setThreads(data); })
             .catch(() => toast.error("Không tải được danh sách hỗ trợ"))
             .finally(() => { if (mounted) setIsLoading(false); });
-        return () => { mounted = false; };
+
+        const listPoll = setInterval(fetchList, 15_000);
+
+        return () => {
+            mounted = false;
+            clearInterval(listPoll);
+        };
     }, []);
 
     // Khi chọn ticket: load detail 1 lần duy nhất (dùng ref để guard)

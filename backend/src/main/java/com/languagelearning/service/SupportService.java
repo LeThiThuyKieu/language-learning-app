@@ -261,22 +261,22 @@ public class SupportService {
 
         supportTicketRepository.save(ticket);
 
-        // Lấy câu hỏi đầu tiên của user để đưa vào email
-        String userQuestion = supportMessageRepository
-                .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
-                .map(SupportMessage::getMessage)
-                .orElse("");
+        // Chỉ gửi email thông báo nếu ticket đến từ form email (không gửi cho chat)
+        if (ticket.getSource() == SupportTicket.TicketSource.EMAIL) {
+            String userQuestion = supportMessageRepository
+                    .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
+                    .map(SupportMessage::getMessage)
+                    .orElse("");
 
-        // Gửi email thông báo phản hồi tới người dùng (async, không block)
-        // isFollowUp = true nếu đây không phải lần reply đầu tiên
-        emailService.sendSupportReply(
-                ticket.getRequesterEmail(),
-                ticket.getRequesterName(),
-                userQuestion,
-                request.getMessage().trim(),
-                ticket.getCategory().getDisplayName(),
-                previousAdminReplies > 0
-        );
+            emailService.sendSupportReply(
+                    ticket.getRequesterEmail(),
+                    ticket.getRequesterName(),
+                    userQuestion,
+                    request.getMessage().trim(),
+                    ticket.getCategory().getDisplayName(),
+                    previousAdminReplies > 0
+            );
+        }
 
         return toDetailDto(ticket);
     }

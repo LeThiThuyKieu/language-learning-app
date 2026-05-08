@@ -162,7 +162,7 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                 const detail = await supportService.getMyTicketDetail(result.id);
                 setTicket(detail);
 
-                const reply = "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!";
+                const reply = "Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất.";
                 setAutoReply(reply);
                 saveChatStorage(result.id, selectedCategory!, reply);
             } else {
@@ -286,29 +286,30 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                 {ticket?.messages?.map((msg, idx) => {
                                     const isUser = msg.senderType === "USER";
                                     return (
-                                        <div key={idx} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                                            <div className={`max-w-[85%] px-3 py-2 text-sm ${
-                                                isUser
-                                                    ? "bg-primary-600 text-white rounded-2xl rounded-br-sm"
-                                                    : "bg-white border rounded-2xl rounded-bl-sm shadow-sm text-slate-700"
-                                            }`}>
-                                                {msg.message}
-                                                <p className={`text-[10px] mt-1 ${isUser ? "text-white/70 text-right" : "text-slate-400"}`}>
-                                                    {msg.createdAt}
-                                                </p>
+                                        <>
+                                            <div key={idx} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                                                <div className={`max-w-[85%] px-3 py-2 text-sm ${
+                                                    isUser
+                                                        ? "bg-primary-600 text-white rounded-2xl rounded-br-sm"
+                                                        : "bg-white border rounded-2xl rounded-bl-sm shadow-sm text-slate-700"
+                                                }`}>
+                                                    {msg.message}
+                                                    <p className={`text-[10px] mt-1 ${isUser ? "text-white/70 text-right" : "text-slate-400"}`}>
+                                                        {msg.createdAt}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
+                                            {/* Auto reply chỉ hiện ngay sau tin nhắn đầu tiên của user */}
+                                            {idx === 0 && autoReply && (
+                                                <div className="flex justify-start">
+                                                    <div className="max-w-[85%] px-3 py-2 text-sm bg-white border rounded-2xl rounded-bl-sm shadow-sm text-slate-700">
+                                                        {autoReply}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     );
                                 })}
-
-                                {/* Tin nhắn tự động sau khi gửi lần đầu */}
-                                {autoReply && (
-                                    <div className="flex justify-start">
-                                        <div className="max-w-[85%] px-3 py-2 text-sm bg-white border rounded-2xl rounded-bl-sm shadow-sm text-slate-700">
-                                            {autoReply}
-                                        </div>
-                                    </div>
-                                )}
 
                                 {isSending && (
                                     <div className="flex justify-end">

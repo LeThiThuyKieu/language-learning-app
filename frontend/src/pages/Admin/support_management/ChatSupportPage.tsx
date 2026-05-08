@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
-import {
+import { toast } from "react-hot-toast";import {
     Search, Send, Inbox, User, MessageCircle, CheckCircle, Clock, AlertCircle,
     ArrowDown, ArrowUp, Filter, X, Loader2,
 } from "lucide-react";
@@ -62,6 +61,7 @@ export default function ChatSupportPage() {
     const loadedIds = useRef<Set<number>>(new Set());
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const stats = useMemo(() => buildStats(threads), [threads]);
 
@@ -84,15 +84,63 @@ export default function ChatSupportPage() {
         [threads, selectedThreadId],
     );
 
-    // Load danh sách chat ticket (source=CHAT)
+    // Load danh sách chat ticket (source=CHAT) + poll mỗi 15s để nhận ticket mới
     useEffect(() => {
         let mounted = true;
+
+        const fetchList = () => {
+            supportService.getAdminTickets(0, 100, "desc", "CHAT")
+                .then((data) => {
+                    if (!mounted) return;
+                    setThreads((prev) => {
+                        // Merge: giữ messages đã load, cập nhật status/thông tin mới
+                        const prevMap = new Map(prev.map((t) => [t.id, t]));
+                        return data.map((t) => {
+                            const existing = prevMap.get(t.id);
+                            return existing?.messages ? { ...t, messages: existing.messages } : t;
+                        });
+                    });
+                })
+                .catch(() => { /* bỏ qua lỗi poll */ });
+        };
+
         setIsLoading(true);
         supportService.getAdminTickets(0, 100, "desc", "CHAT")
             .then((data) => { if (mounted) setThreads(data); })
             .catch(() => toast.error("Không tải được danh sách chat hỗ trợ"))
             .finally(() => { if (mounted) setIsLoading(false); });
-        return () => { mounted = false; };
+
+        // Poll danh sách mỗi 15s để nhận ticket mới
+        const listPoll = setInterval(fetchList, 15_000);
+
+        return () => {
+            mounted = false;
+            clearInterval(listPoll);
+        };
+    }, []);
+
+    // Poll ticket đang xem mỗi 5s để nhận tin nhắn mới từ user
+    useEffect(() => {
+        if (!selectedThreadId) return;
+
+        if (pollRef.current) clearInterval(pollRef.current);
+
+        pollRef.current = setInterval(async () => {
+            try {
+                const detail = await supportService.getAdminTicketDetail(selectedThreadId);
+                setThreads((prev) => prev.map((t) => {
+                    if (t.id !== detail.id) return t;
+                    return { ...detail, message: t.message || detail.message };
+                }));
+            } catch { /* bỏ qua lỗi poll */ }
+        }, 5_000);
+
+        return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    }, [selectedThreadId]);
+
+    // Cleanup khi unmount
+    useEffect(() => {
+        return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }, []);
 
     // Khi chọn ticket: load detail + chuyển OPEN → IN_PROGRESS
@@ -253,7 +301,7 @@ export default function ChatSupportPage() {
 
                 {/* ── Chat Panel ── */}
                 {selectedThread && (
-                    <section className="rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden" style={{ maxHeight: "calc(100vh - 280px)" }}>
+                    <section className="rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden" style={{ maxHeight: "calc(100vh - 200px)" }}>
                         {/* Header */}
                         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
                             <AvatarPlaceholder name={selectedThread.name} size="lg" />
