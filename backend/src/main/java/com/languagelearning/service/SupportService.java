@@ -25,6 +25,24 @@ public class SupportService {
     private final SupportMessageRepository supportMessageRepository;
     private final EmailService emailService;
 
+    // Lấy ticket còn mở (OPEN/IN_PROGRESS/RESOLVED) của user theo category — dùng cho chatbox suggest.
+    @Transactional(readOnly = true)
+    public List<SupportTicketListItemDto> getActiveTicketsByCategory(String email, Integer categoryId) {
+        User user = getUserByEmail(email);
+        List<SupportTicket.SupportStatus> openStatuses = List.of(
+                SupportTicket.SupportStatus.OPEN,
+                SupportTicket.SupportStatus.IN_PROGRESS,
+                SupportTicket.SupportStatus.RESOLVED
+        );
+        return supportTicketRepository
+                .findByUserIdAndCategoryIdAndSourceAndStatusIn(
+                        user.getId(), categoryId, SupportTicket.TicketSource.CHAT, openStatuses)
+                .stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(this::toListItemDto)
+                .toList();
+    }
+
     // Lấy danh sách tất cả category hỗ trợ (dùng cho chatbox chọn category).
     @Transactional(readOnly = true)
     public List<SupportCategoryDto> getCategories() {
@@ -255,8 +273,11 @@ public class SupportService {
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
             ticket.setStatus(parseStatus(request.getStatus()));
         } else {
-            // Khi admin reply, luôn chuyển sang RESOLVED (Đã phản hồi)
-            ticket.setStatus(SupportTicket.SupportStatus.RESOLVED);
+            // Khi admin reply → chuyển sang IN_PROGRESS (không tự RESOLVED)
+            // Admin phải bấm "Hoàn tất" để chuyển RESOLVED
+            if (ticket.getStatus() == SupportTicket.SupportStatus.OPEN) {
+                ticket.setStatus(SupportTicket.SupportStatus.IN_PROGRESS);
+            }
         }
 
         supportTicketRepository.save(ticket);

@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableJpaAuditing
 @EnableMongoAuditing
 @EnableAsync
+@org.springframework.scheduling.annotation.EnableScheduling
 public class LanguageLearningAppApplication {
 
     public static void main(String[] args) {

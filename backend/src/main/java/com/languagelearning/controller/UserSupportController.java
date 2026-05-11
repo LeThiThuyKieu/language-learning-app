@@ -20,6 +20,17 @@ import java.util.List;
 public class UserSupportController {
     private final SupportService supportService;
 
+    // Lấy ticket còn mở theo category — dùng cho chatbox suggest ticket cũ.
+    @GetMapping("/tickets/active")
+    public ResponseEntity<ApiResponse<List<SupportTicketListItemDto>>> getActiveByCategory(
+            Authentication authentication,
+            @RequestParam Integer categoryId
+    ) {
+        String email = authentication.getName();
+        List<SupportTicketListItemDto> data = supportService.getActiveTicketsByCategory(email, categoryId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy ticket đang mở thành công", data));
+    }
+
     // Tạo ticket hỗ trợ mới từ phía user.
     @PostMapping("/tickets")
     public ResponseEntity<ApiResponse<SupportTicketDetailDto>> createTicket(

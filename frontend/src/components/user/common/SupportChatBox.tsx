@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, X, ChevronLeft, Loader2, GraduationCap, User, BookOpen, Wrench, MessageCircle } from "lucide-react";
+import {
+    Send, X, ChevronLeft, Loader2,
+    GraduationCap, User, BookOpen, Wrench, MessageCircle,
+    MessageSquarePlus, Clock, CheckCircle, XCircle,
+} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { supportService } from "@/services/supportService";
 import { toast } from "react-hot-toast";
 import type { SupportThread } from "@/components/admin/support_management/supportTypes";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Step = "category" | "chat";
+type Step =
+    | "category"  // Bước 1: chọn chủ đề
+    | "suggest"   // Bước 2: gợi ý ticket cũ còn mở
+    | "chat";     // Bước 3: chat
 
 interface Category {
     id: number;
@@ -21,6 +28,14 @@ const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
     "Bài học":     BookOpen,
     "Kỹ thuật":    Wrench,
     "Khác":        MessageCircle,
+};
+
+// Badge style cho status
+const STATUS_BADGE: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+    OPEN:        { label: "Open",        className: "bg-rose-100 text-rose-700",     icon: Clock },
+    IN_PROGRESS: { label: "In Progress", className: "bg-amber-100 text-amber-700",   icon: Clock },
+    RESOLVED:    { label: "Resolved",    className: "bg-emerald-100 text-emerald-700", icon: CheckCircle },
+    CLOSED:      { label: "Closed",      className: "bg-gray-100 text-gray-500",     icon: XCircle },
 };
 
 // ─── LocalStorage keys ────────────────────────────────────────────────────────
@@ -49,9 +64,11 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
     const [categories, setCategories] = useState<Category[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(savedCategory);
     const [ticket, setTicket] = useState<SupportThread | null>(null);
+    const [suggestedTickets, setSuggestedTickets] = useState<SupportThread[]>([]);
     const [draft, setDraft] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+    const [isLoadingSuggest, setIsLoadingSuggest] = useState(false);
     const [isRestoringTicket, setIsRestoringTicket] = useState(!!savedTicketId);
     const [autoReply, setAutoReply] = useState<string | null>(savedAutoReply);
 
@@ -85,7 +102,6 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                 setStep("chat");
             })
             .catch(() => {
-                // Ticket không còn tồn tại hoặc lỗi → xóa cache, về màn chọn category
                 clearChatStorage();
                 setStep("category");
                 setSelectedCategory(null);
@@ -130,19 +146,75 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
         localStorage.setItem(LS_AUTO_REPLY, reply);
     };
 
+    const goBackToCategory = () => {
+        clearChatStorage();
+        setStep("category");
+        setTicket(null);
+        setSelectedCategory(null);
+        setAutoReply(null);
+        setSuggestedTickets([]);
+    };
+
     // ── Handlers ──────────────────────────────────────────────────────────────
 
-    const handleSelectCategory = (cat: Category) => {
+    const handleSelectCategory = async (cat: Category) => {
         if (!isAuthenticated) {
             toast.error("Vui lòng đăng nhập để sử dụng chat hỗ trợ");
             return;
         }
-        // Chọn category mới → xóa ticket cũ
+
+        // Nếu đang có ticket cũ cùng category → không cần check lại
+        if (savedTicketId && savedCategory?.id === cat.id) {
+            setSelectedCategory(cat);
+            setStep("chat");
+            return;
+        }
+
+        // Xóa storage cũ nếu chọn category khác
         clearChatStorage();
         setTicket(null);
         setAutoReply(null);
         setSelectedCategory(cat);
         localStorage.setItem(LS_CATEGORY, JSON.stringify(cat));
+
+        // Check ticket còn mở cùng category
+        setIsLoadingSuggest(true);
+        try {
+            const active = await supportService.getActiveTicketsByCategory(cat.id);
+            if (active.length > 0) {
+                setSuggestedTickets(active);
+                setStep("suggest");
+            } else {
+                setStep("chat");
+            }
+        } catch {
+            setStep("chat");
+        } finally {
+            setIsLoadingSuggest(false);
+        }
+    };
+
+    // Tiếp tục ticket cũ
+    const handleContinueTicket = async (t: SupportThread) => {
+        setIsLoadingSuggest(true);
+        try {
+            const detail = await supportService.getMyTicketDetail(t.id);
+            setTicket(detail);
+            // Khôi phục autoReply nếu có
+            const reply = "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!";
+            setAutoReply(reply);
+            saveChatStorage(t.id, selectedCategory!, reply);
+            setStep("chat");
+        } catch {
+            toast.error("Không thể tải ticket, vui lòng thử lại");
+        } finally {
+            setIsLoadingSuggest(false);
+        }
+    };
+
+    // Tạo ticket mới (bỏ qua suggest)
+    const handleNewTicket = () => {
+        setSuggestedTickets([]);
         setStep("chat");
     };
 
@@ -162,10 +234,16 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                 const detail = await supportService.getMyTicketDetail(result.id);
                 setTicket(detail);
 
-                const reply = "Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất.";
+                const reply = "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!";
                 setAutoReply(reply);
                 saveChatStorage(result.id, selectedCategory!, reply);
             } else {
+                // Ticket CLOSED → không cho gửi
+                if (ticket.status === "CLOSED") {
+                    toast.error("Ticket này đã đóng. Vui lòng tạo ticket mới.");
+                    setDraft(text);
+                    return;
+                }
                 const updated = await supportService.sendUserMessage(ticket.id, text);
                 setTicket(updated);
             }
@@ -187,6 +265,8 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
         if (el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 100) + "px"; }
     };
 
+    const isClosed = ticket?.status === "CLOSED";
+
     // ── Render ────────────────────────────────────────────────────────────────
 
     return (
@@ -195,27 +275,22 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
             {/* Header */}
             <div className="flex items-center justify-between border-b bg-primary-600 px-4 py-3 text-white shrink-0">
                 <div className="flex items-center gap-2">
-                    {step === "chat" && (
-                        <button
-                            onClick={() => {
-                                clearChatStorage();
-                                setStep("category");
-                                setTicket(null);
-                                setSelectedCategory(null);
-                                setAutoReply(null);
-                            }}
-                            className="p-1 rounded-lg hover:bg-white/20 transition"
-                        >
+                    {(step === "suggest" || step === "chat") && (
+                        <button onClick={goBackToCategory} className="p-1 rounded-lg hover:bg-white/20 transition">
                             <ChevronLeft className="h-4 w-4" />
                         </button>
                     )}
                     <div>
                         <p className="text-sm font-bold">
-                            {step === "category" ? "Chat hỗ trợ" : selectedCategory?.displayName ?? "Hỗ trợ"}
+                            {step === "category" ? "Chat hỗ trợ"
+                                : step === "suggest" ? `${selectedCategory?.displayName} — Ticket cũ`
+                                : selectedCategory?.displayName ?? "Hỗ trợ"}
                         </p>
                         <p className="text-xs flex items-center gap-1 text-white/85">
                             <span className="h-2 w-2 rounded-full bg-green-400" />
-                            {step === "category" ? "Chọn chủ đề để bắt đầu" : "Phản hồi trong vài phút"}
+                            {step === "category" ? "Chọn chủ đề để bắt đầu"
+                                : step === "suggest" ? "Tiếp tục hoặc tạo mới"
+                                : "Phản hồi trong vài phút"}
                         </p>
                     </div>
                 </div>
@@ -224,13 +299,13 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                 </button>
             </div>
 
-            {/* Bước 1: Chọn category */}
+            {/* ── Bước 1: Chọn category ── */}
             {step === "category" && (
                 <div className="flex-1 overflow-y-auto p-4">
                     <p className="text-sm text-slate-500 mb-4 text-center">
                         Bạn cần hỗ trợ về vấn đề gì?
                     </p>
-                    {isLoadingCategories ? (
+                    {isLoadingCategories || isLoadingSuggest ? (
                         <div className="flex justify-center py-8">
                             <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
                         </div>
@@ -241,7 +316,7 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                 return (
                                     <button
                                         key={cat.id}
-                                        onClick={() => handleSelectCategory(cat)}
+                                        onClick={() => void handleSelectCategory(cat)}
                                         className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 border-transparent
                                             ${cat.colorBg} hover:border-primary-300 hover:shadow-md
                                             transition-all active:scale-95`}
@@ -265,11 +340,60 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                 </div>
             )}
 
-            {/* Bước 2: Chat */}
+            {/* ── Bước 2: Gợi ý ticket cũ ── */}
+            {step === "suggest" && (
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {isLoadingSuggest ? (
+                        <div className="flex justify-center py-8">
+                            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-sm text-slate-600 font-medium">
+                                Bạn có ticket đang mở về <strong>{selectedCategory?.displayName}</strong>:
+                            </p>
+
+                            {suggestedTickets.map((t) => {
+                                const badge = STATUS_BADGE[t.status] ?? STATUS_BADGE["OPEN"];
+                                const BadgeIcon = badge.icon;
+                                return (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => void handleContinueTicket(t)}
+                                        className="w-full text-left p-3 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-200 transition-all"
+                                    >
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${badge.className}`}>
+                                                <BadgeIcon className="w-3 h-3" />
+                                                {badge.label}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400">{t.createdAt}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 line-clamp-2">{t.message}</p>
+                                        <p className="text-[11px] text-primary-600 font-semibold mt-1.5">
+                                            Tiếp tục cuộc hội thoại →
+                                        </p>
+                                    </button>
+                                );
+                            })}
+
+                            {/* Tạo ticket mới */}
+                            <button
+                                onClick={handleNewTicket}
+                                className="w-full flex items-center gap-2 p-3 rounded-2xl border-2 border-dashed border-gray-200 text-slate-500 hover:border-primary-300 hover:text-primary-600 hover:bg-orange-50 transition-all"
+                            >
+                                <MessageSquarePlus className="w-4 h-4 shrink-0" />
+                                <span className="text-xs font-semibold">Tạo yêu cầu hỗ trợ mới</span>
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* ── Bước 3: Chat ── */}
             {step === "chat" && (
                 <>
                     <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-3 space-y-3">
-                        {/* Đang khôi phục ticket */}
                         {isRestoringTicket ? (
                             <div className="flex justify-center py-8">
                                 <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -283,11 +407,19 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                     </div>
                                 </div>
 
+                                {/* Banner CLOSED */}
+                                {isClosed && (
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-xl text-xs text-gray-500">
+                                        <XCircle className="w-3.5 h-3.5 shrink-0" />
+                                        Ticket này đã đóng. Bấm ← để tạo yêu cầu mới.
+                                    </div>
+                                )}
+
                                 {ticket?.messages?.map((msg, idx) => {
                                     const isUser = msg.senderType === "USER";
                                     return (
-                                        <>
-                                            <div key={idx} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                                        <div key={idx}>
+                                            <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
                                                 <div className={`max-w-[85%] px-3 py-2 text-sm ${
                                                     isUser
                                                         ? "bg-primary-600 text-white rounded-2xl rounded-br-sm"
@@ -299,15 +431,15 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                                     </p>
                                                 </div>
                                             </div>
-                                            {/* Auto reply chỉ hiện ngay sau tin nhắn đầu tiên của user */}
+                                            {/* Auto reply ngay sau tin nhắn đầu tiên */}
                                             {idx === 0 && autoReply && (
-                                                <div className="flex justify-start">
+                                                <div className="flex justify-start mt-3">
                                                     <div className="max-w-[85%] px-3 py-2 text-sm bg-white border rounded-2xl rounded-bl-sm shadow-sm text-slate-700">
                                                         {autoReply}
                                                     </div>
                                                 </div>
                                             )}
-                                        </>
+                                        </div>
                                     );
                                 })}
 
@@ -323,28 +455,30 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Input */}
-                    <div className="border-t bg-white p-3 shrink-0">
-                        <div className="flex gap-2 items-end">
-                            <textarea
-                                ref={textareaRef}
-                                value={draft}
-                                onChange={handleDraftChange}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Nhập tin nhắn..."
-                                rows={1}
-                                className="flex-1 resize-none overflow-hidden rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-400 transition"
-                                style={{ maxHeight: 100 }}
-                            />
-                            <button
-                                onClick={() => void handleSend()}
-                                disabled={!draft.trim() || isSending || isRestoringTicket}
-                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
-                            >
-                                <Send className="h-4 w-4" />
-                            </button>
+                    {/* Input — ẩn nếu ticket CLOSED */}
+                    {!isClosed && (
+                        <div className="border-t bg-white p-3 shrink-0">
+                            <div className="flex gap-2 items-end">
+                                <textarea
+                                    ref={textareaRef}
+                                    value={draft}
+                                    onChange={handleDraftChange}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Nhập tin nhắn..."
+                                    rows={1}
+                                    className="flex-1 resize-none overflow-hidden rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-400 transition"
+                                    style={{ maxHeight: 100 }}
+                                />
+                                <button
+                                    onClick={() => void handleSend()}
+                                    disabled={!draft.trim() || isSending || isRestoringTicket}
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white hover:scale-105 active:scale-95 transition-all disabled:opacity-40"
+                                >
+                                    <Send className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </>
             )}
         </div>

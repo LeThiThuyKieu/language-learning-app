@@ -2,18 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";import {
     Search, Send, Inbox, User, MessageCircle, CheckCircle, Clock, AlertCircle,
     ArrowDown, ArrowUp, Filter, X, Loader2,
-} from "lucide-react";
-import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
-import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS } from "@/components/admin/support_management/supportTypes";
+} from "lucide-react";import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
+import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL, STATUS_STYLE } from "@/components/admin/support_management/supportTypes";
 import { supportService } from "@/services/supportService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const STATUS_STYLE: Record<SupportStatus, string> = {
-    "Chưa xử lý": "bg-rose-100 text-rose-700",
-    "Đang xử lý":  "bg-amber-100 text-amber-700",
-    "Đã phản hồi": "bg-emerald-100 text-emerald-700",
-};
-
 const CATEGORY_STYLE: Record<string, string> = {
     "Bắt đầu học": "bg-orange-100 text-orange-700",
     "Tài khoản":   "bg-blue-100 text-blue-700",
@@ -25,14 +18,14 @@ const CATEGORY_STYLE: Record<string, string> = {
 
 function buildStats(threads: SupportThread[]): AdminStatCardProps[] {
     const total      = threads.length;
-    const pending    = threads.filter((t) => t.status === "Chưa xử lý").length;
-    const inProgress = threads.filter((t) => t.status === "Đang xử lý").length;
-    const replied    = threads.filter((t) => t.status === "Đã phản hồi").length;
+    const pending    = threads.filter((t) => t.status === "OPEN").length;
+    const inProgress = threads.filter((t) => t.status === "IN_PROGRESS").length;
+    const replied    = threads.filter((t) => t.status === "RESOLVED").length;
     return [
         { label: "Tổng chat",    value: String(total),      icon: <MessageCircle size={24} />, iconBg: "bg-orange-50",  iconText: "text-orange-500",  borderColor: "border-l-orange-500",  change: "Tổng yêu cầu hỗ trợ", trend: "up" as const },
-        { label: "Chưa xử lý",  value: String(pending),    icon: <AlertCircle size={24} />,   iconBg: "bg-rose-50",    iconText: "text-rose-500",    borderColor: "border-l-rose-500",    change: "Cần xử lý ngay",       trend: pending > 0 ? "down" as const : "up" as const },
-        { label: "Đang xử lý",  value: String(inProgress), icon: <Clock size={24} />,         iconBg: "bg-amber-50",   iconText: "text-amber-500",   borderColor: "border-l-amber-500",   change: "Đang được xử lý",      pulsing: inProgress > 0 },
-        { label: "Đã phản hồi", value: String(replied),    icon: <CheckCircle size={24} />,   iconBg: "bg-emerald-50", iconText: "text-emerald-500", borderColor: "border-l-emerald-500", change: "Đã hoàn thành",         trend: "up" as const },
+        { label: "Open",        value: String(pending),    icon: <AlertCircle size={24} />,   iconBg: "bg-rose-50",    iconText: "text-rose-500",    borderColor: "border-l-rose-500",    change: "Cần xử lý ngay",   trend: pending > 0 ? "down" as const : "up" as const },
+        { label: "In Progress", value: String(inProgress), icon: <Clock size={24} />,         iconBg: "bg-amber-50",   iconText: "text-amber-500",   borderColor: "border-l-amber-500",   change: "Đang được xử lý", pulsing: inProgress > 0 },
+        { label: "Resolved",    value: String(replied),    icon: <CheckCircle size={24} />,   iconBg: "bg-emerald-50", iconText: "text-emerald-500", borderColor: "border-l-emerald-500", change: "Đã hoàn thành",   trend: "up" as const },
     ];
 }
 
@@ -52,6 +45,7 @@ export default function ChatSupportPage() {
     const [threads, setThreads] = useState<SupportThread[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSendingReply, setIsSendingReply] = useState(false);
+    const [isResolving, setIsResolving] = useState(false);
     const [query, setQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<"Tất cả" | SupportStatus>("Tất cả");
     const [timeSort, setTimeSort] = useState<"desc" | "asc">("desc");
@@ -194,6 +188,23 @@ export default function ChatSupportPage() {
         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSendReply(); }
     };
 
+    const handleResolve = async () => {
+        if (!selectedThread || isResolving) return;
+        try {
+            setIsResolving(true);
+            const updated = await supportService.updateTicketStatus(selectedThread.id, "RESOLVED");
+            setThreads((prev) => prev.map((t) => {
+                if (t.id !== updated.id) return t;
+                return { ...updated, message: t.message || updated.message };
+            }));
+            toast.success("Đã đánh dấu hoàn tất");
+        } catch {
+            toast.error("Không thể cập nhật trạng thái");
+        } finally {
+            setIsResolving(false);
+        }
+    };
+
     const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setDraftReply(e.target.value);
         const el = textareaRef.current;
@@ -245,7 +256,7 @@ export default function ChatSupportPage() {
                                         statusFilter === f ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 text-slate-600 hover:bg-gray-200"
                                     }`}
                                 >
-                                    {f}
+                                    {f === "Tất cả" ? "Tất cả" : STATUS_LABEL[f]}
                                 </button>
                             ))}
                             <button
@@ -287,7 +298,7 @@ export default function ChatSupportPage() {
                                             {thread.category}
                                         </span>
                                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[thread.status]}`}>
-                                            {thread.status}
+                                            {STATUS_LABEL[thread.status]}
                                         </span>
                                     </div>
                                     <p className="text-sm text-slate-600 line-clamp-2 leading-6">

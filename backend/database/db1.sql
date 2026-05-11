@@ -381,6 +381,9 @@ CREATE INDEX idx_message_ticket ON support_message(ticket_id);
 ALTER TABLE support_ticket
     ADD COLUMN source ENUM('CHAT', 'EMAIL') NOT NULL DEFAULT 'EMAIL';
 
+ALTER TABLE support_ticket
+    ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
 CREATE INDEX idx_ticket_source ON support_ticket(source);
 
 -- Nhận diện guest session

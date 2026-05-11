@@ -11,13 +11,13 @@ function buildStats(threads: SupportThread[]): AdminStatCardProps[] {
     const total = threads.length;
     const open = threads.filter((t) => t.status === "Chưa xử lý").length;
     const inProgress = threads.filter((t) => t.status === "Đang xử lý").length;
-    const replied = threads.filter((t) => t.status === "Đã phản hồi").length;
+    const replied = threads.filter((t) => t.status === "Đã giải quyết").length;
 
     return [
         { label: "Tổng email",    value: total.toLocaleString(),      icon: <Mail size={24} />,         iconBg: "bg-orange-50",  iconText: "text-orange-500",  borderColor: "border-l-orange-500",  change: "Tổng yêu cầu hỗ trợ", trend: "up" as const },
         { label: "Chưa xử lý",   value: open.toLocaleString(),       icon: <Inbox size={24} />,        iconBg: "bg-rose-50",    iconText: "text-rose-500",    borderColor: "border-l-rose-500",    change: "Cần xử lý ngay",       trend: open > 0 ? "down" as const : "up" as const },
         { label: "Đang xử lý",   value: inProgress.toLocaleString(), icon: <MessageSquare size={24} />,iconBg: "bg-amber-50",   iconText: "text-amber-500",   borderColor: "border-l-amber-500",   change: "Đang được xử lý",      pulsing: inProgress > 0 },
-        { label: "Đã phản hồi",  value: replied.toLocaleString(),    icon: <CheckCircle size={24} />,  iconBg: "bg-emerald-50", iconText: "text-emerald-500", borderColor: "border-l-emerald-500", change: "Đã hoàn thành",         trend: "up" as const },
+        { label: "Đã giải quyết",  value: replied.toLocaleString(),    icon: <CheckCircle size={24} />,  iconBg: "bg-emerald-50", iconText: "text-emerald-500", borderColor: "border-l-emerald-500", change: "Đã hoàn thành",         trend: "up" as const },
     ];
 }
 

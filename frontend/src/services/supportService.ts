@@ -56,9 +56,7 @@ const CATEGORY_ID_BY_TOPIC: Record<string, number> = {
 };
 
 function toSupportStatus(status: BackendSupportListItem["status"] | BackendSupportDetail["status"]): SupportStatus {
-    if (status === "OPEN") return "Chưa xử lý";
-    if (status === "IN_PROGRESS") return "Đang xử lý";
-    return "Đã phản hồi";
+    return status; 
 }
 
 function toSupportCategory(displayName: string): SupportCategory {
@@ -100,7 +98,7 @@ function mapDetailToThread(detail: BackendSupportDetail): SupportThread {
         name: detail.requesterName || detail.requesterEmail?.split("@")[0] || "Người dùng",
         email: detail.requesterEmail,
         category: toSupportCategory(detail.categoryDisplayName),
-        // message luôn là câu hỏi đầu tiên của user — dùng cho list bên trái
+        // message luôn là câu hỏi đầu tiên của user 
         message: firstUserMessage,
         createdAt: toRelativeTime(detail.createdAt),
         sentAt: detail.createdAt,
@@ -181,5 +179,13 @@ export const supportService = {
     async getMyTicketDetail(ticketId: number): Promise<SupportThread> {
         const res = await apiClient.get<ApiResponse<BackendSupportDetail>>(`/users/support/tickets/${ticketId}`);
         return mapDetailToThread(res.data.data);
+    },
+
+    // Lấy ticket còn mở (OPEN/IN_PROGRESS/RESOLVED) theo category — dùng cho chatbox suggest
+    async getActiveTicketsByCategory(categoryId: number): Promise<SupportThread[]> {
+        const res = await apiClient.get<ApiResponse<BackendSupportListItem[]>>(
+            `/users/support/tickets/active?categoryId=${categoryId}`
+        );
+        return (res.data.data ?? []).map(mapListItemToThread);
     },
 };

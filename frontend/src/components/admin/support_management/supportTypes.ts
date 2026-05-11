@@ -1,4 +1,4 @@
-export type SupportStatus = "Chưa xử lý" | "Đang xử lý" | "Đã phản hồi";
+export type SupportStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 export type SupportCategory = "Bắt đầu học" | "Tài khoản" | "Thanh toán" | "Bài học" | "Kỹ thuật" | "Nội dung học" | "Khác";
 
 export type SupportMessage = {
@@ -13,13 +13,33 @@ export type SupportThread = {
     name: string;
     email: string;
     category: SupportCategory;
-    /** Luôn là câu hỏi đầu tiên của user, dùng để hiển thị trong list */
     message: string;
     createdAt: string;
     sentAt: string;
     status: SupportStatus;
-    /** Full conversation, chỉ có khi đã load detail */
     messages?: SupportMessage[];
 };
 
-export const SUPPORT_STATUS_FILTERS: Array<"Tất cả" | SupportStatus> = ["Tất cả", "Chưa xử lý", "Đang xử lý", "Đã phản hồi"];
+export const SUPPORT_STATUS_FILTERS: Array<"Tất cả" | SupportStatus> = [
+    "Tất cả",
+    "OPEN",
+    "IN_PROGRESS",
+    "RESOLVED",
+    "CLOSED",
+];
+
+// Label hiển thị cho từng status
+export const STATUS_LABEL: Record<SupportStatus, string> = {
+    OPEN:        "Open",
+    IN_PROGRESS: "In Progress",
+    RESOLVED:    "Resolved",
+    CLOSED:      "Closed",
+};
+
+// Style badge cho từng status
+export const STATUS_STYLE: Record<SupportStatus, string> = {
+    OPEN:        "bg-rose-100 text-rose-700",
+    IN_PROGRESS: "bg-amber-100 text-amber-700",
+    RESOLVED:    "bg-emerald-100 text-emerald-700",
+    CLOSED:      "bg-gray-100 text-gray-500",
+};
