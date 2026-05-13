@@ -473,7 +473,7 @@ function TopStats() {
                 streakCount: p.streakCount,
                 totalKn: p.totalKn ?? 0,
                 totalXp: p.totalXp ?? 0,
-                badgeCount: p.badges?.length ?? 0,
+                badgeCount: p.badges?.filter(b => b.earned).length ?? 0,
             }))
             .catch(() => {/* ignore */});
     }, []);
