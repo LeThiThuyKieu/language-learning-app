@@ -150,19 +150,6 @@ CREATE TABLE IF NOT EXISTS `skill_tree` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table language_learning_app.streak_history
-CREATE TABLE IF NOT EXISTS `streak_history` (
-                                                `id` int(11) NOT NULL AUTO_INCREMENT,
-    `date` date DEFAULT NULL,
-    `earned_xp` int(11) DEFAULT NULL,
-    `user_id` int(11) DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `FKd6oosu29jri0m758qoscy504a` (`user_id`),
-    CONSTRAINT `FKd6oosu29jri0m758qoscy504a` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Data exporting was unselected.
-
 -- Dumping structure for table language_learning_app.support_category
 CREATE TABLE IF NOT EXISTS `support_category` (
                                                   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -399,20 +386,6 @@ CREATE TABLE IF NOT EXISTS `user_streak` (
     KEY `user_id` (`user_id`),
     CONSTRAINT `streak_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Data exporting was unselected.
-
--- Dumping structure for table language_learning_app.xp_history
-CREATE TABLE IF NOT EXISTS `xp_history` (
-                                            `id` int(11) NOT NULL AUTO_INCREMENT,
-    `user_id` int(11) DEFAULT NULL,
-    `amount` int(11) DEFAULT NULL,
-    `source` varchar(100) DEFAULT NULL,
-    `created_at` datetime DEFAULT current_timestamp(),
-    PRIMARY KEY (`id`),
-    KEY `user_id` (`user_id`),
-    CONSTRAINT `xp_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
