@@ -24,19 +24,24 @@ public class SupportTicketScheduler {
 
     private final SupportTicketRepository supportTicketRepository;
 
-    @Scheduled(fixedRate = 3_600_000) // mỗi 1 giờ
+    @Scheduled(cron = "0 0 2 * * *") // 2:00 AM mỗi ngày
     @Transactional
     public void autoCloseResolvedTickets() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(AUTO_CLOSE_DAYS);
 
+        // Auto-close cả RESOLVED và IN_PROGRESS quá 3 ngày không có hoạt động
         List<SupportTicket> toClose = supportTicketRepository
-                .findByStatusAndUpdatedAtBefore(SupportTicket.SupportStatus.RESOLVED, cutoff);
+                .findByStatusInAndUpdatedAtBefore(
+                        List.of(SupportTicket.SupportStatus.RESOLVED, SupportTicket.SupportStatus.IN_PROGRESS),
+                        cutoff
+                );
 
         if (toClose.isEmpty()) return;
 
         toClose.forEach(ticket -> ticket.setStatus(SupportTicket.SupportStatus.CLOSED));
         supportTicketRepository.saveAll(toClose);
 
-        log.info("Auto-closed {} ticket(s) RESOLVED quá {} ngày", toClose.size(), AUTO_CLOSE_DAYS);
+        log.info("Auto-closed {} ticket(s) (RESOLVED/IN_PROGRESS) quá {} ngày không hoạt động",
+                toClose.size(), AUTO_CLOSE_DAYS);
     }
 }

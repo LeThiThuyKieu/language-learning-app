@@ -56,7 +56,7 @@ const CATEGORY_ID_BY_TOPIC: Record<string, number> = {
 };
 
 function toSupportStatus(status: BackendSupportListItem["status"] | BackendSupportDetail["status"]): SupportStatus {
-    return status; 
+    return status; // Dùng thẳng giá trị từ DB
 }
 
 function toSupportCategory(displayName: string): SupportCategory {
@@ -98,7 +98,6 @@ function mapDetailToThread(detail: BackendSupportDetail): SupportThread {
         name: detail.requesterName || detail.requesterEmail?.split("@")[0] || "Người dùng",
         email: detail.requesterEmail,
         category: toSupportCategory(detail.categoryDisplayName),
-        // message luôn là câu hỏi đầu tiên của user 
         message: firstUserMessage,
         createdAt: toRelativeTime(detail.createdAt),
         sentAt: detail.createdAt,
@@ -112,6 +111,8 @@ function mapDetailToThread(detail: BackendSupportDetail): SupportThread {
 }
 
 export const supportService = {
+    // ── Admin ──────────────────────────────────────────────────────────────────
+
     async getAdminTickets(page = 0, size = 100, sort: "asc" | "desc" = "desc", source?: "CHAT" | "EMAIL"): Promise<SupportThread[]> {
         const params = new URLSearchParams({ page: String(page), size: String(size), sort });
         if (source) params.set("source", source);
@@ -126,12 +127,13 @@ export const supportService = {
         return mapDetailToThread(res.data.data);
     },
 
-    // Gọi khi admin click mở ticket — tự động chuyển OPEN → IN_PROGRESS và trả về full conversation
+    // Admin mở ticket → OPEN → IN_PROGRESS
     async viewAdminTicket(ticketId: number): Promise<SupportThread> {
         const res = await apiClient.post<ApiResponse<BackendSupportDetail>>(`/admin/support-management/tickets/${ticketId}/view`);
         return mapDetailToThread(res.data.data);
     },
 
+    // Admin reply → giữ IN_PROGRESS
     async replyAdminTicket(ticketId: number, message: string): Promise<SupportThread> {
         const res = await apiClient.post<ApiResponse<BackendSupportDetail>>(
             `/admin/support-management/tickets/${ticketId}/reply`,
@@ -139,6 +141,17 @@ export const supportService = {
         );
         return mapDetailToThread(res.data.data);
     },
+
+    // Admin bấm "Hoàn tất" → RESOLVED
+    async updateTicketStatus(ticketId: number, status: string): Promise<SupportThread> {
+        const res = await apiClient.patch<ApiResponse<BackendSupportDetail>>(
+            `/admin/support-management/tickets/${ticketId}/status`,
+            { status },
+        );
+        return mapDetailToThread(res.data.data);
+    },
+
+    // ── User ───────────────────────────────────────────────────────────────────
 
     async createUserTicket(topic: string, message: string, source: "CHAT" | "EMAIL" = "EMAIL"): Promise<{ id: number }> {
         const categoryId = CATEGORY_ID_BY_TOPIC[topic] ?? CATEGORY_ID_BY_TOPIC["Khác"];
@@ -160,7 +173,7 @@ export const supportService = {
         });
     },
 
-    // Lấy danh sách category (public, không cần auth)
+    // Lấy danh sách category (public)
     async getCategories(): Promise<{ id: number; displayName: string; colorBg: string; colorText: string }[]> {
         const res = await apiClient.get<ApiResponse<{ id: number; displayName: string; colorBg: string; colorText: string }[]>>("/public/support/categories");
         return res.data.data ?? [];
@@ -175,16 +188,16 @@ export const supportService = {
         return mapDetailToThread(res.data.data);
     },
 
-    // Lấy chi tiết ticket của user (để poll tin nhắn mới từ admin)
+    // Lấy chi tiết ticket của user (poll tin nhắn mới từ admin)
     async getMyTicketDetail(ticketId: number): Promise<SupportThread> {
         const res = await apiClient.get<ApiResponse<BackendSupportDetail>>(`/users/support/tickets/${ticketId}`);
         return mapDetailToThread(res.data.data);
     },
 
-    // Lấy ticket còn mở (OPEN/IN_PROGRESS/RESOLVED) theo category — dùng cho chatbox suggest
+    // Lấy ticket còn mở theo category — dùng cho chatbox suggest
     async getActiveTicketsByCategory(categoryId: number): Promise<SupportThread[]> {
         const res = await apiClient.get<ApiResponse<BackendSupportListItem[]>>(
-            `/users/support/tickets/active?categoryId=${categoryId}`
+            `/users/support/tickets/active?categoryId=${categoryId}`,
         );
         return (res.data.data ?? []).map(mapListItemToThread);
     },

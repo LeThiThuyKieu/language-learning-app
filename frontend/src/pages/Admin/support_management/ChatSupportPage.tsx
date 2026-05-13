@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-hot-toast";import {
+import { toast } from "react-hot-toast";
+import {
     Search, Send, Inbox, User, MessageCircle, CheckCircle, Clock, AlertCircle,
-    ArrowDown, ArrowUp, Filter, X, Loader2,
-} from "lucide-react";import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
+    ArrowDown, ArrowUp, Filter, X, Loader2, XCircle,
+} from "lucide-react";
+import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL, STATUS_STYLE } from "@/components/admin/support_management/supportTypes";
 import { supportService } from "@/services/supportService";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const CATEGORY_STYLE: Record<string, string> = {
     "Bắt đầu học": "bg-orange-100 text-orange-700",
     "Tài khoản":   "bg-blue-100 text-blue-700",
@@ -21,11 +22,13 @@ function buildStats(threads: SupportThread[]): AdminStatCardProps[] {
     const pending    = threads.filter((t) => t.status === "OPEN").length;
     const inProgress = threads.filter((t) => t.status === "IN_PROGRESS").length;
     const replied    = threads.filter((t) => t.status === "RESOLVED").length;
+    const closed     = threads.filter((t) => t.status === "CLOSED").length;
     return [
-        { label: "Tổng chat",    value: String(total),      icon: <MessageCircle size={24} />, iconBg: "bg-orange-50",  iconText: "text-orange-500",  borderColor: "border-l-orange-500",  change: "Tổng yêu cầu hỗ trợ", trend: "up" as const },
-        { label: "Open",        value: String(pending),    icon: <AlertCircle size={24} />,   iconBg: "bg-rose-50",    iconText: "text-rose-500",    borderColor: "border-l-rose-500",    change: "Cần xử lý ngay",   trend: pending > 0 ? "down" as const : "up" as const },
-        { label: "In Progress", value: String(inProgress), icon: <Clock size={24} />,         iconBg: "bg-amber-50",   iconText: "text-amber-500",   borderColor: "border-l-amber-500",   change: "Đang được xử lý", pulsing: inProgress > 0 },
-        { label: "Resolved",    value: String(replied),    icon: <CheckCircle size={24} />,   iconBg: "bg-emerald-50", iconText: "text-emerald-500", borderColor: "border-l-emerald-500", change: "Đã hoàn thành",   trend: "up" as const },
+        { label: "Tổng chat",   value: String(total),      icon: <MessageCircle size={24} />, iconBg: "bg-orange-50",  iconText: "text-orange-500",  borderColor: "border-l-orange-500",  change: "Tổng yêu cầu hỗ trợ", trend: "up" as const },
+        { label: "Open",        value: String(pending),    icon: <AlertCircle size={24} />,   iconBg: "bg-rose-50",    iconText: "text-rose-500",    borderColor: "border-l-rose-500",    change: "Cần xử lý ngay",       trend: pending > 0 ? "down" as const : "up" as const },
+        { label: "In Progress", value: String(inProgress), icon: <Clock size={24} />,         iconBg: "bg-amber-50",   iconText: "text-amber-500",   borderColor: "border-l-amber-500",   change: "Đang được xử lý",      pulsing: inProgress > 0 },
+        { label: "Resolved",    value: String(replied),    icon: <CheckCircle size={24} />,   iconBg: "bg-emerald-50", iconText: "text-emerald-500", borderColor: "border-l-emerald-500", change: "Đã hoàn thành",         trend: "up" as const },
+        { label: "Closed",      value: String(closed),     icon: <XCircle size={24} />,       iconBg: "bg-gray-50",    iconText: "text-gray-400",    borderColor: "border-l-gray-400",    change: "Đã đóng",               trend: "up" as const },
     ];
 }
 
@@ -40,7 +43,6 @@ function AvatarPlaceholder({ name, size = "md" }: { name: string; size?: "sm" | 
     );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ChatSupportPage() {
     const [threads, setThreads] = useState<SupportThread[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -78,16 +80,13 @@ export default function ChatSupportPage() {
         [threads, selectedThreadId],
     );
 
-    // Load danh sách chat ticket (source=CHAT) + poll mỗi 15s để nhận ticket mới
     useEffect(() => {
         let mounted = true;
-
         const fetchList = () => {
             supportService.getAdminTickets(0, 100, "desc", "CHAT")
                 .then((data) => {
                     if (!mounted) return;
                     setThreads((prev) => {
-                        // Merge: giữ messages đã load, cập nhật status/thông tin mới
                         const prevMap = new Map(prev.map((t) => [t.id, t]));
                         return data.map((t) => {
                             const existing = prevMap.get(t.id);
@@ -95,30 +94,20 @@ export default function ChatSupportPage() {
                         });
                     });
                 })
-                .catch(() => { /* bỏ qua lỗi poll */ });
+                .catch(() => {});
         };
-
         setIsLoading(true);
         supportService.getAdminTickets(0, 100, "desc", "CHAT")
             .then((data) => { if (mounted) setThreads(data); })
             .catch(() => toast.error("Không tải được danh sách chat hỗ trợ"))
             .finally(() => { if (mounted) setIsLoading(false); });
-
-        // Poll danh sách mỗi 15s để nhận ticket mới
         const listPoll = setInterval(fetchList, 15_000);
-
-        return () => {
-            mounted = false;
-            clearInterval(listPoll);
-        };
+        return () => { mounted = false; clearInterval(listPoll); };
     }, []);
 
-    // Poll ticket đang xem mỗi 5s để nhận tin nhắn mới từ user
     useEffect(() => {
         if (!selectedThreadId) return;
-
         if (pollRef.current) clearInterval(pollRef.current);
-
         pollRef.current = setInterval(async () => {
             try {
                 const detail = await supportService.getAdminTicketDetail(selectedThreadId);
@@ -126,29 +115,23 @@ export default function ChatSupportPage() {
                     if (t.id !== detail.id) return t;
                     return { ...detail, message: t.message || detail.message };
                 }));
-            } catch { /* bỏ qua lỗi poll */ }
+            } catch {}
         }, 5_000);
-
         return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }, [selectedThreadId]);
 
-    // Cleanup khi unmount
     useEffect(() => {
         return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }, []);
 
-    // Khi chọn ticket: load detail + chuyển OPEN → IN_PROGRESS
     const handleSelectThread = (threadId: number) => {
         setSelectedThreadId(threadId);
         const thread = threads.find((t) => t.id === threadId);
         if (!thread) return;
-
         setDraftReply(`Chào ${thread.name}, `);
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-
         if (loadedIds.current.has(threadId)) return;
         loadedIds.current.add(threadId);
-
         supportService.viewAdminTicket(threadId)
             .then((detail) => {
                 setThreads((prev) => prev.map((t) => {
@@ -156,17 +139,11 @@ export default function ChatSupportPage() {
                     return { ...detail, message: t.message || detail.message };
                 }));
             })
-            .catch((err) => {
-                console.error(err);
-                loadedIds.current.delete(threadId);
-            });
+            .catch(() => { loadedIds.current.delete(threadId); });
     };
 
     const handleSendReply = async () => {
-        if (!selectedThread || !draftReply.trim()) {
-            toast.error("Vui lòng nhập nội dung phản hồi");
-            return;
-        }
+        if (!selectedThread || !draftReply.trim()) { toast.error("Vui lòng nhập nội dung phản hồi"); return; }
         try {
             setIsSendingReply(true);
             const updated = await supportService.replyAdminTicket(selectedThread.id, draftReply.trim());
@@ -177,11 +154,8 @@ export default function ChatSupportPage() {
             setDraftReply("");
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
             toast.success("Đã gửi phản hồi");
-        } catch {
-            toast.error("Không thể gửi phản hồi");
-        } finally {
-            setIsSendingReply(false);
-        }
+        } catch { toast.error("Không thể gửi phản hồi"); }
+        finally { setIsSendingReply(false); }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -198,11 +172,8 @@ export default function ChatSupportPage() {
                 return { ...updated, message: t.message || updated.message };
             }));
             toast.success("Đã đánh dấu hoàn tất");
-        } catch {
-            toast.error("Không thể cập nhật trạng thái");
-        } finally {
-            setIsResolving(false);
-        }
+        } catch { toast.error("Không thể cập nhật trạng thái"); }
+        finally { setIsResolving(false); }
     };
 
     const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -211,95 +182,79 @@ export default function ChatSupportPage() {
         if (el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }
     };
 
+    // Tắt scroll của main khi ở trang này để 2 panel scroll độc lập
+    useEffect(() => {
+        const main = document.querySelector("main");
+        if (main) { main.style.overflow = "hidden"; }
+        return () => { if (main) { main.style.overflow = ""; } };
+    }, []);
+
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div>
-                <h1 className="text-2xl font-extrabold text-gray-900">Quản lý chat hỗ trợ</h1>
-                <p className="text-sm text-gray-500 mt-1">Xem và phản hồi trực tiếp các yêu cầu hỗ trợ qua chat.</p>
-            </div>
+        <div className="flex flex-col -m-6 h-[calc(100vh-64px)] overflow-hidden">
 
-            {/* Stat cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                {stats.map((s) => <AdminStatCard key={s.label} {...s} />)}
-            </div>
-
-            {isLoading && (
-                <div className="rounded-3xl border border-gray-100 bg-white p-8 text-center text-slate-500 shadow-sm flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Đang tải...
+            {/* Header + Stats — ẩn khi đang xem detail */}
+            {!selectedThread && (
+            <div className="px-6 pt-6 pb-4 space-y-5 shrink-0">
+                <div>
+                    <h1 className="text-2xl font-extrabold text-gray-900">Quản lý chat hỗ trợ</h1>
+                    <p className="text-sm text-gray-500 mt-1">Xem và phản hồi trực tiếp các yêu cầu hỗ trợ qua chat.</p>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
+                    {stats.map((s) => <AdminStatCard key={s.label} {...s} />)}
+                </div>
+                {isLoading && (
+                    <div className="rounded-2xl border border-gray-100 bg-white px-5 py-3 flex items-center gap-2 text-slate-500 text-sm shadow-sm">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Đang tải...
+                    </div>
+                )}
+            </div>
             )}
 
-            {/* Content */}
-            <div className={selectedThread ? "grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]" : "space-y-6"}>
+            {/* List + Chat — chiếm phần còn lại, scroll độc lập */}
+            <div className={`flex-1 overflow-hidden px-6 pb-6 ${selectedThread ? "grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
 
-                {/* ── Ticket List ── */}
-                <section className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-                    <div className="p-4 space-y-3 border-b border-gray-100">
+                {/* List panel */}
+                <div className="flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+                    <div className="p-4 space-y-3 border-b border-gray-100 shrink-0">
                         <div className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
                             <Search className="h-4 w-4 text-slate-400 shrink-0" />
-                            <input
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search tickets..."
-                                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                            />
+                            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search tickets..."
+                                className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" />
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             <Filter className="h-4 w-4 text-slate-400" />
                             {SUPPORT_STATUS_FILTERS.map((f) => (
-                                <button
-                                    key={f}
-                                    onClick={() => setStatusFilter(f)}
-                                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                                        statusFilter === f ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 text-slate-600 hover:bg-gray-200"
-                                    }`}
-                                >
+                                <button key={f} onClick={() => setStatusFilter(f)}
+                                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${statusFilter === f ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 text-slate-600 hover:bg-gray-200"}`}>
                                     {f === "Tất cả" ? "Tất cả" : STATUS_LABEL[f]}
                                 </button>
                             ))}
-                            <button
-                                onClick={() => setTimeSort((p) => p === "desc" ? "asc" : "desc")}
-                                className={`ml-auto inline-flex items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 ${selectedThread ? "px-2.5" : "gap-2 px-3"}`}
-                            >
+                            <button onClick={() => setTimeSort((p) => p === "desc" ? "asc" : "desc")}
+                                className={`ml-auto inline-flex items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 ${selectedThread ? "px-2.5" : "gap-2 px-3"}`}>
                                 {!selectedThread && <span>Theo thời gian</span>}
                                 {timeSort === "desc" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
                             </button>
                         </div>
                     </div>
-
-                    <div className="divide-y divide-gray-50">
+                    <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
                         {!isLoading && filteredThreads.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-400">
-                                <Inbox className="w-10 h-10" />
-                                <p className="text-sm">Không có ticket nào phù hợp</p>
+                            <div className="flex flex-col items-center justify-center h-full gap-3 text-gray-400 py-16">
+                                <Inbox className="w-10 h-10" /><p className="text-sm">Không có ticket nào phù hợp</p>
                             </div>
                         ) : filteredThreads.map((thread) => {
                             const isSelected = thread.id === selectedThreadId;
-                            const lastMsg = thread.messages && thread.messages.length > 0
-                                ? thread.messages[thread.messages.length - 1]
-                                : undefined;
+                            const lastMsg = thread.messages && thread.messages.length > 0 ? thread.messages[thread.messages.length - 1] : undefined;
                             return (
-                                <button
-                                    key={thread.id}
-                                    onClick={() => handleSelectThread(thread.id)}
-                                    className={`w-full text-left p-4 transition ${
-                                        isSelected ? "bg-orange-50 border-l-4 border-l-orange-400" : "hover:bg-orange-50/40 border-l-4 border-l-transparent"
-                                    }`}
-                                >
+                                <button key={thread.id} onClick={() => handleSelectThread(thread.id)}
+                                    className={`w-full text-left p-4 transition ${isSelected ? "bg-orange-50 border-l-4 border-l-orange-400" : "hover:bg-orange-50/40 border-l-4 border-l-transparent"}`}>
                                     <div className="flex items-start justify-between gap-2 mb-1">
                                         <p className="text-sm font-bold text-slate-900 truncate">{thread.name}</p>
                                         <span className="text-xs text-slate-400 shrink-0">{thread.createdAt}</span>
                                     </div>
                                     <p className="text-xs text-slate-400 mb-2">{thread.email}</p>
                                     <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${CATEGORY_STYLE[thread.category] ?? "bg-gray-100 text-gray-700"}`}>
-                                            {thread.category}
-                                        </span>
-                                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[thread.status]}`}>
-                                            {STATUS_LABEL[thread.status]}
-                                        </span>
+                                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${CATEGORY_STYLE[thread.category] ?? "bg-gray-100 text-gray-700"}`}>{thread.category}</span>
+                                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[thread.status]}`}>{STATUS_LABEL[thread.status]}</span>
                                     </div>
                                     <p className="text-sm text-slate-600 line-clamp-2 leading-6">
                                         {lastMsg ? (lastMsg.senderType === "ADMIN" ? "Bạn: " : "") + lastMsg.message : thread.message}
@@ -308,41 +263,36 @@ export default function ChatSupportPage() {
                             );
                         })}
                     </div>
-                </section>
+                </div>
 
-                {/* ── Chat Panel ── */}
+                {/* Chat panel */}
                 {selectedThread && (
-                    <section className="rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden" style={{ maxHeight: "calc(100vh - 200px)" }}>
-                        {/* Header */}
+                    <section className="rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full">
                         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
                             <AvatarPlaceholder name={selectedThread.name} size="lg" />
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <h2 className="text-sm font-bold text-gray-900 truncate">{selectedThread.category}</h2>
                                     <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[selectedThread.status]}`}>
-                                        {selectedThread.status}
+                                        {STATUS_LABEL[selectedThread.status]}
                                     </span>
                                 </div>
-                                <p className="text-xs text-gray-400 mt-0.5">
-                                    {selectedThread.name}
-                                    <span className="mx-1.5">·</span>
-                                    {selectedThread.email}
-                                </p>
+                                <p className="text-xs text-gray-400 mt-0.5">{selectedThread.name}<span className="mx-1.5">·</span>{selectedThread.email}</p>
                             </div>
-                            <button
-                                onClick={() => setSelectedThreadId(null)}
-                                className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
-                            >
+                            {selectedThread.status === "IN_PROGRESS" && (
+                                <button onClick={() => void handleResolve()} disabled={isResolving}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition disabled:opacity-50 shrink-0">
+                                    {isResolving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                                    Hoàn tất
+                                </button>
+                            )}
+                            <button onClick={() => setSelectedThreadId(null)} className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600">
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
-
-                        {/* Messages */}
                         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
                             {!selectedThread.messages ? (
-                                <div className="flex justify-center py-8">
-                                    <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-                                </div>
+                                <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
                             ) : selectedThread.messages.map((msg, idx) => {
                                 const isAdmin = msg.senderType === "ADMIN";
                                 const showDivider = idx > 0 && selectedThread.messages![idx - 1].senderType !== msg.senderType && isAdmin;
@@ -360,16 +310,12 @@ export default function ChatSupportPage() {
                                                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
                                                     <User className="w-3.5 h-3.5 text-white" />
                                                 </div>
-                                            ) : (
-                                                <AvatarPlaceholder name={selectedThread.name} size="sm" />
-                                            )}
+                                            ) : <AvatarPlaceholder name={selectedThread.name} size="sm" />}
                                             <div className={`max-w-[70%] flex flex-col gap-1 ${isAdmin ? "items-end" : "items-start"}`}>
                                                 <span className="text-[11px] text-gray-400">
                                                     {isAdmin ? `Admin · ${msg.createdAt}` : `${selectedThread.name} · ${msg.createdAt}`}
                                                 </span>
-                                                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm border border-gray-100 ${
-                                                    isAdmin ? "bg-orange-50 rounded-br-sm" : "bg-white rounded-bl-sm"
-                                                }`}>
+                                                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm border border-gray-100 ${isAdmin ? "bg-orange-50 rounded-br-sm" : "bg-white rounded-bl-sm"}`}>
                                                     {msg.message}
                                                 </div>
                                             </div>
@@ -379,27 +325,16 @@ export default function ChatSupportPage() {
                             })}
                             <div ref={messagesEndRef} />
                         </div>
-
-                        {/* Input */}
                         <div className="px-4 pt-3 pb-4 border-t border-gray-100 shrink-0">
                             <div className="flex items-end gap-3">
                                 <div className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 focus-within:border-orange-300 focus-within:bg-white transition">
-                                    <textarea
-                                        ref={textareaRef}
-                                        value={draftReply}
-                                        onChange={handleDraftChange}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder="Nhập nội dung phản hồi..."
-                                        rows={1}
+                                    <textarea ref={textareaRef} value={draftReply} onChange={handleDraftChange} onKeyDown={handleKeyDown}
+                                        placeholder="Nhập nội dung phản hồi..." rows={1}
                                         className="w-full bg-transparent text-sm text-gray-700 outline-none resize-none overflow-hidden placeholder:text-gray-400 leading-relaxed"
-                                        style={{ maxHeight: 120 }}
-                                    />
+                                        style={{ maxHeight: 120 }} />
                                 </div>
-                                <button
-                                    onClick={() => void handleSendReply()}
-                                    disabled={!draftReply.trim() || isSendingReply}
-                                    className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#D84315] hover:bg-[#BF360C] text-white text-sm font-bold shadow-md shadow-orange-200 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                                >
+                                <button onClick={() => void handleSendReply()} disabled={!draftReply.trim() || isSendingReply}
+                                    className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#D84315] hover:bg-[#BF360C] text-white text-sm font-bold shadow-md shadow-orange-200 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0">
                                     {isSendingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     Gửi
                                 </button>

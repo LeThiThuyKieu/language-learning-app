@@ -18,9 +18,9 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, In
             List<SupportTicket.SupportStatus> statuses
     );
 
-    // Tìm ticket RESOLVED quá X ngày để auto-close
-    List<SupportTicket> findByStatusAndUpdatedAtBefore(
-            SupportTicket.SupportStatus status,
+    // Tìm ticket theo nhiều status quá X ngày để auto-close
+    List<SupportTicket> findByStatusInAndUpdatedAtBefore(
+            List<SupportTicket.SupportStatus> statuses,
             LocalDateTime cutoff
     );
 }
