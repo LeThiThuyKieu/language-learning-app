@@ -6,7 +6,9 @@ import SupportThreadDetail from "@/components/admin/support_management/SupportTh
 import SupportThreadList from "@/components/admin/support_management/SupportThreadList";
 import { type SupportStatus, type SupportThread } from "@/components/admin/support_management/supportTypes";
 import { supportService } from "@/services/supportService";
+import { useSupportSocket } from "@/hooks/useSupportSocket";
 
+/** Tính stat cards từ danh sách thread hiện tại */
 function buildStats(threads: SupportThread[]): AdminStatCardProps[] {
     const total      = threads.length;
     const open       = threads.filter((t) => t.status === "OPEN").length;
@@ -23,15 +25,15 @@ function buildStats(threads: SupportThread[]): AdminStatCardProps[] {
 }
 
 export default function EmailSupportPage() {
-    const [threads, setThreads] = useState<SupportThread[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [threads, setThreads]               = useState<SupportThread[]>([]);
+    const [isLoading, setIsLoading]           = useState(true);
     const [isSendingReply, setIsSendingReply] = useState(false);
-    const [query, setQuery] = useState("");
-    const [statusFilter, setStatusFilter] = useState<"Tất cả" | SupportStatus>("Tất cả");
-    const [timeSort, setTimeSort] = useState<"desc" | "asc">("desc");
+    const [query, setQuery]                   = useState("");
+    const [statusFilter, setStatusFilter]     = useState<"Tất cả" | SupportStatus>("Tất cả");
+    const [timeSort, setTimeSort]             = useState<"desc" | "asc">("desc");
     const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
-    const [draftReply, setDraftReply] = useState("");
-    const loadedIds = useRef<Set<number>>(new Set());
+    const [draftReply, setDraftReply]         = useState("");
+    const loadedIds = useRef<Set<number>>(new Set()); // tránh gọi viewAdminTicket nhiều lần cho cùng 1 ticket
 
     const stats = useMemo(() => buildStats(threads), [threads]);
 
@@ -39,7 +41,7 @@ export default function EmailSupportPage() {
         const q = query.trim().toLowerCase();
         return threads
             .filter((t) => {
-                const matchQuery = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.message.toLowerCase().includes(q);
+                const matchQuery  = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.message.toLowerCase().includes(q);
                 const matchStatus = statusFilter === "Tất cả" || t.status === statusFilter;
                 return matchQuery && matchStatus;
             })
@@ -54,6 +56,19 @@ export default function EmailSupportPage() {
         [threads, selectedThreadId],
     );
 
+    /** WebSocket: nhận thông báo realtime khi user gửi tin nhắn mới vào ticket đang xem */
+    useSupportSocket({
+        ticketId: selectedThreadId,
+        keepMessage: selectedThread?.message,
+        onUpdate: (updated) => {
+            setThreads((prev) => prev.map((t) => {
+                if (t.id !== updated.id) return t;
+                return { ...updated, message: t.message || updated.message };
+            }));
+        },
+    });
+
+    /** Load danh sách ticket lần đầu, sau đó poll mỗi 15s để bắt ticket mới */
     useEffect(() => {
         let mounted = true;
         const fetchList = () => {
@@ -64,6 +79,7 @@ export default function EmailSupportPage() {
                         const prevMap = new Map(prev.map((t) => [t.id, t]));
                         return data.map((t) => {
                             const existing = prevMap.get(t.id);
+                            // Giữ lại messages đã load để tránh mất dữ liệu khi poll
                             return existing?.messages ? { ...t, messages: existing.messages } : t;
                         });
                     });
@@ -79,12 +95,23 @@ export default function EmailSupportPage() {
         return () => { mounted = false; clearInterval(listPoll); };
     }, []);
 
+    /** Tắt scroll của main khi ở trang này để 2 panel scroll độc lập */
+    useEffect(() => {
+        const main = document.querySelector("main");
+        if (main) { main.style.overflow = "hidden"; }
+        return () => { if (main) { main.style.overflow = ""; } };
+    }, []);
+
+    /**
+     * Chọn thread để xem chi tiết.
+     * Gọi viewAdminTicket lần đầu để chuyển OPEN → IN_PROGRESS (chỉ gọi 1 lần/ticket).
+     */
     const handleSelectThread = (threadId: number) => {
         setSelectedThreadId(threadId);
         const thread = threads.find((t) => t.id === threadId);
         if (!thread) return;
         setDraftReply(`Chào ${thread.name}, admin đã ghi nhận phản hồi của bạn.`);
-        if (loadedIds.current.has(threadId)) return;
+        if (loadedIds.current.has(threadId)) return; // đã load rồi → bỏ qua
         loadedIds.current.add(threadId);
         supportService.viewAdminTicket(threadId)
             .then((detail) => {
@@ -93,9 +120,10 @@ export default function EmailSupportPage() {
                     return { ...detail, message: t.message || detail.message };
                 }));
             })
-            .catch(() => { loadedIds.current.delete(threadId); });
+            .catch(() => { loadedIds.current.delete(threadId); }); // rollback nếu lỗi
     };
 
+    /** Admin gửi phản hồi email vào ticket đang chọn */
     const handleSendReply = async () => {
         if (!selectedThread || !draftReply.trim()) { toast.error("Vui lòng nhập nội dung phản hồi"); return; }
         try {
@@ -111,38 +139,31 @@ export default function EmailSupportPage() {
         finally { setIsSendingReply(false); }
     };
 
-    // Tắt scroll của main khi ở trang này để 2 panel scroll độc lập
-    useEffect(() => {
-        const main = document.querySelector("main");
-        if (main) { main.style.overflow = "hidden"; }
-        return () => { if (main) { main.style.overflow = ""; } };
-    }, []);
-
     return (
         <div className="flex flex-col -m-6 h-[calc(100vh-64px)] overflow-hidden">
 
             {/* Header + Stats — ẩn khi đang xem detail */}
             {!selectedThread && (
-            <div className="px-6 pt-6 pb-4 space-y-5 shrink-0">
-                <div>
-                    <h1 className="text-2xl font-extrabold text-gray-900">Quản lý email hỗ trợ</h1>
-                    <p className="text-sm text-gray-500 mt-1">Xem nhanh danh sách yêu cầu, mở từng email để phản hồi, và theo dõi trạng thái xử lý ngay trong admin.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
-                    {stats.map((stat) => <AdminStatCard key={stat.label} {...stat} />)}
-                </div>
-                {isLoading && (
-                    <div className="rounded-2xl border border-gray-100 bg-white px-5 py-3 flex items-center gap-2 text-slate-500 text-sm shadow-sm">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Đang tải ticket hỗ trợ...
+                <div className="px-6 pt-6 pb-4 space-y-5 shrink-0">
+                    <div>
+                        <h1 className="text-2xl font-extrabold text-gray-900">Quản lý email hỗ trợ</h1>
+                        <p className="text-sm text-gray-500 mt-1">Xem nhanh danh sách yêu cầu, mở từng email để phản hồi, và theo dõi trạng thái xử lý ngay trong admin.</p>
                     </div>
-                )}
-            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5">
+                        {stats.map((stat) => <AdminStatCard key={stat.label} {...stat} />)}
+                    </div>
+                    {isLoading && (
+                        <div className="rounded-2xl border border-gray-100 bg-white px-5 py-3 flex items-center gap-2 text-slate-500 text-sm shadow-sm">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Đang tải ticket hỗ trợ...
+                        </div>
+                    )}
+                </div>
             )}
 
             {/* List + Detail — chiếm phần còn lại, scroll độc lập */}
             <div className={`flex-1 overflow-hidden px-6 pb-6 ${selectedThread ? "grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
 
-                {/* List panel — scroll bên trong */}
+                {/* List panel */}
                 <div className="flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
                     <SupportThreadList
                         threads={filteredThreads}
@@ -158,7 +179,7 @@ export default function EmailSupportPage() {
                     />
                 </div>
 
-                {/* Detail panel — scroll bên trong */}
+                {/* Detail panel */}
                 {selectedThread && (
                     <SupportThreadDetail
                         thread={selectedThread}
