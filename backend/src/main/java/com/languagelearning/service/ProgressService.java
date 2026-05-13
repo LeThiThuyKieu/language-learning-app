@@ -96,13 +96,13 @@ public class ProgressService {
         int knReward = (node.getNodeType() == SkillNode.NodeType.REVIEW) ? 20 : 10;
         addKn(user, knReward);
 
-        // Cộng XP: mỗi câu đúng = +10 XP, lưu vào user_profile.total_xp
+        // Cập nhật streak trước (tạo bản ghi ngày hôm nay nếu chưa có)
+        recordStreak(user);
+
+        // Cộng XP: mỗi câu đúng = +10 XP (sau recordStreak để earned_xp được cập nhật đúng)
         if (correctCount > 0) {
             addXp(user, correctCount * 10);
         }
-
-        // Cập nhật streak: ghi nhận ngày hôm nay user có học
-        recordStreak(user);
 
         // Cập nhật UserSkillTreeProgress
         int treeId = node.getSkillTree().getId();
@@ -203,12 +203,21 @@ public class ProgressService {
         userKnRepository.save(userKn);
     }
 
-    /** Cộng XP cho user (lưu vào user_profile.total_xp) */
+    /** Cộng XP cho user (lưu vào user_profile.total_xp và user_streak.earned_xp hôm nay) */
     private void addXp(User user, int amount) {
+        // Cộng vào total_xp trong user_profile
         userProfileRepository.findByUser(user).ifPresent(profile -> {
             int current = profile.getTotalXp() == null ? 0 : profile.getTotalXp();
             profile.setTotalXp(current + amount);
             userProfileRepository.save(profile);
+        });
+
+        // Cộng vào earned_xp của ngày hôm nay trong user_streak
+        LocalDate today = LocalDate.now();
+        userStreakRepository.findByUserAndDate(user, today).ifPresent(streak -> {
+            int current = streak.getEarnedXp() == null ? 0 : streak.getEarnedXp();
+            streak.setEarnedXp(current + amount);
+            userStreakRepository.save(streak);
         });
     }
 

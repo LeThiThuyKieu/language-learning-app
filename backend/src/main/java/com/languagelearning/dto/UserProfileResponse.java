@@ -30,9 +30,19 @@ public class UserProfileResponse {
 
     private Integer completedNodes;
     private Integer totalNodes;
+    /** Độ chính xác tổng (%) */
     private Integer completionRate; // %
 
     private Integer totalAttempts;
+
+    /** Độ chính xác theo từng loại câu hỏi: VOCAB, LISTENING, SPEAKING, MATCHING */
+    private java.util.Map<String, Integer> accuracyByType;
+
+    // Tiến trình theo tree
+    private Integer completedTrees;
+    private Integer totalTrees;
+    /** Tooltip: "Tree X - Node Y" — vị trí đang học hiện tại */
+    private String currentProgressLabel;
     private List<Integer> weeklyActivityXp;
     private Integer todayXp;
 
@@ -59,6 +69,7 @@ public class UserProfileResponse {
         private String description;
         private Integer requiredKn;
         private String iconUrl;
+        private boolean earned;
 
         @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
         private LocalDateTime earnedAt;

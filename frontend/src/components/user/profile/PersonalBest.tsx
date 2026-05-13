@@ -1,14 +1,16 @@
 interface BestProps {
     highestStreak: number;
     totalXp: number;
+    totalKn: number;
     totalLessons: number;
 }
 
-export default function PersonalBest({ highestStreak, totalXp, totalLessons }: BestProps) {
+export default function PersonalBest({ highestStreak, totalXp, totalKn, totalLessons }: BestProps) {
 
     const bests = [
         { label: "KỶ LỤC CHUỖI", value: `${highestStreak} ngày`, icon: "/profile/trophy.gif" },
         { label: "TỔNG XP", value: `${totalXp} XP`, icon: "/profile/fire.gif" },
+        { label: "TỔNG KN", value: `${totalKn} KN`, icon: "/profile/growth.gif" },
         { label: "BÀI ĐÃ HỌC", value: totalLessons, icon: "/profile/book.gif" },
     ];
 

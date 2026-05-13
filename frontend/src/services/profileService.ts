@@ -10,8 +10,9 @@ export interface ProfileBadge {
     id: number;
     badgeName: string;
     description: string;
-    requiredXp: number;
+    requiredKn: number;
     iconUrl: string | null;
+    earned: boolean;
     earnedAt: string | null;
 }
 
@@ -32,6 +33,10 @@ export interface UserProfileDetail {
     totalNodes: number;
     completionRate: number;
     totalAttempts: number;
+    accuracyByType: Record<string, number>;
+    completedTrees: number;
+    totalTrees: number;
+    currentProgressLabel: string | null;
     weeklyActivityXp: number[];
     todayXp: number;
     createdAt: string;
