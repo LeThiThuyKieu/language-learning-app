@@ -21,8 +21,8 @@ public class Badge {
     @Column(columnDefinition = "TEXT")
     private String description;
     
-    @Column(name = "required_xp")
-    private Integer requiredXp;
+    @Column(name = "required_kn")
+    private Integer requiredKn;
     
     @Column(name = "icon_url", columnDefinition = "TEXT")
     private String iconUrl;

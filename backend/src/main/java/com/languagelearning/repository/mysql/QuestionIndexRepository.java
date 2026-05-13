@@ -11,6 +11,8 @@ import java.util.List;
 @Repository
 public interface QuestionIndexRepository extends JpaRepository<QuestionIndex, Long> {
 
+    java.util.Optional<QuestionIndex> findByMongoQuestionId(String mongoQuestionId);
+
     @Query(
             value = "SELECT * FROM questions WHERE level_id = :levelId AND node_id = :nodeId ORDER BY RAND() LIMIT :limit",
             nativeQuery = true

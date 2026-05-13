@@ -1,10 +1,11 @@
-import {useMemo, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
 import WordTooltip from "@/components/user/learn/question_type/vocab/WordTooltip.tsx";
+import type {AttemptItem, BadgeInfo} from "@/services/learningService";
 
 /** Tách câu thành tokens: từ tiếng Anh (isWord=true) và phần còn lại */
 function tokenizeQuestion(text: string): { text: string; isWord: boolean }[] {
@@ -26,10 +27,12 @@ export default function VocabLessonView({
     node,
     onLeaveLesson,
     onComplete,
+    onNavigate,
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => Promise<BadgeInfo[]>;
+    onNavigate: () => void;
 }) {
     const questions = node.questions ?? [];
     const total = Math.max(questions.length, 1);
@@ -38,6 +41,10 @@ export default function VocabLessonView({
     const [checked, setChecked] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
     const [exitOpen, setExitOpen] = useState(false);
+    const [correctCount, setCorrectCount] = useState(0);
+    const [attempts, setAttempts] = useState<AttemptItem[]>([]);
+    const [newBadges, setNewBadges] = useState<BadgeInfo[]>([]);
+    const completingRef = useRef(false);
 
     const current = questions[index];
 
@@ -83,15 +90,34 @@ export default function VocabLessonView({
 
     function handleContinue() {
         if (!checked) return;
+        const wasCorrect = checked && Boolean(selectedOption) && selectedOption === correctOptionText;
+        const nextCorrect = correctCount + (wasCorrect ? 1 : 0);
+        const newAttempt: AttemptItem = {
+            mongoQuestionId: (current as {mongoQuestionId?: string})?.mongoQuestionId ?? String(current?.id ?? ""),
+            userAnswer: selectedOption ?? "",
+            correct: wasCorrect,
+        };
+        const nextAttempts = [...attempts, newAttempt];
         if (index < total - 1) {
+            setCorrectCount(nextCorrect);
+            setAttempts(nextAttempts);
             resetForNextQuestion(index + 1);
         } else {
-            setIsFinished(true);
+            setCorrectCount(nextCorrect);
+            setAttempts(nextAttempts);
+            // Guard chống double-invoke (React StrictMode)
+            if (completingRef.current) return;
+            completingRef.current = true;
+            onComplete(nextCorrect, nextAttempts).then((badges) => {
+                setNewBadges(badges);
+                setIsFinished(true);
+            });
         }
     }
 
     if (isFinished) {
-        return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
+        const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+        return <LessonCompleteView knGained={10} accuracy={accuracy} newBadges={newBadges} onContinue={onNavigate}/>;
     }
 
     return (

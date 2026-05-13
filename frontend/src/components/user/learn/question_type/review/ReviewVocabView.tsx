@@ -4,6 +4,7 @@ import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
 import WordTooltip from "@/components/user/learn/question_type/vocab/WordTooltip.tsx";
+import type {AttemptItem} from "@/services/learningService";
 
 /** Tách câu thành tokens: từ tiếng Anh (isWord=true) và phần còn lại */
 function tokenizeQuestion(text: string): { text: string; isWord: boolean }[] {
@@ -31,7 +32,7 @@ export default function ReviewVocabView({
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (attempts: AttemptItem[]) => void;
 }) {
     const questions = node.questions ?? [];
     const total = Math.max(questions.length, 1);
@@ -40,6 +41,7 @@ export default function ReviewVocabView({
     const [checked, setChecked] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
     const [exitOpen, setExitOpen] = useState(false);
+    const [attempts, setAttempts] = useState<AttemptItem[]>([]);
 
     const current = questions[index];
 
@@ -72,7 +74,7 @@ export default function ReviewVocabView({
     const isCorrect = checked && Boolean(selectedOption) && selectedOption === correctOptionText;
 
     useEffect(() => {
-        if (isFinished) onComplete();
+        if (isFinished) onComplete(attempts);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isFinished]);
 
@@ -89,9 +91,18 @@ export default function ReviewVocabView({
 
     function handleContinue() {
         if (!checked) return;
+        const wasCorrect = isCorrect;
+        const newAttempt: AttemptItem = {
+            mongoQuestionId: (current as {mongoQuestionId?: string})?.mongoQuestionId ?? String(current?.id ?? ""),
+            userAnswer: selectedOption ?? "",
+            correct: wasCorrect,
+        };
+        const nextAttempts = [...attempts, newAttempt];
         if (index < total - 1) {
+            setAttempts(nextAttempts);
             resetForNextQuestion(index + 1);
         } else {
+            setAttempts(nextAttempts);
             setIsFinished(true);
         }
     }

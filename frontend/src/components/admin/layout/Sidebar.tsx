@@ -5,7 +5,7 @@ import {
     BookOpen,
     GitBranch,
     BarChart2,
-    MessageSquare,
+    MessagesSquare,
     Trophy,
     ClipboardList,
     Mail,
@@ -21,7 +21,7 @@ const menuItems = [
     { path: "/admin/lessons",         icon: BookOpen,        label: "Lessons" },
     { path: "/admin/placement-test-management", icon: ClipboardList,   label: "Placement Tests" },
     { path: "/admin/leaderboard",     icon: Trophy,          label: "Rankings" },
-    { path: "/admin/feedback",        icon: MessageSquare,   label: "Feedback" },
+    { path: "/admin/feedback",        icon: MessagesSquare,   label: "Feedback" },
     { path: "/admin/reports",         icon: BarChart2,       label: "Reports" },
 ];
 

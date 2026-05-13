@@ -4,19 +4,29 @@ import com.languagelearning.dto.UpdateUserProfileRequest;
 import com.languagelearning.dto.UserProfileResponse;
 import com.languagelearning.entity.Leaderboard;
 import com.languagelearning.entity.Level;
+import com.languagelearning.entity.SkillNode;
+import com.languagelearning.entity.SkillTree;
 import com.languagelearning.entity.User;
 import com.languagelearning.entity.UserBadge;
+import com.languagelearning.entity.UserKn;
 import com.languagelearning.entity.UserNodeProgress;
 import com.languagelearning.entity.UserProfile;
-import com.languagelearning.entity.StreakHistory;
+import com.languagelearning.entity.UserSkillTreeProgress;
+import com.languagelearning.entity.UserStreak;
 import com.languagelearning.exception.BadCredentialsException;
 import com.languagelearning.repository.mysql.LeaderboardRepository;
 import com.languagelearning.repository.mysql.LevelRepository;
-import com.languagelearning.repository.mysql.StreakHistoryRepository;
+import com.languagelearning.repository.mysql.SkillNodeRepository;
+import com.languagelearning.repository.mysql.SkillTreeRepository;
+import com.languagelearning.repository.mysql.BadgeRepository;
+import com.languagelearning.repository.mysql.UserKnRepository;
+import com.languagelearning.repository.mysql.UserStreakRepository;
 import com.languagelearning.repository.mysql.UserBadgeRepository;
 import com.languagelearning.repository.mysql.UserNodeProgressRepository;
 import com.languagelearning.repository.mysql.UserProfileRepository;
 import com.languagelearning.repository.mysql.UserRepository;
+import com.languagelearning.repository.mysql.UserSkillTreeProgressRepository;
+import com.languagelearning.repository.mysql.UserQuestionAttemptRepository;
 import com.languagelearning.util.AvatarDefaults;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,10 +34,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -37,11 +49,17 @@ public class UserProfileService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final LevelRepository levelRepository;
+    private final BadgeRepository badgeRepository;
     private final UserBadgeRepository userBadgeRepository;
     private final UserNodeProgressRepository userNodeProgressRepository;
     private final LeaderboardRepository leaderboardRepository;
-    private final StreakHistoryRepository streakHistoryRepository;
+    private final UserStreakRepository userStreakRepository;
+    private final UserKnRepository userKnRepository;
     private final AvatarUploadService avatarUploadService;
+    private final SkillTreeRepository skillTreeRepository;
+    private final SkillNodeRepository skillNodeRepository;
+    private final UserSkillTreeProgressRepository userSkillTreeProgressRepository;
+    private final UserQuestionAttemptRepository userQuestionAttemptRepository;
 
 
     /*
@@ -133,15 +151,80 @@ public class UserProfileService {
                 .map(Leaderboard::getRankPosition)
                 .orElse(null);
 
+        int totalKn = userKnRepository.findByUser(user)
+                .map(UserKn::getTotalKn)
+                .orElse(0);
+
+        // Tính tiến trình theo tree (dựa trên level hiện tại của user)
+        int completedTrees = 0;
+        int totalTrees = 0;
+        String currentProgressLabel = null;
+
+        Integer currentLevelId = profile.getCurrentLevel();
+        if (currentLevelId != null) {
+            List<SkillTree> trees = skillTreeRepository.findByLevel_IdOrderByOrderIndex(currentLevelId);
+            totalTrees = trees.size();
+
+            Map<Integer, UserSkillTreeProgress.ProgressStatus> treeStatusMap = userSkillTreeProgressRepository
+                    .findByUser(user).stream()
+                    .filter(p -> p.getSkillTree() != null)
+                    .collect(Collectors.toMap(
+                            p -> p.getSkillTree().getId(),
+                            UserSkillTreeProgress::getStatus,
+                            (a, b) -> a
+                    ));
+
+            Map<Integer, UserNodeProgress.NodeProgressStatus> nodeStatusMap = nodeProgresses.stream()
+                    .filter(p -> p.getNode() != null)
+                    .collect(Collectors.toMap(
+                            p -> p.getNode().getId(),
+                            UserNodeProgress::getStatus,
+                            (a, b) -> a
+                    ));
+
+            for (SkillTree tree : trees) {
+                UserSkillTreeProgress.ProgressStatus treeStatus =
+                        treeStatusMap.getOrDefault(tree.getId(), UserSkillTreeProgress.ProgressStatus.locked);
+                if (treeStatus == UserSkillTreeProgress.ProgressStatus.done) {
+                    completedTrees++;
+                }
+            }
+
+            // Tìm tree đang học (in_progress hoặc tree đầu tiên chưa done)
+            for (int ti = 0; ti < trees.size(); ti++) {
+                SkillTree tree = trees.get(ti);
+                UserSkillTreeProgress.ProgressStatus treeStatus =
+                        treeStatusMap.getOrDefault(tree.getId(), UserSkillTreeProgress.ProgressStatus.locked);
+                if (treeStatus != UserSkillTreeProgress.ProgressStatus.done) {
+                    // Tìm node đang active trong tree này
+                    List<SkillNode> nodes = skillNodeRepository.findBySkillTree_IdOrderByOrderIndex(tree.getId());
+                    int activeNodeIdx = 1;
+                    for (int ni = 0; ni < nodes.size(); ni++) {
+                        SkillNode node = nodes.get(ni);
+                        if (nodeStatusMap.getOrDefault(node.getId(), UserNodeProgress.NodeProgressStatus.not_started)
+                                == UserNodeProgress.NodeProgressStatus.completed) {
+                            activeNodeIdx = ni + 2; // node tiếp theo
+                        } else {
+                            activeNodeIdx = ni + 1;
+                            break;
+                        }
+                    }
+                    activeNodeIdx = Math.min(activeNodeIdx, nodes.size());
+                    currentProgressLabel = "Tree " + (ti + 1) + " - Node " + activeNodeIdx + "/" + nodes.size();
+                    break;
+                }
+            }
+        }
+
         LocalDate today = LocalDate.now();
         LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
         LocalDate endOfWeek = startOfWeek.plusDays(6);
 
-        Map<LocalDate, Integer> activityByDate = streakHistoryRepository
+        Map<LocalDate, Integer> activityByDate = userStreakRepository
                 .findByUserAndDateBetween(user, startOfWeek, endOfWeek)
                 .stream()
                 .collect(Collectors.toMap(
-                        StreakHistory::getDate,
+                        UserStreak::getDate,
                         item -> item.getEarnedXp() == null ? 0 : item.getEarnedXp(),
                         Integer::sum
                 ));
@@ -153,14 +236,27 @@ public class UserProfileService {
 
         Integer todayXp = activityByDate.getOrDefault(today, 0);
 
-        List<UserProfileResponse.BadgeItem> badgeItems = userBadges.stream()
-                .map(userBadge -> new UserProfileResponse.BadgeItem(
-                        userBadge.getBadge().getId(),
-                        userBadge.getBadge().getBadgeName(),
-                        userBadge.getBadge().getDescription(),
-                        userBadge.getBadge().getRequiredXp(),
-                        userBadge.getBadge().getIconUrl(),
-                        userBadge.getEarnedAt()
+        // Tất cả badges (earned + not-earned), sắp xếp theo required_kn tăng dần
+        Set<Integer> earnedBadgeIds = userBadges.stream()
+                .map(ub -> ub.getBadge().getId())
+                .collect(Collectors.toSet());
+        Map<Integer, LocalDateTime> earnedAtMap = userBadges.stream()
+                .collect(Collectors.toMap(
+                        ub -> ub.getBadge().getId(),
+                        UserBadge::getEarnedAt,
+                        (a, b) -> a
+                ));
+
+        List<UserProfileResponse.BadgeItem> badgeItems = badgeRepository.findAll().stream()
+                .sorted(Comparator.comparingInt(b -> b.getRequiredKn() == null ? 0 : b.getRequiredKn()))
+                .map(badge -> new UserProfileResponse.BadgeItem(
+                        badge.getId(),
+                        badge.getBadgeName(),
+                        badge.getDescription(),
+                        badge.getRequiredKn(),
+                        badge.getIconUrl(),
+                        earnedBadgeIds.contains(badge.getId()),
+                        earnedAtMap.get(badge.getId())
                 ))
                 .toList();
 
@@ -176,10 +272,33 @@ public class UserProfileService {
         resp.setTotalXp(profile.getTotalXp() == null ? 0 : profile.getTotalXp());
         resp.setStreakCount(profile.getStreakCount() == null ? 0 : profile.getStreakCount());
         resp.setRankPosition(rankPosition);
+        resp.setTotalKn(totalKn);
         resp.setCompletedNodes(completedNodes);
         resp.setTotalNodes(totalNodes);
         resp.setCompletionRate(completionRate);
         resp.setTotalAttempts(totalAttempts);
+        resp.setCompletedTrees(completedTrees);
+        resp.setTotalTrees(totalTrees);
+        resp.setCurrentProgressLabel(currentProgressLabel);
+
+        // Tính accuracy theo từng loại câu hỏi
+        java.util.Map<String, Integer> accuracyByType = new java.util.LinkedHashMap<>();
+        try {
+            var attempts = userQuestionAttemptRepository.findByUserWithQuestion(user);
+            String[] types = {"VOCAB", "LISTENING", "SPEAKING", "MATCHING"};
+            for (String type : types) {
+                var filtered = attempts.stream()
+                        .filter(a -> a.getQuestion() != null
+                                && a.getQuestion().getQuestionType() != null
+                                && a.getQuestion().getQuestionType().name().equals(type))
+                        .toList();
+                if (!filtered.isEmpty()) {
+                    long correct = filtered.stream().filter(a -> Boolean.TRUE.equals(a.getIsCorrect())).count();
+                    accuracyByType.put(type, (int) Math.round((correct * 100.0) / filtered.size()));
+                }
+            }
+        } catch (Exception ignored) {}
+        resp.setAccuracyByType(accuracyByType);
         resp.setWeeklyActivityXp(weeklyActivityXp);
         resp.setTodayXp(todayXp);
         resp.setCreatedAt(user.getCreatedAt());
