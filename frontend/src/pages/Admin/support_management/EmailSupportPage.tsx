@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Mail, CheckCircle, XCircle, AlertCircle, Clock, Loader2 } from "lucide-react";
+import { Mail, CheckCircle, XCircle, AlertCircle, Clock, Loader2, Search, Filter, ArrowDown, ArrowUp } from "lucide-react";
 import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import SupportThreadDetail from "@/components/admin/support_management/SupportThreadDetail";
 import SupportThreadList from "@/components/admin/support_management/SupportThreadList";
-import { type SupportStatus, type SupportThread } from "@/components/admin/support_management/supportTypes";
+import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL } from "@/components/admin/support_management/supportTypes";
 import { supportService } from "@/services/supportService";
-import { useSupportSocket } from "@/hooks/useSupportSocket";
+import { useSupportSocket, useSupportListSocket } from "@/hooks/useSupportSocket";
 
 /** Tính stat cards từ danh sách thread hiện tại */
 function buildStats(threads: SupportThread[]): AdminStatCardProps[] {
@@ -33,7 +33,15 @@ export default function EmailSupportPage() {
     const [timeSort, setTimeSort]             = useState<"desc" | "asc">("desc");
     const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
     const [draftReply, setDraftReply]         = useState("");
-    const loadedIds = useRef<Set<number>>(new Set()); // tránh gọi viewAdminTicket nhiều lần cho cùng 1 ticket
+    // Mobile: true = đang xem detail panel
+    const [mobileShowDetail, setMobileShowDetail] = useState(false);
+    // Set id các ticket có tin nhắn mới chưa xem (admin đang ở detail khác)
+    const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
+
+    const loadedIds = useRef<Set<number>>(new Set());
+    // Ref để truy cập selectedThreadId mới nhất trong WS callback
+    const selectedThreadIdRef = useRef<number | null>(null);
+    selectedThreadIdRef.current = selectedThreadId;
 
     const stats = useMemo(() => buildStats(threads), [threads]);
 
@@ -56,43 +64,70 @@ export default function EmailSupportPage() {
         [threads, selectedThreadId],
     );
 
-    /** WebSocket: nhận thông báo realtime khi user gửi tin nhắn mới vào ticket đang xem */
+    /** WebSocket: nhận tin nhắn mới realtime (ticket đang xem) */
     useSupportSocket({
         ticketId: selectedThreadId,
         keepMessage: selectedThread?.message,
         onUpdate: (updated) => {
-            setThreads((prev) => prev.map((t) => {
-                if (t.id !== updated.id) return t;
-                return { ...updated, message: t.message || updated.message };
-            }));
+            const now = new Date().toISOString();
+            setThreads((prev) =>
+                prev
+                    .map((t) => {
+                        if (t.id !== updated.id) return t;
+                        return { ...updated, message: t.message || updated.message, sentAt: now };
+                    })
+                    .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()),
+            );
+            if (updated.id !== selectedThreadIdRef.current) {
+                setUnreadIds((prev) => new Set(prev).add(updated.id));
+            }
         },
     });
 
-    /** Load danh sách ticket lần đầu, sau đó poll mỗi 15s để bắt ticket mới */
+    /** WebSocket: nhận cập nhật danh sách (sort, status, preview) cho mọi ticket EMAIL */
+    useSupportListSocket({
+        onListUpdate: (item) => {
+            if (item.source !== "EMAIL") return;
+            const now = new Date().toISOString();
+            setThreads((prev) => {
+                const exists = prev.find((t) => t.id === item.id);
+                if (!exists) {
+                    // Ticket mới toanh → thêm vào đầu danh sách
+                    const newThread: SupportThread = {
+                        id:        item.id,
+                        userId:    null,
+                        name:      item.requesterName || item.requesterEmail?.split("@")[0] || "Người dùng",
+                        email:     item.requesterEmail,
+                        category:  item.categoryDisplayName as SupportThread["category"],
+                        message:   item.latestMessage,
+                        createdAt: "Vừa xong",
+                        sentAt:    now,
+                        status:    item.status,
+                    };
+                    return [newThread, ...prev];
+                }
+                return prev
+                    .map((t) => {
+                        if (t.id !== item.id) return t;
+                        return { ...t, status: item.status, message: item.latestMessage || t.message, sentAt: now };
+                    })
+                    .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+            });
+            if (item.id !== selectedThreadIdRef.current) {
+                setUnreadIds((prev) => new Set(prev).add(item.id));
+            }
+        },
+    });
+
+    /** Load danh sách ticket lần đầu khi mount — không poll, WS xử lý realtime */
     useEffect(() => {
         let mounted = true;
-        const fetchList = () => {
-            supportService.getAdminTickets(0, 100, "desc", "EMAIL")
-                .then((data) => {
-                    if (!mounted) return;
-                    setThreads((prev) => {
-                        const prevMap = new Map(prev.map((t) => [t.id, t]));
-                        return data.map((t) => {
-                            const existing = prevMap.get(t.id);
-                            // Giữ lại messages đã load để tránh mất dữ liệu khi poll
-                            return existing?.messages ? { ...t, messages: existing.messages } : t;
-                        });
-                    });
-                })
-                .catch(() => {});
-        };
         setIsLoading(true);
         supportService.getAdminTickets(0, 100, "desc", "EMAIL")
             .then((data) => { if (mounted) setThreads(data); })
             .catch(() => toast.error("Không tải được danh sách hỗ trợ"))
             .finally(() => { if (mounted) setIsLoading(false); });
-        const listPoll = setInterval(fetchList, 15_000);
-        return () => { mounted = false; clearInterval(listPoll); };
+        return () => { mounted = false; };
     }, []);
 
     /** Tắt scroll của main khi ở trang này để 2 panel scroll độc lập */
@@ -102,28 +137,36 @@ export default function EmailSupportPage() {
         return () => { if (main) { main.style.overflow = ""; } };
     }, []);
 
-    /**
-     * Chọn thread để xem chi tiết.
-     * Gọi viewAdminTicket lần đầu để chuyển OPEN → IN_PROGRESS (chỉ gọi 1 lần/ticket).
-     */
+    /** Chọn thread, chuyển OPEN → IN_PROGRESS, xóa unread */
     const handleSelectThread = (threadId: number) => {
         setSelectedThreadId(threadId);
+        setMobileShowDetail(true);
+        setUnreadIds((prev) => { const s = new Set(prev); s.delete(threadId); return s; });
         const thread = threads.find((t) => t.id === threadId);
         if (!thread) return;
         setDraftReply(`Chào ${thread.name}, admin đã ghi nhận phản hồi của bạn.`);
-        if (loadedIds.current.has(threadId)) return; // đã load rồi → bỏ qua
+
+        // Optimistic: đổi OPEN → IN_PROGRESS ngay lập tức, không chờ API
+        if (thread.status === "OPEN") {
+            setThreads((prev) => prev.map((t) =>
+                t.id === threadId ? { ...t, status: "IN_PROGRESS" } : t
+            ));
+        }
+
+        if (loadedIds.current.has(threadId)) return;
         loadedIds.current.add(threadId);
         supportService.viewAdminTicket(threadId)
             .then((detail) => {
+                // Chỉ cập nhật messages và status, giữ nguyên sentAt
                 setThreads((prev) => prev.map((t) => {
                     if (t.id !== detail.id) return t;
-                    return { ...detail, message: t.message || detail.message };
+                    return { ...t, messages: detail.messages, status: detail.status };
                 }));
             })
-            .catch(() => { loadedIds.current.delete(threadId); }); // rollback nếu lỗi
+            .catch(() => { loadedIds.current.delete(threadId); });
     };
 
-    /** Admin gửi phản hồi email vào ticket đang chọn */
+    /** Admin gửi phản hồi email */
     const handleSendReply = async () => {
         if (!selectedThread || !draftReply.trim()) { toast.error("Vui lòng nhập nội dung phản hồi"); return; }
         try {
@@ -131,7 +174,7 @@ export default function EmailSupportPage() {
             const updated = await supportService.replyAdminTicket(selectedThread.id, draftReply);
             setThreads((prev) => prev.map((t) => {
                 if (t.id !== updated.id) return t;
-                return { ...updated, message: t.message || updated.message };
+                return { ...t, messages: updated.messages, status: updated.status, message: updated.message || t.message };
             }));
             setDraftReply("");
             toast.success("Đã gửi phản hồi");
@@ -142,9 +185,9 @@ export default function EmailSupportPage() {
     return (
         <div className="flex flex-col -m-6 h-[calc(100vh-64px)] overflow-hidden">
 
-            {/* Header + Stats — ẩn khi đang xem detail */}
+            {/* Header + Stats — chỉ hiện trên md+, ẩn khi đang xem detail */}
             {!selectedThread && (
-                <div className="px-6 pt-6 pb-4 space-y-5 shrink-0">
+                <div className="hidden md:block px-6 pt-6 pb-4 space-y-5 shrink-0">
                     <div>
                         <h1 className="text-2xl font-extrabold text-gray-900">Quản lý email hỗ trợ</h1>
                         <p className="text-sm text-gray-500 mt-1">Xem nhanh danh sách yêu cầu, mở từng email để phản hồi, và theo dõi trạng thái xử lý ngay trong admin.</p>
@@ -160,34 +203,90 @@ export default function EmailSupportPage() {
                 </div>
             )}
 
-            {/* List + Detail — chiếm phần còn lại, scroll độc lập */}
-            <div className={`flex-1 overflow-hidden px-6 pb-6 ${selectedThread ? "grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
+            {/* Layout chính */}
+            <div className={`flex-1 overflow-hidden px-3 pb-3 md:px-6 md:pb-6 ${selectedThread ? "pt-3 lg:grid lg:gap-6 lg:pt-4 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
 
-                {/* List panel */}
-                <div className="flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
-                    <SupportThreadList
-                        threads={filteredThreads}
-                        selectedThreadId={selectedThreadId}
-                        query={query}
-                        statusFilter={statusFilter}
-                        timeSort={timeSort}
-                        isTwoColumn={Boolean(selectedThread)}
-                        onQueryChange={setQuery}
-                        onStatusFilterChange={setStatusFilter}
-                        onToggleTimeSort={() => setTimeSort((prev) => (prev === "desc" ? "asc" : "desc"))}
-                        onSelectThread={handleSelectThread}
-                    />
-                </div>
+                {/* List panel:
+                    - Mobile không có detail: hiện
+                    - Mobile có detail đang xem: ẩn hoàn toàn (không render)
+                    - Desktop: luôn hiện (lg:flex) */}
+                {(!selectedThread || !mobileShowDetail) && (
+                    <div className={`flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm ${selectedThread ? "hidden lg:flex" : "flex"}`}>
+                        <SupportThreadList
+                            threads={filteredThreads}
+                            selectedThreadId={selectedThreadId}
+                            query={query}
+                            statusFilter={statusFilter}
+                            timeSort={timeSort}
+                            isTwoColumn={Boolean(selectedThread)}
+                            unreadIds={unreadIds}
+                            onQueryChange={setQuery}
+                            onStatusFilterChange={setStatusFilter}
+                            onToggleTimeSort={() => setTimeSort((prev) => (prev === "desc" ? "asc" : "desc"))}
+                            onSelectThread={handleSelectThread}
+                        />
+                    </div>
+                )}
 
-                {/* Detail panel */}
+                {/* Detail panel:
+                    - Mobile: chỉ hiện khi mobileShowDetail=true
+                    - Desktop: luôn hiện khi có selectedThread */}
                 {selectedThread && (
-                    <SupportThreadDetail
-                        thread={selectedThread}
-                        replyDraft={draftReply}
-                        onReplyDraftChange={setDraftReply}
-                        onSendReply={handleSendReply}
-                        isSendingReply={isSendingReply}
-                    />
+                    <div className={`${mobileShowDetail ? "flex" : "hidden"} flex-col h-full lg:flex pt-3 lg:pt-0`}>
+
+                        {/* Filter bar ngoài khung — chỉ mobile, giống SupportThreadList header */}
+                        <div className="lg:hidden shrink-0 space-y-3 mb-3">
+                            <div className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                                <Search className="h-4 w-4 text-slate-400 shrink-0" />
+                                <input
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Search tickets..."
+                                    className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                                />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Filter className="h-4 w-4 text-slate-400" />
+                                {SUPPORT_STATUS_FILTERS.map((f) => {
+                                    const showDot = f === "OPEN" && unreadIds.size > 0;
+                                    return (
+                                        <button
+                                            key={f}
+                                            onClick={() => { setStatusFilter(f); setMobileShowDetail(false); }}
+                                            className={[
+                                                "relative rounded-full px-3 py-1.5 text-xs font-semibold transition",
+                                                statusFilter === f
+                                                    ? "bg-primary-600 text-white shadow-sm"
+                                                    : "bg-gray-100 text-slate-600 hover:bg-gray-200",
+                                            ].join(" ")}
+                                        >
+                                            {f === "Tất cả" ? "Tất cả" : STATUS_LABEL[f]}
+                                            {showDot && (
+                                                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                                <button
+                                    type="button"
+                                    onClick={() => setTimeSort((prev) => (prev === "desc" ? "asc" : "desc"))}
+                                    className="ml-auto inline-flex gap-2 px-3 items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+                                >
+                                    <span>Theo thời gian</span>
+                                    {timeSort === "desc" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <SupportThreadDetail
+                            thread={selectedThread}
+                            replyDraft={draftReply}
+                            onReplyDraftChange={setDraftReply}
+                            onSendReply={handleSendReply}
+                            isSendingReply={isSendingReply}
+                            onBack={() => setMobileShowDetail(false)}
+                        />
+                    </div>
                 )}
             </div>
         </div>

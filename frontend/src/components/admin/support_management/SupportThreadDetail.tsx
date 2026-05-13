@@ -1,4 +1,4 @@
-import { Send, Loader2, User } from "lucide-react";
+import { Send, Loader2, User, ChevronLeft } from "lucide-react";
 import { type SupportThread, STATUS_STYLE, STATUS_LABEL } from "./supportTypes.ts";
 
 type SupportThreadDetailProps = {
@@ -7,6 +7,7 @@ type SupportThreadDetailProps = {
     onReplyDraftChange: (value: string) => void;
     onSendReply: () => void;
     isSendingReply?: boolean;
+    onBack?: () => void; // mobile: quay về list
 };
 
 function AvatarPlaceholder({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
@@ -26,6 +27,7 @@ export default function SupportThreadDetail({
     onReplyDraftChange,
     onSendReply,
     isSendingReply = false,
+    onBack,
 }: SupportThreadDetailProps) {
     if (!thread) return null;
 
@@ -34,8 +36,16 @@ export default function SupportThreadDetail({
     return (
         <section className="rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full">
 
-            {/* Header — giống ChatSupportPage */}
+            {/* Header */}
             <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className="lg:hidden p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600 shrink-0"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                )}
                 <AvatarPlaceholder name={thread.name} size="lg" />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

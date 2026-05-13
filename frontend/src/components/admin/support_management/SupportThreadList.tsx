@@ -8,6 +8,7 @@ type SupportThreadListProps = {
     statusFilter: "Tất cả" | SupportStatus;
     timeSort: "desc" | "asc";
     isTwoColumn: boolean;
+    unreadIds?: Set<number>; // ticket có tin nhắn mới chưa xem
     onQueryChange: (value: string) => void;
     onStatusFilterChange: (value: "Tất cả" | SupportStatus) => void;
     onToggleTimeSort: () => void;
@@ -31,6 +32,7 @@ export default function SupportThreadList({
     statusFilter,
     timeSort,
     isTwoColumn,
+    unreadIds,
     onQueryChange,
     onStatusFilterChange,
     onToggleTimeSort,
@@ -52,29 +54,32 @@ export default function SupportThreadList({
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Filter className="h-4 w-4 text-slate-400" />
-                    {SUPPORT_STATUS_FILTERS.map((filter) => (
-                        <button
-                            key={filter}
-                            onClick={() => onStatusFilterChange(filter)}
-                            className={[
-                                "rounded-full px-3 py-1.5 text-xs font-semibold transition",
-                                statusFilter === filter
-                                    ? "bg-primary-600 text-white shadow-sm"
-                                    : "bg-gray-100 text-slate-600 hover:bg-gray-200",
-                            ].join(" ")}
-                        >
-                            {filter === "Tất cả" ? "Tất cả" : STATUS_LABEL[filter]}
-                        </button>
-                    ))}
+                    {SUPPORT_STATUS_FILTERS.map((filter) => {
+                        const showDot = filter === "OPEN" && (unreadIds?.size ?? 0) > 0;
+                        return (
+                            <button
+                                key={filter}
+                                onClick={() => onStatusFilterChange(filter)}
+                                className={[
+                                    "relative rounded-full px-3 py-1.5 text-xs font-semibold transition",
+                                    statusFilter === filter
+                                        ? "bg-primary-600 text-white shadow-sm"
+                                        : "bg-gray-100 text-slate-600 hover:bg-gray-200",
+                                ].join(" ")}
+                            >
+                                {filter === "Tất cả" ? "Tất cả" : STATUS_LABEL[filter]}
+                                {showDot && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                )}
+                            </button>
+                        );
+                    })}
                     <button
                         type="button"
                         onClick={onToggleTimeSort}
-                        className={[
-                            "ml-auto inline-flex items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700",
-                            isTwoColumn ? "px-2.5" : "gap-2 px-3",
-                        ].join(" ")}
+                        className="ml-auto inline-flex gap-2 px-3 items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
                     >
-                        {!isTwoColumn && <span>Theo thời gian</span>}
+                        <span>Theo thời gian</span>
                         {timeSort === "desc" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
                     </button>
                 </div>
@@ -89,6 +94,7 @@ export default function SupportThreadList({
                     </div>
                 ) : threads.map((thread) => {
                     const isSelected = thread.id === selectedThreadId;
+                    const hasUnread  = unreadIds?.has(thread.id) ?? false;
                     return (
                         <button
                             key={thread.id}
@@ -100,7 +106,13 @@ export default function SupportThreadList({
                             }`}
                         >
                             <div className="flex items-start justify-between gap-2 mb-1">
-                                <p className="text-sm font-bold text-slate-900 truncate">{thread.name}</p>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <p className="text-sm font-bold text-slate-900 truncate">{thread.name}</p>
+                                    {/* Dot đỏ báo tin nhắn mới chưa xem */}
+                                    {hasUnread && (
+                                        <span className="shrink-0 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                    )}
+                                </div>
                                 <span className="text-xs text-slate-400 shrink-0">{thread.createdAt}</span>
                             </div>
                             <p className="text-xs text-slate-400 mb-2">{thread.email}</p>
@@ -112,7 +124,9 @@ export default function SupportThreadList({
                                     {STATUS_LABEL[thread.status]}
                                 </span>
                             </div>
-                            <p className="text-sm text-slate-600 line-clamp-2 leading-6">{thread.message}</p>
+                            <p className={`text-sm line-clamp-2 leading-6 ${hasUnread ? "font-semibold text-slate-800" : "text-slate-600"}`}>
+                                {thread.message}
+                            </p>
                         </button>
                     );
                 })}
