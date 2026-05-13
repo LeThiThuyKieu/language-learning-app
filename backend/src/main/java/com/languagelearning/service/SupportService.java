@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class SupportService {
     private final SupportTicketRepository supportTicketRepository;
     private final SupportMessageRepository supportMessageRepository;
     private final EmailService emailService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // Lấy ticket còn mở (OPEN/IN_PROGRESS/RESOLVED) của user theo category — dùng cho chatbox suggest.
     @Transactional(readOnly = true)
@@ -86,7 +88,9 @@ public class SupportService {
             supportTicketRepository.save(ticket);
         }
 
-        return toDetailDto(ticket);
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
     }
 
     // Tạo ticket hỗ trợ mới cho user hiện tại và thêm tin nhắn đầu tiên từ user.
@@ -113,7 +117,9 @@ public class SupportService {
         firstMessage.setMessage(request.getMessage().trim());
         supportMessageRepository.save(firstMessage);
 
-        return toDetailDto(ticket);
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
     }
 
     // Tạo ticket hỗ trợ mới cho guest (chưa đăng nhập) với tên và email được cung cấp.
@@ -299,7 +305,9 @@ public class SupportService {
             );
         }
 
-        return toDetailDto(ticket);
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
     }
 
     // Admin cập nhật trạng thái ticket mà không cần gửi tin nhắn phản hồi.
@@ -313,7 +321,14 @@ public class SupportService {
 
         ticket.setStatus(parseStatus(request.getStatus()));
         supportTicketRepository.save(ticket);
-        return toDetailDto(ticket);
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
+    }
+
+    // Broadcast cập nhật ticket tới tất cả subscriber WebSocket.
+    private void broadcastTicketUpdate(SupportTicketDetailDto ticket) {
+        messagingTemplate.convertAndSend("/topic/support/" + ticket.getId(), ticket);
     }
 
     // Lấy user theo email từ token hiện tại.
