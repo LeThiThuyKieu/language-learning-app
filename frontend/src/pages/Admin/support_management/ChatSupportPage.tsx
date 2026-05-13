@@ -7,7 +7,7 @@ import {
 import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL, STATUS_STYLE } from "@/components/admin/support_management/supportTypes";
 import { supportService } from "@/services/supportService";
-import { useSupportSocket } from "@/hooks/useSupportSocket";
+import { useSupportSocket, useSupportListSocket } from "@/hooks/useSupportSocket";
 
 /** Style badge màu cho từng category */
 const CATEGORY_STYLE: Record<string, string> = {
@@ -63,10 +63,17 @@ export default function ChatSupportPage() {
     const [timeSort, setTimeSort]             = useState<"desc" | "asc">("desc");
     const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
     const [draftReply, setDraftReply]         = useState("");
+    // Mobile: true = đang xem chat panel, false = đang xem list panel
+    const [mobileShowChat, setMobileShowChat] = useState(false);
+    // Set id các ticket có tin nhắn mới chưa xem
+    const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
 
-    const loadedIds     = useRef<Set<number>>(new Set()); // tránh gọi viewAdminTicket nhiều lần cho cùng 1 ticket
+    const loadedIds     = useRef<Set<number>>(new Set());
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef   = useRef<HTMLTextAreaElement>(null);
+    // Ref để truy cập selectedThreadId mới nhất trong WS callback
+    const selectedThreadIdRef = useRef<number | null>(null);
+    selectedThreadIdRef.current = selectedThreadId;
 
     /** Tính stat cards từ danh sách thread hiện tại */
     const stats = useMemo(() => buildStats(threads), [threads]);
@@ -92,52 +99,64 @@ export default function ChatSupportPage() {
         [threads, selectedThreadId],
     );
 
-    /** WebSocket: nhận tin nhắn realtime từ user */
+    /** WebSocket: nhận tin nhắn realtime từ user (ticket đang xem) */
     useSupportSocket({
-        ticketId: selectedThreadId, // subscribe vào ticket đang xem
-        keepMessage: selectedThread?.message, // giữ message gốc khi merge
+        ticketId: selectedThreadId,
+        keepMessage: selectedThread?.message,
         onUpdate: (updated) => {
-            // Cập nhật thread trong danh sách khi có tin mới qua WebSocket
+            // Chỉ cập nhật messages + status của ticket đang xem, KHÔNG đụng sentAt
+            // (sentAt được useSupportListSocket xử lý để tránh double-update)
             setThreads((prev) => prev.map((t) => {
                 if (t.id !== updated.id) return t;
-                return { ...updated, message: t.message || updated.message };
+                return { ...t, messages: updated.messages, status: updated.status };
             }));
         },
     });
 
-    /**
-     * Load danh sách ticket lần đầu khi mount.
-     * Sau đó poll mỗi 15 giây để cập nhật danh sách (ticket mới, status thay đổi).
-     * Khi merge dữ liệu mới, giữ nguyên messages đã load để tránh mất dữ liệu.
-     */
+    /** WebSocket: nhận cập nhật danh sách (sort, status, preview) cho mọi ticket CHAT */
+    useSupportListSocket({
+        onListUpdate: (item) => {
+            if (item.source !== "CHAT") return;
+            const now = new Date().toISOString();
+            setThreads((prev) => {
+                const exists = prev.find((t) => t.id === item.id);
+                if (!exists) {
+                    // Ticket mới toanh → thêm vào đầu danh sách
+                    const newThread: SupportThread = {
+                        id:        item.id,
+                        userId:    null,
+                        name:      item.requesterName || item.requesterEmail?.split("@")[0] || "Người dùng",
+                        email:     item.requesterEmail,
+                        category:  item.categoryDisplayName as SupportThread["category"],
+                        message:   item.latestMessage,
+                        createdAt: "Vừa xong",
+                        sentAt:    now,
+                        status:    item.status,
+                    };
+                    return [newThread, ...prev];
+                }
+                return prev
+                    .map((t) => {
+                        if (t.id !== item.id) return t;
+                        return { ...t, status: item.status, message: item.latestMessage || t.message, sentAt: now };
+                    })
+                    .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+            });
+            if (item.id !== selectedThreadIdRef.current) {
+                setUnreadIds((prev) => new Set(prev).add(item.id));
+            }
+        },
+    });
+
+    /** Load danh sách ticket lần đầu khi mount — không poll, WS xử lý realtime */
     useEffect(() => {
         let mounted = true;
-
-        // Hàm fetch danh sách dùng cho cả lần đầu và poll
-        const fetchList = () => {
-            supportService.getAdminTickets(0, 100, "desc", "CHAT")
-                .then((data) => {
-                    if (!mounted) return;
-                    setThreads((prev) => {
-                        const prevMap = new Map(prev.map((t) => [t.id, t]));
-                        return data.map((t) => {
-                            const existing = prevMap.get(t.id);
-                            // Giữ lại messages đã load nếu có, tránh mất dữ liệu khi poll
-                            return existing?.messages ? { ...t, messages: existing.messages } : t;
-                        });
-                    });
-                })
-                .catch(() => {});
-        };
-
         setIsLoading(true);
         supportService.getAdminTickets(0, 100, "desc", "CHAT")
             .then((data) => { if (mounted) setThreads(data); })
             .catch(() => toast.error("Không tải được danh sách chat hỗ trợ"))
             .finally(() => { if (mounted) setIsLoading(false); });
-
-        const listPoll = setInterval(fetchList, 15_000); // poll danh sách mỗi 15s
-        return () => { mounted = false; clearInterval(listPoll); };
+        return () => { mounted = false; };
     }, []);
 
     /**
@@ -157,21 +176,31 @@ export default function ChatSupportPage() {
      */
     const handleSelectThread = (threadId: number) => {
         setSelectedThreadId(threadId);
+        setMobileShowChat(true);
+        setUnreadIds((prev) => { const s = new Set(prev); s.delete(threadId); return s; });
         const thread = threads.find((t) => t.id === threadId);
         if (!thread) return;
-        setDraftReply(`Chào ${thread.name}, `); // pre-fill draft
+        setDraftReply(`Chào ${thread.name}, `);
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
 
-        if (loadedIds.current.has(threadId)) return; // đã load rồi → bỏ qua
+        // Optimistic: đổi OPEN → IN_PROGRESS ngay lập tức, không chờ API
+        if (thread.status === "OPEN") {
+            setThreads((prev) => prev.map((t) =>
+                t.id === threadId ? { ...t, status: "IN_PROGRESS" } : t
+            ));
+        }
+
+        if (loadedIds.current.has(threadId)) return;
         loadedIds.current.add(threadId);
         supportService.viewAdminTicket(threadId)
             .then((detail) => {
+                // Chỉ cập nhật messages và status, giữ nguyên sentAt
                 setThreads((prev) => prev.map((t) => {
                     if (t.id !== detail.id) return t;
-                    return { ...detail, message: t.message || detail.message };
+                    return { ...t, messages: detail.messages, status: detail.status };
                 }));
             })
-            .catch(() => { loadedIds.current.delete(threadId); }); // rollback nếu lỗi
+            .catch(() => { loadedIds.current.delete(threadId); });
     };
 
     /** Admin gửi phản hồi vào ticket đang chọn */
@@ -182,7 +211,8 @@ export default function ChatSupportPage() {
             const updated = await supportService.replyAdminTicket(selectedThread.id, draftReply.trim());
             setThreads((prev) => prev.map((t) => {
                 if (t.id !== updated.id) return t;
-                return { ...updated, message: t.message || updated.message };
+                // Giữ sentAt hiện tại, chỉ cập nhật messages và status
+                return { ...t, messages: updated.messages, status: updated.status, message: updated.message || t.message };
             }));
             setDraftReply("");
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
@@ -204,7 +234,7 @@ export default function ChatSupportPage() {
             const updated = await supportService.updateTicketStatus(selectedThread.id, "RESOLVED");
             setThreads((prev) => prev.map((t) => {
                 if (t.id !== updated.id) return t;
-                return { ...updated, message: t.message || updated.message };
+                return { ...t, status: updated.status };
             }));
             toast.success("Đã đánh dấu hoàn tất");
         } catch { toast.error("Không thể cập nhật trạng thái"); }
@@ -221,9 +251,9 @@ export default function ChatSupportPage() {
     return (
         <div className="flex flex-col -m-6 h-[calc(100vh-64px)] overflow-hidden">
 
-            {/* Header + Stats — ẩn khi đang xem chi tiết để nhường chỗ cho chat panel */}
+            {/* Header + Stats — chỉ hiện trên md trở lên, ẩn khi đang xem chi tiết */}
             {!selectedThread && (
-                <div className="px-6 pt-6 pb-4 space-y-5 shrink-0">
+                <div className="hidden md:block px-6 pt-6 pb-4 space-y-5 shrink-0">
                     <div>
                         <h1 className="text-2xl font-extrabold text-gray-900">Quản lý chat hỗ trợ</h1>
                         <p className="text-sm text-gray-500 mt-1">Xem và phản hồi trực tiếp các yêu cầu hỗ trợ qua chat.</p>
@@ -239,11 +269,12 @@ export default function ChatSupportPage() {
                 </div>
             )}
 
-            {/* Layout chính: list panel bên trái, chat panel bên phải (khi có selectedThread) */}
-            <div className={`flex-1 overflow-hidden px-6 pb-6 ${selectedThread ? "grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
+            {/* Layout chính */}
+            <div className={`flex-1 overflow-hidden px-3 pb-3 md:px-6 md:pb-6 ${selectedThread ? "lg:grid lg:gap-6 lg:pt-4 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
 
-                {/* ── List panel ── */}
-                <div className="flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
+                {/* List panel — ẩn trên mobile khi đang xem chat, luôn hiện trên desktop */}
+                {(!mobileShowChat || !selectedThread) && (
+                <div className="flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm lg:flex">
 
                     {/* Thanh tìm kiếm và filter */}
                     <div className="p-4 space-y-3 border-b border-gray-100 shrink-0">
@@ -258,22 +289,27 @@ export default function ChatSupportPage() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             <Filter className="h-4 w-4 text-slate-400" />
-                            {/* Filter buttons theo status */}
-                            {SUPPORT_STATUS_FILTERS.map((f) => (
-                                <button
-                                    key={f}
-                                    onClick={() => setStatusFilter(f)}
-                                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${statusFilter === f ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 text-slate-600 hover:bg-gray-200"}`}
-                                >
-                                    {f === "Tất cả" ? "Tất cả" : STATUS_LABEL[f]}
-                                </button>
-                            ))}
-                            {/* Nút toggle sắp xếp theo thời gian */}
+                            {SUPPORT_STATUS_FILTERS.map((f) => {
+                                // Hiện chấm đỏ trên filter "Open" nếu có unread
+                                const showDot = f === "OPEN" && unreadIds.size > 0;
+                                return (
+                                    <button
+                                        key={f}
+                                        onClick={() => setStatusFilter(f)}
+                                        className={`relative rounded-full px-3 py-1.5 text-xs font-semibold transition ${statusFilter === f ? "bg-primary-600 text-white shadow-sm" : "bg-gray-100 text-slate-600 hover:bg-gray-200"}`}
+                                    >
+                                        {f === "Tất cả" ? "Tất cả" : STATUS_LABEL[f]}
+                                        {showDot && (
+                                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                             <button
                                 onClick={() => setTimeSort((p) => p === "desc" ? "asc" : "desc")}
-                                className={`ml-auto inline-flex items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 ${selectedThread ? "px-2.5" : "gap-2 px-3"}`}
+                                className="ml-auto inline-flex gap-2 px-3 items-center rounded-full border border-gray-200 bg-white py-1.5 text-xs font-semibold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
                             >
-                                {!selectedThread && <span>Theo thời gian</span>}
+                                <span>Theo thời gian</span>
                                 {timeSort === "desc" ? <ArrowDown className="h-3.5 w-3.5" /> : <ArrowUp className="h-3.5 w-3.5" />}
                             </button>
                         </div>
@@ -288,10 +324,10 @@ export default function ChatSupportPage() {
                             </div>
                         ) : filteredThreads.map((thread) => {
                             const isSelected = thread.id === selectedThreadId;
-                            // Hiển thị tin nhắn cuối cùng trong preview
-                            const lastMsg = thread.messages && thread.messages.length > 0
-                                ? thread.messages[thread.messages.length - 1]
-                                : undefined;
+                            const hasUnread  = unreadIds.has(thread.id);
+                            // Lấy tin nhắn mới nhất, bỏ qua auto-reply tĩnh
+                            const realMsgs = (thread.messages ?? []).filter((m) => m.message !== "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!");
+                            const lastMsg  = realMsgs.length > 0 ? realMsgs[realMsgs.length - 1] : undefined;
                             return (
                                 <button
                                     key={thread.id}
@@ -299,7 +335,12 @@ export default function ChatSupportPage() {
                                     className={`w-full text-left p-4 transition ${isSelected ? "bg-orange-50 border-l-4 border-l-orange-400" : "hover:bg-orange-50/40 border-l-4 border-l-transparent"}`}
                                 >
                                     <div className="flex items-start justify-between gap-2 mb-1">
-                                        <p className="text-sm font-bold text-slate-900 truncate">{thread.name}</p>
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <p className="text-sm font-bold text-slate-900 truncate">{thread.name}</p>
+                                            {hasUnread && (
+                                                <span className="shrink-0 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                            )}
+                                        </div>
                                         <span className="text-xs text-slate-400 shrink-0">{thread.createdAt}</span>
                                     </div>
                                     <p className="text-xs text-slate-400 mb-2">{thread.email}</p>
@@ -311,8 +352,7 @@ export default function ChatSupportPage() {
                                             {STATUS_LABEL[thread.status]}
                                         </span>
                                     </div>
-                                    {/* Preview tin nhắn cuối, prefix "Bạn: " nếu là admin */}
-                                    <p className="text-sm text-slate-600 line-clamp-2 leading-6">
+                                    <p className={`text-sm line-clamp-2 leading-6 ${hasUnread ? "font-semibold text-slate-800" : "text-slate-600"}`}>
                                         {lastMsg ? (lastMsg.senderType === "ADMIN" ? "Bạn: " : "") + lastMsg.message : thread.message}
                                     </p>
                                 </button>
@@ -320,12 +360,45 @@ export default function ChatSupportPage() {
                         })}
                     </div>
                 </div>
+                )}
 
-                {/* ── Chat panel — chỉ hiện khi có thread được chọn ── */}
+                {/* Chat panel — hiện trên mobile khi mobileShowChat=true, luôn hiện trên desktop */}
                 {selectedThread && (
-                    <section className="rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full">
+                    <section className={`rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full
+                        ${mobileShowChat ? "flex" : "hidden lg:flex"}`}>
 
-                        {/* Header chat panel: thông tin user + nút Hoàn tất + nút đóng */}
+                        {/* Mini filter bar — chỉ hiện trên mobile khi đang xem chat */}
+                        <div className="lg:hidden flex items-center gap-2 px-3 pt-3 pb-0 shrink-0 flex-wrap">
+                            <button
+                                onClick={() => setMobileShowChat(false)}
+                                className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 shrink-0"
+                            >
+                                <ArrowUp className="w-4 h-4 rotate-[-90deg]" />
+                            </button>
+                            {SUPPORT_STATUS_FILTERS.map((f) => {
+                                const showDot = f === "OPEN" && unreadIds.size > 0;
+                                return (
+                                    <button
+                                        key={f}
+                                        onClick={() => { setStatusFilter(f); setMobileShowChat(false); }}
+                                        className={`relative rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${statusFilter === f ? "bg-primary-600 text-white" : "bg-gray-100 text-slate-600"}`}
+                                    >
+                                        {f === "Tất cả" ? "Tất cả" : STATUS_LABEL[f]}
+                                        {showDot && (
+                                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                            {unreadIds.size > 0 && (
+                                <span className="ml-auto text-[11px] font-semibold text-rose-500 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse inline-block" />
+                                    {unreadIds.size} tin mới
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Header: info user + Hoàn tất + đóng (desktop) */}
                         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
                             <AvatarPlaceholder name={selectedThread.name} size="lg" />
                             <div className="flex-1 min-w-0">
@@ -339,7 +412,6 @@ export default function ChatSupportPage() {
                                     {selectedThread.name}<span className="mx-1.5">·</span>{selectedThread.email}
                                 </p>
                             </div>
-                            {/* Nút Hoàn tất — chỉ hiện khi ticket đang IN_PROGRESS */}
                             {selectedThread.status === "IN_PROGRESS" && (
                                 <button
                                     onClick={() => void handleResolve()}
@@ -350,10 +422,10 @@ export default function ChatSupportPage() {
                                     Hoàn tất
                                 </button>
                             )}
-                            {/* Nút đóng chat panel */}
+                            {/* Nút đóng — chỉ hiện trên desktop */}
                             <button
-                                onClick={() => setSelectedThreadId(null)}
-                                className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
+                                onClick={() => { setSelectedThreadId(null); setMobileShowChat(false); }}
+                                className="hidden lg:block p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -362,13 +434,11 @@ export default function ChatSupportPage() {
                         {/* Vùng hiển thị hội thoại */}
                         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
                             {!selectedThread.messages ? (
-                                // Chưa load messages → hiện spinner
                                 <div className="flex justify-center py-8">
                                     <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                                 </div>
                             ) : selectedThread.messages.map((msg, idx) => {
                                 const isAdmin = msg.senderType === "ADMIN";
-                                // Hiện divider khi chuyển từ user sang admin
                                 const showDivider = idx > 0 && selectedThread.messages![idx - 1].senderType !== msg.senderType && isAdmin;
                                 return (
                                     <div key={idx}>
@@ -379,7 +449,6 @@ export default function ChatSupportPage() {
                                                 <div className="flex-1 h-px bg-gray-100" />
                                             </div>
                                         )}
-                                        {/* Bubble tin nhắn — admin bên phải (flex-row-reverse), user bên trái */}
                                         <div className={`flex items-end gap-2 ${isAdmin ? "flex-row-reverse" : "flex-row"}`}>
                                             {isAdmin ? (
                                                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
@@ -398,10 +467,10 @@ export default function ChatSupportPage() {
                                     </div>
                                 );
                             })}
-                            <div ref={messagesEndRef} /> {/* anchor scroll */}
+                            <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Input phản hồi của admin */}
+                        {/* Input phản hồi */}
                         <div className="px-4 pt-3 pb-4 border-t border-gray-100 shrink-0">
                             <div className="flex items-end gap-3">
                                 <div className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 focus-within:border-orange-300 focus-within:bg-white transition">

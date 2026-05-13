@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
     Send, X, ChevronLeft, Loader2,
     GraduationCap, User, BookOpen, Wrench, MessageCircle,
-    MessageSquarePlus, Clock, CheckCircle, XCircle,
+    MessageSquarePlus, XCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { supportService } from "@/services/supportService";
@@ -23,21 +23,12 @@ interface Category {
     colorText: string;
 }
 
-/** Map tên category → icon tương ứng */
-const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
+/** Map tên category → icon tương ứng */const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
     "Bắt đầu học": GraduationCap,
     "Tài khoản":   User,
     "Bài học":     BookOpen,
     "Kỹ thuật":    Wrench,
     "Khác":        MessageCircle,
-};
-
-/** Style badge cho từng trạng thái ticket */
-const STATUS_BADGE: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-    OPEN:        { label: "Open",        className: "bg-rose-100 text-rose-700",       icon: Clock },
-    IN_PROGRESS: { label: "In Progress", className: "bg-amber-100 text-amber-700",     icon: Clock },
-    RESOLVED:    { label: "Resolved",    className: "bg-emerald-100 text-emerald-700", icon: CheckCircle },
-    CLOSED:      { label: "Closed",      className: "bg-gray-100 text-gray-500",       icon: XCircle },
 };
 
 /** Keys lưu trạng thái chat vào localStorage để khôi phục khi reload */
@@ -353,10 +344,7 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                 Bạn có ticket đang mở về <strong>{selectedCategory?.displayName}</strong>:
                             </p>
 
-                            {/* Danh sách ticket cũ có thể tiếp tục */}
                             {suggestedTickets.map((t) => {
-                                const badge    = STATUS_BADGE[t.status] ?? STATUS_BADGE["OPEN"];
-                                const BadgeIcon = badge.icon;
                                 return (
                                     <button
                                         key={t.id}
@@ -364,10 +352,6 @@ export function SupportChatBox({ onClose }: SupportChatBoxProps) {
                                         className="w-full text-left p-3 rounded-2xl border border-gray-100 bg-gray-50 hover:bg-orange-50 hover:border-orange-200 transition-all"
                                     >
                                         <div className="flex items-center justify-between mb-1.5">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${badge.className}`}>
-                                                <BadgeIcon className="w-3 h-3" />
-                                                {badge.label}
-                                            </span>
                                             <span className="text-[10px] text-slate-400">{t.createdAt}</span>
                                         </div>
                                         <p className="text-xs text-slate-600 line-clamp-2">{t.message}</p>
