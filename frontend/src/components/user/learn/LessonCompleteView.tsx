@@ -1,14 +1,29 @@
+import { useState } from "react";
+import BadgeUnlockPopup from "@/components/user/learn/BadgeUnlockPopup";
+import type { BadgeInfo } from "@/services/learningService";
+
 export default function LessonCompleteView({
                                               knGained,
                                               accuracy,
+                                              newBadges = [],
                                               onContinue,
                                           }: {
     knGained: number;
-    accuracy?: number; // 0-100, nếu không truyền thì không hiển thị
+    accuracy?: number;
+    newBadges?: BadgeInfo[];
     onContinue: () => void;
 }) {
+    const [badgeQueue, setBadgeQueue] = useState<BadgeInfo[]>(newBadges);
+
+    function handleBadgeClose() {
+        setBadgeQueue((prev) => prev.slice(1));
+    }
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white flex flex-col">
+            {/* Popup badge — hiện từng cái một */}
+            {badgeQueue.length > 0 && (
+                <BadgeUnlockPopup badgeQueue={badgeQueue} onClose={handleBadgeClose} />
+            )}
             <div className="flex-1 flex items-center justify-center px-4">
                 <div className="w-full max-w-xl text-center">
                     <div className="mx-auto mb-6 h-24 w-24 rounded-full bg-primary-50 flex items-center justify-center">

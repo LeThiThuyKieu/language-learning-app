@@ -90,10 +90,11 @@ export default function ListeningLessonPage() {
                 node={listeningNode}
                 onLeaveLesson={() => navigate("/learn")}
                 onComplete={async (correctCount: number, attempts) => {
-                    const next = await completeNodeAndSave(listeningNode.nodeId, treeId, undefined, correctCount, attempts);
-                    bumpLearnTreeUnlocked(treeId, next);
-                    navigate("/learn", {state: {treeId, unlockedCount: next}});
+                    const result = await completeNodeAndSave(listeningNode.nodeId, treeId, undefined, correctCount, attempts);
+                    bumpLearnTreeUnlocked(treeId, result.unlockedCount);
+                    return result.newBadges;
                 }}
+                onNavigate={() => navigate("/learn", {state: {treeId}})}
             />
         </div>
     );

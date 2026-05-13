@@ -12,6 +12,17 @@ export interface SubmitAttemptsPayload {
   attempts: AttemptItem[];
 }
 
+export interface BadgeInfo {
+  name: string;
+  iconUrl: string | null;
+}
+
+export interface CompleteNodeResult {
+  unlockedCount: number;
+  knEarned: number;
+  newBadges: BadgeInfo[];
+}
+
 // Session cache key pattern: level_questions_{levelId}
 function levelQuestionsKey(levelId: number) {
     return `level_questions_${levelId}`;
@@ -70,16 +81,16 @@ export const learningService = {
   },
 
   /** Đánh dấu node hoàn thành, trả về unlockedCount và knEarned */
-  completeNode: async (nodeId: number, correctCount = 0): Promise<{ unlockedCount: number; knEarned: number }> => {
-    const response = await apiClient.post<{ unlockedCount: number; knEarned: number }>(
+  completeNode: async (nodeId: number, correctCount = 0): Promise<CompleteNodeResult> => {
+    const response = await apiClient.post<CompleteNodeResult>(
       `/progress/nodes/${nodeId}/complete?correctCount=${correctCount}`
     );
     return response.data;
   },
 
   /** Ghi lại kết quả từng câu hỏi + hoàn thành node */
-  submitAttempts: async (payload: SubmitAttemptsPayload): Promise<{ unlockedCount: number; knEarned: number }> => {
-    const response = await apiClient.post<{ unlockedCount: number; knEarned: number }>(
+  submitAttempts: async (payload: SubmitAttemptsPayload): Promise<CompleteNodeResult> => {
+    const response = await apiClient.post<CompleteNodeResult>(
       `/progress/nodes/submit`,
       payload
     );

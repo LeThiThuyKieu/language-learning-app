@@ -1,4 +1,4 @@
-import { learningService, type AttemptItem } from "@/services/learningService";
+import { learningService, type AttemptItem, type BadgeInfo, type CompleteNodeResult } from "@/services/learningService";
 
 /**
  * Tiến độ cây bài học — lưu DB là nguồn chính, sessionStorage là cache tạm.
@@ -42,7 +42,7 @@ export async function loadProgressFromDB(treeId: number): Promise<number> {
 
 /**
  * Sau khi hoàn thành node: ghi lại attempts + complete node.
- * Trả về unlockedCount mới.
+ * Trả về unlockedCount mới và danh sách badge mới được trao.
  */
 export async function completeNodeAndSave(
     nodeId: number,
@@ -50,9 +50,9 @@ export async function completeNodeAndSave(
     levelId?: number,
     correctCount = 0,
     attempts?: AttemptItem[]
-): Promise<number> {
+): Promise<{ unlockedCount: number; newBadges: BadgeInfo[] }> {
     try {
-        let result: { unlockedCount: number; knEarned: number };
+        let result: CompleteNodeResult;
 
         if (attempts && attempts.length > 0) {
             result = await learningService.submitAttempts({ nodeId, attempts });
@@ -60,17 +60,16 @@ export async function completeNodeAndSave(
             result = await learningService.completeNode(nodeId, correctCount);
         }
 
-        const count = result.unlockedCount;
-        setLearnTreeUnlockedCount(treeId, count);
+        setLearnTreeUnlockedCount(treeId, result.unlockedCount);
         if (levelId != null) {
             learningService.invalidateLevelQuestionsCache(levelId);
         }
-        return count;
+        return { unlockedCount: result.unlockedCount, newBadges: result.newBadges ?? [] };
     } catch {
         const current = getLearnTreeUnlockedCount(treeId);
         const next = Math.max(current, 1);
         setLearnTreeUnlockedCount(treeId, next);
-        return next;
+        return { unlockedCount: next, newBadges: [] };
     }
 }
 

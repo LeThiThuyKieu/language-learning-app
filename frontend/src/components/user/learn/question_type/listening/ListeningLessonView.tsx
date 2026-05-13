@@ -1,11 +1,11 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
-import type {AttemptItem} from "@/services/learningService";
+import type {AttemptItem, BadgeInfo} from "@/services/learningService";
 
 function parseExpectedTokens(correctAnswer?: string): string[] {
     const raw = (correctAnswer ?? "").trim();
@@ -35,10 +35,12 @@ export default function ListeningLessonView({
     node,
     onLeaveLesson,
     onComplete,
+    onNavigate,
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: (correctCount: number, attempts: AttemptItem[]) => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => Promise<BadgeInfo[]>;
+    onNavigate: () => void;
 }) {
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
@@ -53,6 +55,8 @@ export default function ListeningLessonView({
     const [checked, setChecked] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
     const [exitOpen, setExitOpen] = useState(false);
+    const [newBadges, setNewBadges] = useState<BadgeInfo[]>([]);
+    const completingRef = useRef(false);
 
     useEffect(() => {
         setInputs(expected.map(() => ""));
@@ -74,11 +78,8 @@ export default function ListeningLessonView({
 
     function handleContinue() {
         if (!checked) return;
-        setIsFinished(true);
-    }
-
-    if (isFinished) {
-        // Mỗi từ trong expected là 1 attempt riêng
+        if (completingRef.current) return;
+        completingRef.current = true;
         const mongoId = (q as {mongoQuestionId?: string})?.mongoQuestionId ?? String(q?.id ?? "");
         const attempts: AttemptItem[] = expected.map((exp, i) => ({
             mongoQuestionId: mongoId,
@@ -86,8 +87,17 @@ export default function ListeningLessonView({
             correct: tokenMatches(inputs[i] ?? "", exp),
         }));
         const correctCount = attempts.filter(a => a.correct).length;
-        const accuracy = expected.length > 0 ? Math.round((correctCount / expected.length) * 100) : 0;
-        return <LessonCompleteView knGained={10} accuracy={accuracy} onContinue={() => onComplete(correctCount, attempts)}/>;
+        onComplete(correctCount, attempts).then((badges) => {
+            setNewBadges(badges);
+            setIsFinished(true);
+        });
+    }
+
+    if (isFinished) {
+        const accuracy = expected.length > 0
+            ? Math.round((expected.filter((exp, i) => tokenMatches(inputs[i] ?? "", exp)).length / expected.length) * 100)
+            : 0;
+        return <LessonCompleteView knGained={10} accuracy={accuracy} newBadges={newBadges} onContinue={onNavigate}/>;
     }
 
     const answerListDetail =

@@ -28,30 +28,31 @@ public class ProgressController {
 
     /** Đánh dấu node hoàn thành */
     @PostMapping("/nodes/{nodeId}/complete")
-    public ResponseEntity<Map<String, Integer>> completeNode(
+    public ResponseEntity<Map<String, Object>> completeNode(
             @PathVariable int nodeId,
             @RequestParam(defaultValue = "0") int correctCount,
             @AuthenticationPrincipal UserDetails userDetails) {
         ProgressService.CompleteNodeResult result = progressService.completeNode(userDetails.getUsername(), nodeId, correctCount);
         return ResponseEntity.ok(Map.of(
                 "unlockedCount", result.unlockedCount(),
-                "knEarned", result.knEarned()
+                "knEarned", result.knEarned(),
+                "newBadges", result.newBadgeNames()
         ));
     }
 
     /**
      * Ghi lại kết quả từng câu hỏi + hoàn thành node.
-     * Thay thế /nodes/{nodeId}/complete khi có dữ liệu chi tiết từng câu.
      * POST /api/progress/nodes/submit
      */
     @PostMapping("/nodes/submit")
-    public ResponseEntity<Map<String, Integer>> submitAttempts(
+    public ResponseEntity<Map<String, Object>> submitAttempts(
             @RequestBody SubmitAttemptsRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         ProgressService.CompleteNodeResult result = progressService.submitAttempts(userDetails.getUsername(), request);
         return ResponseEntity.ok(Map.of(
                 "unlockedCount", result.unlockedCount(),
-                "knEarned", result.knEarned()
+                "knEarned", result.knEarned(),
+                "newBadges", result.newBadgeNames()
         ));
     }
 }

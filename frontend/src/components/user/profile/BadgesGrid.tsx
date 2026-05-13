@@ -41,11 +41,11 @@ export default function BadgesGrid({ badges }: BadgesGridProps) {
                             title={badge.description}
                         >
                             {/* Vòng tròn chứa Icon */}
-                            <div className="relative w-[4.5rem] h-[4.5rem] sm:w-24 sm:h-24 rounded-full flex items-center justify-center mb-3 shadow-inner border-4 border-white bg-primary-50">
+                            <div className="relative w-[4.5rem] h-[4.5rem] sm:w-24 sm:h-24 flex items-center justify-center mb-3">
                                 <img
                                     src={badge.iconUrl || FALLBACK_BADGE_ICON}
                                     alt={badge.badgeName}
-                                    className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
+                                    className="w-15 h-15 sm:w-25 sm:h-25 object-contain"
                                 />
 
                                 <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>

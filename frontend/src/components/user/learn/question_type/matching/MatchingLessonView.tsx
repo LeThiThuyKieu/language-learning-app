@@ -1,10 +1,10 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import {Sparkles} from "lucide-react";
-import type {AttemptItem} from "@/services/learningService";
+import type {AttemptItem, BadgeInfo} from "@/services/learningService";
 
 type Pair = {
     id: string;
@@ -52,10 +52,12 @@ export default function MatchingLessonView({
                                                node,
                                                onLeaveLesson,
                                                onComplete,
+                                               onNavigate,
                                            }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: (correctCount: number, attempts: AttemptItem[]) => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => Promise<BadgeInfo[]>;
+    onNavigate: () => void;
 }) {
     const pairs: Pair[] = useMemo(() => {
         const qs = node.questions ?? [];
@@ -83,6 +85,8 @@ export default function MatchingLessonView({
     const [wrongPair, setWrongPair] = useState<{ leftId: string; rightId: string } | null>(null);
     const [isFinished, setIsFinished] = useState(false);
     const [exitOpen, setExitOpen] = useState(false);
+    const [newBadges, setNewBadges] = useState<BadgeInfo[]>([]);
+    const completingRef = useRef(false);
 
     useEffect(() => {
         setSelectedLeftId(null);
@@ -114,7 +118,22 @@ export default function MatchingLessonView({
                 setMatchedIds((prev) => {
                     const next = new Set(prev).add(nextLeftId);
                     if (next.size === pairs.length && pairs.length > 0) {
-                        window.setTimeout(() => setIsFinished(true), 400);
+                        window.setTimeout(() => {
+                            if (completingRef.current) return;
+                            completingRef.current = true;
+                            const matchAttempts: AttemptItem[] = pairs.map((p) => {
+                                const q = node.questions?.find((q) => (q.questionText ?? "").trim() === p.left);
+                                return {
+                                    mongoQuestionId: (q as {mongoQuestionId?: string})?.mongoQuestionId ?? String(q?.id ?? p.id),
+                                    userAnswer: p.right,
+                                    correct: true,
+                                };
+                            });
+                            onComplete(pairs.length, matchAttempts).then((badges) => {
+                                setNewBadges(badges);
+                                setIsFinished(true);
+                            });
+                        }, 400);
                     }
                     return next;
                 });
@@ -147,7 +166,7 @@ export default function MatchingLessonView({
                 correct: true,
             };
         });
-        return <LessonCompleteView knGained={10} accuracy={100} onContinue={() => onComplete(pairs.length, attempts)}/>;
+        return <LessonCompleteView knGained={10} accuracy={100} newBadges={newBadges} onContinue={onNavigate}/>;
     }
 
     const matchPct = pairs.length === 0 ? 0 : (matchedIds.size / pairs.length) * 100;

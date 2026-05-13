@@ -20,7 +20,10 @@ import java.util.stream.Collectors;
 public class ProgressService {
 
     /** Kết quả trả về sau khi hoàn thành node */
-    public record CompleteNodeResult(int unlockedCount, int knEarned) {}
+    public record CompleteNodeResult(int unlockedCount, int knEarned, List<BadgeInfo> newBadgeNames) {}
+
+    /** Thông tin badge mới được trao */
+    public record BadgeInfo(String name, String iconUrl) {}
 
     private final UserRepository userRepository;
     private final SkillNodeRepository skillNodeRepository;
@@ -33,6 +36,8 @@ public class ProgressService {
     private final UserProfileRepository userProfileRepository;
     private final QuestionIndexRepository questionIndexRepository;
     private final UserQuestionAttemptRepository userQuestionAttemptRepository;
+    private final BadgeRepository badgeRepository;
+    private final UserBadgeRepository userBadgeRepository;
 
     /** Lấy số node đã unlock của một tree */
     @Transactional(readOnly = true)
@@ -109,7 +114,7 @@ public class ProgressService {
             skillTreeQuestionService.invalidateLevelCache(user.getId(), levelId);
         }
 
-        return new CompleteNodeResult(getUnlockedCount(email, treeId), knReward);
+        return new CompleteNodeResult(getUnlockedCount(email, treeId), knReward, checkAndAwardBadges(user));
     }
 
     /** Cập nhật Tree Progress */
@@ -205,6 +210,32 @@ public class ProgressService {
             profile.setTotalXp(current + amount);
             userProfileRepository.save(profile);
         });
+    }
+
+    /**
+     * Kiểm tra và trao badge cho user nếu đủ KN.
+     * Trả về danh sách badge mới được trao (name + iconUrl).
+     */
+    private List<BadgeInfo> checkAndAwardBadges(User user) {
+        int totalKn = userKnRepository.findByUser(user)
+                .map(UserKn::getTotalKn)
+                .orElse(0);
+
+        List<Badge> eligibleBadges = badgeRepository.findAll().stream()
+                .filter(b -> b.getRequiredKn() != null && totalKn >= b.getRequiredKn())
+                .toList();
+
+        List<BadgeInfo> newBadges = new java.util.ArrayList<>();
+        for (Badge badge : eligibleBadges) {
+            if (!userBadgeRepository.existsByUserAndBadgeId(user, badge.getId())) {
+                UserBadge ub = new UserBadge();
+                ub.setUser(user);
+                ub.setBadge(badge);
+                userBadgeRepository.save(ub);
+                newBadges.add(new BadgeInfo(badge.getBadgeName(), badge.getIconUrl()));
+            }
+        }
+        return newBadges;
     }
 
     /**

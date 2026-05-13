@@ -29,7 +29,16 @@ CREATE TABLE IF NOT EXISTS `badges` (
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Data exporting was unselected.
+-- Dữ liệu mốc huy hiệu theo KN tích lũy
+INSERT INTO `badges` (`badge_name`, `description`, `required_kn`, `icon_url`) VALUES
+('Bước Chân Đầu Tiên',   'Hãy cố gắng đạt 30 KN để nhận huy hiệu Bước Chân Đầu Tiên!',       30,   '/badges/badge_1.png'),
+('Chiến Binh Xuất Hành', 'Hãy cố gắng đạt 100 KN để nhận huy hiệu Chiến Binh Xuất Hành!',    100,  '/badges/badge_2.png'),
+('Người Học Chăm Chỉ',   'Hãy cố gắng đạt 250 KN để nhận huy hiệu Người Học Chăm Chỉ!',      250,  '/badges/badge_3.png'),
+('Ngọn Lửa Tri Thức',    'Hãy cố gắng đạt 500 KN để nhận huy hiệu Ngọn Lửa Tri Thức!',       500,  '/badges/badge_4.png'),
+('Nhà Thám Hiểm Ngôn Từ','Hãy cố gắng đạt 1000 KN để nhận huy hiệu Nhà Thám Hiểm Ngôn Từ!', 1000, '/badges/badge_5.png'),
+('Hiệp Sĩ Từ Vựng',      'Hãy cố gắng đạt 2000 KN để nhận huy hiệu Hiệp Sĩ Từ Vựng!',       2000, '/badges/badge_6.png'),
+('Bậc Thầy Giao Tiếp',   'Hãy cố gắng đạt 3500 KN để nhận huy hiệu Bậc Thầy Giao Tiếp!',    3500, '/badges/badge_7.png'),
+('Huyền Thoại Ngôn Ngữ', 'Hãy cố gắng đạt 5000 KN để nhận huy hiệu Huyền Thoại Ngôn Ngữ!',  5000, '/badges/badge_8.png');
 
 -- Dumping structure for table language_learning_app.feedback
 CREATE TABLE IF NOT EXISTS `feedback` (

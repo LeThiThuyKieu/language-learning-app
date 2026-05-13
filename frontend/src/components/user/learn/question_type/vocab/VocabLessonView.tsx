@@ -1,11 +1,11 @@
-import {useMemo, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
 import WordTooltip from "@/components/user/learn/question_type/vocab/WordTooltip.tsx";
-import type {AttemptItem} from "@/services/learningService";
+import type {AttemptItem, BadgeInfo} from "@/services/learningService";
 
 /** Tách câu thành tokens: từ tiếng Anh (isWord=true) và phần còn lại */
 function tokenizeQuestion(text: string): { text: string; isWord: boolean }[] {
@@ -27,10 +27,12 @@ export default function VocabLessonView({
     node,
     onLeaveLesson,
     onComplete,
+    onNavigate,
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: (correctCount: number, attempts: AttemptItem[]) => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => Promise<BadgeInfo[]>;
+    onNavigate: () => void;
 }) {
     const questions = node.questions ?? [];
     const total = Math.max(questions.length, 1);
@@ -41,6 +43,8 @@ export default function VocabLessonView({
     const [exitOpen, setExitOpen] = useState(false);
     const [correctCount, setCorrectCount] = useState(0);
     const [attempts, setAttempts] = useState<AttemptItem[]>([]);
+    const [newBadges, setNewBadges] = useState<BadgeInfo[]>([]);
+    const completingRef = useRef(false);
 
     const current = questions[index];
 
@@ -101,13 +105,19 @@ export default function VocabLessonView({
         } else {
             setCorrectCount(nextCorrect);
             setAttempts(nextAttempts);
-            setIsFinished(true);
+            // Guard chống double-invoke (React StrictMode)
+            if (completingRef.current) return;
+            completingRef.current = true;
+            onComplete(nextCorrect, nextAttempts).then((badges) => {
+                setNewBadges(badges);
+                setIsFinished(true);
+            });
         }
     }
 
     if (isFinished) {
         const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
-        return <LessonCompleteView knGained={10} accuracy={accuracy} onContinue={() => onComplete(correctCount, attempts)}/>;
+        return <LessonCompleteView knGained={10} accuracy={accuracy} newBadges={newBadges} onContinue={onNavigate}/>;
     }
 
     return (

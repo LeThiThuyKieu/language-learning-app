@@ -1,7 +1,7 @@
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {learningService} from "@/services/learningService.ts";
-import type {AttemptItem} from "@/services/learningService.ts";
+import type {AttemptItem, BadgeInfo} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import ReviewVocabView from "@/components/user/learn/question_type/review/ReviewVocabView.tsx";
@@ -33,6 +33,8 @@ export default function ReviewLessonPage() {
     const [error, setError] = useState<string | null>(null);
     const [stage, setStage] = useState<Stage>("VOCAB");
     const [allAttempts, setAllAttempts] = useState<AttemptItem[]>([]);
+    const [reviewBadges, setReviewBadges] = useState<BadgeInfo[]>([]);
+    const completingRef = useRef(false);
 
     useEffect(() => {
         // Nếu pass node REVIEW từ LearningPage thì khỏi fetch lại
@@ -143,11 +145,8 @@ export default function ReviewLessonPage() {
                 <LessonCompleteView
                     knGained={20}
                     accuracy={accuracy}
-                    onContinue={async () => {
-                        const next = await completeNodeAndSave(reviewNode.nodeId, treeId, undefined, 0, allAttempts);
-                        bumpLearnTreeUnlocked(treeId, next);
-                        navigate("/learn", {state: {treeId, unlockedCount: next}});
-                    }}
+                    newBadges={reviewBadges}
+                    onContinue={() => navigate("/learn", {state: {treeId}})}
                 />
             </div>
         );
@@ -189,8 +188,14 @@ export default function ReviewLessonPage() {
                 <ReviewMatchingView
                     node={matchingNode}
                     onLeaveLesson={() => navigate("/learn")}
-                    onComplete={(attempts) => {
-                        setAllAttempts((prev) => [...prev, ...attempts]);
+                    onComplete={async (attempts) => {
+                        if (completingRef.current) return;
+                        completingRef.current = true;
+                        const finalAttempts = [...allAttempts, ...attempts];
+                        setAllAttempts(finalAttempts);
+                        const result = await completeNodeAndSave(reviewNode.nodeId, treeId, undefined, 0, finalAttempts);
+                        bumpLearnTreeUnlocked(treeId, result.unlockedCount);
+                        setReviewBadges(result.newBadges);
                         setStage("DONE");
                     }}
                 />

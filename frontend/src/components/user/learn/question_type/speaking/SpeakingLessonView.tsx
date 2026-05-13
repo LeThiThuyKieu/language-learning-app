@@ -6,7 +6,7 @@ import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import {Mic, MicOff, Star, ThumbsUp, TrendingUp, AlertCircle, RefreshCw, CheckCircle2, XCircle} from "lucide-react";
-import type {AttemptItem} from "@/services/learningService";
+import type {AttemptItem, BadgeInfo} from "@/services/learningService";
 
 // Helpers
 
@@ -164,10 +164,12 @@ export default function SpeakingLessonView({
     node,
     onLeaveLesson,
     onComplete,
+    onNavigate,
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: (correctCount: number, attempts: AttemptItem[]) => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => Promise<BadgeInfo[]>;
+    onNavigate: () => void;
 }) {
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
@@ -190,9 +192,11 @@ export default function SpeakingLessonView({
     const [isFinished, setIsFinished] = useState(false);      // hoàn thành tất cả câu
     const [exitOpen, setExitOpen] = useState(false);          // modal thoát
     const [sttError, setSttError] = useState("");             // lỗi ghi âm
-    const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set()); // câu bị bỏ qua
-    const [passedCount, setPassedCount] = useState(0); // số câu pass (≥70%)
+    const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set());
+    const [passedCount, setPassedCount] = useState(0);
     const [speakingAttempts, setSpeakingAttempts] = useState<AttemptItem[]>([]);
+    const [newBadges, setNewBadges] = useState<BadgeInfo[]>([]);
+    const completingRef = useRef(false);
 
     const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
@@ -268,11 +272,10 @@ export default function SpeakingLessonView({
     // Tiếp tục: nếu pass (≥70%) thì qua câu tiếp, nếu fail thì cho thử lại
     function handleContinue() {
         if (score !== null && score >= 70) {
-            const passed = true;
             const newAttempt: AttemptItem = {
                 mongoQuestionId: q?.mongoQuestionId ?? "",
                 userAnswer: transcript,
-                correct: passed,
+                correct: true,
             };
             const nextPassed = passedCount + 1;
             const nextAttempts = [...speakingAttempts, newAttempt];
@@ -287,7 +290,12 @@ export default function SpeakingLessonView({
             } else {
                 setPassedCount(nextPassed);
                 setSpeakingAttempts(nextAttempts);
-                setIsFinished(true);
+                if (completingRef.current) return;
+                completingRef.current = true;
+                onComplete(nextPassed, nextAttempts).then((badges) => {
+                    setNewBadges(badges);
+                    setIsFinished(true);
+                });
             }
         } else {
             setChecked(false);
@@ -314,7 +322,12 @@ export default function SpeakingLessonView({
             setScore(null);
             setSttError("");
         } else {
-            setIsFinished(true);
+            onComplete(passedCount, nextAttempts).then((badges) => {
+                if (completingRef.current) return;
+                completingRef.current = true;
+                setNewBadges(badges);
+                setIsFinished(true);
+            });
         }
     }
 
@@ -323,7 +336,7 @@ export default function SpeakingLessonView({
         const accuracy = speakingAttempts.length > 0
             ? Math.round((passedCount / speakingAttempts.length) * 100)
             : 0;
-        return <LessonCompleteView knGained={10} accuracy={accuracy} onContinue={() => onComplete(passedCount, speakingAttempts)}/>;
+        return <LessonCompleteView knGained={10} accuracy={accuracy} newBadges={newBadges} onContinue={onNavigate}/>;
     }
 
     const pass = score !== null && score >= 70;
