@@ -90,11 +90,12 @@ export default function VocabLessonPage() {
             <VocabLessonView
                 node={vocabNode}
                 onLeaveLesson={() => navigate("/learn")}
-                onComplete={async () => {
-                    const next = await completeNodeAndSave(vocabNode.nodeId, treeId);
-                    bumpLearnTreeUnlocked(treeId, next);
-                    navigate("/learn", {state: {treeId, unlockedCount: next}});
+                onComplete={async (correctCount: number, attempts) => {
+                    const result = await completeNodeAndSave(vocabNode.nodeId, treeId, undefined, correctCount, attempts);
+                    bumpLearnTreeUnlocked(treeId, result.unlockedCount);
+                    return result.newBadges;
                 }}
+                onNavigate={() => navigate("/learn", {state: {treeId}})}
             />
         </div>
     );

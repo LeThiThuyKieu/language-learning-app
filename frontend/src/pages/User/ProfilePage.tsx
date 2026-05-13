@@ -199,7 +199,7 @@ export default function ProfilePage() {
 
     return (
         <>
-            {/* ================= MAIN PAGE ================= */}
+            {/* MAIN PAGE */}
             <div className="bg-primary-50/30 min-h-screen flex flex-col font-sans">
                 <div className="flex-1">
                     <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-10 pt-0">
@@ -229,10 +229,18 @@ export default function ProfilePage() {
 
                                 <div className="px-4 sm:px-0 space-y-5 sm:space-y-7">
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
-                                        <AccuracyStats percent={profile.completionRate} />
+                                        <AccuracyStats
+                                            percent={
+                                                profile.accuracyByType && Object.keys(profile.accuracyByType).length > 0
+                                                    ? Math.round(Object.values(profile.accuracyByType).reduce((a, b) => a + b, 0) / Object.keys(profile.accuracyByType).length)
+                                                    : profile.completionRate
+                                            }
+                                            accuracyByType={profile.accuracyByType ?? {}}
+                                        />
                                         <PersonalBest
                                             highestStreak={profile.streakCount}
                                             totalXp={profile.totalXp}
+                                            totalKn={profile.totalKn ?? 0}
                                             totalLessons={profile.completedNodes}
                                         />
                                     </div>
@@ -294,9 +302,9 @@ export default function ProfilePage() {
                             <div className="xl:col-span-1 px-4 sm:px-0 mt-5 sm:mt-0">
                                 <div className="xl:sticky xl:top-6 space-y-5 sm:space-y-7">
                                     <BadgeProgress
-                                        completionRate={profile.completionRate}
-                                        completedNodes={profile.completedNodes}
-                                        totalNodes={profile.totalNodes}
+                                        completedTrees={profile.completedTrees ?? 0}
+                                        totalTrees={profile.totalTrees ?? 0}
+                                        currentProgressLabel={profile.currentProgressLabel ?? null}
                                     />
                                     <Activity
                                         weeklyData={profile.weeklyActivityXp}

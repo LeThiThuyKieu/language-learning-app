@@ -89,11 +89,12 @@ export default function MatchingLessonPage() {
             <MatchingLessonView
                 node={matchingNode}
                 onLeaveLesson={() => navigate("/learn")}
-                onComplete={async () => {
-                    const next = await completeNodeAndSave(matchingNode.nodeId, treeId);
-                    bumpLearnTreeUnlocked(treeId, next);
-                    navigate("/learn", {state: {treeId, unlockedCount: next}});
+                onComplete={async (correctCount: number, attempts) => {
+                    const result = await completeNodeAndSave(matchingNode.nodeId, treeId, undefined, correctCount, attempts);
+                    bumpLearnTreeUnlocked(treeId, result.unlockedCount);
+                    return result.newBadges;
                 }}
+                onNavigate={() => navigate("/learn", {state: {treeId}})}
             />
         </div>
     );

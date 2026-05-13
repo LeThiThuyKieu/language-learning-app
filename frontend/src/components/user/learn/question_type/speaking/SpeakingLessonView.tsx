@@ -6,6 +6,7 @@ import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import {Mic, MicOff, Star, ThumbsUp, TrendingUp, AlertCircle, RefreshCw, CheckCircle2, XCircle} from "lucide-react";
+import type {AttemptItem, BadgeInfo} from "@/services/learningService";
 
 // Helpers
 
@@ -163,10 +164,12 @@ export default function SpeakingLessonView({
     node,
     onLeaveLesson,
     onComplete,
+    onNavigate,
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (correctCount: number, attempts: AttemptItem[]) => Promise<BadgeInfo[]>;
+    onNavigate: () => void;
 }) {
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
@@ -189,7 +192,11 @@ export default function SpeakingLessonView({
     const [isFinished, setIsFinished] = useState(false);      // hoàn thành tất cả câu
     const [exitOpen, setExitOpen] = useState(false);          // modal thoát
     const [sttError, setSttError] = useState("");             // lỗi ghi âm
-    const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set()); // câu bị bỏ qua
+    const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set());
+    const [passedCount, setPassedCount] = useState(0);
+    const [speakingAttempts, setSpeakingAttempts] = useState<AttemptItem[]>([]);
+    const [newBadges, setNewBadges] = useState<BadgeInfo[]>([]);
+    const completingRef = useRef(false);
 
     const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
@@ -203,6 +210,8 @@ export default function SpeakingLessonView({
         setIsFinished(false);
         setSttError("");
         setSkippedIndices(new Set());
+        setPassedCount(0);
+        setSpeakingAttempts([]);
     }, [q?.mongoQuestionId]);
 
     // Dọn dẹp SpeechRecognition khi component unmount
@@ -263,17 +272,32 @@ export default function SpeakingLessonView({
     // Tiếp tục: nếu pass (≥70%) thì qua câu tiếp, nếu fail thì cho thử lại
     function handleContinue() {
         if (score !== null && score >= 70) {
+            const newAttempt: AttemptItem = {
+                mongoQuestionId: q?.mongoQuestionId ?? "",
+                userAnswer: transcript,
+                correct: true,
+            };
+            const nextPassed = passedCount + 1;
+            const nextAttempts = [...speakingAttempts, newAttempt];
             if (lineIndex < lines.length - 1) {
+                setPassedCount(nextPassed);
+                setSpeakingAttempts(nextAttempts);
                 setLineIndex(lineIndex + 1);
                 setChecked(false);
                 setTranscript("");
                 setScore(null);
                 setSttError("");
             } else {
-                setIsFinished(true);
+                setPassedCount(nextPassed);
+                setSpeakingAttempts(nextAttempts);
+                if (completingRef.current) return;
+                completingRef.current = true;
+                onComplete(nextPassed, nextAttempts).then((badges) => {
+                    setNewBadges(badges);
+                    setIsFinished(true);
+                });
             }
         } else {
-            // Fail: reset để thử lại câu hiện tại
             setChecked(false);
             setTranscript("");
             setScore(null);
@@ -281,9 +305,16 @@ export default function SpeakingLessonView({
         }
     }
 
-    // Bỏ qua câu hiện tại (tính là sai/chưa hoàn thành), chuyển sang câu tiếp
+    // Bỏ qua câu hiện tại (tính là sai), chuyển sang câu tiếp
     function handleSkip() {
+        const newAttempt: AttemptItem = {
+            mongoQuestionId: q?.mongoQuestionId ?? "",
+            userAnswer: transcript,
+            correct: false,
+        };
+        const nextAttempts = [...speakingAttempts, newAttempt];
         setSkippedIndices((prev) => new Set(prev).add(lineIndex));
+        setSpeakingAttempts(nextAttempts);
         if (lineIndex < lines.length - 1) {
             setLineIndex(lineIndex + 1);
             setChecked(false);
@@ -291,13 +322,21 @@ export default function SpeakingLessonView({
             setScore(null);
             setSttError("");
         } else {
-            setIsFinished(true);
+            onComplete(passedCount, nextAttempts).then((badges) => {
+                if (completingRef.current) return;
+                completingRef.current = true;
+                setNewBadges(badges);
+                setIsFinished(true);
+            });
         }
     }
 
     // Hoàn thành tất cả câu → hiện màn hình kết thúc bài
     if (isFinished) {
-        return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
+        const accuracy = speakingAttempts.length > 0
+            ? Math.round((passedCount / speakingAttempts.length) * 100)
+            : 0;
+        return <LessonCompleteView knGained={10} accuracy={accuracy} newBadges={newBadges} onContinue={onNavigate}/>;
     }
 
     const pass = score !== null && score >= 70;

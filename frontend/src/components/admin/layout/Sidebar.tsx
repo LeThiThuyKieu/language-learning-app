@@ -6,7 +6,7 @@ import {
     BookOpen,
     GitBranch,
     BarChart2,
-    MessageSquare,
+    MessagesSquare,
     Trophy,
     ClipboardList,
     Mail,

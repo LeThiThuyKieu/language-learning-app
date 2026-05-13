@@ -3,6 +3,7 @@ import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import {Sparkles} from "lucide-react";
+import type {AttemptItem} from "@/services/learningService";
 
 type Pair = {
     id: string;
@@ -56,7 +57,7 @@ export default function ReviewMatchingView({
                                           }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (attempts: AttemptItem[]) => void;
 }) {
     const pairs: Pair[] = useMemo(() => {
         const qs = node.questions ?? [];
@@ -95,7 +96,17 @@ export default function ReviewMatchingView({
     }, [node.nodeId]);
 
     useEffect(() => {
-        if (isFinished) onComplete();
+        if (isFinished) {
+            const attempts: AttemptItem[] = pairs.map((p) => {
+                const q = node.questions?.find((q) => (q.questionText ?? "").trim() === p.left);
+                return {
+                    mongoQuestionId: (q as {mongoQuestionId?: string})?.mongoQuestionId ?? String(q?.id ?? p.id),
+                    userAnswer: p.right,
+                    correct: true,
+                };
+            });
+            onComplete(attempts);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isFinished]);
 

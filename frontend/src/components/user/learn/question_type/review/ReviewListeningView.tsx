@@ -4,6 +4,7 @@ import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
 import LessonResultFooter from "@/components/user/learn/LessonResultFooter.tsx";
+import type {AttemptItem} from "@/services/learningService";
 
 function parseExpectedTokens(correctAnswer?: string): string[] {
     const raw = (correctAnswer ?? "").trim();
@@ -32,7 +33,7 @@ export default function ReviewListeningView({
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (attempts: AttemptItem[]) => void;
 }) {
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
@@ -53,7 +54,15 @@ export default function ReviewListeningView({
     }, [expected]);
 
     useEffect(() => {
-        if (isFinished) onComplete();
+        if (isFinished) {
+            const mongoId = (q as {mongoQuestionId?: string})?.mongoQuestionId ?? String(q?.id ?? "");
+            const attempts: AttemptItem[] = expected.map((exp, i) => ({
+                mongoQuestionId: mongoId,
+                userAnswer: inputs[i] ?? "",
+                correct: tokenMatches(inputs[i] ?? "", exp),
+            }));
+            onComplete(attempts);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isFinished]);
 

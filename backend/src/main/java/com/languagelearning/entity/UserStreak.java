@@ -8,21 +8,21 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "streak_history")
+@Table(name = "user_streak")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StreakHistory {
+public class UserStreak {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    
+
     private LocalDate date;
-    
+
     @Column(name = "earned_xp")
     private Integer earnedXp = 0;
 }

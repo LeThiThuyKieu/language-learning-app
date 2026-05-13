@@ -4,8 +4,8 @@ import type {SkillTreeNodeQuestionsData} from "@/types";
 import LessonTopBar from "@/components/user/learn/LessonTopBar.tsx";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 import LessonAudioPlayer from "@/components/user/learn/LessonAudioPlayer.tsx";
-import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import {Mic, MicOff, Star, ThumbsUp, TrendingUp, AlertCircle, RefreshCw, CheckCircle2, XCircle} from "lucide-react";
+import type {AttemptItem} from "@/services/learningService";
 
 // Helpers (giống SpeakingLessonView)
 
@@ -130,7 +130,7 @@ export default function ReviewSpeakingView({
 }: {
     node: SkillTreeNodeQuestionsData;
     onLeaveLesson: () => void;
-    onComplete: () => void;
+    onComplete: (attempts: AttemptItem[]) => void;
 }) {
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
@@ -148,10 +148,10 @@ export default function ReviewSpeakingView({
     const [transcript, setTranscript] = useState("");
     const [score, setScore] = useState<number | null>(null);
     const [checked, setChecked] = useState(false);
-    const [isFinished, setIsFinished] = useState(false);
     const [exitOpen, setExitOpen] = useState(false);
     const [sttError, setSttError] = useState("");
     const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set());
+    const [speakingAttempts, setSpeakingAttempts] = useState<AttemptItem[]>([]);
 
     const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
@@ -162,9 +162,9 @@ export default function ReviewSpeakingView({
         setTranscript("");
         setScore(null);
         setChecked(false);
-        setIsFinished(false);
         setSttError("");
         setSkippedIndices(new Set());
+        setSpeakingAttempts([]);
     }, [q?.mongoQuestionId]);
 
     // Cleanup khi unmount
@@ -207,11 +207,15 @@ export default function ReviewSpeakingView({
 
     function handleContinue() {
         if (score !== null && score >= 70) {
+            const newAttempt: AttemptItem = { mongoQuestionId: q?.mongoQuestionId ?? "", userAnswer: transcript, correct: true };
+            const nextAttempts = [...speakingAttempts, newAttempt];
             if (lineIndex < lines.length - 1) {
+                setSpeakingAttempts(nextAttempts);
                 setLineIndex(lineIndex + 1);
                 setChecked(false); setTranscript(""); setScore(null); setSttError("");
             } else {
-                setIsFinished(true);
+                setSpeakingAttempts(nextAttempts);
+                onComplete(nextAttempts);
             }
         } else {
             setChecked(false); setTranscript(""); setScore(null); setSttError("");
@@ -219,18 +223,19 @@ export default function ReviewSpeakingView({
     }
 
     function handleSkip() {
+        const newAttempt: AttemptItem = { mongoQuestionId: q?.mongoQuestionId ?? "", userAnswer: transcript, correct: false };
+        const nextAttempts = [...speakingAttempts, newAttempt];
         setSkippedIndices((prev) => new Set(prev).add(lineIndex));
+        setSpeakingAttempts(nextAttempts);
         if (lineIndex < lines.length - 1) {
             setLineIndex(lineIndex + 1);
             setChecked(false); setTranscript(""); setScore(null); setSttError("");
         } else {
-            setIsFinished(true);
+            onComplete(nextAttempts);
         }
     }
 
-    if (isFinished) {
-        return <LessonCompleteView knGained={10} onContinue={onComplete}/>;
-    }
+    if (!q) return null;
 
     const pass = score !== null && score >= 70;
 
