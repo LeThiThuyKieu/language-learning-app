@@ -72,7 +72,9 @@ function toSupportCategory(displayName: string): SupportCategory {
 
 /** Chuyển ISO date string thành chuỗi thời gian tương đối (vd: "5 phút trước") */
 function toRelativeTime(dateIso: string): string {
-    const date    = new Date(dateIso);
+    const normalized = dateIso.endsWith("Z") ? dateIso : dateIso + "Z";
+    const date    = new Date(normalized);
+    if (isNaN(date.getTime())) return dateIso;
     const diffMs  = Date.now() - date.getTime();
     const diffMin = Math.floor(diffMs / 60000);
     if (diffMin < 1)  return "Vừa xong";
@@ -98,16 +100,21 @@ function mapListItemToThread(item: BackendSupportListItem): SupportThread {
     };
 }
 
+const AUTO_REPLY_TEXT = "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!";
+
 /** Map BackendSupportDetail → SupportThread kèm toàn bộ messages */
 function mapDetailToThread(detail: BackendSupportDetail): SupportThread {
-    const firstUserMessage = detail.messages.find((m) => m.senderType === "USER")?.message ?? "";
+    // Lấy tin nhắn mới nhất, bỏ qua auto-reply tĩnh
+    const realMessages = detail.messages.filter((m) => m.message !== AUTO_REPLY_TEXT);
+    const latestMsg    = realMessages.length > 0 ? realMessages[realMessages.length - 1].message : "";
+    const firstUserMsg = detail.messages.find((m) => m.senderType === "USER")?.message ?? "";
     return {
         id:        detail.id,
         userId:    detail.userId,
         name:      detail.requesterName || detail.requesterEmail?.split("@")[0] || "Người dùng",
         email:     detail.requesterEmail,
         category:  toSupportCategory(detail.categoryDisplayName),
-        message:   firstUserMessage, // message luôn là câu hỏi đầu tiên của user
+        message:   latestMsg || firstUserMsg, // tin mới nhất để hiện preview
         createdAt: toRelativeTime(detail.createdAt),
         sentAt:    detail.createdAt,
         status:    toSupportStatus(detail.status),

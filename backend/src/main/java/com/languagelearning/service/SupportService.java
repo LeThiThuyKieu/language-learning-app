@@ -5,6 +5,7 @@ import com.languagelearning.entity.*;
 import com.languagelearning.repository.mysql.*;
 import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class SupportService {
     private final UserRepository userRepository;
@@ -82,8 +84,10 @@ public class SupportService {
         message.setMessage(request.getMessage().trim());
         supportMessageRepository.save(message);
 
-        // Nếu ticket đang RESOLVED, chuyển lại OPEN khi user nhắn thêm
-        if (ticket.getStatus() == SupportTicket.SupportStatus.RESOLVED) {
+        // Khi user nhắn tin mới → chuyển về OPEN để admin biết cần xử lý lại
+        // (áp dụng cho cả RESOLVED và IN_PROGRESS)
+        if (ticket.getStatus() == SupportTicket.SupportStatus.RESOLVED
+                || ticket.getStatus() == SupportTicket.SupportStatus.IN_PROGRESS) {
             ticket.setStatus(SupportTicket.SupportStatus.OPEN);
             supportTicketRepository.save(ticket);
         }
@@ -249,8 +253,13 @@ public class SupportService {
         if (ticket.getStatus() == SupportTicket.SupportStatus.OPEN) {
             ticket.setStatus(SupportTicket.SupportStatus.IN_PROGRESS);
             supportTicketRepository.save(ticket);
+            // Broadcast status mới — chỉ broadcast khi thực sự có thay đổi status
+            SupportTicketDetailDto result = toDetailDto(ticket);
+            broadcastTicketUpdate(result);
+            return result;
         }
 
+        // Không broadcast nếu status không thay đổi (tránh đẩy ticket lên đầu list)
         return toDetailDto(ticket);
     }
 
@@ -328,9 +337,17 @@ public class SupportService {
 
     // Broadcast cập nhật ticket tới tất cả subscriber WebSocket.
     private void broadcastTicketUpdate(SupportTicketDetailDto ticket) {
+        log.info("[WS] Broadcasting ticket {} to /topic/support/{}", ticket.getId(), ticket.getId());
         messagingTemplate.convertAndSend("/topic/support/" + ticket.getId(), ticket);
-    }
 
+        SupportTicket entity = supportTicketRepository.findById(ticket.getId()).orElse(null);
+        if (entity != null) {
+            SupportTicketListItemDto listItem = toListItemDto(entity);
+            log.info("[WS] Broadcasting list update for ticket {} (source={}, status={}) to /topic/support/list",
+                    ticket.getId(), listItem.getSource(), listItem.getStatus());
+            messagingTemplate.convertAndSend("/topic/support/list", listItem);
+        }
+    }
     // Lấy user theo email từ token hiện tại.
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
@@ -378,12 +395,12 @@ public class SupportService {
     }
 
     // Chuyển SupportTicket thành item dùng cho danh sách ticket.
-    // latestMessage luôn là câu hỏi đầu tiên của user, không bao giờ là reply của admin.
+    // latestMessage là tin nhắn mới nhất trong hội thoại (USER hoặc ADMIN).
     private SupportTicketListItemDto toListItemDto(SupportTicket ticket) {
-        String firstUserMessage = supportMessageRepository
-                .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
-                .map(SupportMessage::getMessage)
-                .orElse("");
+        List<SupportMessage> messages = supportMessageRepository.findByTicketIdOrderByCreatedAtAsc(ticket.getId());
+
+        // Lấy tin nhắn mới nhất
+        String latestMessage = messages.isEmpty() ? "" : messages.get(messages.size() - 1).getMessage();
 
         return SupportTicketListItemDto.builder()
                 .id(ticket.getId())
@@ -396,7 +413,7 @@ public class SupportService {
                 .status(ticket.getStatus().name())
                 .source(ticket.getSource().name())
                 .createdAt(ticket.getCreatedAt())
-                .latestMessage(firstUserMessage)
+                .latestMessage(latestMessage)
                 .build();
     }
 
