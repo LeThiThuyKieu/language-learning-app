@@ -27,18 +27,9 @@ CREATE TABLE IF NOT EXISTS `badges` (
     `required_kn` int(11) DEFAULT NULL,
     `icon_url` text DEFAULT NULL,
     PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dữ liệu mốc huy hiệu theo KN tích lũy
-INSERT INTO `badges` (`badge_name`, `description`, `required_kn`, `icon_url`) VALUES
-('Bước Chân Đầu Tiên',   'Hãy cố gắng đạt 30 KN để nhận huy hiệu Bước Chân Đầu Tiên!',       30,   '/badges/badge_1.png'),
-('Chiến Binh Xuất Hành', 'Hãy cố gắng đạt 100 KN để nhận huy hiệu Chiến Binh Xuất Hành!',    100,  '/badges/badge_2.png'),
-('Người Học Chăm Chỉ',   'Hãy cố gắng đạt 250 KN để nhận huy hiệu Người Học Chăm Chỉ!',      250,  '/badges/badge_3.png'),
-('Ngọn Lửa Tri Thức',    'Hãy cố gắng đạt 500 KN để nhận huy hiệu Ngọn Lửa Tri Thức!',       500,  '/badges/badge_4.png'),
-('Nhà Thám Hiểm Ngôn Từ','Hãy cố gắng đạt 1000 KN để nhận huy hiệu Nhà Thám Hiểm Ngôn Từ!', 1000, '/badges/badge_5.png'),
-('Hiệp Sĩ Từ Vựng',      'Hãy cố gắng đạt 2000 KN để nhận huy hiệu Hiệp Sĩ Từ Vựng!',       2000, '/badges/badge_6.png'),
-('Bậc Thầy Giao Tiếp',   'Hãy cố gắng đạt 3500 KN để nhận huy hiệu Bậc Thầy Giao Tiếp!',    3500, '/badges/badge_7.png'),
-('Huyền Thoại Ngôn Ngữ', 'Hãy cố gắng đạt 5000 KN để nhận huy hiệu Huyền Thoại Ngôn Ngữ!',  5000, '/badges/badge_8.png');
+-- Data exporting was unselected.
 
 -- Dumping structure for table language_learning_app.feedback
 CREATE TABLE IF NOT EXISTS `feedback` (
@@ -98,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `placement_test` (
     KEY `fk_placement_session_level` (`detected_level_id`),
     CONSTRAINT `fk_placement_session_level` FOREIGN KEY (`detected_level_id`) REFERENCES `levels` (`id`),
     CONSTRAINT `fk_placement_session_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=132 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=134 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -159,33 +150,15 @@ CREATE TABLE IF NOT EXISTS `skill_tree` (
 
 -- Data exporting was unselected.
 
--- Dumping structure for table language_learning_app.user_streak
--- Lưu lại là xem user có học ngày đó ko
--- Mỗi hàng = 1 ngày user có học ít nhất 1 node → dùng để tính streak liên tiếp
-CREATE TABLE IF NOT EXISTS `user_streak` (
+-- Dumping structure for table language_learning_app.streak_history
+CREATE TABLE IF NOT EXISTS `streak_history` (
                                                 `id` int(11) NOT NULL AUTO_INCREMENT,
+    `date` date DEFAULT NULL,
+    `earned_xp` int(11) DEFAULT NULL,
     `user_id` int(11) DEFAULT NULL,
-    `date` date NOT NULL,
-    `earned_xp` int(11) DEFAULT 0,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_user_streak_date` (`user_id`, `date`), -- đảm bảo mỗi user chỉ có 1 bản ghi/ngày
-    KEY `user_id` (`user_id`),
-    CONSTRAINT `streak_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Data exporting was unselected.
-
--- Dumping structure for table language_learning_app.user_kn
--- Lưu tổng điểm KN (kinh nghiệm) tích lũy của từng user
--- KN được cộng mỗi khi hoàn thành node hoac học lại: +10 KN (VOCAB/LISTENING/SPEAKING/MATCHING), +20 KN (REVIEW)
-CREATE TABLE IF NOT EXISTS `user_kn` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `user_id` int(11) NOT NULL,
-    `total_kn` int(11) NOT NULL DEFAULT 0,
-    `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_user_kn` (`user_id`),
-    CONSTRAINT `fk_user_kn_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    KEY `FKd6oosu29jri0m758qoscy504a` (`user_id`),
+    CONSTRAINT `FKd6oosu29jri0m758qoscy504a` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
@@ -279,7 +252,20 @@ CREATE TABLE IF NOT EXISTS `user_badges` (
     KEY `badge_id` (`badge_id`),
     CONSTRAINT `user_badges_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_badges_ibfk_2` FOREIGN KEY (`badge_id`) REFERENCES `badges` (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.user_kn
+CREATE TABLE IF NOT EXISTS `user_kn` (
+                                         `id` int(11) NOT NULL AUTO_INCREMENT,
+    `total_kn` int(11) NOT NULL,
+    `updated_at` datetime(6) DEFAULT NULL,
+    `user_id` int(11) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `UK_s272e3aqu0gch92qj97fw74mp` (`user_id`),
+    CONSTRAINT `FKtijrmdli7n3k26lv3byssd75s` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -296,7 +282,7 @@ CREATE TABLE IF NOT EXISTS `user_level_question_snapshot` (
     KEY `level_id` (`level_id`),
     CONSTRAINT `fk_ulqs_level` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ulqs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -332,7 +318,7 @@ CREATE TABLE IF NOT EXISTS `user_node_progress` (
     KEY `node_id` (`node_id`),
     CONSTRAINT `user_node_progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_node_progress_ibfk_2` FOREIGN KEY (`node_id`) REFERENCES `skill_node` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -369,7 +355,7 @@ CREATE TABLE IF NOT EXISTS `user_question_attempt` (
     KEY `question_id` (`question_id`),
     CONSTRAINT `user_question_attempt_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_question_attempt_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=234 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -398,7 +384,21 @@ CREATE TABLE IF NOT EXISTS `user_skill_tree_progress` (
     KEY `skill_tree_id` (`skill_tree_id`),
     CONSTRAINT `user_skill_tree_progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_skill_tree_progress_ibfk_2` FOREIGN KEY (`skill_tree_id`) REFERENCES `skill_tree` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.user_streak
+CREATE TABLE IF NOT EXISTS `user_streak` (
+                                             `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) DEFAULT NULL,
+    `date` date NOT NULL,
+    `earned_xp` int(11) DEFAULT 0,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_user_streak_date` (`user_id`,`date`),
+    KEY `user_id` (`user_id`),
+    CONSTRAINT `streak_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
