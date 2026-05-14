@@ -38,6 +38,7 @@ public class ProgressService {
     private final UserQuestionAttemptRepository userQuestionAttemptRepository;
     private final BadgeRepository badgeRepository;
     private final UserBadgeRepository userBadgeRepository;
+    private final UserReviewAttemptRepository userReviewAttemptRepository;
 
     /** Lấy số node đã unlock của một tree */
     @Transactional(readOnly = true)
@@ -162,6 +163,7 @@ public class ProgressService {
     /**
      * Ghi lại kết quả từng câu hỏi vào user_question_attempt,
      * sau đó hoàn thành node (cộng KN, XP, streak).
+     * Với node REVIEW, còn lưu thêm kết quả tổng hợp vào user_review_attempt.
      */
     @Transactional
     public CompleteNodeResult submitAttempts(String email, SubmitAttemptsRequest request) {
@@ -171,14 +173,19 @@ public class ProgressService {
 
         if (request.getAttempts() != null) {
             for (SubmitAttemptsRequest.AttemptItem item : request.getAttempts()) {
-                // Tìm QuestionIndex theo mongoQuestionId (bỏ qua nếu không tìm thấy)
+                // Bỏ qua penalty attempts (timeout-penalty không có trong DB)
+                if ("timeout-penalty".equals(item.getMongoQuestionId())) {
+                    if (!item.isCorrect()) { /* đã tính vào correctCount bên dưới */ }
+                    continue;
+                }
+
                 QuestionIndex qi = questionIndexRepository
                         .findByMongoQuestionId(item.getMongoQuestionId())
                         .orElse(null);
 
                 UserQuestionAttempt attempt = new UserQuestionAttempt();
                 attempt.setUser(user);
-                attempt.setQuestion(qi); // null-safe: nếu không tìm thấy thì vẫn lưu
+                attempt.setQuestion(qi);
                 attempt.setUserAnswer(item.getUserAnswer());
                 attempt.setIsCorrect(item.isCorrect());
                 attempt.setScore(item.isCorrect() ? 10 : 0);
@@ -188,7 +195,56 @@ public class ProgressService {
             }
         }
 
-        return completeNode(email, request.getNodeId(), correctCount);
+        // Kiểm tra xem đây có phải node REVIEW với outcome FAIL/CARELESS không
+        boolean isReviewFail = false;
+        SkillNode reviewNode = null;
+        if (request.getOutcome() != null) {
+            reviewNode = skillNodeRepository.findById(request.getNodeId()).orElse(null);
+            if (reviewNode != null && reviewNode.getNodeType() == SkillNode.NodeType.REVIEW) {
+                isReviewFail = "FAIL".equals(request.getOutcome()) || "CARELESS".equals(request.getOutcome());
+            }
+        }
+
+        // Chỉ complete node (cộng KN, XP, streak) khi không phải REVIEW FAIL/CARELESS
+        CompleteNodeResult result;
+        if (isReviewFail) {
+            // FAIL/CARELESS: không complete node, không cộng KN/XP
+            result = new CompleteNodeResult(
+                    getUnlockedCount(email, reviewNode.getSkillTree().getId()),
+                    0,
+                    List.of()
+            );
+        } else {
+            result = completeNode(email, request.getNodeId(), correctCount);
+        }
+
+        // Lưu kết quả tổng hợp cho node REVIEW
+        if (request.getOutcome() != null && reviewNode != null && reviewNode.getNodeType() == SkillNode.NodeType.REVIEW) {
+            try {
+                int totalCount = request.getAttempts() != null ? request.getAttempts().size() : 0;
+                int allCorrect = request.getAttempts() != null
+                        ? (int) request.getAttempts().stream().filter(SubmitAttemptsRequest.AttemptItem::isCorrect).count()
+                        : 0;
+                int accuracy = totalCount > 0 ? (int) Math.round((allCorrect * 100.0) / totalCount) : 0;
+                boolean passed = !isReviewFail;
+
+                UserReviewAttempt reviewAttempt = new UserReviewAttempt();
+                reviewAttempt.setUser(user);
+                reviewAttempt.setNode(reviewNode);
+                reviewAttempt.setCorrectCount(allCorrect);
+                reviewAttempt.setTotalCount(totalCount);
+                reviewAttempt.setAccuracy(accuracy);
+                reviewAttempt.setElapsedSeconds(request.getElapsedSeconds() != null ? request.getElapsedSeconds() : 0);
+                reviewAttempt.setTimedOut(Boolean.TRUE.equals(request.getTimedOut()));
+                reviewAttempt.setOutcome(request.getOutcome());
+                reviewAttempt.setPassed(passed);
+                userReviewAttemptRepository.save(reviewAttempt);
+            } catch (Exception e) {
+                log.warn("Failed to save review attempt: {}", e.getMessage());
+            }
+        }
+
+        return result;
     }
 
     /** Cộng KN cho user */

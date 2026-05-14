@@ -49,13 +49,18 @@ export async function completeNodeAndSave(
     treeId: number,
     levelId?: number,
     correctCount = 0,
-    attempts?: AttemptItem[]
+    attempts?: AttemptItem[],
+    reviewMeta?: { elapsedSeconds: number; timedOut: boolean; outcome: string }
 ): Promise<{ unlockedCount: number; newBadges: BadgeInfo[] }> {
     try {
         let result: CompleteNodeResult;
 
         if (attempts && attempts.length > 0) {
-            result = await learningService.submitAttempts({ nodeId, attempts });
+            result = await learningService.submitAttempts({
+                nodeId,
+                attempts,
+                ...(reviewMeta ?? {}),
+            });
         } else {
             result = await learningService.completeNode(nodeId, correctCount);
         }

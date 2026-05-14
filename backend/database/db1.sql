@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS `support_message` (
     PRIMARY KEY (`id`),
     KEY `idx_message_ticket` (`ticket_id`),
     CONSTRAINT `support_message_ibfk_1` FOREIGN KEY (`ticket_id`) REFERENCES `support_ticket` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -198,15 +198,21 @@ CREATE TABLE IF NOT EXISTS `support_message` (
 CREATE TABLE IF NOT EXISTS `support_ticket` (
                                                 `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` int(11) DEFAULT NULL,
+    `guest_id` varchar(36) DEFAULT NULL,
     `guest_email` varchar(100) DEFAULT NULL,
     `guest_name` varchar(100) DEFAULT NULL,
+    `subject` varchar(255) DEFAULT NULL,
     `category_id` int(11) NOT NULL,
     `status` enum('OPEN','IN_PROGRESS','RESOLVED','CLOSED') DEFAULT 'OPEN',
     `created_at` datetime DEFAULT current_timestamp(),
+    `source` enum('CHAT','EMAIL') NOT NULL DEFAULT 'EMAIL',
+    `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
     PRIMARY KEY (`id`),
     KEY `user_id` (`user_id`),
     KEY `idx_ticket_status` (`status`),
     KEY `idx_ticket_category` (`category_id`),
+    KEY `idx_ticket_source` (`source`),
+    KEY `idx_ticket_guest` (`guest_id`),
     CONSTRAINT `support_ticket_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `support_ticket_ibfk_2` FOREIGN KEY (`category_id`) REFERENCES `support_category` (`id`)
     ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -253,7 +259,7 @@ CREATE TABLE IF NOT EXISTS `user_kn` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `UK_s272e3aqu0gch92qj97fw74mp` (`user_id`),
     CONSTRAINT `FKtijrmdli7n3k26lv3byssd75s` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -343,7 +349,7 @@ CREATE TABLE IF NOT EXISTS `user_question_attempt` (
     KEY `question_id` (`question_id`),
     CONSTRAINT `user_question_attempt_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_question_attempt_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=234 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=269 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -376,6 +382,30 @@ CREATE TABLE IF NOT EXISTS `user_skill_tree_progress` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table language_learning_app.user_review_attempt
+-- Lưu kết quả tổng hợp mỗi lần user làm Node Review
+-- outcome: FAST_TRACKER | STEADY | SLOW_PASS | FAIL | CARELESS
+CREATE TABLE IF NOT EXISTS `user_review_attempt` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `node_id` int(11) NOT NULL,
+    `correct_count` int(11) NOT NULL DEFAULT 0,
+    `total_count` int(11) NOT NULL DEFAULT 0,
+    `accuracy` int(11) NOT NULL DEFAULT 0 COMMENT 'Tỷ lệ đúng 0-100%',
+    `elapsed_seconds` int(11) NOT NULL DEFAULT 0 COMMENT 'Thời gian làm bài (giây)',
+    `timed_out` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 nếu hết giờ',
+    `outcome` varchar(20) NOT NULL COMMENT 'FAST_TRACKER|STEADY|SLOW_PASS|FAIL|CARELESS',
+    `passed` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 nếu đạt (outcome != FAIL và != CARELESS)',
+    `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_review_attempt_user` (`user_id`),
+    KEY `idx_review_attempt_node` (`node_id`),
+    CONSTRAINT `fk_review_attempt_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_review_attempt_node` FOREIGN KEY (`node_id`) REFERENCES `skill_node` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table language_learning_app.user_streak
 CREATE TABLE IF NOT EXISTS `user_streak` (
                                              `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -386,7 +416,7 @@ CREATE TABLE IF NOT EXISTS `user_streak` (
     UNIQUE KEY `uk_user_streak_date` (`user_id`,`date`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `streak_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
