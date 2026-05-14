@@ -5,7 +5,11 @@ import {
     CheckCircle2, XCircle, Clock, Zap, AlertTriangle,
     TrendingUp, Lightbulb, ArrowRight, RotateCcw, BookOpen,
     Star, PartyPopper, Frown, Meh, HelpCircle, FlaskConical,
+    ClipboardList,
 } from "lucide-react";
+import ReviewAnswerSheet from "@/components/user/learn/ReviewAnswerSheet.tsx";
+import type { AttemptItem } from "@/services/learningService";
+import type { SkillTreeEnrichedQuestion } from "@/types";
 
 export type ReviewOutcome =
     | "FAST_TRACKER"
@@ -22,6 +26,10 @@ interface Props {
     totalSeconds: number;
     timedOut: boolean;
     outcome: ReviewOutcome;
+    /** Danh sách attempts để hiển thị "Xem lại bài làm" (chỉ pass cases) */
+    attempts?: AttemptItem[];
+    /** Danh sách câu hỏi gốc để ghép với attempts */
+    questions?: SkillTreeEnrichedQuestion[];
     onContinue: () => void;
     onRetry: () => void;
 }
@@ -248,11 +256,12 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
 // Main component
 export default function ReviewResultView({
     accuracy, correctCount, totalCount, elapsedSeconds, totalSeconds,
-    timedOut, outcome, onContinue, onRetry,
+    timedOut, outcome, attempts, questions, onContinue, onRetry,
 }: Props) {
     const cfg = OUTCOME_CONFIG[outcome];
     const canvasRef = useConfetti(cfg.canPass);
     const [visible, setVisible] = useState(false);
+    const [showSheet, setShowSheet] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -271,12 +280,21 @@ export default function ReviewResultView({
                 />
             )}
 
+            {/* Answer sheet modal — chỉ pass cases */}
+            {showSheet && attempts && questions && (
+                <ReviewAnswerSheet
+                    attempts={attempts}
+                    questions={questions}
+                    onClose={() => setShowSheet(false)}
+                />
+            )}
+
             {/* Gradient header strip */}
             <div className={`w-full h-2 bg-gradient-to-r ${cfg.gradient}`} />
 
             <div className="flex-1 flex items-center justify-center px-4 py-8">
                 <div
-                    className={`w-full max-w-md transition-all duration-500 ${
+                    className={`w-full max-w-xl transition-all duration-500 ${
                         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                     }`}
                 >
@@ -300,7 +318,7 @@ export default function ReviewResultView({
                         </div>
                     </div>
 
-                    {/*  Accuracy progress bar*/}
+                    {/* Accuracy progress bar */}
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Độ chính xác</span>
@@ -368,31 +386,48 @@ export default function ReviewResultView({
 
                     {/* Action buttons */}
                     <div
-                        className="flex flex-col gap-3 transition-all duration-500"
+                        className="transition-all duration-500"
                         style={{ transitionDelay: "450ms", opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(12px)" }}
                     >
                         {cfg.canPass ? (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={onContinue}
-                                    className={`w-full rounded-2xl bg-gradient-to-r ${cfg.gradient} hover:opacity-90 active:scale-95 text-white font-extrabold py-4 text-sm uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2`}
-                                >
-                                    Tiếp tục <ArrowRight className="w-4 h-4" />
-                                </button>
-                                {/* Nút kiểm tra năng lực — chỉ hiện cho FAST_TRACKER */}
+                            /* ── Pass: 3 nút nằm ngang ── */
+                            <div className="flex gap-2 items-stretch">
+                                {/* Xem lại bài làm */}
+                                {attempts && attempts.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowSheet(true)}
+                                        className="flex-1 rounded-2xl border-2 border-gray-200 bg-white text-gray-600 font-bold py-3 text-xs uppercase tracking-wide transition hover:bg-gray-50 active:scale-95 flex flex-col items-center justify-center gap-1.5 min-w-0"
+                                    >
+                                        <ClipboardList className="w-5 h-5 shrink-0" />
+                                        <span className="leading-tight text-center">Xem lại<br />bài làm</span>
+                                    </button>
+                                )}
+
+                                {/* Kiểm tra năng lực — chỉ FAST_TRACKER */}
                                 {cfg.showPlacementBtn && (
                                     <button
                                         type="button"
                                         onClick={() => navigate("/placement-test")}
-                                        className="w-full rounded-2xl border-2 border-amber-300 bg-amber-50 text-amber-700 font-bold py-3.5 text-sm uppercase tracking-wide transition hover:bg-amber-100 active:scale-95 flex items-center justify-center gap-2"
+                                        className="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50 text-amber-700 font-bold py-3 text-xs uppercase tracking-wide transition hover:bg-amber-100 active:scale-95 flex flex-col items-center justify-center gap-1.5 min-w-0"
                                     >
-                                        <FlaskConical className="w-4 h-4" /> Kiểm tra lại năng lực
+                                        <FlaskConical className="w-5 h-5 shrink-0" />
+                                        <span className="leading-tight text-center">Kiểm tra<br />lại năng lực</span>
                                     </button>
                                 )}
-                            </>
+
+                                {/* Tiếp tục — nút chính, rộng hơn */}
+                                <button
+                                    type="button"
+                                    onClick={onContinue}
+                                    className={`flex-[2] rounded-2xl bg-gradient-to-r ${cfg.gradient} hover:opacity-90 active:scale-95 text-white font-extrabold py-3 text-sm uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 min-w-0`}
+                                >
+                                    Tiếp tục <ArrowRight className="w-4 h-4 shrink-0" />
+                                </button>
+                            </div>
                         ) : (
-                            <>
+                            /* ── Fail: 2 nút dọc ── */
+                            <div className="flex flex-col gap-3">
                                 <button
                                     type="button"
                                     onClick={onRetry}
@@ -407,7 +442,7 @@ export default function ReviewResultView({
                                 >
                                     <BookOpen className="w-4 h-4" /> Ôn lại bài học
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>

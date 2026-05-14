@@ -238,6 +238,8 @@ export default function ReviewLessonPage() {
                 totalSeconds={REVIEW_TOTAL_SECONDS}
                 timedOut={timedOut}
                 outcome={resultOutcome}
+                attempts={allAttempts}
+                questions={reviewNode?.questions ?? []}
                 onContinue={() => setStage("COMPLETE")}
                 onRetry={() => {
                     // Reset để làm lại
