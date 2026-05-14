@@ -5,17 +5,20 @@ import com.languagelearning.entity.*;
 import com.languagelearning.repository.mysql.*;
 import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class SupportService {
     private final UserRepository userRepository;
@@ -24,6 +27,75 @@ public class SupportService {
     private final SupportTicketRepository supportTicketRepository;
     private final SupportMessageRepository supportMessageRepository;
     private final EmailService emailService;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    // Lấy ticket còn mở (OPEN/IN_PROGRESS/RESOLVED) của user theo category — dùng cho chatbox suggest.
+    @Transactional(readOnly = true)
+    public List<SupportTicketListItemDto> getActiveTicketsByCategory(String email, Integer categoryId) {
+        User user = getUserByEmail(email);
+        List<SupportTicket.SupportStatus> openStatuses = List.of(
+                SupportTicket.SupportStatus.OPEN,
+                SupportTicket.SupportStatus.IN_PROGRESS,
+                SupportTicket.SupportStatus.RESOLVED
+        );
+        return supportTicketRepository
+                .findByUserIdAndCategoryIdAndSourceAndStatusIn(
+                        user.getId(), categoryId, SupportTicket.TicketSource.CHAT, openStatuses)
+                .stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(this::toListItemDto)
+                .toList();
+    }
+
+    // Lấy danh sách tất cả category hỗ trợ (dùng cho chatbox chọn category).
+    @Transactional(readOnly = true)
+    public List<SupportCategoryDto> getCategories() {
+        return supportCategoryRepository.findAll().stream()
+                .map(c -> SupportCategoryDto.builder()
+                        .id(c.getId())
+                        .name(c.getName())
+                        .displayName(c.getDisplayName())
+                        .colorBg(c.getColorBg())
+                        .colorText(c.getColorText())
+                        .build())
+                .toList();
+    }
+
+    // User gửi thêm tin nhắn vào ticket đang mở (follow-up message).
+    @Transactional
+    public SupportTicketDetailDto sendUserMessage(String email, Integer ticketId, SupportReplyRequest request) {
+        User user = getUserByEmail(email);
+        SupportTicket ticket = supportTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ticket: " + ticketId));
+
+        // Kiểm tra quyền sở hữu
+        if (ticket.getUser() == null || !ticket.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Bạn không có quyền gửi tin nhắn vào ticket này");
+        }
+
+        // Không cho gửi nếu ticket đã đóng
+        if (ticket.getStatus() == SupportTicket.SupportStatus.CLOSED) {
+            throw new IllegalArgumentException("Ticket này đã đóng, không thể gửi thêm tin nhắn");
+        }
+
+        SupportMessage message = new SupportMessage();
+        message.setTicket(ticket);
+        message.setSenderType(SupportMessage.SenderType.USER);
+        message.setMessage(request.getMessage().trim());
+        supportMessageRepository.save(message);
+
+        // Khi user nhắn tin mới → chuyển về OPEN để admin biết cần xử lý lại
+        // (áp dụng cho cả RESOLVED và IN_PROGRESS)
+        if (ticket.getStatus() == SupportTicket.SupportStatus.RESOLVED
+                || ticket.getStatus() == SupportTicket.SupportStatus.IN_PROGRESS) {
+            ticket.setStatus(SupportTicket.SupportStatus.OPEN);
+            supportTicketRepository.save(ticket);
+        }
+
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
+    }
 
     // Tạo ticket hỗ trợ mới cho user hiện tại và thêm tin nhắn đầu tiên từ user.
     @Transactional
@@ -40,6 +112,7 @@ public class SupportService {
         ticket.setRequesterName(requesterName);
         ticket.setCategory(category);
         ticket.setStatus(SupportTicket.SupportStatus.OPEN);
+        ticket.setSource(parseSource(request.getSource()));
         ticket = supportTicketRepository.save(ticket);
 
         SupportMessage firstMessage = new SupportMessage();
@@ -48,7 +121,9 @@ public class SupportService {
         firstMessage.setMessage(request.getMessage().trim());
         supportMessageRepository.save(firstMessage);
 
-        return toDetailDto(ticket);
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
     }
 
     // Tạo ticket hỗ trợ mới cho guest (chưa đăng nhập) với tên và email được cung cấp.
@@ -70,6 +145,7 @@ public class SupportService {
         ticket.setRequesterName(request.getGuestName().trim());
         ticket.setCategory(category);
         ticket.setStatus(SupportTicket.SupportStatus.OPEN);
+        ticket.setSource(parseSource(request.getSource()));
         ticket = supportTicketRepository.save(ticket);
 
         SupportMessage firstMessage = new SupportMessage();
@@ -112,6 +188,7 @@ public class SupportService {
             String status,
             Integer categoryId,
             String keyword,
+            String source,
             String sort,
             int page,
             int size
@@ -123,6 +200,12 @@ public class SupportService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
 
         Specification<SupportTicket> specification = Specification.where(null);
+
+        // Filter theo source (CHAT / EMAIL) — quan trọng để phân biệt 2 trang admin
+        if (source != null && !source.isBlank()) {
+            SupportTicket.TicketSource parsedSource = parseSource(source);
+            specification = specification.and((root, query, cb) -> cb.equal(root.get("source"), parsedSource));
+        }
 
         if (status != null && !status.isBlank()) {
             SupportTicket.SupportStatus parsedStatus = parseStatus(status);
@@ -170,8 +253,13 @@ public class SupportService {
         if (ticket.getStatus() == SupportTicket.SupportStatus.OPEN) {
             ticket.setStatus(SupportTicket.SupportStatus.IN_PROGRESS);
             supportTicketRepository.save(ticket);
+            // Broadcast status mới — chỉ broadcast khi thực sự có thay đổi status
+            SupportTicketDetailDto result = toDetailDto(ticket);
+            broadcastTicketUpdate(result);
+            return result;
         }
 
+        // Không broadcast nếu status không thay đổi (tránh đẩy ticket lên đầu list)
         return toDetailDto(ticket);
     }
 
@@ -200,30 +288,35 @@ public class SupportService {
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
             ticket.setStatus(parseStatus(request.getStatus()));
         } else {
-            // Khi admin reply, luôn chuyển sang RESOLVED (Đã phản hồi)
-            ticket.setStatus(SupportTicket.SupportStatus.RESOLVED);
+            // Khi admin reply → chuyển sang IN_PROGRESS (không tự RESOLVED)
+            // Admin phải bấm "Hoàn tất" để chuyển RESOLVED
+            if (ticket.getStatus() == SupportTicket.SupportStatus.OPEN) {
+                ticket.setStatus(SupportTicket.SupportStatus.IN_PROGRESS);
+            }
         }
 
         supportTicketRepository.save(ticket);
 
-        // Lấy câu hỏi đầu tiên của user để đưa vào email
-        String userQuestion = supportMessageRepository
-                .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
-                .map(SupportMessage::getMessage)
-                .orElse("");
+        // Chỉ gửi email thông báo nếu ticket đến từ form email (không gửi cho chat)
+        if (ticket.getSource() == SupportTicket.TicketSource.EMAIL) {
+            String userQuestion = supportMessageRepository
+                    .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
+                    .map(SupportMessage::getMessage)
+                    .orElse("");
 
-        // Gửi email thông báo phản hồi tới người dùng (async, không block)
-        // isFollowUp = true nếu đây không phải lần reply đầu tiên
-        emailService.sendSupportReply(
-                ticket.getRequesterEmail(),
-                ticket.getRequesterName(),
-                userQuestion,
-                request.getMessage().trim(),
-                ticket.getCategory().getDisplayName(),
-                previousAdminReplies > 0
-        );
+            emailService.sendSupportReply(
+                    ticket.getRequesterEmail(),
+                    ticket.getRequesterName(),
+                    userQuestion,
+                    request.getMessage().trim(),
+                    ticket.getCategory().getDisplayName(),
+                    previousAdminReplies > 0
+            );
+        }
 
-        return toDetailDto(ticket);
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
     }
 
     // Admin cập nhật trạng thái ticket mà không cần gửi tin nhắn phản hồi.
@@ -237,9 +330,24 @@ public class SupportService {
 
         ticket.setStatus(parseStatus(request.getStatus()));
         supportTicketRepository.save(ticket);
-        return toDetailDto(ticket);
+        SupportTicketDetailDto result = toDetailDto(ticket);
+        broadcastTicketUpdate(result);
+        return result;
     }
 
+    // Broadcast cập nhật ticket tới tất cả subscriber WebSocket.
+    private void broadcastTicketUpdate(SupportTicketDetailDto ticket) {
+        log.info("[WS] Broadcasting ticket {} to /topic/support/{}", ticket.getId(), ticket.getId());
+        messagingTemplate.convertAndSend("/topic/support/" + ticket.getId(), ticket);
+
+        SupportTicket entity = supportTicketRepository.findById(ticket.getId()).orElse(null);
+        if (entity != null) {
+            SupportTicketListItemDto listItem = toListItemDto(entity);
+            log.info("[WS] Broadcasting list update for ticket {} (source={}, status={}) to /topic/support/list",
+                    ticket.getId(), listItem.getSource(), listItem.getStatus());
+            messagingTemplate.convertAndSend("/topic/support/list", listItem);
+        }
+    }
     // Lấy user theo email từ token hiện tại.
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
@@ -276,13 +384,23 @@ public class SupportService {
         }
     }
 
+    // Parse chuỗi source, mặc định EMAIL nếu null/blank/không hợp lệ.
+    private SupportTicket.TicketSource parseSource(String source) {
+        if (source == null || source.isBlank()) return SupportTicket.TicketSource.EMAIL;
+        try {
+            return SupportTicket.TicketSource.valueOf(source.trim().toUpperCase());
+        } catch (Exception ex) {
+            return SupportTicket.TicketSource.EMAIL;
+        }
+    }
+
     // Chuyển SupportTicket thành item dùng cho danh sách ticket.
-    // latestMessage luôn là câu hỏi đầu tiên của user, không bao giờ là reply của admin.
+    // latestMessage là tin nhắn mới nhất trong hội thoại (USER hoặc ADMIN).
     private SupportTicketListItemDto toListItemDto(SupportTicket ticket) {
-        String firstUserMessage = supportMessageRepository
-                .findTopByTicketIdAndSenderTypeOrderByCreatedAtAsc(ticket.getId(), SupportMessage.SenderType.USER)
-                .map(SupportMessage::getMessage)
-                .orElse("");
+        List<SupportMessage> messages = supportMessageRepository.findByTicketIdOrderByCreatedAtAsc(ticket.getId());
+
+        // Lấy tin nhắn mới nhất
+        String latestMessage = messages.isEmpty() ? "" : messages.get(messages.size() - 1).getMessage();
 
         return SupportTicketListItemDto.builder()
                 .id(ticket.getId())
@@ -293,8 +411,9 @@ public class SupportService {
                 .categoryName(ticket.getCategory().getName())
                 .categoryDisplayName(ticket.getCategory().getDisplayName())
                 .status(ticket.getStatus().name())
+                .source(ticket.getSource().name())
                 .createdAt(ticket.getCreatedAt())
-                .latestMessage(firstUserMessage)
+                .latestMessage(latestMessage)
                 .build();
     }
 
@@ -318,6 +437,7 @@ public class SupportService {
                 .categoryName(ticket.getCategory().getName())
                 .categoryDisplayName(ticket.getCategory().getDisplayName())
                 .status(ticket.getStatus().name())
+                .source(ticket.getSource().name())
                 .createdAt(ticket.getCreatedAt())
                 .messages(messageDtos)
                 .build();

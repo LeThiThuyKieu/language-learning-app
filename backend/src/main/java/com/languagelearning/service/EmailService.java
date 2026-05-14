@@ -69,8 +69,8 @@ public class EmailService {
 
                         <!-- Header -->
                         <tr>
-                          <td style="background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);padding:32px 40px;">
-                            <p style="margin:0;color:#ffffff;font-size:26px;font-weight:900;letter-spacing:-0.5px;">🦁 Lion</p>
+                          <td style="background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);padding:32px 40px;text-align:center;">
+                            <p style="margin:0;color:#ffffff;font-size:28px;font-weight:900;letter-spacing:1px;">Lion</p>
                             <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:12px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;">Bảo mật tài khoản</p>
                           </td>
                         </tr>
@@ -202,8 +202,8 @@ public class EmailService {
 
                         <!-- Header -->
                         <tr>
-                          <td style="background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);padding:32px 40px;">
-                            <p style="margin:0;color:#ffffff;font-size:26px;font-weight:900;letter-spacing:-0.5px;">🦁 Lion</p>
+                          <td style="background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);padding:32px 40px;text-align:center;">
+                            <p style="margin:0;color:#ffffff;font-size:28px;font-weight:900;letter-spacing:1px;">Lion</p>
                             <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:12px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;">Trung tâm hỗ trợ</p>
                           </td>
                         </tr>

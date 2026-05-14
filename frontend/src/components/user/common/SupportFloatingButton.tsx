@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
-import { SupportChatBox } from "./SupportChatBox"; // import chatbox
+import { SupportChatBox } from "./SupportChatBox";
+import { useAuthStore } from "@/store/authStore";
+import { supportService } from "@/services/supportService";
 
-/**
- * =========================
- * HOVER MESSAGES
- * =========================
- */
+const LS_TICKET_ID    = "support_chat_ticket_id";
+const LS_LAST_READ_AT = "support_chat_last_read_at";
+
+//HOVER MESSAGES
 const HOVER_MESSAGES = [
     "Có thắc mắc gì? Hỏi mình nhé",
     "Mình luôn sẵn sàng giúp bạn!",
@@ -31,31 +32,52 @@ function SupportChatIcon({ className }: { className?: string }) {
 export default function SupportFloatingButton() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { isAuthenticated } = useAuthStore();
     const normalizedPath =
         location.pathname !== "/" && location.pathname.endsWith("/")
             ? location.pathname.slice(0, -1)
             : location.pathname;
 
     const isVisibleOnCurrentPage = ["/", "/profile", "/learn", "/settings", "/help"].includes(normalizedPath);
-    /**
-     * =========================
-     * STATE
-     * =========================
-     */
-    const [menuOpen, setMenuOpen] = useState(false); // menu nhỏ
-    const [chatOpen, setChatOpen] = useState(false); // chatbox
 
-    const [hoverLineIndex, setHoverLineIndex] = useState<number | null>(null);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [hasUnread, setHasUnread] = useState(false);
 
     const hoverTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
     const hoverCycleDoneRef = useRef(false);
     const rootRef = useRef<HTMLDivElement>(null);
+    const notifPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    /**
-     * =========================
-     * HOVER LOGIC
-     * =========================
-     */
+    const [hoverLineIndex, setHoverLineIndex] = useState<number | null>(null);
+
+    // Poll kiểm tra tin nhắn mới từ admin mỗi 10s
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const checkUnread = async () => {
+            const ticketId = localStorage.getItem(LS_TICKET_ID);
+            if (!ticketId) return;
+            try {
+                const detail = await supportService.getMyTicketDetail(Number(ticketId));
+                // Đếm số tin nhắn ADMIN hiện tại
+                const adminMsgCount = detail.messages?.filter((m) => m.senderType === "ADMIN").length ?? 0;
+                const lastReadCount = Number(localStorage.getItem(LS_LAST_READ_AT) ?? "0");
+
+                if (adminMsgCount > lastReadCount && !chatOpen) {
+                    setHasUnread(true);
+                }
+            } catch { /* bỏ qua */ }
+        };
+
+        notifPollRef.current = setInterval(checkUnread, 10_000);
+        // Kiểm tra ngay khi mount
+        void checkUnread();
+        return () => { if (notifPollRef.current) clearInterval(notifPollRef.current); };
+    }, [isAuthenticated, chatOpen]);
+
+
+    // HOVER LOGIC
     const clearHoverTimers = useCallback(() => {
         hoverTimersRef.current.forEach(clearTimeout);
         hoverTimersRef.current = [];
@@ -107,12 +129,7 @@ export default function SupportFloatingButton() {
         hoverCycleDoneRef.current = false;
     };
 
-    /**
-     * =========================
-     * EFFECTS
-     * =========================
-     */
-
+             // EFFECTS
     // Khi mở menu thì dừng hover
     useEffect(() => {
         if (menuOpen) {
@@ -160,9 +177,19 @@ export default function SupportFloatingButton() {
     };
 
     // MỞ CHATBOX
-    const openChat = () => {
+    const openChat = async () => {
         setMenuOpen(false);
         setChatOpen(true);
+        setHasUnread(false);
+        // Lưu số tin nhắn ADMIN hiện tại làm mốc "đã đọc"
+        const ticketId = localStorage.getItem(LS_TICKET_ID);
+        if (ticketId) {
+            try {
+                const detail = await supportService.getMyTicketDetail(Number(ticketId));
+                const adminCount = detail.messages?.filter((m) => m.senderType === "ADMIN").length ?? 0;
+                localStorage.setItem(LS_LAST_READ_AT, String(adminCount));
+            } catch { /* bỏ qua */ }
+        }
     };
 
     const showTooltip =
@@ -182,19 +209,19 @@ export default function SupportFloatingButton() {
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
         >
-            {/* ================= TOOLTIP ================= */}
+            {/* TOOLTIP  */}
             {showTooltip && (
                 <div className="rounded-2xl bg-white px-4 py-3 text-sm shadow-lg">
                     {HOVER_MESSAGES[hoverLineIndex]}
                 </div>
             )}
 
-            {/* ================= CHATBOX ================= */}
+            {/* CHATBOX */}
             {chatOpen && (
                 <SupportChatBox onClose={() => setChatOpen(false)} />
             )}
 
-            {/* ================= MENU ================= */}
+            {/* MENU  */}
             {menuOpen && !chatOpen && (
                 <div className="mb-1 flex min-w-[13rem] flex-col rounded-2xl bg-white py-1 shadow-xl">
                     <button
@@ -235,15 +262,21 @@ export default function SupportFloatingButton() {
                 </div>
             )}
 
-            {/* ================= BUTTON ================= */}
+             {/*Button*/}
             <button
                 onClick={toggleMenu}
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:scale-105"
+                className="relative flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:scale-105"
             >
                 {menuOpen ? (
                     <X className="h-7 w-7" />
                 ) : (
                     <SupportChatIcon className="h-9 w-9" />
+                )}
+                {/* Badge thông báo tin nhắn mới */}
+                {hasUnread && !chatOpen && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white animate-bounce">
+                        !
+                    </span>
                 )}
             </button>
         </div>

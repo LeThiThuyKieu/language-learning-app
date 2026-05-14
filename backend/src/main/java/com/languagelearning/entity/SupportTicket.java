@@ -38,11 +38,23 @@ public class SupportTicket {
     @Column(name = "status", nullable = false)
     private SupportStatus status = SupportStatus.OPEN;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false)
+    private TicketSource source = TicketSource.EMAIL;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @org.springframework.data.annotation.LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     public enum SupportStatus {
         OPEN, IN_PROGRESS, RESOLVED, CLOSED
+    }
+
+    public enum TicketSource {
+        CHAT, EMAIL
     }
 }

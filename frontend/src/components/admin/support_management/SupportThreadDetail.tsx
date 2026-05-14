@@ -1,5 +1,7 @@
-import { MessageSquare, Send, Loader2 } from "lucide-react";
-import { type SupportThread, type SupportStatus } from "./supportTypes.ts";
+import { Send, Loader2, MessageSquare, ChevronLeft } from "lucide-react";
+import { type SupportThread, STATUS_STYLE, STATUS_LABEL } from "./supportTypes.ts";
+
+const AUTO_REPLY_TEXT = "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!";
 
 type SupportThreadDetailProps = {
     thread: SupportThread | null;
@@ -7,12 +9,7 @@ type SupportThreadDetailProps = {
     onReplyDraftChange: (value: string) => void;
     onSendReply: () => void;
     isSendingReply?: boolean;
-};
-
-const statusStyles: Record<SupportStatus, string> = {
-    "Chưa xử lý": "bg-rose-100 text-rose-700",
-    "Đang xử lý": "bg-amber-100 text-amber-700",
-    "Đã phản hồi": "bg-emerald-100 text-emerald-700",
+    onBack?: () => void;
 };
 
 export default function SupportThreadDetail({
@@ -21,111 +18,148 @@ export default function SupportThreadDetail({
     onReplyDraftChange,
     onSendReply,
     isSendingReply = false,
+    onBack,
 }: SupportThreadDetailProps) {
     if (!thread) return null;
 
     const isLoadingMessages = !thread.messages;
-    const adminReplies = thread.messages?.filter((m) => m.senderType === "ADMIN") ?? [];
-    const userQuestion = thread.messages?.find((m) => m.senderType === "USER")?.message ?? thread.message;
+
+    // Lọc bỏ auto-reply
+    const realMessages = (thread.messages ?? []).filter((m) => m.message !== AUTO_REPLY_TEXT);
+
+    // Tin nhắn user (không phải admin)
+    const userMessages = realMessages.filter((m) => m.senderType === "USER");
+
+    // Các lần admin đã phản hồi
+    const adminReplies = realMessages.filter((m) => m.senderType === "ADMIN");
+
+    // Nội dung chính: tin nhắn user đầu tiên
+    const firstUserMsg = userMessages[0];
+
+    // Thời gian của tin nhắn user đầu tiên
+    const firstUserTime = firstUserMsg?.createdAt ?? thread.createdAt;
 
     return (
-        <section className="space-y-6">
-            {/* Thông tin ticket */}
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="space-y-4">
-                    <h2 className="text-xl font-bold text-slate-900">Chi tiết hỗ trợ</h2>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-2xl bg-gray-50 px-4 py-3">
-                            <p className="text-xs text-slate-500">Email</p>
-                            <p className="mt-1 text-sm font-semibold text-slate-800">{thread.email}</p>
-                        </div>
-                        <div className="rounded-2xl bg-gray-50 px-4 py-3">
-                            <p className="text-xs text-slate-500">Tên</p>
-                            <p className="mt-1 text-sm font-semibold text-slate-800">{thread.name}</p>
-                        </div>
-                        <div className="rounded-2xl bg-gray-50 px-4 py-3">
-                            <p className="text-xs text-slate-500">Category</p>
-                            <p className="mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold bg-orange-100 text-orange-700">
-                                {thread.category}
-                            </p>
-                        </div>
-                        <div className="rounded-2xl bg-gray-50 px-4 py-3">
-                            <p className="text-xs text-slate-500">Status</p>
-                            <p className={[
-                                "mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
-                                statusStyles[thread.status],
-                            ].join(" ")}>{thread.status}</p>
-                        </div>
-                        <div className="rounded-2xl bg-gray-50 px-4 py-3 sm:col-span-2">
-                            <p className="text-xs text-slate-500">Thời gian</p>
-                            <p className="mt-1 text-sm font-semibold text-slate-800">{thread.createdAt}</p>
-                        </div>
-                    </div>
-                </div>
+        <section className="rounded-3xl border border-gray-100 bg-white shadow-sm flex flex-col overflow-hidden h-full min-h-0">
+
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className="lg:hidden p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-600 shrink-0"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                )}
+                <h2 className="text-base font-bold text-gray-900">Chi tiết hỗ trợ</h2>
             </div>
 
-            {/* Nội dung câu hỏi của user */}
-            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
-                    NỘI DUNG
+            {/* Body — scrollable */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+                {/* Info grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-2xl px-4 py-3">
+                        <p className="text-[11px] text-gray-400 font-medium mb-1">Email</p>
+                        <p className="text-sm text-gray-800 font-medium">{thread.email}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-2xl px-4 py-3">
+                        <p className="text-[11px] text-gray-400 font-medium mb-1">Tên</p>
+                        <p className="text-sm text-gray-800 font-medium">{thread.name}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-2xl px-4 py-3">
+                        <p className="text-[11px] text-gray-400 font-medium mb-1">Category</p>
+                        <span className="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold bg-orange-100 text-orange-700">
+                            {thread.category}
+                        </span>
+                    </div>
+                    <div className="bg-gray-50 rounded-2xl px-4 py-3">
+                        <p className="text-[11px] text-gray-400 font-medium mb-1">Status</p>
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLE[thread.status]}`}>
+                            {STATUS_LABEL[thread.status]}
+                        </span>
+                    </div>
+                    <div className="bg-gray-50 rounded-2xl px-4 py-3 sm:col-span-2">
+                        <p className="text-[11px] text-gray-400 font-medium mb-1">Thời gian</p>
+                        <p className="text-sm text-gray-700">{firstUserTime}</p>
+                    </div>
                 </div>
-                <p className="text-base leading-8 text-slate-800">{userQuestion}</p>
+
+                {/* Nội dung user */}
+                {isLoadingMessages ? (
+                    <div className="flex justify-center py-8">
+                        <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                    </div>
+                ) : (
+                    <>
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="inline-flex items-center gap-1.5 bg-orange-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">
+                                    <MessageSquare className="w-3 h-3" />
+                                    NỘI DUNG
+                                </span>
+                            </div>
+                            <div className="bg-gray-50 rounded-2xl px-5 py-4 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                {firstUserMsg?.message ?? thread.message}
+                            </div>
+                        </div>
+
+                        {/* Các lần admin đã phản hồi */}
+                        {adminReplies.map((reply, idx) => (
+                            <div key={idx}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="inline-flex items-center gap-1.5 bg-orange-100 text-orange-700 text-[11px] font-bold px-3 py-1 rounded-full">
+                                        <MessageSquare className="w-3 h-3" />
+                                        NỘI DUNG ĐÃ PHẢN HỒI
+                                    </span>
+                                    <span className="text-xs text-gray-400">{reply.createdAt}</span>
+                                </div>
+                                <div className="bg-orange-50 border border-orange-100 rounded-2xl px-5 py-4 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                    {reply.message}
+                                </div>
+                            </div>
+                        ))}
+                    </>
+                )}
             </div>
 
-            {/* Loading messages */}
-            {isLoadingMessages && (
-                <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm flex items-center justify-center gap-2 text-slate-400">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Đang tải...</span>
-                </div>
-            )}
-
-            {/* Các lần admin đã phản hồi */}
-            {!isLoadingMessages && adminReplies.map((reply, idx) => (
-                <div key={idx} className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            NỘI DUNG ĐÃ PHẢN HỒI
-                        </div>
-                        <span className="text-xs text-slate-400">{reply.createdAt}</span>
-                    </div>
-                    <div className="rounded-2xl bg-orange-50 px-5 py-4">
-                        <p className="text-sm leading-7 text-slate-800">{reply.message}</p>
-                    </div>
-                </div>
-            ))}
-
-            {/* Form phản hồi mới */}
+            {/* Reply input */}
             {!isLoadingMessages && (
-                <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
-                    <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
-                        <Send className="h-3.5 w-3.5" />
-                        {adminReplies.length > 0 ? "PHẢN HỒI MỚI" : "REPLY"}
+                <div className="px-6 pt-3 pb-5 border-t border-gray-100 shrink-0 space-y-3">
+                    {/* Label REPLY */}
+                    <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1.5 bg-orange-100 text-orange-700 text-[11px] font-bold px-3 py-1 rounded-full">
+                            <MessageSquare className="w-3 h-3" />
+                            REPLY
+                        </span>
                     </div>
 
                     <textarea
                         value={replyDraft}
-                        onChange={(event) => onReplyDraftChange(event.target.value)}
-                        placeholder={
-                            adminReplies.length > 0
-                                ? "Nhập nội dung phản hồi tiếp theo..."
-                                : "Nhập nội dung phản hồi cho user..."
-                        }
-                        className="mt-4 min-h-40 w-full rounded-3xl border border-gray-100 bg-blue-50 px-5 py-4 text-sm leading-6 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:bg-white"
+                        onChange={(e) => onReplyDraftChange(e.target.value)}
+                        placeholder={adminReplies.length > 0
+                            ? "Nhập nội dung phản hồi tiếp theo..."
+                            : "Nhập nội dung phản hồi cho user..."}
+                        rows={4}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 outline-none resize-none focus:border-orange-300 focus:bg-white transition placeholder:text-gray-400 leading-relaxed"
+                        style={{ maxHeight: 200 }}
+                        onInput={(e) => {
+                            const el = e.currentTarget;
+                            el.style.height = "auto";
+                            el.style.height = Math.min(el.scrollHeight, 200) + "px";
+                        }}
                     />
 
-                    <div className="mt-5 flex flex-wrap gap-3">
-                        <button
-                            type="button"
-                            onClick={onSendReply}
-                            disabled={isSendingReply}
-                            className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            <Send className="h-4 w-4" />
-                            {isSendingReply ? "Đang gửi..." : "Gửi phản hồi"}
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={onSendReply}
+                        disabled={isSendingReply || !replyDraft.trim()}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#D84315] hover:bg-[#BF360C] text-white text-sm font-bold shadow-md shadow-orange-200 transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        {isSendingReply ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        Gửi phản hồi
+                    </button>
                 </div>
             )}
         </section>

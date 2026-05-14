@@ -1,6 +1,7 @@
 package com.languagelearning.controller;
 
 import com.languagelearning.dto.ApiResponse;
+import com.languagelearning.dto.support.SupportCategoryDto;
 import com.languagelearning.dto.support.SupportCreateTicketRequest;
 import com.languagelearning.dto.support.SupportTicketDetailDto;
 import com.languagelearning.service.SupportService;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,6 +40,13 @@ public class PublicController {
     ) {
         SupportTicketDetailDto data = supportService.createTicketForGuest(request);
         return ResponseEntity.ok(ApiResponse.success("Gửi yêu cầu hỗ trợ thành công", data));
+    }
+
+    // Lấy danh sách category hỗ trợ (dùng cho cả user và guest khi mở chatbox).
+    @GetMapping("/support/categories")
+    public ResponseEntity<ApiResponse<List<SupportCategoryDto>>> getCategories() {
+        List<SupportCategoryDto> data = supportService.getCategories();
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách category thành công", data));
     }
 }
 

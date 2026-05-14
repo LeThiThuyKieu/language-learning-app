@@ -10,29 +10,38 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
 @RequestMapping("/api/admin/support-management")
 @RequiredArgsConstructor
 public class SupportManagementController {
+
     private final SupportService supportService;
 
-    // Lấy danh sách ticket cho admin với filter và phân trang.
+    /**
+     * Lấy danh sách ticket với filter và phân trang.
+     * Hỗ trợ filter theo: status, categoryId, keyword (tên/email), source (CHAT/EMAIL).
+     */
     @GetMapping("/tickets")
     public ResponseEntity<ApiResponse<Page<SupportTicketListItemDto>>> getTickets(
             Authentication authentication,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "desc") String sort,
+            @RequestParam(required = false) String source,       // CHAT hoặc EMAIL
+            @RequestParam(defaultValue = "desc") String sort,    // desc = mới nhất trước
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         String email = authentication.getName();
-        Page<SupportTicketListItemDto> data = supportService.getAdminTickets(email, status, categoryId, keyword, sort, page, size);
+        Page<SupportTicketListItemDto> data = supportService.getAdminTickets(email, status, categoryId, keyword, source, sort, page, size);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách ticket thành công", data));
     }
 
-    // Lấy chi tiết ticket cho admin (chỉ đọc, không đổi status).
+    /**
+     * Lấy chi tiết ticket cho admin (chỉ đọc, không thay đổi status).
+     * Dùng để poll tin nhắn mới trong chat panel.
+     */
     @GetMapping("/tickets/{ticketId}")
     public ResponseEntity<ApiResponse<SupportTicketDetailDto>> getTicketDetail(
             Authentication authentication,
@@ -43,7 +52,10 @@ public class SupportManagementController {
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết ticket thành công", data));
     }
 
-    // Admin mở xem ticket → tự động chuyển OPEN sang IN_PROGRESS.
+    /**
+     * Admin mở xem ticket lần đầu → tự động chuyển OPEN sang IN_PROGRESS.
+     * Trả về full conversation kèm toàn bộ messages.
+     */
     @PostMapping("/tickets/{ticketId}/view")
     public ResponseEntity<ApiResponse<SupportTicketDetailDto>> viewTicket(
             Authentication authentication,
@@ -54,7 +66,11 @@ public class SupportManagementController {
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết ticket thành công", data));
     }
 
-    // Admin phản hồi ticket và có thể cập nhật trạng thái ticket trong cùng request.
+    /**
+     * Admin gửi phản hồi vào ticket.
+     * Có thể kèm status mới trong request body để cập nhật trạng thái cùng lúc.
+     * Nếu ticket là CHAT, không gửi email thông báo.
+     */
     @PostMapping("/tickets/{ticketId}/reply")
     public ResponseEntity<ApiResponse<SupportTicketDetailDto>> replyTicket(
             Authentication authentication,
@@ -66,7 +82,10 @@ public class SupportManagementController {
         return ResponseEntity.ok(ApiResponse.success("Gửi phản hồi hỗ trợ thành công", data));
     }
 
-    // Admin cập nhật trạng thái ticket mà không gửi nội dung phản hồi.
+    /**
+     * Admin cập nhật trạng thái ticket mà không gửi tin nhắn phản hồi.
+     * Dùng cho nút "Hoàn tất" (chuyển sang RESOLVED) hoặc "Đóng" (CLOSED).
+     */
     @PatchMapping("/tickets/{ticketId}/status")
     public ResponseEntity<ApiResponse<SupportTicketDetailDto>> updateStatus(
             Authentication authentication,

@@ -4,11 +4,14 @@ import Sidebar from "./Sidebar.tsx";
 
 export default function AdminLayout() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="h-screen flex flex-col bg-white overflow-hidden">
+      {/* Navbar cố định trên cùng */}
       <Navbar />
-      <div className="flex">
+
+      {/* Phần còn lại: sidebar + content, chiếm hết chiều cao còn lại */}
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 p-6 bg-white">
+        <main className="flex-1 p-6 bg-white overflow-y-auto">
           <Outlet />
         </main>
       </div>
