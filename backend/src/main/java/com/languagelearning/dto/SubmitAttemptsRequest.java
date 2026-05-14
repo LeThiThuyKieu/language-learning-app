@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * Request gửi lên khi user hoàn thành một node.
  * Chứa danh sách kết quả từng câu hỏi + nodeId để complete node.
+ * Với node REVIEW, còn có thêm thông tin thời gian và outcome.
  */
 @Data
 @NoArgsConstructor
@@ -18,6 +19,17 @@ public class SubmitAttemptsRequest {
 
     /** Danh sách kết quả từng câu hỏi */
     private List<AttemptItem> attempts;
+
+    // ──Thông tin bổ sung cho node REVIEW ──
+
+    /** Thời gian làm bài (giây), null nếu không phải REVIEW */
+    private Integer elapsedSeconds;
+
+    /** true nếu hết giờ */
+    private Boolean timedOut;
+
+    /** Outcome: FAST_TRACKER | STEADY | SLOW_PASS | FAIL | CARELESS */
+    private String outcome;
 
     @Data
     @NoArgsConstructor

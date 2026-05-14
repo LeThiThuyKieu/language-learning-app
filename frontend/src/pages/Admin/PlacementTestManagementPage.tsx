@@ -85,18 +85,6 @@ export default function PlacementTestManagementPage() {
         fetchData(0);
     }, []);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async function handleDelete(testId: number) {
-        if (!confirm("Bạn có chắc muốn xóa placement test này?")) return;
-        try {
-            await placementTestManagementService.deleteTest(testId);
-            toast.success("Đã xóa placement test thành công!");
-            fetchData(page);
-        } catch {
-            toast.error("Xóa placement test thất bại, vui lòng thử lại.");
-        }
-    }
-
     function handlePageChange(p: number) {
         setPage(p);
         fetchData(p);
