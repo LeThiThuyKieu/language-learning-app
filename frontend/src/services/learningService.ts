@@ -10,6 +10,12 @@ export interface AttemptItem {
 export interface SubmitAttemptsPayload {
   nodeId: number;
   attempts: AttemptItem[];
+  /** Thời gian làm bài (giây) — chỉ dùng cho node REVIEW */
+  elapsedSeconds?: number;
+  /** true nếu hết giờ */
+  timedOut?: boolean;
+  /** Outcome: FAST_TRACKER | STEADY | SLOW_PASS | FAIL | CARELESS */
+  outcome?: string;
 }
 
 export interface BadgeInfo {
