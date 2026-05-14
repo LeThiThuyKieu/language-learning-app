@@ -31,7 +31,7 @@ type BackendSupportListItem = {
 
 /** Một tin nhắn trong hội thoại ticket */
 type BackendSupportMessage = {
-    senderType: "USER" | "ADMIN";
+    senderType: "USER" | "ADMIN" | "BOT";
     message: string;
     createdAt: string;
 };
@@ -119,7 +119,7 @@ function mapDetailToThread(detail: BackendSupportDetail): SupportThread {
         sentAt:    detail.createdAt,
         status:    toSupportStatus(detail.status),
         messages:  detail.messages.map((m) => ({
-            senderType: m.senderType,
+            senderType: m.senderType as "USER" | "ADMIN" | "BOT",
             message:    m.message,
             createdAt:  toRelativeTime(m.createdAt),
         })),
@@ -160,12 +160,13 @@ export const supportService = {
     },
 
     /** User tạo ticket mới với tin nhắn đầu tiên, source mặc định là EMAIL */
-    async createUserTicket(topic: string, message: string, source: "CHAT" | "EMAIL" = "EMAIL"): Promise<{ id: number }> {
+    async createUserTicket(topic: string, message: string, source: "CHAT" | "EMAIL" = "EMAIL", botResponse?: string): Promise<{ id: number }> {
         const categoryId = CATEGORY_ID_BY_TOPIC[topic] ?? CATEGORY_ID_BY_TOPIC["Khác"];
         const res = await apiClient.post<ApiResponse<{ id: number }>>("/users/support/tickets", {
             categoryId,
             message,
             source,
+            ...(botResponse ? { botResponse } : {}),
         });
         return { id: res.data.data?.id ?? 0 };
     },
@@ -217,5 +218,21 @@ export const supportService = {
             `/users/support/tickets/active?categoryId=${categoryId}`,
         );
         return (res.data.data ?? []).map(mapListItemToThread);
+    },
+
+    /**
+     * Match keyword với chatbot rule-based.
+     * Gọi trước khi tạo ticket — nếu matched=true thì hiện botResponse ngay,
+     * không cần tạo ticket và chuyển admin.
+     */
+    async matchChatbot(message: string, categoryId?: number): Promise<{ matched: boolean; botResponse?: string }> {
+        const res = await apiClient.post<ApiResponse<{ matched: boolean; botResponse: string; ruleId: number }>>(
+            "/public/chatbot/match",
+            { message, categoryId: categoryId ?? null },
+        );
+        return {
+            matched:     res.data.data.matched,
+            botResponse: res.data.data.botResponse,
+        };
     },
 };
