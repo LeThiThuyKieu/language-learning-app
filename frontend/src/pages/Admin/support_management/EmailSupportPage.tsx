@@ -204,14 +204,13 @@ export default function EmailSupportPage() {
             )}
 
             {/* Layout chính */}
-            <div className={`flex-1 overflow-hidden px-3 pb-3 md:px-6 md:pb-6 ${selectedThread ? "pt-3 lg:grid lg:gap-6 lg:pt-4 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
+            <div className={`flex-1 overflow-hidden px-3 pb-3 md:px-6 md:pb-6 ${selectedThread ? "flex flex-col pt-3 lg:grid lg:gap-6 lg:pt-4 lg:grid-cols-[380px_minmax(0,1fr)] lg:h-full" : "flex flex-col"}`}>
 
                 {/* List panel:
                     - Mobile không có detail: hiện
-                    - Mobile có detail đang xem: ẩn hoàn toàn (không render)
-                    - Desktop: luôn hiện (lg:flex) */}
-                {(!selectedThread || !mobileShowDetail) && (
-                    <div className={`flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm ${selectedThread ? "hidden lg:flex" : "flex"}`}>
+                    - Mobile có detail đang xem: ẩn hoàn toàn
+                    - Desktop: luôn hiện */}
+                <div className={`flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm ${mobileShowDetail && selectedThread ? "hidden lg:flex" : "flex"}`}>
                         <SupportThreadList
                             threads={filteredThreads}
                             selectedThreadId={selectedThreadId}
@@ -226,13 +225,12 @@ export default function EmailSupportPage() {
                             onSelectThread={handleSelectThread}
                         />
                     </div>
-                )}
 
                 {/* Detail panel:
                     - Mobile: chỉ hiện khi mobileShowDetail=true
                     - Desktop: luôn hiện khi có selectedThread */}
                 {selectedThread && (
-                    <div className={`${mobileShowDetail ? "flex" : "hidden"} flex-col h-full lg:flex pt-3 lg:pt-0`}>
+                    <div className={`${mobileShowDetail ? "flex" : "hidden"} flex-col h-full min-h-0 lg:flex pt-3 lg:pt-0`}>
 
                         {/* Filter bar ngoài khung — chỉ mobile, giống SupportThreadList header */}
                         <div className="lg:hidden shrink-0 space-y-3 mb-3">

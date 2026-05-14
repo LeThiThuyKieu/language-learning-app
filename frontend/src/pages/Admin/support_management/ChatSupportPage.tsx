@@ -273,8 +273,7 @@ export default function ChatSupportPage() {
             <div className={`flex-1 overflow-hidden px-3 pb-3 md:px-6 md:pb-6 ${selectedThread ? "lg:grid lg:gap-6 lg:pt-4 lg:grid-cols-[380px_minmax(0,1fr)]" : "flex flex-col"}`}>
 
                 {/* List panel — ẩn trên mobile khi đang xem chat, luôn hiện trên desktop */}
-                {(!mobileShowChat || !selectedThread) && (
-                <div className="flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm lg:flex">
+                <div className={`flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm ${mobileShowChat && selectedThread ? "hidden lg:flex" : "flex"}`}>
 
                     {/* Thanh tìm kiếm và filter */}
                     <div className="p-4 space-y-3 border-b border-gray-100 shrink-0">
@@ -360,7 +359,6 @@ export default function ChatSupportPage() {
                         })}
                     </div>
                 </div>
-                )}
 
                 {/* Chat panel — hiện trên mobile khi mobileShowChat=true, luôn hiện trên desktop */}
                 {selectedThread && (
