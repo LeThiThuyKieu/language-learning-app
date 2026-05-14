@@ -37,15 +37,15 @@ function countTotalQuestions(node: SkillTreeNodeQuestionsData | null): number {
     );
 }
 
-const REVIEW_TOTAL_SECONDS = 20 * 60; // 20 phút
+const REVIEW_TOTAL_SECONDS = 2 * 60; // 20 phút
 
 /** Xác định outcome dựa trên accuracy và thời gian */
 function calcOutcome(accuracy: number, elapsedSeconds: number, timedOut: boolean): ReviewOutcome {
     const fast = elapsedSeconds < 10 * 60; // < 10 phút
     if (accuracy >= 90 && fast) return "FAST_TRACKER";
     if (accuracy < 70 && fast) return "CARELESS";
-    if (accuracy >= 70 && (timedOut || elapsedSeconds >= 15 * 60)) return "SLOW_PASS";
-    if (accuracy >= 70) return "STEADY";
+    if (accuracy >= 70 && (timedOut || elapsedSeconds > 15 * 60)) return "SLOW_PASS";
+    if (accuracy >= 70) return "STEADY"; // tức 10-15p
     return "FAIL";
 }
 
@@ -220,7 +220,6 @@ export default function ReviewLessonPage() {
 
     // Màn hình kết quả adaptive
     if (stage === "RESULT") {
-        const canPass = resultOutcome !== "FAIL" && resultOutcome !== "CARELESS";
         return (
             <ReviewResultView
                 accuracy={resultAccuracy}
