@@ -37,7 +37,7 @@ function countTotalQuestions(node: SkillTreeNodeQuestionsData | null): number {
     );
 }
 
-const REVIEW_TOTAL_SECONDS = 2 * 60; // 20 phút
+const REVIEW_TOTAL_SECONDS = 20 * 60; // 20 phút
 
 /** Xác định outcome dựa trên accuracy và thời gian */
 function calcOutcome(accuracy: number, elapsedSeconds: number, timedOut: boolean): ReviewOutcome {
@@ -76,6 +76,8 @@ export default function ReviewLessonPage() {
 
     useEffect(() => {
         if (state.node && state.node.nodeType === "REVIEW") {
+            // Data đã có sẵn, bắt đầu tính giờ ngay
+            startTimeRef.current = Date.now();
             setLoading(false);
             return;
         }
@@ -86,7 +88,11 @@ export default function ReviewLessonPage() {
             setError(null);
             try {
                 const data = await learningService.getTreeQuestions(treeId);
-                if (!cancelled) setTreeData(data);
+                if (!cancelled) {
+                    setTreeData(data);
+                    // Reset timer sau khi data load xong, user bắt đầu làm bài
+                    startTimeRef.current = Date.now();
+                }
             } catch (e: unknown) {
                 if (!cancelled) {
                     setError(e instanceof Error ? e.message : "Không tải được dữ liệu REVIEW");
@@ -131,7 +137,10 @@ export default function ReviewLessonPage() {
         if (completingRef.current) return;
         completingRef.current = true;
 
-        const elapsed = Math.round((Date.now() - startTimeRef.current) / 1000);
+        const elapsed = Math.min(
+            Math.round((Date.now() - startTimeRef.current) / 1000),
+            REVIEW_TOTAL_SECONDS
+        );
         setElapsedSeconds(elapsed);
 
         // Câu chưa làm → tính là sai
