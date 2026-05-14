@@ -11,8 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface LeaderboardRepository extends JpaRepository<Leaderboard, Integer> {
-    @Query("SELECT l FROM Leaderboard l ORDER BY l.totalXp DESC")
-    List<Leaderboard> findAllOrderByTotalXpDesc();
+    @Query("SELECT l FROM Leaderboard l ORDER BY l.totalKn DESC, l.totalXp DESC")
+    List<Leaderboard> findAllOrderByTotalKnDesc();
 
     /*
      * Dùng cho trang Profile.
@@ -20,5 +20,3 @@ public interface LeaderboardRepository extends JpaRepository<Leaderboard, Intege
      */
     Optional<Leaderboard> findByUser(User user);
 }
-
-

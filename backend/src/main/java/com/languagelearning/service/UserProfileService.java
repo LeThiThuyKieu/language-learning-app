@@ -147,13 +147,20 @@ public class UserProfileService {
                 .filter(value -> value != null)
                 .reduce(0, Integer::sum);
         int completionRate = totalNodes == 0 ? 0 : (int) ((completedNodes * 100.0) / totalNodes);
-        Integer rankPosition = leaderboardRepository.findByUser(user)
-                .map(Leaderboard::getRankPosition)
-                .orElse(null);
-
+        
         int totalKn = userKnRepository.findByUser(user)
                 .map(UserKn::getTotalKn)
                 .orElse(0);
+
+        // Tính rank dựa trên total_kn
+        List<Leaderboard> allLeaderboards = leaderboardRepository.findAllOrderByTotalKnDesc();
+        Integer rankPosition = null;
+        for (int i = 0; i < allLeaderboards.size(); i++) {
+            if (allLeaderboards.get(i).getUser().getId().equals(user.getId())) {
+                rankPosition = i + 1;
+                break;
+            }
+        }
 
         // Tính tiến trình theo tree (dựa trên level hiện tại của user)
         int completedTrees = 0;

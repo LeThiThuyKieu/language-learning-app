@@ -210,6 +210,7 @@ export default function ProfilePage() {
                                 level={levelDisplay}
                                 showLevelLabel={!isLevelUndefined}
                                 avatarUrl={avatarUrl}
+                                createdAt={profile?.createdAt}
                                 onAvatarClick={() => setIsModalOpen(true)}
                                 onEditNameClick={openEditNameModal}
                                 onLevelClick={isLevelUndefined ? () => navigate("/welcome") : undefined}

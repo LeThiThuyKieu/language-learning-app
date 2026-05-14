@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS `leaderboard` (
                                              `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` int(11) DEFAULT NULL,
     `total_xp` int(11) DEFAULT NULL,
+    `total_kn` int(11) DEFAULT 0,
     `rank_position` int(11) DEFAULT NULL,
     `updated_at` datetime DEFAULT current_timestamp(),
     PRIMARY KEY (`id`),
@@ -183,7 +184,7 @@ CREATE TABLE IF NOT EXISTS `support_email_log` (
 CREATE TABLE IF NOT EXISTS `support_message` (
                                                  `id` int(11) NOT NULL AUTO_INCREMENT,
     `ticket_id` int(11) NOT NULL,
-    `sender_type` enum('USER','ADMIN') NOT NULL,
+    `sender_type` enum('USER','ADMIN','BOT') NOT NULL,
     `message` text NOT NULL,
     `created_at` datetime DEFAULT current_timestamp(),
     PRIMARY KEY (`id`),
@@ -388,6 +389,25 @@ CREATE TABLE IF NOT EXISTS `user_streak` (
     ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.chatbot_rule
+CREATE TABLE IF NOT EXISTS `chatbot_rule` (
+    `id`           int(11)      NOT NULL AUTO_INCREMENT,
+    `rule_name`    varchar(100) NOT NULL COMMENT 'Tên rule để dễ quản lý trong admin',
+    `keywords`     text         NOT NULL COMMENT 'Từ khóa phân cách bởi |, vd: quên mật khẩu|reset password',
+    `bot_response` text         NOT NULL COMMENT 'Câu trả lời tự động khi khớp keyword',
+    `category_id`  int(11)      DEFAULT NULL COMMENT 'NULL = áp dụng cho mọi category',
+    `priority`     int(11)      NOT NULL DEFAULT 0 COMMENT 'Ưu tiên cao hơn được kiểm tra trước',
+    `is_active`    tinyint(1)   NOT NULL DEFAULT 1,
+    `created_at`   datetime     DEFAULT current_timestamp(),
+    `updated_at`   datetime     DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_chatbot_active` (`is_active`),
+    KEY `idx_chatbot_category` (`category_id`),
+    CONSTRAINT `chatbot_rule_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `support_category` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Chatbot rule-based: keyword matching → auto reply';
+
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
