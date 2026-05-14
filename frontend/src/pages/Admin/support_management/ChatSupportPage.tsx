@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import {
     Search, Send, Inbox, User, MessageCircle, CheckCircle, Clock, AlertCircle,
-    ArrowDown, ArrowUp, Filter, X, Loader2, XCircle,
+    ArrowDown, ArrowUp, Filter, X, Loader2, XCircle, Bot,
 } from "lucide-react";
 import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL, STATUS_STYLE } from "@/components/admin/support_management/supportTypes";
@@ -326,9 +326,6 @@ export default function ChatSupportPage() {
                         ) : filteredThreads.map((thread) => {
                             const isSelected = thread.id === selectedThreadId;
                             const hasUnread  = unreadIds.has(thread.id);
-                            // Lấy tin nhắn mới nhất, bỏ qua auto-reply tĩnh
-                            const realMsgs = (thread.messages ?? []).filter((m) => m.message !== "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!");
-                            const lastMsg  = realMsgs.length > 0 ? realMsgs[realMsgs.length - 1] : undefined;
                             return (
                                 <button
                                     key={thread.id}
@@ -353,8 +350,9 @@ export default function ChatSupportPage() {
                                             {STATUS_LABEL[thread.status]}
                                         </span>
                                     </div>
+                                    {/* thread.message luôn là latestMessage từ API/WS — không cần parse messages array */}
                                     <p className={`text-sm line-clamp-2 leading-6 ${hasUnread ? "font-semibold text-slate-800" : "text-slate-600"}`}>
-                                        {lastMsg ? (lastMsg.senderType === "ADMIN" ? "Bạn: " : lastMsg.senderType === "BOT" ? "🤖 " : "") + lastMsg.message : thread.message}
+                                        {thread.message}
                                     </p>
                                 </button>
                             );
@@ -457,7 +455,7 @@ export default function ChatSupportPage() {
                                 if (isBot) return (
                                     <div key={idx} className="flex items-end gap-2 flex-row">
                                         <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
-                                            <svg className="w-3.5 h-3.5 text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7H3a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><path d="M5 14v7"/><path d="M19 14v7"/><path d="M9 18h6"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>
+                                            <Bot className="w-3.5 h-3.5 text-primary-600" />
                                         </div>
                                         <div className="max-w-[70%] flex flex-col gap-1 items-start">
                                             <span className="text-[11px] text-gray-400">Bot · {msg.createdAt}</span>

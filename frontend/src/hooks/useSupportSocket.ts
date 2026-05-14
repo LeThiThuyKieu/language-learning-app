@@ -16,7 +16,7 @@ interface WsTicketPayload {
     source: string;
     createdAt: string;
     messages: Array<{
-        senderType: "USER" | "ADMIN";
+        senderType: "USER" | "ADMIN" | "BOT";
         message: string;
         createdAt: string;
     }>;

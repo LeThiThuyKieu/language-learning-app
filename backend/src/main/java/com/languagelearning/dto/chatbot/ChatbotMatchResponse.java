@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 
 /**
  * Kết quả match keyword:
- * - matched=true  → botResponse chứa câu trả lời tự động
- * - matched=false → không tìm thấy rule, chuyển sang admin
+ * - matched=true, fallback=false → rule matched, botResponse là câu trả lời từ rule
+ * - matched=true, fallback=true  → không match rule nào, botResponse là fallback mặc định
+ * - matched=false                → (không dùng nữa, giữ lại để tương thích)
  */
 @Data
 @Builder
@@ -18,4 +19,5 @@ public class ChatbotMatchResponse {
     private boolean matched;
     private String botResponse;
     private Integer ruleId;
+    private boolean fallback;
 }

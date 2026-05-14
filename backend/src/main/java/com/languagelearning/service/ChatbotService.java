@@ -22,38 +22,93 @@ public class ChatbotService {
     private final ChatbotRuleRepository chatbotRuleRepository;
     private final SupportCategoryRepository supportCategoryRepository;
 
+    private static final String FALLBACK_RESPONSE =
+            "Cảm ơn bạn đã liên hệ hỗ trợ. Admin sẽ phản hồi trong thời gian sớm nhất.";
+
     /**
-     * Match keyword trong message của user.
-     * Ưu tiên rule có category khớp.
-     * Rule có priority cao hơn được kiểm tra trước.
+     * Match keyword theo thứ tự ưu tiên:
+     *   1. Rule thuộc category hiện tại (category = categoryId)
+     *   2. Rule global (category IS NULL)
+     *   3. Rule thuộc các category khác
+     *   4. Không match → trả fallback response
+     *
+     * Trong mỗi bước, rule có priority cao hơn được kiểm tra trước.
      */
     @Transactional(readOnly = true)
     public ChatbotMatchResponse match(ChatbotMatchRequest request) {
-        List<ChatbotRule> rules = request.getCategoryId() != null
-                ? chatbotRuleRepository.findActiveByCategoryOrGlobal(request.getCategoryId())
-                : chatbotRuleRepository.findByIsActiveTrueOrderByPriorityDesc();
-
         String normalizedMsg = normalize(request.getMessage());
+        Integer categoryId   = request.getCategoryId();
 
+        // Bước 1: category hiện tại
+        if (categoryId != null) {
+            ChatbotMatchResponse r = matchFromList(
+                    chatbotRuleRepository.findActiveByCategory(categoryId), normalizedMsg);
+            if (r != null) {
+                log.debug("[Chatbot] Step1 matched (category={}) for: {}", categoryId, request.getMessage());
+                return r;
+            }
+        }
+
+        // Bước 2: general (category IS NULL)
+        {
+            ChatbotMatchResponse r = matchFromList(
+                    chatbotRuleRepository.findActiveGeneral(), normalizedMsg);
+            if (r != null) {
+                log.debug("[Chatbot] Step2 matched (general) for: {}", request.getMessage());
+                return r;
+            }
+        }
+
+        //  Bước 3: các category khác 
+        if (categoryId != null) {
+            ChatbotMatchResponse r = matchFromList(
+                    chatbotRuleRepository.findActiveByOtherCategories(categoryId), normalizedMsg);
+            if (r != null) {
+                log.debug("[Chatbot] Step3 matched (other categories) for: {}", request.getMessage());
+                return r;
+            }
+        } else {
+            // Không có categoryId → thử toàn bộ rule có category
+            List<ChatbotRule> allWithCat = chatbotRuleRepository
+                    .findByIsActiveTrueOrderByPriorityDesc()
+                    .stream()
+                    .filter(rule -> rule.getCategory() != null)
+                    .toList();
+            ChatbotMatchResponse r = matchFromList(allWithCat, normalizedMsg);
+            if (r != null) {
+                log.debug("[Chatbot] Step3 matched (all categories) for: {}", request.getMessage());
+                return r;
+            }
+        }
+
+        // Bước 4: fallback 
+        log.debug("[Chatbot] No rule matched, returning fallback for: {}", request.getMessage());
+        return ChatbotMatchResponse.builder()
+                .matched(true)          // matched=true để lưu vào DB như bot message
+                .botResponse(FALLBACK_RESPONSE)
+                .ruleId(null)
+                .fallback(true)
+                .build();
+    }
+
+    /** Duyệt danh sách rule, trả về kết quả match đầu tiên hoặc null nếu không có */
+    private ChatbotMatchResponse matchFromList(List<ChatbotRule> rules, String normalizedMsg) {
         for (ChatbotRule rule : rules) {
             String[] keywords = rule.getKeywords().split("\\|");
             boolean matched = Arrays.stream(keywords)
                     .map(String::trim)
                     .filter(k -> !k.isEmpty())
                     .anyMatch(k -> normalizedMsg.contains(normalize(k)));
-
             if (matched) {
-                log.debug("[Chatbot] Matched rule #{} for message: {}", rule.getId(), request.getMessage());
                 return ChatbotMatchResponse.builder()
                         .matched(true)
                         .botResponse(rule.getBotResponse())
                         .ruleId(rule.getId())
+                        .fallback(false)
                         .build();
             }
         }
-
-        log.debug("[Chatbot] No rule matched for message: {}", request.getMessage());
-        return ChatbotMatchResponse.builder().matched(false).build();
+        return null;
     }
 
     @Transactional(readOnly = true)

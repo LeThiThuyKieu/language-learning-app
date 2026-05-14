@@ -225,14 +225,15 @@ export const supportService = {
      * Gọi trước khi tạo ticket — nếu matched=true thì hiện botResponse ngay,
      * không cần tạo ticket và chuyển admin.
      */
-    async matchChatbot(message: string, categoryId?: number): Promise<{ matched: boolean; botResponse?: string }> {
-        const res = await apiClient.post<ApiResponse<{ matched: boolean; botResponse: string; ruleId: number }>>(
+    async matchChatbot(message: string, categoryId?: number): Promise<{ matched: boolean; botResponse?: string; fallback?: boolean }> {
+        const res = await apiClient.post<ApiResponse<{ matched: boolean; botResponse: string; ruleId: number; fallback: boolean }>>(
             "/public/chatbot/match",
             { message, categoryId: categoryId ?? null },
         );
         return {
             matched:     res.data.data.matched,
             botResponse: res.data.data.botResponse,
+            fallback:    res.data.data.fallback,
         };
     },
 };

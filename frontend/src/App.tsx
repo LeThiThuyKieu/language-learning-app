@@ -14,6 +14,8 @@ import UserManagementPage from "@/pages/Admin/UserManagementPage.tsx";
 import PlacementTestManagementPage from "@/pages/Admin/PlacementTestManagementPage.tsx";
 import EmailSupportPage from "@/pages/Admin/support_management/EmailSupportPage.tsx";
 import ChatSupportPage from "@/pages/Admin/support_management/ChatSupportPage.tsx";
+import ChatbotRulesPage from "@/pages/Admin/support_management/ChatbotRulesPage.tsx";
+import LeaderboardPage from "@/pages/Admin/LeaderboardPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
 import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";
@@ -133,6 +135,8 @@ function App() {
                         <Route path="placement-test-management" element={<PlacementTestManagementPage/>}/>
                         <Route path="support-management/email-support" element={<EmailSupportPage/>}/>
                         <Route path="support-management/chat-support" element={<ChatSupportPage/>}/>
+                        <Route path="support-management/chatbot-rules" element={<ChatbotRulesPage/>}/>
+                        <Route path="leaderboard" element={<LeaderboardPage/>}/>
                     </Route>
                 </Routes>
                 <SupportFloatingButton />
