@@ -13,6 +13,9 @@ public class SupportCreateTicketRequest {
     // "CHAT" hoặc "EMAIL" — mặc định EMAIL nếu không truyền
     private String source;
 
+    // Bot response từ chatbot rule-based (optional) — nếu có sẽ lưu vào DB như message BOT
+    private String botResponse;
+
     // Fields for guest users (optional, only used when not authenticated)
     private String guestName;
 

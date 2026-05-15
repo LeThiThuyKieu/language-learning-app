@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import {
     Search, Send, Inbox, User, MessageCircle, CheckCircle, Clock, AlertCircle,
-    ArrowDown, ArrowUp, Filter, X, Loader2, XCircle,
+    ArrowDown, ArrowUp, Filter, X, Loader2, XCircle, Bot,
 } from "lucide-react";
 import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL, STATUS_STYLE } from "@/components/admin/support_management/supportTypes";
@@ -237,8 +237,10 @@ export default function ChatSupportPage() {
                 return { ...t, status: updated.status };
             }));
             toast.success("Đã đánh dấu hoàn tất");
-        } catch { toast.error("Không thể cập nhật trạng thái"); }
-        finally { setIsResolving(false); }
+        } catch (err) {
+            console.error("[handleResolve] error:", err);
+            toast.error("Không thể cập nhật trạng thái");
+        } finally { setIsResolving(false); }
     };
 
     /** Tự động resize textarea theo nội dung, tối đa 120px */
@@ -324,9 +326,6 @@ export default function ChatSupportPage() {
                         ) : filteredThreads.map((thread) => {
                             const isSelected = thread.id === selectedThreadId;
                             const hasUnread  = unreadIds.has(thread.id);
-                            // Lấy tin nhắn mới nhất, bỏ qua auto-reply tĩnh
-                            const realMsgs = (thread.messages ?? []).filter((m) => m.message !== "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!");
-                            const lastMsg  = realMsgs.length > 0 ? realMsgs[realMsgs.length - 1] : undefined;
                             return (
                                 <button
                                     key={thread.id}
@@ -351,8 +350,9 @@ export default function ChatSupportPage() {
                                             {STATUS_LABEL[thread.status]}
                                         </span>
                                     </div>
+                                    {/* thread.message luôn là latestMessage từ API/WS — không cần parse messages array */}
                                     <p className={`text-sm line-clamp-2 leading-6 ${hasUnread ? "font-semibold text-slate-800" : "text-slate-600"}`}>
-                                        {lastMsg ? (lastMsg.senderType === "ADMIN" ? "Bạn: " : "") + lastMsg.message : thread.message}
+                                        {thread.message}
                                     </p>
                                 </button>
                             );
@@ -410,7 +410,7 @@ export default function ChatSupportPage() {
                                     {selectedThread.name}<span className="mx-1.5">·</span>{selectedThread.email}
                                 </p>
                             </div>
-                            {selectedThread.status === "IN_PROGRESS" && (
+                            {(selectedThread.status === "OPEN" || selectedThread.status === "IN_PROGRESS") && (
                                 <button
                                     onClick={() => void handleResolve()}
                                     disabled={isResolving}
@@ -437,33 +437,50 @@ export default function ChatSupportPage() {
                                 </div>
                             ) : selectedThread.messages.map((msg, idx) => {
                                 const isAdmin = msg.senderType === "ADMIN";
-                                const showDivider = idx > 0 && selectedThread.messages![idx - 1].senderType !== msg.senderType && isAdmin;
-                                return (
-                                    <div key={idx}>
-                                        {showDivider && (
-                                            <div className="flex items-center gap-3 my-3">
-                                                <div className="flex-1 h-px bg-gray-100" />
-                                                <span className="text-[11px] text-gray-400">Phản hồi từ admin</span>
-                                                <div className="flex-1 h-px bg-gray-100" />
-                                            </div>
-                                        )}
-                                        <div className={`flex items-end gap-2 ${isAdmin ? "flex-row-reverse" : "flex-row"}`}>
-                                            {isAdmin ? (
-                                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
-                                                    <User className="w-3.5 h-3.5 text-white" />
-                                                </div>
-                                            ) : <AvatarPlaceholder name={selectedThread.name} size="sm" />}
-                                            <div className={`max-w-[70%] flex flex-col gap-1 ${isAdmin ? "items-end" : "items-start"}`}>
-                                                <span className="text-[11px] text-gray-400">
-                                                    {isAdmin ? `Admin · ${msg.createdAt}` : `${selectedThread.name} · ${msg.createdAt}`}
-                                                </span>
-                                                <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm border border-gray-100 ${isAdmin ? "bg-orange-50 rounded-br-sm" : "bg-white rounded-bl-sm"}`}>
-                                                    {msg.message}
-                                                </div>
+                                const isBot   = msg.senderType === "BOT";
+                                const isUser  = msg.senderType === "USER";
+
+                                if (isUser) return (
+                                    <div key={idx} className="flex items-end gap-2 flex-row">
+                                        <AvatarPlaceholder name={selectedThread.name} size="sm" />
+                                        <div className="max-w-[70%] flex flex-col gap-1 items-start">
+                                            <span className="text-[11px] text-gray-400">{selectedThread.name} · {msg.createdAt}</span>
+                                            <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm border border-gray-100 bg-white rounded-bl-sm">
+                                                {msg.message}
                                             </div>
                                         </div>
                                     </div>
                                 );
+
+                                if (isBot) return (
+                                    <div key={idx} className="flex items-end gap-2 flex-row">
+                                        <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
+                                            <Bot className="w-3.5 h-3.5 text-primary-600" />
+                                        </div>
+                                        <div className="max-w-[70%] flex flex-col gap-1 items-start">
+                                            <span className="text-[11px] text-gray-400">Bot · {msg.createdAt}</span>
+                                            <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm border border-primary-100 bg-primary-50 rounded-bl-sm whitespace-pre-line">
+                                                {msg.message}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+
+                                if (isAdmin) return (
+                                    <div key={idx} className="flex items-end gap-2 flex-row-reverse">
+                                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
+                                            <User className="w-3.5 h-3.5 text-white" />
+                                        </div>
+                                        <div className="max-w-[70%] flex flex-col gap-1 items-end">
+                                            <span className="text-[11px] text-gray-400">Admin · {msg.createdAt}</span>
+                                            <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm border border-gray-100 bg-orange-50 rounded-br-sm">
+                                                {msg.message}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+
+                                return null;
                             })}
                             <div ref={messagesEndRef} />
                         </div>

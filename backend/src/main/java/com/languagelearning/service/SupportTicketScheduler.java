@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Tự động đóng ticket RESOLVED sau 3 ngày không có phản hồi từ user.
- * Chạy mỗi giờ một lần.
+ * Chạy mỗi ngày một lần, lúc 2 giờ sáng (đây là tgian ít người truy cập)
  */
 @Slf4j
 @Component

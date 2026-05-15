@@ -121,6 +121,16 @@ public class SupportService {
         firstMessage.setMessage(request.getMessage().trim());
         supportMessageRepository.save(firstMessage);
 
+        // Nếu chatbot đã match và trả lời → lưu bot response vào DB
+        // Admin sẽ thấy cuộc hội thoại đầy đủ: USER → BOT → (admin có thể tiếp tục)
+        if (request.getBotResponse() != null && !request.getBotResponse().isBlank()) {
+            SupportMessage botMessage = new SupportMessage();
+            botMessage.setTicket(ticket);
+            botMessage.setSenderType(SupportMessage.SenderType.BOT);
+            botMessage.setMessage(request.getBotResponse().trim());
+            supportMessageRepository.save(botMessage);
+        }
+
         SupportTicketDetailDto result = toDetailDto(ticket);
         broadcastTicketUpdate(result);
         return result;

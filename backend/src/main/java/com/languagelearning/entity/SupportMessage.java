@@ -36,6 +36,6 @@ public class SupportMessage {
     private LocalDateTime createdAt;
 
     public enum SenderType {
-        USER, ADMIN
+        USER, ADMIN, BOT
     }
 }

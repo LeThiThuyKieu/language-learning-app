@@ -12,6 +12,7 @@ import {
     Mail,
     MessageCircle,
     Headphones,
+    Bot,
     ChevronDown,
     LogOut,
 } from "lucide-react";
@@ -96,8 +97,9 @@ export default function Sidebar() {
                             {supportOpen && (
                                 <div className="mt-1 ml-4 pl-3 border-l-2 border-orange-100 space-y-1">
                                     {[
-                                        { path: "/admin/support-management/email-support", icon: Mail,          label: "Email" },
-                                        { path: "/admin/support-management/chat-support",  icon: MessageCircle, label: "Chat" },
+                                        { path: "/admin/support-management/email-support",  icon: Mail,          label: "Email" },
+                                        { path: "/admin/support-management/chat-support",   icon: MessageCircle, label: "Chat" },
+                                        { path: "/admin/support-management/chatbot-rules",  icon: Bot,           label: "Chatbot Rules" },
                                     ].map(({ path, icon: Icon, label }) => {
                                         const isActive = location.pathname === path || location.pathname.startsWith(path + "/");
                                         return (

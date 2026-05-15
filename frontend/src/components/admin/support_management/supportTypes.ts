@@ -2,7 +2,7 @@ export type SupportStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 export type SupportCategory = "Bắt đầu học" | "Tài khoản" | "Thanh toán" | "Bài học" | "Kỹ thuật" | "Nội dung học" | "Khác";
 
 export type SupportMessage = {
-    senderType: "USER" | "ADMIN";
+    senderType: "USER" | "ADMIN" | "BOT";
     message: string;
     createdAt: string;
 };
