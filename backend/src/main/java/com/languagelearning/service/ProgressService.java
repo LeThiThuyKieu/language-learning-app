@@ -40,6 +40,9 @@ public class ProgressService {
     private final UserBadgeRepository userBadgeRepository;
     private final UserReviewAttemptRepository userReviewAttemptRepository;
 
+    /** Cập nhật rank realtime */
+    private final LeaderboardService leaderboardService;
+
     /** Lấy số node đã unlock của một tree */
     @Transactional(readOnly = true)
     public int getUnlockedCount(String email, int treeId) {
@@ -257,6 +260,9 @@ public class ProgressService {
         });
         userKn.setTotalKn(userKn.getTotalKn() + amount);
         userKnRepository.save(userKn);
+
+        // Cập nhật rank realtime - push WebSocket
+        leaderboardService.updateRankRealtime(user.getId(), userKn.getTotalKn());
     }
 
     /** Cộng XP cho user (lưu vào user_profile.total_xp và user_streak.earned_xp hôm nay) */
