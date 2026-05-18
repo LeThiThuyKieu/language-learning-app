@@ -118,6 +118,16 @@ public class ProgressService {
             skillTreeQuestionService.invalidateLevelCache(user.getId(), levelId);
         }
 
+        // Sau khi KN và XP đã được cập nhật, gọi LeaderboardService để tính rank realtime
+        // Tính rank dựa trên total_kn, nếu bằng nhau sẽ so total_xp
+        int totalKn = userKnRepository.findByUser(user).map(UserKn::getTotalKn).orElse(0);
+        int totalXp = userProfileRepository.findByUser(user).map(up -> up.getTotalXp() == null ? 0 : up.getTotalXp()).orElse(0);
+        try {
+            leaderboardService.updateRankRealtime(user.getId(), totalKn, totalXp);
+        } catch (Exception e) {
+            log.warn("Failed to update realtime leaderboard for user {}: {}", user.getId(), e.getMessage());
+        }
+
         return new CompleteNodeResult(getUnlockedCount(email, treeId), knReward, checkAndAwardBadges(user));
     }
 
@@ -281,6 +291,15 @@ public class ProgressService {
             streak.setEarnedXp(current + amount);
             userStreakRepository.save(streak);
         });
+
+        // Sau khi XP được lưu, cập nhật leaderboard để đảm bảo total_xp được reflect
+        try {
+            int totalKn = userKnRepository.findByUser(user).map(UserKn::getTotalKn).orElse(0);
+            int totalXp = userProfileRepository.findByUser(user).map(up -> up.getTotalXp() == null ? 0 : up.getTotalXp()).orElse(0);
+            leaderboardService.updateRankRealtime(user.getId(), totalKn, totalXp);
+        } catch (Exception e) {
+            log.warn("Failed to update leaderboard after addXp for user {}: {}", user.getId(), e.getMessage());
+        }
     }
 
     /**
