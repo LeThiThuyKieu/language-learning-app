@@ -26,6 +26,10 @@ export function useRankUpdate(userId: number | undefined, initialRank: number | 
     const [isAnimating, setIsAnimating] = useState(false);
 
     useEffect(() => {
+        setCurrentRank(initialRank);
+    }, [initialRank]);
+
+    useEffect(() => {
         if (!userId) return;
 
         const socket = new SockJS('/ws');

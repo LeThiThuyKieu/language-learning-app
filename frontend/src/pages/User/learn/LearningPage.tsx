@@ -12,6 +12,7 @@ import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
+import LeaderboardCard from "@/components/user/common/LeaderboardCard";
 
 export default function LearningPage() {
     const location = useLocation();
@@ -337,6 +338,7 @@ export default function LearningPage() {
                             <div className="col-span-12 lg:col-span-4">
                                 <div className="flex flex-col gap-3 lg:sticky lg:top-24">
                                     <TopStats/>
+                                    <LeaderboardCard />
                                     <InfoCard
                                         title="Mở khóa Bảng xếp hạng!"
                                         subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
