@@ -120,7 +120,7 @@ export default function FeedbackModal({ treeId, onDone }: FeedbackModalProps) {
                         </button>
                     </div>
                 ) : (
-                    /* ── Thank you screen ── */
+                    /* Thank you screen */
                     <div className="px-7 pt-8 pb-7 flex flex-col items-center text-center">
                         {/* Success icon */}
                         <div className="relative mb-5">

@@ -190,7 +190,6 @@ export default function LearningPage() {
                 <div className="grid grid-cols-12 gap-6">
                     <aside
                         className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-3 md:pl-0 lg:pr-6">
-                        {/* top-24 ≈ header thu gọn (~80px) + khe ~16px; đồng bộ khi scroll */}
                         <div className="md:sticky md:top-24">
                             <nav className="mt-1 flex w-full max-w-[16.5rem] flex-col gap-1">
                                 <SidebarItem

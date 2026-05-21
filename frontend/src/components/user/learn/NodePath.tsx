@@ -10,11 +10,11 @@ export type NodeAccentKey = "orange" | "blue" | "purple" | "teal" | "rose";
 const ACCENTS: Record<
     NodeAccentKey,
     {
-        bubbleContainer: string; // includes bg/text/border
-        bubbleTail: string; // includes border-color and bg
-        bubbleButtonText: string; // includes text color
+        bubbleContainer: string;
+        bubbleTail: string;
+        bubbleButtonText: string;
         nodeActiveOuterBg: string;
-        nodeActiveInnerBgBorder: string; // includes bg and border
+        nodeActiveInnerBgBorder: string;
     }
 > = {
     orange: {
