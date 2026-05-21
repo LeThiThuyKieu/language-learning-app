@@ -162,6 +162,7 @@ public class ProgressService {
         SkillTree tree = skillTreeRepository.findById(treeId)
                 .orElseThrow(() -> new IllegalArgumentException("Tree not found: " + treeId));
 
+        // Lấy ra 5 node của tree
         List<SkillNode> nodes = skillNodeRepository.findBySkillTree_IdOrderByOrderIndex(treeId);
 
         List<UserNodeProgress> nodeProgressList = userNodeProgressRepository
@@ -182,14 +183,36 @@ public class ProgressService {
                 progressMap.getOrDefault(n.getId(), new UserNodeProgress()).getStatus()
                         == UserNodeProgress.NodeProgressStatus.completed);
 
-        // Tính accuracy = tổng earned_xp / tổng max_xp
-        int totalEarned = nodeProgressList.stream()
-                .mapToInt(p -> p.getEarnedXp() == null ? 0 : p.getEarnedXp())
-                .sum();
-        int totalMax = nodeProgressList.stream()
-                .mapToInt(p -> p.getMaxXp() == null ? 0 : p.getMaxXp())
-                .sum();
-        double accuracy = totalMax > 0 ? (double) totalEarned / totalMax : 0.0;
+        // Tính accuracy:
+        // - 4 node đầu (non-REVIEW): dùng earned_xp / max_xp từ user_node_progress
+        // - Node REVIEW: dùng correct_count / total_count từ lần đầu tiên trong user_review_attempt
+        int totalEarned = 0;
+        int totalMax = 0;
+
+        for (SkillNode node : nodes) {
+            if (node.getNodeType() == SkillNode.NodeType.REVIEW) {
+                // Lấy lần làm review đầu tiên (theo attempted_at)
+                var firstReview = userReviewAttemptRepository.findFirstByUserAndNodeId(user, node.getId());
+                if (firstReview.isPresent()) {
+                    int correctCount = firstReview.get().getCorrectCount() != null ? firstReview.get().getCorrectCount() : 0;
+                    int totalCount   = firstReview.get().getTotalCount()   != null ? firstReview.get().getTotalCount()   : 0;
+                    totalEarned += correctCount * 10;
+                    totalMax    += totalCount   * 10;
+                }
+            } else {
+                UserNodeProgress p = progressMap.get(node.getId());
+                if (p != null) {
+                    totalEarned += p.getEarnedXp() != null ? p.getEarnedXp() : 0;
+                    totalMax    += p.getMaxXp()    != null ? p.getMaxXp()    : 0;
+                }
+            }
+        }
+
+        // accuracy = tổng câu đúng / tổng câu (0.0 – 1.0), làm tròn 2 chữ số thập phân
+        // earned_xp = correctCount * 10, max_xp = totalQuestions * 10 → chia 10 để ra số câu
+        double accuracy = totalMax > 0
+                ? Math.round((double) totalEarned / totalMax * 100.0) / 100.0
+                : 0.0;
 
         UserSkillTreeProgress treeProgress = userSkillTreeProgressRepository
                 .findByUserAndSkillTreeId(user, treeId)
@@ -288,6 +311,7 @@ public class ProgressService {
                 int accuracy = totalCount > 0 ? (int) Math.round((allCorrect * 100.0) / totalCount) : 0;
                 boolean passed = !isReviewFail;
 
+                // Lưu tất cả các lần làm review để tracking lịch sử
                 UserReviewAttempt reviewAttempt = new UserReviewAttempt();
                 reviewAttempt.setUser(user);
                 reviewAttempt.setNode(reviewNode);
@@ -299,6 +323,13 @@ public class ProgressService {
                 reviewAttempt.setOutcome(request.getOutcome());
                 reviewAttempt.setPassed(passed);
                 userReviewAttemptRepository.save(reviewAttempt);
+
+                // Khi FAIL/CARELESS: completeNode không được gọi nên cần cập nhật
+                // (để accuracy phản ánh đúng kết quả lần đầu làm review)
+                // accuracy của tree thủ công (dùng lần đầu tiên trong user_review_attempt)
+                if (isReviewFail) {
+                    updateTreeProgress(user, reviewNode.getSkillTree().getId());
+                }
             } catch (Exception e) {
                 log.warn("Failed to save review attempt: {}", e.getMessage());
             }
