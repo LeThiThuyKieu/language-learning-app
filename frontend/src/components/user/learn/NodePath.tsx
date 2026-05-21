@@ -10,11 +10,11 @@ export type NodeAccentKey = "orange" | "blue" | "purple" | "teal" | "rose";
 const ACCENTS: Record<
     NodeAccentKey,
     {
-        bubbleContainer: string; // includes bg/text/border
-        bubbleTail: string; // includes border-color and bg
-        bubbleButtonText: string; // includes text color
+        bubbleContainer: string;
+        bubbleTail: string;
+        bubbleButtonText: string;
         nodeActiveOuterBg: string;
-        nodeActiveInnerBgBorder: string; // includes bg and border
+        nodeActiveInnerBgBorder: string;
     }
 > = {
     orange: {
@@ -84,6 +84,7 @@ function nodeTypeToKind(
 /** Node đang học tiếp theo: order === unlockedCount → index unlockedCount - 1 */
 function activeNodeIndex(unlockedCount: number, nodeCount: number): number | null {
     if (nodeCount <= 0) return null;
+    if (unlockedCount <= 0) return null; // tree bị khoá hoàn toàn → không auto-select
     return Math.min(Math.max(0, unlockedCount - 1), nodeCount - 1);
 }
 
@@ -335,13 +336,20 @@ export default function NodePath({
     const nodeCount = nodes.length;
 
     const [selectedIndex, setSelectedIndex] = useState<number | null>(() =>
-        activeNodeIndex(unlockedCount, nodeCount)
+        unlockedCount > 0 ? activeNodeIndex(unlockedCount, nodeCount) : null
     );
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     // Bubble mặc định bám node hiện tại (vừa mở khóa); khi hoàn thành bài và unlockedCount tăng → nhảy xuống node tiếp theo
+    // Nếu unlockedCount > nodeCount (tất cả completed), không hiện bubble mặc định
     useEffect(() => {
-        setSelectedIndex(activeNodeIndex(unlockedCount, nodeCount));
+        const idx = activeNodeIndex(unlockedCount, nodeCount);
+        // Nếu tất cả node đã completed (unlockedCount > nodeCount), không auto-select
+        if (unlockedCount > nodeCount) {
+            setSelectedIndex(null);
+        } else {
+            setSelectedIndex(idx);
+        }
     }, [unlockedCount, nodeCount]);
 
     useEffect(() => {
@@ -375,7 +383,11 @@ export default function NodePath({
                 const kind = nodeTypeToKind(n.nodeType);
                 const order = idx + 1;
                 const status: NodeStatus =
-                    order < unlockedCount ? "completed" : order === unlockedCount ? "active" : "locked";
+                    unlockedCount > nodeCount
+                        ? "completed"                                                          // tất cả đã xong
+                        : order < unlockedCount ? "completed"
+                        : order === unlockedCount ? "active"
+                        : "locked";
                 const isSelected = selectedIndex === idx;
                 const label = n.title || FALLBACK_PATH_NODES[idx]?.title;
                 const meta = getNodeMeta(n.nodeType);

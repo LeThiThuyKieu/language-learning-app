@@ -19,21 +19,18 @@ public class Feedback {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    
+
     @ManyToOne
     @JoinColumn(name = "skill_tree_id")
     private SkillTree skillTree;
-    
+
     @Column(nullable = false)
     private Integer rating;
-    
-    @Column(columnDefinition = "TEXT")
-    private String comment;
-    
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

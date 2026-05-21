@@ -32,12 +32,12 @@ CREATE TABLE IF NOT EXISTS `badges` (
 -- Data exporting was unselected.
 
 -- Dumping structure for table language_learning_app.feedback
+-- rating: 1=Rất dễ, 2=Dễ, 3=Bình thường, 4=Khó, 5=Rất khó
 CREATE TABLE IF NOT EXISTS `feedback` (
                                           `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` int(11) DEFAULT NULL,
     `skill_tree_id` int(11) DEFAULT NULL,
-    `rating` int(11) DEFAULT NULL CHECK (`rating` between 1 and 5),
-    `comment` text DEFAULT NULL,
+    `rating` int(11) NOT NULL CHECK (`rating` between 1 and 5),
     `created_at` datetime DEFAULT current_timestamp(),
     PRIMARY KEY (`id`),
     KEY `user_id` (`user_id`),
