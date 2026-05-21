@@ -27,6 +27,9 @@ public class Leaderboard {
     @Column(name = "total_xp")
     private Integer totalXp;
     
+    @Column(name = "total_kn")
+    private Integer totalKn = 0;
+    
     @Column(name = "rank_position")
     private Integer rankPosition;
     
@@ -34,5 +37,3 @@ public class Leaderboard {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
-
-
