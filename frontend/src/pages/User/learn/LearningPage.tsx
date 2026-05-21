@@ -190,6 +190,7 @@ export default function LearningPage() {
                                 />
                                 <SidebarItem
                                     label="Bảng xếp hạng"
+                                    onClick={() => navigate("/leaderboard")}
                                     icon={<img src="/icons/learn/bxh.svg" alt=""
                                                className="h-8 w-8 shrink-0 object-contain"/>}
                                 />
@@ -338,7 +339,12 @@ export default function LearningPage() {
                             <div className="col-span-12 lg:col-span-4">
                                 <div className="flex flex-col gap-3 lg:sticky lg:top-24">
                                     <TopStats/>
-                                    <LeaderboardCard />
+                                    <LeaderboardCard
+                                        title="Bảng xếp hạng"
+                                        subtitle="Top 3 người có tổng KN cao nhất"
+                                        limit={3}
+                                        showViewMore
+                                    />
                                     <InfoCard
                                         title="Mở khóa Bảng xếp hạng!"
                                         subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
@@ -367,10 +373,16 @@ export default function LearningPage() {
     );
 }
 
-function SidebarItem({label, active = false, icon}: { label: string; active?: boolean; icon?: React.ReactNode }) {
+function SidebarItem({label, active = false, icon, onClick}: {
+    label: string;
+    active?: boolean;
+    icon?: React.ReactNode;
+    onClick?: () => void;
+}) {
     return (
         <button
             type="button"
+            onClick={onClick}
             className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm transition ${
                 active
                     ? "border-primary-300 bg-primary-50 font-bold text-primary-700 shadow-sm"

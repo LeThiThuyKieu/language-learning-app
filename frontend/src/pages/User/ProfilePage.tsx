@@ -305,7 +305,12 @@ export default function ProfilePage() {
 
                             <div className="xl:col-span-1 px-4 sm:px-0 mt-5 sm:mt-0">
                                 <div className="xl:sticky xl:top-6 space-y-5 sm:space-y-7">
-                                    <LeaderboardCard />
+                                    <LeaderboardCard
+                                        title="Bảng xếp hạng"
+                                        subtitle="Top 3 người có tổng KN cao nhất"
+                                        limit={3}
+                                        showViewMore
+                                    />
                                     <BadgeProgress
                                         completedTrees={profile.completedTrees ?? 0}
                                         totalTrees={profile.totalTrees ?? 0}

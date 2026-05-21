@@ -2,11 +2,14 @@ import { Crown, Medal, Trophy } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { useNavigate } from "react-router-dom";
 
 interface LeaderboardCardProps {
     title?: string;
     subtitle?: string;
     className?: string;
+    limit?: number;
+    showViewMore?: boolean;
 }
 
 const formatter = new Intl.NumberFormat("vi-VN");
@@ -15,9 +18,12 @@ export default function LeaderboardCard({
     title = "Bảng xếp hạng",
     subtitle = "10 người có tổng KN cao nhất",
     className = "",
+    limit = 10,
+    showViewMore = false,
 }: LeaderboardCardProps) {
+    const navigate = useNavigate();
     const { user } = useAuthStore();
-    const { entries, isLoading, error } = useLeaderboard(10);
+    const { entries, isLoading, error } = useLeaderboard(limit);
 
     return (
         <div className={`overflow-hidden rounded-3xl border border-primary-100 bg-white shadow-sm ${className}`}>
@@ -37,7 +43,7 @@ export default function LeaderboardCard({
             <div className="max-h-[470px] overflow-auto p-3">
                 {isLoading ? (
                     <div className="space-y-2">
-                        {Array.from({ length: 5 }).map((_, index) => (
+                        {Array.from({ length: Math.min(Math.max(limit, 3), 5) }).map((_, index) => (
                             <div key={index} className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3">
                                 <div className="h-8 w-8 rounded-full bg-slate-100 animate-pulse" />
                                 <div className="h-10 w-10 rounded-full bg-slate-100 animate-pulse" />
@@ -112,6 +118,18 @@ export default function LeaderboardCard({
                                 </div>
                             );
                         })}
+                    </div>
+                )}
+
+                {showViewMore && !isLoading && !error && (
+                    <div className="mt-3 border-t border-slate-100 pt-3">
+                        <button
+                            type="button"
+                            onClick={() => navigate("/leaderboard")}
+                            className="w-full rounded-xl bg-primary-600 px-3 py-2.5 text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-primary-700"
+                        >
+                            Xem thêm
+                        </button>
                     </div>
                 )}
             </div>
