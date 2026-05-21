@@ -84,21 +84,36 @@ public class ProgressService {
     /** Đánh dấu node đã hoàn thành, cập nhật tree progress, invalidate Redis cache */
     @Transactional
     public CompleteNodeResult completeNode(String email, int nodeId, int correctCount) {
+        return completeNode(email, nodeId, correctCount, 0);
+    }
+
+    /** Đánh dấu node đã hoàn thành với thông tin XP */
+    @Transactional
+    public CompleteNodeResult completeNode(String email, int nodeId, int correctCount, int totalQuestions) {
         User user = getUser(email);
         SkillNode node = skillNodeRepository.findById(nodeId)
                 .orElseThrow(() -> new IllegalArgumentException("Node not found: " + nodeId));
 
         // Upsert UserNodeProgress
+        final boolean[] isFirstAttempt = {false};
         UserNodeProgress progress = userNodeProgressRepository
                 .findByUserAndNodeId(user, nodeId)
                 .orElseGet(() -> {
+                    isFirstAttempt[0] = true;
                     UserNodeProgress p = new UserNodeProgress();
                     p.setUser(user);
                     p.setNode(node);
-                    p.setScore(0);
+                    p.setEarnedXp(0);
+                    p.setMaxXp(0);
                     p.setAttemptCount(0);
                     return p;
                 });
+
+        // Chỉ lưu earned_xp và max_xp ở lần đầu tiên
+        if (isFirstAttempt[0] || progress.getAttemptCount() == 0) {
+            progress.setEarnedXp(correctCount * 10);
+            progress.setMaxXp(totalQuestions > 0 ? totalQuestions * 10 : correctCount * 10);
+        }
 
         progress.setStatus(UserNodeProgress.NodeProgressStatus.completed);
         progress.setAttemptCount((progress.getAttemptCount() == null ? 0 : progress.getAttemptCount()) + 1);
@@ -129,25 +144,39 @@ public class ProgressService {
         return new CompleteNodeResult(getUnlockedCount(email, treeId), knReward, checkAndAwardBadges(user));
     }
 
-    /** Cập nhật Tree Progress */
+    /** Cập nhật Tree Progress — tính accuracy từ earned_xp / max_xp của các node */
     private void updateTreeProgress(User user, int treeId) {
         SkillTree tree = skillTreeRepository.findById(treeId)
                 .orElseThrow(() -> new IllegalArgumentException("Tree not found: " + treeId));
 
         List<SkillNode> nodes = skillNodeRepository.findBySkillTree_IdOrderByOrderIndex(treeId);
-        Map<Integer, UserNodeProgress.NodeProgressStatus> statusMap = userNodeProgressRepository
+
+        List<UserNodeProgress> nodeProgressList = userNodeProgressRepository
                 .findByUser(user)
                 .stream()
-                .filter(p -> p.getNode() != null)
+                .filter(p -> p.getNode() != null && nodes.stream()
+                        .anyMatch(n -> n.getId().equals(p.getNode().getId())))
+                .toList();
+
+        Map<Integer, UserNodeProgress> progressMap = nodeProgressList.stream()
                 .collect(Collectors.toMap(
                         p -> p.getNode().getId(),
-                        UserNodeProgress::getStatus,
+                        p -> p,
                         (a, b) -> a
                 ));
 
         boolean allDone = !nodes.isEmpty() && nodes.stream().allMatch(n ->
-                statusMap.getOrDefault(n.getId(), UserNodeProgress.NodeProgressStatus.not_started)
+                progressMap.getOrDefault(n.getId(), new UserNodeProgress()).getStatus()
                         == UserNodeProgress.NodeProgressStatus.completed);
+
+        // Tính accuracy = tổng earned_xp / tổng max_xp
+        int totalEarned = nodeProgressList.stream()
+                .mapToInt(p -> p.getEarnedXp() == null ? 0 : p.getEarnedXp())
+                .sum();
+        int totalMax = nodeProgressList.stream()
+                .mapToInt(p -> p.getMaxXp() == null ? 0 : p.getMaxXp())
+                .sum();
+        double accuracy = totalMax > 0 ? (double) totalEarned / totalMax : 0.0;
 
         UserSkillTreeProgress treeProgress = userSkillTreeProgressRepository
                 .findByUserAndSkillTreeId(user, treeId)
@@ -155,13 +184,14 @@ public class ProgressService {
                     UserSkillTreeProgress tp = new UserSkillTreeProgress();
                     tp.setUser(user);
                     tp.setSkillTree(tree);
-                    tp.setScore(0);
+                    tp.setAccuracy(0.0);
                     return tp;
                 });
 
         treeProgress.setStatus(allDone
                 ? UserSkillTreeProgress.ProgressStatus.done
                 : UserSkillTreeProgress.ProgressStatus.in_progress);
+        treeProgress.setAccuracy(accuracy);
         userSkillTreeProgressRepository.save(treeProgress);
     }
 
@@ -218,6 +248,12 @@ public class ProgressService {
 
         // Chỉ complete node (cộng KN, XP, streak) khi không phải REVIEW FAIL/CARELESS
         CompleteNodeResult result;
+        // Tổng số câu thực (bỏ penalty)
+        int totalQuestions = request.getAttempts() != null
+                ? (int) request.getAttempts().stream()
+                        .filter(a -> !"timeout-penalty".equals(a.getMongoQuestionId()))
+                        .count()
+                : 0;
         if (isReviewFail) {
             // FAIL/CARELESS: không complete node, không cộng KN/XP
             result = new CompleteNodeResult(
@@ -226,7 +262,7 @@ public class ProgressService {
                     List.of()
             );
         } else {
-            result = completeNode(email, request.getNodeId(), correctCount);
+            result = completeNode(email, request.getNodeId(), correctCount, totalQuestions);
         }
 
         // Lưu kết quả tổng hợp cho node REVIEW

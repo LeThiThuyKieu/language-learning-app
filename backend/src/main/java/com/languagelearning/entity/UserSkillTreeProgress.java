@@ -19,25 +19,31 @@ public class UserSkillTreeProgress {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    
+
     @ManyToOne
     @JoinColumn(name = "skill_tree_id")
     private SkillTree skillTree;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProgressStatus status = ProgressStatus.locked;
-    
-    private Integer score = 0;
-    
+
+    /**
+     * Accuracy của tree = tổng earned_xp / tổng max_xp của 4 node.
+     * Ví dụ: 4 câu đúng / 20 câu = 0.2
+     * Lưu dạng thập phân 0.0 – 1.0.
+     */
+    @Column(name = "accuracy", nullable = false)
+    private Double accuracy = 0.0;
+
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
+
     public enum ProgressStatus {
         locked, in_progress, done
     }
