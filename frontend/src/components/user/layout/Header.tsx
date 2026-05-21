@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {Menu, X, LogOut, ChevronDown, User, Settings} from "lucide-react";
+import {Menu, X, LogOut, ChevronDown, User, Settings, Home, BookOpen} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { profileService } from "@/services/profileService";
 import ConfirmModal from "./ConfirmModal";
@@ -68,11 +68,18 @@ export default function Header() {
         };
     }, [isAuthenticated]);
 
-    const navLinks = [
+    const desktopNavLinks = [
         { name: "Trang chủ", path: "/" },
         { name: "Khóa học", path: "/learn" },
         { name: "Hồ sơ", path: "/profile" },
     ];
+
+    const mobileNavLinks = [
+        { name: "Trang chủ", path: "/", icon: Home },
+        { name: "Khóa học", path: "/learn", icon: BookOpen },
+    ];
+    const isProfilePage = location.pathname.startsWith("/profile");
+    const isSettingsPage = location.pathname.startsWith("/settings");
 
     const confirmLogout = () => {
         logout();
@@ -117,7 +124,7 @@ export default function Header() {
 
                     {/* menu */}
                     <div className="hidden md:flex items-center gap-10">
-                        {navLinks.map((link) => (
+                        {desktopNavLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
@@ -159,15 +166,33 @@ export default function Header() {
                                             <p className="text-xs text-gray-500 truncate">Đang đăng nhập với</p>
                                             <p className="text-sm font-medium text-white truncate">{user?.email}</p>
                                         </div>
-                                        <Link to="/profile" className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-700 transition">
-                                            <User size={16} /> Hồ sơ của tôi
+                                        <Link
+                                            to="/profile"
+                                            className={`block mx-2 mt-2 p-3 rounded-lg font-semibold ${
+                                                isProfilePage
+                                                    ? "bg-orange-500/10 text-orange-500"
+                                                    : "text-gray-300"
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <User size={16} /> Hồ sơ của tôi
+                                            </span>
                                         </Link>
-                                        <Link to="/settings" className="flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-700 transition">
-                                            <Settings size={16} /> Cài đặt
+                                        <Link
+                                            to="/settings"
+                                            className={`block mx-2 mb-2 p-3 rounded-lg font-semibold ${
+                                                isSettingsPage
+                                                    ? "bg-orange-500/10 text-orange-500"
+                                                    : "text-gray-300"
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-2">
+                                                <Settings size={16} /> Cài đặt
+                                            </span>
                                         </Link>
                                         <button
                                             onClick={() => setShowConfirm(true)}
-                                            className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-red-500/10 transition"
+                                            className="w-full flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-700 transition"
                                         >
                                             <LogOut size={16} /> Đăng xuất
                                         </button>
@@ -194,7 +219,7 @@ export default function Header() {
             {/* Mobile Menu */}
             {mobileMenuOpen && (
                 <div className="md:hidden absolute top-full left-0 w-full bg-gray-900 border-t border-gray-800 shadow-2xl p-4 space-y-2 animate-in slide-in-from-top duration-300">
-                    {navLinks.map((link) => (
+                    {mobileNavLinks.map((link) => (
                         <Link
                             key={link.path}
                             to={link.path}
@@ -202,9 +227,46 @@ export default function Header() {
                                 location.pathname === link.path ? "bg-orange-500/10 text-orange-500" : "text-gray-300"
                             }`}
                         >
-                            {link.name}
+                            <span className="flex items-center gap-2">
+                                <link.icon size={16} />
+                                {link.name}
+                            </span>
                         </Link>
                     ))}
+                    {isAuthenticated && (
+                        <>
+                            <Link
+                                to="/profile"
+                                className={`block p-3 rounded-lg font-semibold ${
+                                    isProfilePage
+                                        ? "bg-orange-500/10 text-orange-500"
+                                        : "text-gray-300"
+                                }`}
+                            >
+                                <span className="flex items-center gap-2">
+                                    <User size={16} /> Hồ sơ của tôi
+                                </span>
+                            </Link>
+                            <Link
+                                to="/settings"
+                                className={`block p-3 rounded-lg font-semibold ${
+                                    isSettingsPage
+                                        ? "bg-orange-500/10 text-orange-500"
+                                        : "text-gray-300"
+                                }`}
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Settings size={16} /> Cài đặt
+                                </span>
+                            </Link>
+                            <button
+                                onClick={() => setShowConfirm(true)}
+                                className="w-full flex items-center gap-2 p-3 rounded-lg text-gray-300 hover:bg-gray-700 transition"
+                            >
+                                <LogOut size={16} /> Đăng xuất
+                            </button>
+                        </>
+                    )}
                     {!isAuthenticated && (
                         <Link to="/login" className="block p-3 text-center bg-orange-600 text-white rounded-lg font-bold">
                             Đăng nhập

@@ -21,6 +21,7 @@ import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLesso
 import SpeakingLessonPage from "@/pages/User/learn/question_type/SpeakingLessonPage.tsx";
 import MatchingLessonPage from "@/pages/User/learn/question_type/MatchingLessonPage.tsx";
 import ReviewLessonPage from "@/pages/User/learn/question_type/ReviewLessonPage.tsx";
+import LeaderboardPage from "@/pages/User/learn/LeaderboardPage.tsx";
 import ProfilePage from "@/pages/User/ProfilePage";
 import LionWelcome from "@/components/user/home/LionWelcome";
 import LevelSelectPage from "@/pages/User/learn/LevelSelectPage.tsx";
@@ -101,6 +102,7 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="leaderboard" element={<LeaderboardPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
                         <Route path="settings" element={<SettingsPage/>}/>
                         <Route path="help" element={<HelpPage/>}/>

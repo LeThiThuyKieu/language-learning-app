@@ -40,6 +40,9 @@ public class ProgressService {
     private final UserBadgeRepository userBadgeRepository;
     private final UserReviewAttemptRepository userReviewAttemptRepository;
 
+    /** Cập nhật rank realtime */
+    private final LeaderboardService leaderboardService;
+
     /** Lấy số node đã unlock của một tree */
     @Transactional(readOnly = true)
     public int getUnlockedCount(String email, int treeId) {
@@ -139,6 +142,16 @@ public class ProgressService {
         Integer levelId = node.getSkillTree().getLevel() != null ? node.getSkillTree().getLevel().getId() : null;
         if (levelId != null) {
             skillTreeQuestionService.invalidateLevelCache(user.getId(), levelId);
+        }
+
+        // Sau khi KN và XP đã được cập nhật, gọi LeaderboardService để tính rank realtime
+        // Tính rank dựa trên total_kn, nếu bằng nhau sẽ so total_xp
+        int totalKn = userKnRepository.findByUser(user).map(UserKn::getTotalKn).orElse(0);
+        int totalXp = userProfileRepository.findByUser(user).map(up -> up.getTotalXp() == null ? 0 : up.getTotalXp()).orElse(0);
+        try {
+            leaderboardService.updateRankRealtime(user.getId(), totalKn, totalXp);
+        } catch (Exception e) {
+            log.warn("Failed to update realtime leaderboard for user {}: {}", user.getId(), e.getMessage());
         }
 
         return new CompleteNodeResult(getUnlockedCount(email, treeId), knReward, checkAndAwardBadges(user));
@@ -304,6 +317,8 @@ public class ProgressService {
         });
         userKn.setTotalKn(userKn.getTotalKn() + amount);
         userKnRepository.save(userKn);
+
+        // Note: leaderboard update is performed by higher-level flow after both KN and XP are persisted.
     }
 
     /** Cộng XP cho user (lưu vào user_profile.total_xp và user_streak.earned_xp hôm nay) */
@@ -322,6 +337,8 @@ public class ProgressService {
             streak.setEarnedXp(current + amount);
             userStreakRepository.save(streak);
         });
+
+        // Note: leaderboard update is performed by higher-level flow after both KN and XP are persisted.
     }
 
     /**

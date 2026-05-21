@@ -17,6 +17,8 @@ import { authService } from "@/services/authService";
 import { Eye, EyeOff, KeyRound, Lock } from "lucide-react";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import { useRankUpdate } from "@/hooks/RankUpdateMessage";
+import LeaderboardCard from "@/components/user/common/LeaderboardCard";
 
 const formatNumber = (value: number) => new Intl.NumberFormat("vi-VN").format(value);
 
@@ -36,6 +38,7 @@ export default function ProfilePage() {
     // Thông tin auth của user (hasPassword, authProvider) — lấy thẳng từ profile
     const hasPassword = profile?.hasPassword ?? null;
     const authProvider = profile?.authProvider ?? null;
+    const { currentRank } = useRankUpdate(profile?.userId, profile?.rankPosition ?? null);
 
     // Password modal state
     const [currentPassword, setCurrentPassword] = useState("");
@@ -210,6 +213,7 @@ export default function ProfilePage() {
                                 level={levelDisplay}
                                 showLevelLabel={!isLevelUndefined}
                                 avatarUrl={avatarUrl}
+                                createdAt={profile?.createdAt}
                                 onAvatarClick={() => setIsModalOpen(true)}
                                 onEditNameClick={openEditNameModal}
                                 onLevelClick={isLevelUndefined ? () => navigate("/welcome") : undefined}
@@ -223,7 +227,7 @@ export default function ProfilePage() {
                                     <Stats
                                         streak={profile.streakCount}
                                         xp={formatNumber(profile.totalXp)}
-                                        rank={profile.rankPosition ?? "--"}
+                                        rank={currentRank ?? profile.rankPosition ?? "--"}
                                     />
                                 </div>
 
@@ -301,6 +305,12 @@ export default function ProfilePage() {
 
                             <div className="xl:col-span-1 px-4 sm:px-0 mt-5 sm:mt-0">
                                 <div className="xl:sticky xl:top-6 space-y-5 sm:space-y-7">
+                                    <LeaderboardCard
+                                        title="Bảng xếp hạng"
+                                        subtitle="Top 3 người có tổng KN cao nhất"
+                                        limit={3}
+                                        showViewMore
+                                    />
                                     <BadgeProgress
                                         completedTrees={profile.completedTrees ?? 0}
                                         totalTrees={profile.totalTrees ?? 0}
