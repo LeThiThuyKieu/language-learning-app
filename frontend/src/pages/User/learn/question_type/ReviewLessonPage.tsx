@@ -5,12 +5,13 @@ import type {AttemptItem, BadgeInfo} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import ReviewVocabView from "@/components/user/learn/question_type/review/ReviewVocabView.tsx";
-import {bumpLearnTreeUnlocked, completeNodeAndSave} from "@/utils/learnTreeProgress.ts";
+import {bumpLearnTreeUnlocked, clearAllTreeCache, completeNodeAndSave} from "@/utils/learnTreeProgress.ts";
 import ReviewListeningView from "@/components/user/learn/question_type/review/ReviewListeningView.tsx";
 import ReviewSpeakingView from "@/components/user/learn/question_type/review/ReviewSpeakingView.tsx";
 import ReviewMatchingView from "@/components/user/learn/question_type/review/ReviewMatchingView.tsx";
 import ReviewTimerBubble from "@/components/user/learn/ReviewTimerBubble.tsx";
 import ReviewResultView, {type ReviewOutcome} from "@/components/user/learn/ReviewResultView.tsx";
+import FeedbackModal from "@/components/user/learn/FeedbackModal.tsx";
 import {toast} from "react-hot-toast";
 import { AlertTriangle, Clock, Timer } from "lucide-react";
 
@@ -39,12 +40,12 @@ function countTotalQuestions(node: SkillTreeNodeQuestionsData | null): number {
 
 const REVIEW_TOTAL_SECONDS = 20 * 60; // 20 phút
 
-/** Xác định outcome dựa trên accuracy và thời gian */
+/** Xác định outcome dựa trên accuracy và thời gian , pass >=70%, careless và fail là chưa pass */
 function calcOutcome(accuracy: number, elapsedSeconds: number, timedOut: boolean): ReviewOutcome {
     const fast = elapsedSeconds < 10 * 60; // < 10 phút
     if (accuracy >= 90 && fast) return "FAST_TRACKER";
     if (accuracy < 70 && fast) return "CARELESS";
-    if (accuracy >= 70 && (timedOut || elapsedSeconds > 15 * 60)) return "SLOW_PASS";
+    if (accuracy >= 70 && (timedOut || elapsedSeconds > 15 * 60)) return "SLOW_PASS"; //hết giờ hoặc lớn hơn 15p
     if (accuracy >= 70) return "STEADY"; // tức 10-15p
     return "FAIL";
 }
@@ -62,6 +63,9 @@ export default function ReviewLessonPage() {
     const [allAttempts, setAllAttempts] = useState<AttemptItem[]>([]);
     const [reviewBadges, setReviewBadges] = useState<BadgeInfo[]>([]);
     const completingRef = useRef(false);
+
+    // Feedback state
+    const [showFeedback, setShowFeedback] = useState(false);
 
     // Timer state
     const startTimeRef = useRef<number>(Date.now());
@@ -261,8 +265,19 @@ export default function ReviewLessonPage() {
                     knGained={20}
                     accuracy={resultAccuracy}
                     newBadges={reviewBadges}
-                    onContinue={() => navigate("/learn", {state: {treeId}})}
+                    onContinue={() => setShowFeedback(true)}
                 />
+                {/* Feedback modal — hiện sau khi user nhấn Tiếp tục */}
+                {showFeedback && (
+                    <FeedbackModal
+                        treeId={treeId}
+                        onDone={() => {
+                            // Xóa toàn bộ cache unlocked để loadProgressFromDB rebuild từ DB
+                            clearAllTreeCache();
+                            navigate("/learn", { state: { treeId } });
+                        }}
+                    />
+                )}
             </div>
         );
     }
