@@ -21,6 +21,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import java.math.BigInteger;
 
 /**
  * LeaderboardService - Quản lý xếp hạng realtime
@@ -92,10 +95,15 @@ public class LeaderboardService {
             log.info("[Leaderboard] User {} rank: {} → {}, KN: {}",
                     userId, oldRank, newRank, newTotalKn);
 
-            // Push WebSocket
+            // Push rank update cho user vừa thay đổi
             pushRankUpdate(userId, oldRank, newRank, newTotalKn);
-            // Gửi lại top 10 để các màn hình BXH tự refresh realtime.
-            broadcastLeaderboardSnapshot();
+
+            // Chỉ broadcast TOP 10 khi thay đổi có thể ảnh hưởng danh sách TOP 10
+            int oldRankSafe = oldRank == null ? Integer.MAX_VALUE : oldRank;
+            int newRankSafe = newRank == null ? Integer.MAX_VALUE : newRank;
+            if (oldRankSafe <= 10 || newRankSafe <= 10) {
+                broadcastLeaderboardSnapshot();
+            }
 
         } catch (Exception e) {
             log.error("[Leaderboard] Error updating rank: {}", e.getMessage());
@@ -129,15 +137,33 @@ public class LeaderboardService {
      * @param currentTotalKn KN hiện tại của user
      * @return rank position (1 = top 1)
      */
-    @Transactional(readOnly = true)
-    /**
-     * Tính thứ hạng của user dựa trên `currentTotalKn` và `currentTotalXp`.
-     * Sử dụng truy vấn COUNT tối ưu (không sort toàn bộ bảng):
-     * SELECT COUNT(*) FROM leaderboard WHERE total_kn > :currentKn OR (total_kn = :currentKn AND total_xp > :currentXp)
-     * -> rank = count + 1
-     */
+    @PersistenceContext
+    private EntityManager entityManager;
+
+        /**
+         * Tính thứ hạng của user dựa trên `currentTotalKn` và `currentTotalXp`.
+         * Sử dụng truy vấn COUNT tối ưu (không sort toàn bộ bảng).
+         */
+        @Transactional(readOnly = true)
     public Integer calculateUserRank(Integer currentTotalKn, Integer currentTotalXp) {
-        Long countHigher = leaderboardRepository.countByTotalKnGreaterThanOrTotalXpGreaterWhenEqual(currentTotalKn, currentTotalXp == null ? 0 : currentTotalXp);
+        int curXp = currentTotalXp == null ? 0 : currentTotalXp;
+
+        String sql = "SELECT COUNT(*) FROM user_kn uk " +
+                "LEFT JOIN user_profile up ON up.user_id = uk.user_id " +
+            "WHERE uk.total_kn > ?1 OR (uk.total_kn = ?1 AND COALESCE(up.total_xp,0) > ?2)";
+
+        Object result = entityManager.createNativeQuery(sql)
+            .setParameter(1, currentTotalKn)
+            .setParameter(2, curXp)
+                .getSingleResult();
+
+        long countHigher = 0;
+        if (result instanceof BigInteger) {
+            countHigher = ((BigInteger) result).longValue();
+        } else if (result instanceof Number) {
+            countHigher = ((Number) result).longValue();
+        }
+
         return Math.toIntExact(countHigher + 1);
     }
 
@@ -155,12 +181,19 @@ public class LeaderboardService {
         try {
             List<UserKn> allUserKns = userKnRepository.findAll();
 
-            // Sort theo totalKn DESC để tính rank
-            allUserKns.sort(Comparator.comparingInt(UserKn::getTotalKn).reversed());
+            // Sort theo totalKn DESC, nếu bằng thì so totalXp DESC (tie-breaker)
+            allUserKns.sort(Comparator
+                    .comparingInt(UserKn::getTotalKn).reversed()
+                    .thenComparing((UserKn uk) -> userProfileRepository.findByUser(uk.getUser())
+                            .map(up -> up.getTotalXp() == null ? 0 : up.getTotalXp()).orElse(0), Comparator.reverseOrder())
+            );
 
             for (int i = 0; i < allUserKns.size(); i++) {
                 UserKn userKn = allUserKns.get(i);
                 int rank = i + 1;
+
+                int totalXp = userProfileRepository.findByUser(userKn.getUser())
+                        .map(up -> up.getTotalXp() == null ? 0 : up.getTotalXp()).orElse(0);
 
                 Leaderboard leaderboard = leaderboardRepository.findByUser(userKn.getUser())
                         .orElseGet(() -> {
@@ -171,6 +204,7 @@ public class LeaderboardService {
                         });
 
                 leaderboard.setTotalKn(userKn.getTotalKn());
+                leaderboard.setTotalXp(totalXp);
                 leaderboard.setRankPosition(rank);
                 leaderboard.setUpdatedAt(LocalDateTime.now());
                 leaderboardRepository.save(leaderboard);

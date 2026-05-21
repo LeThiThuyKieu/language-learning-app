@@ -271,8 +271,7 @@ public class ProgressService {
         userKn.setTotalKn(userKn.getTotalKn() + amount);
         userKnRepository.save(userKn);
 
-        // Cập nhật rank realtime - push WebSocket
-        leaderboardService.updateRankRealtime(user.getId(), userKn.getTotalKn());
+        // Note: leaderboard update is performed by higher-level flow after both KN and XP are persisted.
     }
 
     /** Cộng XP cho user (lưu vào user_profile.total_xp và user_streak.earned_xp hôm nay) */
@@ -292,14 +291,7 @@ public class ProgressService {
             userStreakRepository.save(streak);
         });
 
-        // Sau khi XP được lưu, cập nhật leaderboard để đảm bảo total_xp được reflect
-        try {
-            int totalKn = userKnRepository.findByUser(user).map(UserKn::getTotalKn).orElse(0);
-            int totalXp = userProfileRepository.findByUser(user).map(up -> up.getTotalXp() == null ? 0 : up.getTotalXp()).orElse(0);
-            leaderboardService.updateRankRealtime(user.getId(), totalKn, totalXp);
-        } catch (Exception e) {
-            log.warn("Failed to update leaderboard after addXp for user {}: {}", user.getId(), e.getMessage());
-        }
+        // Note: leaderboard update is performed by higher-level flow after both KN and XP are persisted.
     }
 
     /**
