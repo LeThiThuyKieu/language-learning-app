@@ -7,7 +7,6 @@ import {
     GitBranch,
     BarChart2,
     MessagesSquare,
-    Trophy,
     ClipboardList,
     Mail,
     MessageCircle,
@@ -128,7 +127,6 @@ export default function Sidebar() {
                         {navLink("/admin/skill-trees",               GitBranch,       "Skill Trees")}
                         {navLink("/admin/lessons",                   BookOpen,        "Lessons")}
                         {navLink("/admin/placement-test-management", ClipboardList,   "Placement Tests")}
-                        {navLink("/admin/leaderboard",               Trophy,          "Rankings")}
                         {navLink("/admin/feedback",                  MessagesSquare,   "Feedback")}
                         {navLink("/admin/reports",                   BarChart2,       "Reports")}
                     </nav>

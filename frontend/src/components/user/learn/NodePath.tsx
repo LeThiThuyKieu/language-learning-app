@@ -340,8 +340,15 @@ export default function NodePath({
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     // Bubble mặc định bám node hiện tại (vừa mở khóa); khi hoàn thành bài và unlockedCount tăng → nhảy xuống node tiếp theo
+    // Nếu unlockedCount > nodeCount (tất cả completed), không hiện bubble mặc định
     useEffect(() => {
-        setSelectedIndex(activeNodeIndex(unlockedCount, nodeCount));
+        const idx = activeNodeIndex(unlockedCount, nodeCount);
+        // Nếu tất cả node đã completed (unlockedCount > nodeCount), không auto-select
+        if (unlockedCount > nodeCount) {
+            setSelectedIndex(null);
+        } else {
+            setSelectedIndex(idx);
+        }
     }, [unlockedCount, nodeCount]);
 
     useEffect(() => {
@@ -375,7 +382,11 @@ export default function NodePath({
                 const kind = nodeTypeToKind(n.nodeType);
                 const order = idx + 1;
                 const status: NodeStatus =
-                    order < unlockedCount ? "completed" : order === unlockedCount ? "active" : "locked";
+                    unlockedCount > nodeCount
+                        ? "completed"                                                          // tất cả đã xong
+                        : order < unlockedCount ? "completed"
+                        : order === unlockedCount ? "active"
+                        : "locked";
                 const isSelected = selectedIndex === idx;
                 const label = n.title || FALLBACK_PATH_NODES[idx]?.title;
                 const meta = getNodeMeta(n.nodeType);

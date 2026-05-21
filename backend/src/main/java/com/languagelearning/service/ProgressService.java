@@ -66,8 +66,9 @@ public class ProgressService {
                 break; // dừng ở node đầu tiên chưa completed
             }
         }
-        // unlockedCount = completedCount + 1 (node tiếp theo đang active), tối đa = nodes.size()
-        return Math.min(completedCount + 1, nodes.size());
+        // unlockedCount = completedCount + 1 (node tiếp theo đang active)
+        // Nếu tất cả đã completed → trả về nodes.size() + 1 để node cuối hiển thị "completed" thay vì "active"
+        return completedCount >= nodes.size() ? nodes.size() + 1 : completedCount + 1;
     }
 
     /** Đánh dấu node đã hoàn thành, cập nhật tree progress, invalidate Redis cache */

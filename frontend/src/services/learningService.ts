@@ -102,4 +102,15 @@ export const learningService = {
     );
     return response.data;
   },
+
+  /** Kiểm tra user đã feedback cho tree này chưa */
+  checkFeedback: async (treeId: number): Promise<boolean> => {
+    const response = await apiClient.get<{ done: boolean }>(`/feedback/check/${treeId}`);
+    return response.data.done;
+  },
+
+  /** Gửi feedback rating (1-5) cho một skill tree */
+  submitFeedback: async (treeId: number, rating: number): Promise<void> => {
+    await apiClient.post("/feedback", { treeId, rating });
+  },
 };

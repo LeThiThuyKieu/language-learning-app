@@ -2,7 +2,7 @@ import {useLocation, useNavigate} from "react-router-dom";
 import {useEffect, useMemo, useRef, useState} from "react";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
-import {getLearnTreeUnlockedCount, loadProgressFromDB} from "@/utils/learnTreeProgress";
+import {loadProgressFromDB} from "@/utils/learnTreeProgress";
 import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx";
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
@@ -44,6 +44,8 @@ export default function LearningPage() {
     const [treesLoading, setTreesLoading] = useState(true);
     const [treesError, setTreesError] = useState<string | null>(null);
     const [activeTreeIndex, setActiveTreeIndex] = useState(0);
+    // Map treeId → unlockedCount, dùng state để React re-render khi thay đổi
+    const [unlockedCounts, setUnlockedCounts] = useState<Record<number, number>>({});
 
     const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -114,9 +116,19 @@ export default function LearningPage() {
                 const data = await learningService.getLevelQuestions(levelId);
                 if (cancelled) return;
                 setTrees(data);
-                // Load tiến trình từ DB cho tất cả tree
-                await Promise.all(data.map((t) => loadProgressFromDB(t.treeId)));
-                if (!cancelled) setTrees([...data]); // trigger re-render với progress mới
+                // Load tiến trình từ DB cho tất cả tree — tuần tự để tree N+1
+                // luôn check feedback sau khi tree N đã được xử lý
+                const counts: Record<number, number> = {};
+                for (let i = 0; i < data.length; i++) {
+                    const t = data[i];
+                    const prevTreeId = i > 0 ? data[i - 1]?.treeId : undefined;
+                    const count = await loadProgressFromDB(t.treeId, i, prevTreeId);
+                    counts[t.treeId] = count;
+                }
+                if (!cancelled) {
+                    setUnlockedCounts(counts);
+                    setTrees([...data]);
+                }
             } catch (e: unknown) {
                 if (cancelled) return;
                 setTreesError(
@@ -252,11 +264,11 @@ export default function LearningPage() {
                                         >
                                             <div className="max-w-[72%]">
                                                 <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
-                                                    Phần {activeTreeIndex + 1}, Cửa 1
+                                                    Phần {trees[activeTreeIndex]?.treeId ?? (activeTreeIndex + 1)}, Cửa 1
                                                 </div>
                                                 <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
                                                     {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${
-                                                        activeTreeIndex + 1
+                                                        trees[activeTreeIndex]?.treeId ?? (activeTreeIndex + 1)
                                                     }`}
                                                 </h1>
                                             </div>
@@ -309,7 +321,7 @@ export default function LearningPage() {
                                                         key={`${tree.treeId}-${accentKey}`}
                                                         accentKey={accentKey}
                                                         apiNodes={treeData?.nodes?.slice(0, 5) ?? null}
-                                                        unlockedCount={getLearnTreeUnlockedCount(tree.treeId)}
+                                                        unlockedCount={unlockedCounts[tree.treeId] ?? 0}
                                                         onStartVocab={(node) =>
                                                             navigate("/learn/vocab", {state: {treeId: tree.treeId, node}})
                                                         }

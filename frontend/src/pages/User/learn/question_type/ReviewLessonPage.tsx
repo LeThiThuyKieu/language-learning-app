@@ -5,12 +5,13 @@ import type {AttemptItem, BadgeInfo} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import ReviewVocabView from "@/components/user/learn/question_type/review/ReviewVocabView.tsx";
-import {bumpLearnTreeUnlocked, completeNodeAndSave} from "@/utils/learnTreeProgress.ts";
+import {bumpLearnTreeUnlocked, completeNodeAndSave, unlockNextTree} from "@/utils/learnTreeProgress.ts";
 import ReviewListeningView from "@/components/user/learn/question_type/review/ReviewListeningView.tsx";
 import ReviewSpeakingView from "@/components/user/learn/question_type/review/ReviewSpeakingView.tsx";
 import ReviewMatchingView from "@/components/user/learn/question_type/review/ReviewMatchingView.tsx";
 import ReviewTimerBubble from "@/components/user/learn/ReviewTimerBubble.tsx";
 import ReviewResultView, {type ReviewOutcome} from "@/components/user/learn/ReviewResultView.tsx";
+import FeedbackModal from "@/components/user/learn/FeedbackModal.tsx";
 import {toast} from "react-hot-toast";
 import { AlertTriangle, Clock, Timer } from "lucide-react";
 
@@ -62,6 +63,9 @@ export default function ReviewLessonPage() {
     const [allAttempts, setAllAttempts] = useState<AttemptItem[]>([]);
     const [reviewBadges, setReviewBadges] = useState<BadgeInfo[]>([]);
     const completingRef = useRef(false);
+
+    // Feedback state
+    const [showFeedback, setShowFeedback] = useState(false);
 
     // Timer state
     const startTimeRef = useRef<number>(Date.now());
@@ -261,8 +265,19 @@ export default function ReviewLessonPage() {
                     knGained={20}
                     accuracy={resultAccuracy}
                     newBadges={reviewBadges}
-                    onContinue={() => navigate("/learn", {state: {treeId}})}
+                    onContinue={() => setShowFeedback(true)}
                 />
+                {/* Feedback modal — hiện sau khi user nhấn Tiếp tục */}
+                {showFeedback && (
+                    <FeedbackModal
+                        treeId={treeId}
+                        onDone={() => {
+                            // Unlock node 1 của tree tiếp theo ngay lập tức (optimistic)
+                            unlockNextTree(treeId + 1);
+                            navigate("/learn", { state: { treeId } });
+                        }}
+                    />
+                )}
             </div>
         );
     }
