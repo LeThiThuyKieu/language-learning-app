@@ -58,16 +58,26 @@ public class ProgressService {
                 ));
 
         int completedCount = 0;
+        boolean anyStarted = false;
         for (SkillNode node : nodes) {
-            if (statusMap.getOrDefault(node.getId(), UserNodeProgress.NodeProgressStatus.not_started)
-                    == UserNodeProgress.NodeProgressStatus.completed) {
+            UserNodeProgress.NodeProgressStatus s = statusMap.getOrDefault(
+                    node.getId(), UserNodeProgress.NodeProgressStatus.not_started);
+            if (s != UserNodeProgress.NodeProgressStatus.not_started) {
+                anyStarted = true;
+            }
+            if (s == UserNodeProgress.NodeProgressStatus.completed) {
                 completedCount++;
             } else {
                 break; // dừng ở node đầu tiên chưa completed
             }
         }
+
+        // Nếu user chưa bắt đầu bất kỳ node nào trong tree này → trả về 0 (tree bị khoá)
+        // Frontend sẽ dùng feedback check để quyết định có unlock không
+        if (!anyStarted) return 0;
+
         // unlockedCount = completedCount + 1 (node tiếp theo đang active)
-        // Nếu tất cả đã completed → trả về nodes.size() + 1 để node cuối hiển thị "completed" thay vì "active"
+        // Nếu tất cả đã completed → trả về nodes.size() + 1 để node cuối hiển thị "completed"
         return completedCount >= nodes.size() ? nodes.size() + 1 : completedCount + 1;
     }
 

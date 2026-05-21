@@ -43,9 +43,27 @@ export function unlockNextTree(nextTreeId: number): void {
 }
 
 /**
- * Xóa cache sessionStorage của một tree.
+ * Xóa toàn bộ cache unlocked của tất cả tree trong sessionStorage.
  * Gọi trước khi navigate về LearningPage để đảm bảo
  * loadProgressFromDB là nguồn duy nhất quyết định trạng thái.
+ */
+export function clearAllTreeCache(): void {
+    try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            if (key && key.startsWith("learn_tree_") && key.endsWith("_unlocked")) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(k => sessionStorage.removeItem(k));
+    } catch {
+        // ignore
+    }
+}
+
+/**
+ * Xóa cache sessionStorage của một tree cụ thể.
  */
 export function clearTreeCache(treeId: number): void {
     try {
@@ -79,10 +97,14 @@ export async function loadProgressFromDB(treeId: number, treeIndex = 0, prevTree
 
         // Tree tiếp theo: kiểm tra feedback của tree trước từ DB
         if (prevTreeId !== undefined) {
-            const feedbackDone = await learningService.checkFeedback(prevTreeId);
-            if (feedbackDone) {
-                setLearnTreeUnlockedCount(treeId, 1);
-                return 1;
+            try {
+                const feedbackDone = await learningService.checkFeedback(prevTreeId);
+                if (feedbackDone) {
+                    setLearnTreeUnlockedCount(treeId, 1);
+                    return 1;
+                }
+            } catch {
+                // Lỗi API → khoá an toàn, không dùng sessionStorage
             }
         }
 
@@ -90,8 +112,9 @@ export async function loadProgressFromDB(treeId: number, treeIndex = 0, prevTree
         setLearnTreeUnlockedCount(treeId, 0);
         return 0;
     } catch {
-        // Nếu lỗi mạng, dùng cache sessionStorage
-        return getLearnTreeUnlockedCount(treeId);
+        // Lỗi mạng nghiêm trọng → khoá an toàn (không fallback sessionStorage)
+        setLearnTreeUnlockedCount(treeId, 0);
+        return 0;
     }
 }
 

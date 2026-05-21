@@ -5,7 +5,7 @@ import type {AttemptItem, BadgeInfo} from "@/services/learningService.ts";
 import type {SkillTreeNodeQuestionsData, SkillTreeQuestionsData} from "@/types";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView.tsx";
 import ReviewVocabView from "@/components/user/learn/question_type/review/ReviewVocabView.tsx";
-import {bumpLearnTreeUnlocked, completeNodeAndSave, unlockNextTree} from "@/utils/learnTreeProgress.ts";
+import {bumpLearnTreeUnlocked, clearAllTreeCache, completeNodeAndSave} from "@/utils/learnTreeProgress.ts";
 import ReviewListeningView from "@/components/user/learn/question_type/review/ReviewListeningView.tsx";
 import ReviewSpeakingView from "@/components/user/learn/question_type/review/ReviewSpeakingView.tsx";
 import ReviewMatchingView from "@/components/user/learn/question_type/review/ReviewMatchingView.tsx";
@@ -272,8 +272,8 @@ export default function ReviewLessonPage() {
                     <FeedbackModal
                         treeId={treeId}
                         onDone={() => {
-                            // Unlock node 1 của tree tiếp theo ngay lập tức (optimistic)
-                            unlockNextTree(treeId + 1);
+                            // Xóa toàn bộ cache unlocked để loadProgressFromDB rebuild từ DB
+                            clearAllTreeCache();
                             navigate("/learn", { state: { treeId } });
                         }}
                     />

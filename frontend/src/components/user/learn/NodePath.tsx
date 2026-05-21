@@ -84,6 +84,7 @@ function nodeTypeToKind(
 /** Node đang học tiếp theo: order === unlockedCount → index unlockedCount - 1 */
 function activeNodeIndex(unlockedCount: number, nodeCount: number): number | null {
     if (nodeCount <= 0) return null;
+    if (unlockedCount <= 0) return null; // tree bị khoá hoàn toàn → không auto-select
     return Math.min(Math.max(0, unlockedCount - 1), nodeCount - 1);
 }
 
@@ -335,7 +336,7 @@ export default function NodePath({
     const nodeCount = nodes.length;
 
     const [selectedIndex, setSelectedIndex] = useState<number | null>(() =>
-        activeNodeIndex(unlockedCount, nodeCount)
+        unlockedCount > 0 ? activeNodeIndex(unlockedCount, nodeCount) : null
     );
     const containerRef = useRef<HTMLDivElement | null>(null);
 
