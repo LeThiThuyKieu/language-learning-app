@@ -156,69 +156,224 @@ public class EmailService {
                 """.formatted(purpose, purposeDetail, otp);
     }
 
-    private String buildVerificationHtml(String token) {
-      // Sử dụng endpoint xác thực của backend để khi người dùng nhấn liên kết,
-      // backend sẽ thực hiện xác thực token trên server rồi chuyển hướng về frontend.
-      // Cách này tránh để lộ logic xác thực token trên client và cho phép xác thực chỉ với một lần nhấn.
-      String verifyLink = backendUrl + "/api/auth/verify-email?token=" + token;
-      return """
-                <!DOCTYPE html>
-                <html lang="vi">
-                <head>
-                  <meta charset="UTF-8"/>
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-                </head>
-                <body style="margin:0;padding:0;background:#fdf2f2;font-family:'Segoe UI',Arial,sans-serif;">
-                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#fdf2f2;padding:40px 0;">
-                    <tr><td align="center">
-                      <table width="540" cellpadding="0" cellspacing="0"
-                             style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 6px 30px rgba(0,0,0,0.06);">
+/**
+ * Tạo nội dung HTML cho email xác thực tài khoản.
+ * Email chứa nút xác thực dẫn tới endpoint verify của backend.
+ */
 
-                        <tr>
-                          <td style="background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);padding:28px 24px;text-align:center;">
-                            <p style="margin:0;color:#ffffff;font-size:24px;font-weight:900;">⚡ Lion</p>
-                            <p style="margin:6px 0 0;color:rgba(255,255,255,0.9);font-size:12px;font-weight:600;text-transform:uppercase;">XÁC THỰC TÀI KHOẢN</p>
-                          </td>
-                        </tr>
+private String buildVerificationHtml(String token) {
 
-                        <tr>
-                          <td style="padding:28px 32px;">
-                            <p style="margin:0 0 8px;font-size:16px;font-weight:700;color:#111827;">Xác nhận địa chỉ email của bạn</p>
-                            <p style="margin:0 0 18px;font-size:14px;color:#6b7280;line-height:1.6;">Cảm ơn bạn đã đăng ký tại Lion. Để hoàn tất quá trình đăng ký và bảo mật tài khoản, vui lòng xác thực địa chỉ email bằng mã bên dưới.</p>
+    String verifyLink = backendUrl + "/api/auth/verify-email?token=" + java.net.URLEncoder.encode(token, java.nio.charset.StandardCharsets.UTF_8);
 
-                            <table width="100%%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
-                              <tr>
-                                <td align="center" style="background:#fff7ed;border:2px dashed #fb923c;border-radius:14px;padding:18px 14px;">
-                                  <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#9a3412;text-transform:uppercase;letter-spacing:1px;">Mã xác thực</p>
-                                  <p style="margin:0;font-size:36px;font-weight:900;letter-spacing:0.5px;color:#1f2937;font-family:'Courier New',Courier,monospace;line-height:1;">%s</p>
-                                </td>
-                              </tr>
-                            </table>
+    return """
+            <!DOCTYPE html>
+            <html lang="vi">
+            <head>
+              <meta charset="UTF-8"/>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            </head>
 
-                            <div style="text-align:center;margin-bottom:16px;">
-                              <a href="%s" style="display:inline-block;padding:12px 20px;background:#ea580c;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;">Xác thực địa chỉ email</a>
-                            </div>
+            <body style="
+                margin:0;
+                padding:0;
+                background:#f3f4f6;
+                font-family:'Segoe UI',Arial,sans-serif;
+            ">
 
-                            <p style="margin:0 0 14px;font-size:13px;color:#6b7280;text-align:center;">Liên kết xác thực này sẽ hết hạn trong <strong style="color:#dc2626;">24 giờ</strong>.</p>
+              <table width="100%%" cellpadding="0" cellspacing="0"
+                     style="background:#f3f4f6;padding:32px 16px;">
 
-                            <p style="margin:0;font-size:12px;color:#9ca3af;">Nếu bạn không phải là chủ nhân yêu cầu này, hãy bỏ qua email.</p>
-                          </td>
-                        </tr>
+                <tr>
+                  <td align="center">
 
-                        <tr>
-                          <td style="background:#f9fafb;padding:18px 24px;border-top:1px solid #f3f4f6;text-align:center;">
-                            <p style="margin:0;font-size:13px;color:#374151;">Trân trọng,</p>
-                            <p style="margin:6px 0 0;font-size:13px;font-weight:700;color:#ea580c;">Đội ngũ Lion Learning</p>
-                          </td>
-                        </tr>
+                    <!-- MAIN CARD -->
+                    <table width="680" cellpadding="0" cellspacing="0"
+                           style="
+                              width:680px;
+                              max-width:100%%;
+                              background:#ffffff;
+                              border-radius:24px;
+                              overflow:hidden;
+                              box-shadow:0 10px 35px rgba(0,0,0,0.08);
+                           ">
 
-                      </table>
-                    </td></tr>
-                  </table>
-                </body>
-                </html>
-                """.formatted(token, verifyLink);
-    }
+                      <!-- HEADER -->
+                      <tr>
+                        <td style="
+                            background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);
+                            padding:22px 32px;
+                            text-align:center;
+                        ">
+
+                          <div style="
+                              width:52px;
+                              height:52px;
+                              line-height:52px;
+                              margin:0 auto 10px;
+                              border-radius:50%%;
+                              background:rgba(255,255,255,0.15);
+                              font-size:24px;
+                          ">
+                            ⚡
+                          </div>
+
+                          <p style="
+                              margin:0;
+                              color:#ffffff;
+                              font-size:26px;
+                              font-weight:900;
+                              letter-spacing:1px;
+                          ">
+                            Lion
+                          </p>
+
+                          <p style="
+                              margin:6px 0 0;
+                              color:rgba(255,255,255,0.82);
+                              font-size:12px;
+                              text-transform:uppercase;
+                              letter-spacing:1px;
+                          ">
+                            Xác thực tài khoản
+                          </p>
+
+                        </td>
+                      </tr>
+
+                      <!-- BODY -->
+                      <tr>
+                        <td style="padding:48px 56px;">
+
+                          <h2 style="
+                              margin:0 0 16px;
+                              text-align:center;
+                              color:#111827;
+                              font-size:30px;
+                              font-weight:800;
+                          ">
+                            Xác nhận email của bạn
+                          </h2>
+
+                          <p style="
+                              margin:0 auto 34px;
+                              max-width:520px;
+                              text-align:center;
+                              color:#6b7280;
+                              font-size:15px;
+                              line-height:1.9;
+                          ">
+                            Cảm ơn bạn đã đăng ký tài khoản tại
+                            <strong style="color:#ea580c;">Lion Learning</strong>.
+                            Nhấn nút bên dưới để kích hoạt tài khoản và bắt đầu trải nghiệm hệ thống học tập.
+                          </p>
+
+                          <!-- BUTTON -->
+                          <div style="text-align:center;margin-bottom:36px;">
+
+                            <a href="%s"
+                               style="
+                                  display:inline-block;
+                                  padding:16px 38px;
+                                  border-radius:14px;
+                                  background:linear-gradient(135deg,#f97316 0%%,#ea580c 100%%);
+                                  color:#ffffff;
+                                  text-decoration:none;
+                                  font-size:15px;
+                                  font-weight:700;
+                                  box-shadow:0 6px 18px rgba(249,115,22,0.35);
+                               ">
+                               Xác thực email
+                            </a>
+
+                          </div>
+
+                          <!-- INFO BOX -->
+                          <table width="100%%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="
+                                  background:#fff7ed;
+                                  border:1px solid #fed7aa;
+                                  border-radius:16px;
+                                  padding:18px 22px;
+                              ">
+
+                                <p style="
+                                    margin:0 0 8px;
+                                    font-size:13px;
+                                    font-weight:700;
+                                    color:#9a3412;
+                                ">
+                                  ⏰ Thông tin liên kết
+                                </p>
+
+                                <p style="
+                                    margin:0;
+                                    color:#7c2d12;
+                                    font-size:13px;
+                                    line-height:1.8;
+                                ">
+                                  Liên kết xác thực sẽ hết hạn trong
+                                  <strong>24 giờ</strong>.
+                                  Nếu bạn không thực hiện đăng ký tài khoản,
+                                  hãy bỏ qua email này.
+                                </p>
+
+                              </td>
+                            </tr>
+                          </table>
+
+                        </td>
+                      </tr>
+
+                      <!-- FOOTER -->
+                      <tr>
+                        <td style="
+                            background:#f9fafb;
+                            border-top:1px solid #f3f4f6;
+                            padding:24px 32px;
+                            text-align:center;
+                        ">
+
+                          <p style="
+                              margin:0 0 6px;
+                              color:#374151;
+                              font-size:13px;
+                          ">
+                            Trân trọng,
+                          </p>
+
+                          <p style="
+                              margin:0 0 12px;
+                              color:#ea580c;
+                              font-size:14px;
+                              font-weight:700;
+                          ">
+                            Lion Learning Team
+                          </p>
+
+                          <p style="
+                              margin:0;
+                              color:#9ca3af;
+                              font-size:11px;
+                              line-height:1.7;
+                          ">
+                            © 2025 Lion Learning · Đây là email tự động, vui lòng không phản hồi trực tiếp.
+                          </p>
+
+                        </td>
+                      </tr>
+
+                    </table>
+
+                  </td>
+                </tr>
+
+              </table>
+
+            </body>
+            </html>
+            """.formatted(verifyLink);
+}
 
     /**
      * Gửi email phản hồi support tới user/guest sau khi admin reply.
