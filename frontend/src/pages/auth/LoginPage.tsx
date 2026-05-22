@@ -420,6 +420,14 @@ export default function LoginPage() {
 
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
+        const verified = queryParams.get("verified");
+        const verifiedEmail = queryParams.get("email");
+        if (verified) {
+            toast.success("Xác thực email thành công! Vui lòng đăng nhập.");
+            // clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
         const token = queryParams.get("token");
         const socialError = queryParams.get("error");
 

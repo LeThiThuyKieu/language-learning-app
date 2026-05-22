@@ -20,7 +20,7 @@ export default function RegisterPage() {
         setLoading(true);
         try {
             await authService.register({ email, password, fullName });
-            toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác thực");
+            toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác thực", { id: 'verify-sent' });
             navigate(`/verify-email?email=${encodeURIComponent(email)}`);
         } catch (error) {
             if (axios.isAxiosError(error)) {

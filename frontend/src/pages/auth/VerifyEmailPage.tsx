@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import {useState, useEffect} from "react";
 import {useLocation, useNavigate} from "react-router-dom";
 import {authService} from "@/services/authService";
 import toast from "react-hot-toast";
@@ -12,16 +12,16 @@ export default function VerifyEmailPage() {
   const navigate = useNavigate();
   const emailFromQuery = query.get("email") || "";
 
-  const [email, setEmail] = useState(emailFromQuery);
+  const [email] = useState(emailFromQuery);
   const [resending, setResending] = useState(false);
   const [processingToken, setProcessingToken] = useState(false);
 
   useEffect(() => {
-    if (emailFromQuery) {
-      toast.success("Email xác thực đã được gửi tới email của bạn");
-    }
-    // If token present in query, auto-verify via backend
+    // emailFromQuery is used to prefill the email; do not toast immediately to avoid duplicates
     const token = query.get("token");
+    const verified = query.get("verified");
+    const error = query.get("error");
+
     if (token) {
       (async () => {
         setProcessingToken(true);
@@ -35,6 +35,24 @@ export default function VerifyEmailPage() {
           setProcessingToken(false);
         }
       })();
+      return;
+    }
+
+    if (verified) {
+      toast.success("Xác thực email thành công!", { id: 'verify-result' });
+      // Optionally navigate to login after a short delay
+      setTimeout(() => navigate('/login'), 2200);
+      return;
+    }
+
+    if (error) {
+      // backend encodes the message; decode for display
+      try {
+        const decoded = decodeURIComponent(error);
+        toast.error(decoded, { id: 'verify-result' });
+      } catch (e) {
+        toast.error("Xác thực thất bại", { id: 'verify-result' });
+      }
     }
   }, [emailFromQuery]);
 
@@ -42,7 +60,7 @@ export default function VerifyEmailPage() {
     setResending(true);
     try {
       await authService.sendVerification(email);
-      toast.success("Đã gửi lại email xác thực");
+      toast.success("Đã gửi lại email xác thực", { id: 'verify-sent' });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Gửi lại thất bại");
     } finally {
@@ -61,10 +79,9 @@ export default function VerifyEmailPage() {
 
           <div className="p-8">
             <p className="text-lg font-bold text-[#111827] mb-2">Xác nhận địa chỉ email của bạn</p>
-            <p className="text-sm text-gray-500 mb-6">Một email chứa mã xác thực đã được gửi tới <span className="font-medium">{email}</span>. Vui lòng nhập mã để hoàn tất đăng ký.</p>
+            <p className="text-sm text-gray-500 mb-6">Đã gửi email xác thực tới <span className="font-medium">{email}</span>. Vui lòng mở email và nhấn nút "Xác thực địa chỉ email".</p>
 
             <div className="space-y-4">
-              <div className="text-sm text-gray-600">Chúng tôi đã gửi liên kết xác thực tới <span className="font-medium">{email}</span>. Vui lòng kiểm tra hộp thư và nhấn nút "Xác thực địa chỉ email" trong email.</div>
 
               <div className="flex gap-3">
                 <button type="button" disabled={processingToken || resending} onClick={handleResend} className="flex-1 bg-[#D84315] text-white py-3 rounded-lg font-semibold hover:bg-[#BF360C]">
