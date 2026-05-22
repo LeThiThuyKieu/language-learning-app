@@ -9,6 +9,7 @@ import MainLayout from "@/components/user/layout/MainLayout.tsx";
 import HomePage from "@/pages/User/HomePage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
 import UserManagementPage from "@/pages/Admin/UserManagementPage.tsx";
 import PlacementTestManagementPage from "@/pages/Admin/PlacementTestManagementPage.tsx";
@@ -97,6 +98,7 @@ function App() {
                 <Routes>
                     <Route path="/login" element={<LoginPage/>}/>
                     <Route path="/register" element={<RegisterPage/>}/>
+                    <Route path="/verify-email" element={<VerifyEmailPage/>}/>
 
                     {/* User Routes - HomePage, Learning, Profile */}
                     <Route path="/" element={<MainLayout/>}>

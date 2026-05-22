@@ -8,6 +8,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -15,6 +23,10 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -80,6 +92,51 @@ public class AuthController {
     ) {
         authService.verifyOtp(request);
         return ResponseEntity.ok(ApiResponse.success("Xác thực OTP thành công", null));
+    }
+
+    // Gửi lại email xác thực
+    @PostMapping("/send-verification")
+    public ResponseEntity<ApiResponse<String>> sendVerification(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.sendVerificationEmail(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("Email xác thực đã được gửi lại", null));
+    }
+
+    // Cho phép frontend POST token để xác thực (tùy chọn thay vì bấm link).
+
+    // Xác thực email sau khi đăng ký
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<String>> verifyEmail(@Valid @RequestBody VerifyOtpRequest request) {
+        authService.verifyEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Xác thực email thành công", null));
+    }
+
+    // Xác thực email bằng token (từ link). Frontend hits backend with token, or backend can be hit directly.
+    @PostMapping("/verify-email-token")
+    public ResponseEntity<ApiResponse<String>> verifyEmailToken(@RequestBody TokenRequest request) {
+        String email = authService.verifyEmailToken(request.getToken());
+        return ResponseEntity.ok(ApiResponse.success("Xác thực email thành công", email));
+    }
+
+    // Xác thực email bằng token qua GET (link trong email sẽ gọi endpoint này).
+    // Sau khi xác thực thành công, redirect về frontend (ví dụ trang login hoặc thông báo).
+    @GetMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmailGet(@RequestParam("token") String token) {
+        try {
+            String email = authService.verifyEmailToken(token);
+            // Ensure frontendUrl is absolute
+            String base = (frontendUrl == null || frontendUrl.isBlank()) ? "http://localhost:3000" : frontendUrl;
+            if (!base.startsWith("http")) base = "http://" + base;
+            String target = base + "/login?verified=true&email=" + URLEncoder.encode(email, StandardCharsets.UTF_8);
+            log.info("Email verification success for token={}, redirecting to {}", token, target);
+            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(target)).build();
+        } catch (Exception ex) {
+            String base = (frontendUrl == null || frontendUrl.isBlank()) ? "http://localhost:3000" : frontendUrl;
+            if (!base.startsWith("http")) base = "http://" + base;
+            String reason = URLEncoder.encode(ex.getMessage() == null ? "error" : ex.getMessage(), StandardCharsets.UTF_8);
+            String target = base + "/verify-email?error=" + reason;
+            log.warn("Email verification failed for token={}, reason={}, redirecting to {}", token, ex.getMessage(), target);
+            return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(target)).build();
+        }
     }
 
     // Đặt lại mật khẩu mới sau khi OTP đã được xác thực.
