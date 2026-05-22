@@ -82,6 +82,29 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Xác thực OTP thành công", null));
     }
 
+    // Gửi lại email xác thực
+    @PostMapping("/send-verification")
+    public ResponseEntity<ApiResponse<String>> sendVerification(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.sendVerificationEmail(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("Email xác thực đã được gửi lại", null));
+    }
+
+    // Cho phép frontend POST token để xác thực (tùy chọn thay vì bấm link).
+
+    // Xác thực email sau khi đăng ký
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<String>> verifyEmail(@Valid @RequestBody VerifyOtpRequest request) {
+        authService.verifyEmail(request);
+        return ResponseEntity.ok(ApiResponse.success("Xác thực email thành công", null));
+    }
+
+    // Xác thực email bằng token (từ link). Frontend hits backend with token, or backend can be hit directly.
+    @PostMapping("/verify-email-token")
+    public ResponseEntity<ApiResponse<String>> verifyEmailToken(@RequestBody TokenRequest request) {
+        String email = authService.verifyEmailToken(request.getToken());
+        return ResponseEntity.ok(ApiResponse.success("Xác thực email thành công", email));
+    }
+
     // Đặt lại mật khẩu mới sau khi OTP đã được xác thực.
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<String>> resetPassword(

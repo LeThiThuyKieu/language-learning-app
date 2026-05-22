@@ -46,6 +46,9 @@ public class User {
     @Column(nullable = false)
     private UserStatus status = UserStatus.active;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",

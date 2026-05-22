@@ -31,6 +31,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final OtpService otpService;
     private final EmailService emailService;
+    private final VerificationService verificationService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -60,6 +61,14 @@ public class AuthService {
 
         user = userRepository.save(user);
 
+        // mark not verified and send verification email
+        user.setEmailVerified(false);
+        userRepository.save(user);
+
+        // generate verification token valid 24 hours and send email link
+        String verificationToken = verificationService.generateToken(user.getEmail(), java.time.Duration.ofHours(24));
+        emailService.sendVerificationEmail(user.getEmail(), verificationToken);
+
         UserProfile profile = new UserProfile();
         profile.setUser(user);
         profile.setFullName(request.getFullName());
@@ -68,15 +77,8 @@ public class AuthService {
         profile.setStreakCount(0);
         userProfileRepository.save(profile);
 
-        // Generate token
-        String token = jwtTokenProvider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
-
-        // Update last login
-        user.setLastLogin(LocalDateTime.now());
-        userRepository.save(user);
-
-        return new AuthResponse(UserDTO.fromUser(user), token, refreshToken);
+        // Do NOT issue JWT yet — require email verification first
+        return new AuthResponse(UserDTO.fromUser(user), null, null);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -88,6 +90,11 @@ public class AuthService {
             throw new BadCredentialsException("Account is banned");
         }
 
+        // Require email verification for LOCAL accounts
+        if (user.getAuthProvider() == User.AuthProvider.LOCAL && (user.isEmailVerified() == false)) {
+            throw new BadCredentialsException("Vui lòng xác thực email trước khi đăng nhập");
+        }
+
         if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
             throw new BadCredentialsException("This account uses social login. Please continue with Google/Facebook.");
         }
@@ -96,7 +103,7 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        // Generate token
+        // Sinh JWT
         String token = jwtTokenProvider.generateToken(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
@@ -228,6 +235,49 @@ public class AuthService {
 
         // Xóa OTP sau khi đã dùng xong
         otpService.invalidate(request.getEmail());
+    }
+
+    /** Gửi lại email xác thực (resend). */
+    public void sendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        if (user.isEmailVerified()) return; // already verified
+
+        String token = verificationService.generateToken(email, java.time.Duration.ofHours(24));
+        emailService.sendVerificationEmail(email, token);
+    }
+
+    /** Xác thực email bằng OTP. */
+    @Transactional
+    public void verifyEmail(VerifyOtpRequest request) {
+        if (!otpService.verify(request.getEmail(), request.getOtp())) {
+            throw new BadCredentialsException("Mã xác thực không đúng hoặc đã hết hạn");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        otpService.invalidate(request.getEmail());
+    }
+
+    /** Verify using token (from link). Returns associated email or throws if invalid. */
+    @Transactional
+    public String verifyEmailToken(String token) {
+        String email = verificationService.consumeToken(token);
+        if (email == null) {
+            throw new BadCredentialsException("Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        return email;
     }
 
 }
