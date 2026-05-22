@@ -4,6 +4,7 @@ import com.languagelearning.entity.*;
 import com.languagelearning.dto.SubmitAttemptsRequest;
 import com.languagelearning.exception.BadCredentialsException;
 import com.languagelearning.repository.mysql.*;
+import com.languagelearning.service.leaderboard.LeaderboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

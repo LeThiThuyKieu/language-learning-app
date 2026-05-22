@@ -1,4 +1,4 @@
-package com.languagelearning.service;
+package com.languagelearning.service.leaderboard;
 
 import com.languagelearning.dto.RankUpdateResponse;
 import com.languagelearning.dto.LeaderboardEntryResponse;
