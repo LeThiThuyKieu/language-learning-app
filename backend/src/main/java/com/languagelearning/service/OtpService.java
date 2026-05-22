@@ -12,11 +12,11 @@ import java.time.Duration;
 public class OtpService {
 
     private static final String OTP_PREFIX = "otp:reset:";
-    private static final Duration OTP_TTL = Duration.ofMinutes(1); // hết hạn sau 1 phút
+    private static final Duration OTP_TTL = Duration.ofMinutes(5); // hết hạn sau 5 phút (khớp nội dung email)
 
     private final StringRedisTemplate redisTemplate;
 
-    /** Tạo OTP 6 số, lưu Redis TTL 1 phút, trả về mã. */
+    /** Tạo OTP 6 số, lưu Redis TTL mặc định (5 phút), trả về mã. */
     public String generateAndStore(String email) {
         String otp = String.format("%06d", new SecureRandom().nextInt(1_000_000));
         redisTemplate.opsForValue().set(key(email), otp, OTP_TTL);

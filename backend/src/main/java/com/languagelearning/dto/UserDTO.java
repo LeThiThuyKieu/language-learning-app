@@ -27,6 +27,7 @@ public class UserDTO {
     private Boolean hasPassword;
 
     private String authProvider;
+    private Boolean emailVerified;
 
     public static UserDTO fromUser(User user) {
         UserDTO dto = new UserDTO();
@@ -40,6 +41,7 @@ public class UserDTO {
                 .collect(Collectors.toList()));
         dto.setHasPassword(user.getPasswordHash() != null && !user.getPasswordHash().isBlank());
         dto.setAuthProvider(user.getAuthProvider().name());
+        dto.setEmailVerified(user.isEmailVerified());
         return dto;
     }
 }

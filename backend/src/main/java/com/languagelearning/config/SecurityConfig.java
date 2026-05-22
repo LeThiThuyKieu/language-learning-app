@@ -40,7 +40,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/oauth2/**", "/login/oauth2/**", "/error").permitAll()
                     .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/social/**").permitAll()
-                    .requestMatchers("/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/reset-password").permitAll()
+                    .requestMatchers("/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/reset-password", "/api/auth/verify-email", "/api/auth/verify-email-token", "/api/auth/send-verification").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/auth/**").authenticated()
                 .requestMatchers("/api/public/**").permitAll()

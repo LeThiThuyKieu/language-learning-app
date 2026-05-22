@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,20 +32,27 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final OtpService otpService;
     private final EmailService emailService;
+    private final VerificationService verificationService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.email-verification.enforced-since:2026-05-22T00:00:00}")
+    private String emailVerificationEnforcedSince;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // check neu tồn tại user
-        if (userRepository.existsByEmail(request.getEmail())) {
+        User user = userRepository.findByEmail(request.getEmail()).orElseGet(User::new);
+        boolean isNewUser = user.getId() == null;
+
+        // Nếu email đã tồn tại nhưng chưa xác thực, cho phép đăng ký lại để làm mới token.
+        if (!isNewUser && user.isEmailVerified()) {
             throw new UserAlreadyExistsException("Email already registered");
         }
 
-        User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setAuthProvider(User.AuthProvider.LOCAL);
         user.setProviderUserId(null);
         user.setStatus(User.UserStatus.active);
+        user.setEmailVerified(false);
 
         // assign default role (USER)
         Role userRole = roleRepository.findByRoleName("USER")
@@ -59,24 +67,28 @@ public class AuthService {
         user.setRoles(roles);
 
         user = userRepository.save(user);
+        final User savedUser = user;
 
-        UserProfile profile = new UserProfile();
-        profile.setUser(user);
-        profile.setFullName(request.getFullName());
-        profile.setAvatarUrl(AvatarDefaults.randomAvatarUrl());
-        profile.setTotalXp(0);
-        profile.setStreakCount(0);
+        // Xóa token cũ theo email nếu có, rồi tạo token mới và gửi mail xác thực mới.
+        verificationService.invalidateByEmail(savedUser.getEmail());
+        String verificationToken = verificationService.generateToken(savedUser.getEmail(), java.time.Duration.ofHours(24));
+        emailService.sendVerificationEmail(savedUser.getEmail(), verificationToken);
+
+        UserProfile profile = userProfileRepository.findByUser(savedUser).orElseGet(() -> {
+            UserProfile newProfile = new UserProfile();
+            newProfile.setUser(savedUser);
+            newProfile.setAvatarUrl(AvatarDefaults.randomAvatarUrl());
+            newProfile.setTotalXp(0);
+            newProfile.setStreakCount(0);
+            return newProfile;
+        });
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            profile.setFullName(request.getFullName());
+        }
         userProfileRepository.save(profile);
 
-        // Generate token
-        String token = jwtTokenProvider.generateToken(user.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
-
-        // Update last login
-        user.setLastLogin(LocalDateTime.now());
-        userRepository.save(user);
-
-        return new AuthResponse(UserDTO.fromUser(user), token, refreshToken);
+        // Do NOT issue JWT yet — require email verification first
+        return new AuthResponse(UserDTO.fromUser(user), null, null);
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -88,6 +100,18 @@ public class AuthService {
             throw new BadCredentialsException("Account is banned");
         }
 
+        // Với tài khoản local, chỉ chặn xác thực email đối với tài khoản được tạo sau mốc bật tính năng.
+        // Tài khoản cũ vẫn đăng nhập bình thường để không làm gián đoạn người dùng hiện tại.
+        if (user.getAuthProvider() == User.AuthProvider.LOCAL && !user.isEmailVerified()) {
+            if (mustVerifyEmail(user)) {
+                throw new BadCredentialsException("Vui lòng xác thực email trước khi đăng nhập");
+            }
+
+            // Tự động cho phép tài khoản cũ để tương thích ngược với dữ liệu đã có sẵn.
+            user.setEmailVerified(true);
+            userRepository.save(user);
+        }
+
         if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
             throw new BadCredentialsException("This account uses social login. Please continue with Google/Facebook.");
         }
@@ -96,7 +120,7 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
-        // Generate token
+        // Sinh JWT
         String token = jwtTokenProvider.generateToken(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
@@ -105,6 +129,20 @@ public class AuthService {
         userRepository.save(user);
 
         return new AuthResponse(UserDTO.fromUser(user), token, refreshToken);
+    }
+
+    private boolean mustVerifyEmail(User user) {
+        if (user.getCreatedAt() == null) {
+            return true;
+        }
+
+        try {
+            LocalDateTime enforcedSince = LocalDateTime.parse(emailVerificationEnforcedSince);
+            return !user.getCreatedAt().isBefore(enforcedSince);
+        } catch (DateTimeParseException ex) {
+            // Nếu cấu hình sai định dạng, mặc định vẫn yêu cầu xác thực để an toàn.
+            return true;
+        }
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
@@ -228,6 +266,49 @@ public class AuthService {
 
         // Xóa OTP sau khi đã dùng xong
         otpService.invalidate(request.getEmail());
+    }
+
+    /** Gửi lại email xác thực (resend). */
+    public void sendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        if (user.isEmailVerified()) return; // already verified
+
+        String token = verificationService.generateToken(email, java.time.Duration.ofHours(24));
+        emailService.sendVerificationEmail(email, token);
+    }
+
+    /** Xác thực email bằng OTP. */
+    @Transactional
+    public void verifyEmail(VerifyOtpRequest request) {
+        if (!otpService.verify(request.getEmail(), request.getOtp())) {
+            throw new BadCredentialsException("Mã xác thực không đúng hoặc đã hết hạn");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        otpService.invalidate(request.getEmail());
+    }
+
+    /** Verify using token (from link). Returns associated email or throws if invalid. */
+    @Transactional
+    public String verifyEmailToken(String token) {
+        String email = verificationService.consumeToken(token);
+        if (email == null) {
+            throw new BadCredentialsException("Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        return email;
     }
 
 }

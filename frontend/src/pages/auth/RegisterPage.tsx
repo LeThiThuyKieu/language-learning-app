@@ -1,41 +1,27 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
+// import auth store handled after verification
 import { authService } from "@/services/authService";
 import toast from "react-hot-toast";
 import axios from "axios";
 import {FcGoogle} from "react-icons/fc";
 import {FaFacebook} from "react-icons/fa";
-import { profileService } from "@/services/profileService";
-import {hasChosenLearningLevel, mapLevelIdToKey} from "@/utils/learningLevel";
+// profile and level routing handled after verification
 import { Home } from "lucide-react";
 export default function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
     const [loading, setLoading] = useState(false);
-    const { setAuth } = useAuthStore();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await authService.register({ email, password, fullName });
-            setAuth(response.user, response.token);
-            toast.success("Đăng ký thành công!");
-
-            try {
-                const profile = await profileService.getMyProfile();
-                if (hasChosenLearningLevel(profile.currentLevelId)) {
-                    const level = mapLevelIdToKey(profile.currentLevelId as number);
-                    navigate("/learn", {state: {level}});
-                } else {
-                    navigate("/welcome");
-                }
-            } catch {
-                navigate("/welcome");
-            }
+            await authService.register({ email, password, fullName });
+            toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác thực", { id: 'verify-sent' });
+            navigate(`/verify-email?email=${encodeURIComponent(email)}`);
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 toast.error(error.response?.data?.message || "Đăng ký thất bại");
