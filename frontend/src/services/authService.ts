@@ -63,6 +63,18 @@ export const authService = {
     await apiClient.post<ApiResponse<null>>("/auth/reset-password", { email, otp, newPassword });
   },
 
+  sendVerification: async (email: string): Promise<void> => {
+    await apiClient.post<ApiResponse<null>>("/auth/send-verification", { email });
+  },
+
+  verifyEmail: async (email: string, otp: string): Promise<void> => {
+    await apiClient.post<ApiResponse<null>>("/auth/verify-email", { email, otp });
+  },
+  verifyEmailToken: async (token: string): Promise<{email: string}> => {
+    const response = await apiClient.post<{email: string}>("/auth/verify-email-token", { token });
+    return response.data;
+  },
+
   // Tạo mật khẩu lần đầu cho social user (Google/Facebook)
   setPassword: async (newPassword: string, confirmNewPassword: string): Promise<void> => {
     await apiClient.post<ApiResponse<null>>("/auth/set-password", { newPassword, confirmNewPassword });
