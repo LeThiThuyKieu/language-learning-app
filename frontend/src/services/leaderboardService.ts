@@ -16,10 +16,12 @@ export interface LeaderboardEntry {
     updatedAt: string;
 }
 
+export type LeaderboardPeriod = "WEEK" | "MONTH";
+
 export const leaderboardService = {
-    getTopLeaderboard: async (limit = 10): Promise<LeaderboardEntry[]> => {
+    getTopLeaderboard: async (period: LeaderboardPeriod = "WEEK"): Promise<LeaderboardEntry[]> => {
         const response = await apiClient.get<ApiResponse<LeaderboardEntry[]>>(
-            `/leaderboard/top?limit=${limit}`
+            `/leaderboard/top?period=${period}`
         );
 
         return response.data.data;

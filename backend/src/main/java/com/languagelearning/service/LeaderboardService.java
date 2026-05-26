@@ -16,7 +16,9 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +40,24 @@ import java.math.BigInteger;
 @Service
 @RequiredArgsConstructor
 public class LeaderboardService {
+
+    public enum LeaderboardPeriod {
+        WEEK,
+        MONTH,
+        ALL;
+
+        public static LeaderboardPeriod from(String raw) {
+            if (raw == null || raw.isBlank()) {
+                return WEEK;
+            }
+            try {
+                LeaderboardPeriod parsed = LeaderboardPeriod.valueOf(raw.trim().toUpperCase());
+                return parsed;
+            } catch (IllegalArgumentException ex) {
+                return WEEK;
+            }
+        }
+    }
 
     private final LeaderboardRepository leaderboardRepository;
     private final UserKnRepository userKnRepository;
@@ -121,12 +141,52 @@ public class LeaderboardService {
      */
     @Transactional(readOnly = true)
     public List<LeaderboardEntryResponse> getTopLeaderboard(int limit) {
+        return getTopLeaderboard(limit, LeaderboardPeriod.ALL);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LeaderboardEntryResponse> getTopLeaderboard(int limit, LeaderboardPeriod period) {
         int safeLimit = Math.max(1, Math.min(limit, 10));
+
+        if (period == LeaderboardPeriod.WEEK || period == LeaderboardPeriod.MONTH) {
+            return getTopLeaderboardByPeriod(safeLimit, period);
+        }
+
         List<Leaderboard> topLeaderboards = leaderboardRepository.findTop10ByOrderByTotalKnDescTotalXpDesc();
 
         return IntStream.range(0, Math.min(safeLimit, topLeaderboards.size()))
             .mapToObj(index -> toResponse(topLeaderboards.get(index), index + 1))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    protected List<LeaderboardEntryResponse> getTopLeaderboardByPeriod(int limit, LeaderboardPeriod period) {
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = period == LeaderboardPeriod.WEEK
+                ? today.minusDays(6)
+                : YearMonth.now().atDay(1);
+
+        String sql = """
+            SELECT us.user_id AS userId,
+                   COALESCE(SUM(us.earned_kn), 0) AS periodKn,
+                   COALESCE(SUM(us.earned_xp), 0) AS periodXp
+            FROM user_streak us
+            WHERE us.date BETWEEN ?1 AND ?2
+            GROUP BY us.user_id
+            ORDER BY periodKn DESC, periodXp DESC, us.user_id ASC
+            LIMIT ?3
+            """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery(sql)
+                .setParameter(1, startDate)
+                .setParameter(2, today)
+                .setParameter(3, limit)
+                .getResultList();
+
+        return IntStream.range(0, rows.size())
+            .mapToObj(index -> toPeriodResponse(rows.get(index), index + 1))
+            .toList();
     }
 
     /**
@@ -252,11 +312,42 @@ public class LeaderboardService {
      */
     private void broadcastLeaderboardSnapshot() {
         try {
-            List<LeaderboardEntryResponse> snapshot = getTopLeaderboard(10);
+            List<LeaderboardEntryResponse> snapshot = getTopLeaderboard(10, LeaderboardPeriod.ALL);
             messagingTemplate.convertAndSend("/topic/leaderboard", snapshot);
         } catch (Exception e) {
             log.error("[WebSocket] Error broadcasting leaderboard snapshot: {}", e.getMessage());
         }
+    }
+
+    private LeaderboardEntryResponse toPeriodResponse(Object[] row, Integer rankPosition) {
+        Integer userId = row[0] == null ? null : ((Number) row[0]).intValue();
+        int periodKn = row[1] == null ? 0 : ((Number) row[1]).intValue();
+        int periodXp = row.length > 2 && row[2] == null ? 0 : (row.length > 2 ? ((Number) row[2]).intValue() : 0);
+
+        if (userId == null) {
+            return new LeaderboardEntryResponse(rankPosition, 0, "Unknown", null, 0, periodXp, LocalDateTime.now());
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return new LeaderboardEntryResponse(rankPosition, userId, "Unknown", null, 0, periodXp, LocalDateTime.now());
+        }
+
+        Optional<UserProfile> profile = userProfileRepository.findByUser(user);
+        String displayName = profile.map(UserProfile::getFullName)
+                .filter(name -> name != null && !name.isBlank())
+                .orElse(user.getEmail());
+
+        // For period leaderboards we show period KN as `totalKn` and period XP as `totalXp`.
+        return new LeaderboardEntryResponse(
+            rankPosition,
+            userId,
+            displayName,
+            profile.map(UserProfile::getAvatarUrl).orElse(null),
+            periodKn,
+            periodXp,
+            LocalDateTime.now()
+        );
     }
 
         /**

@@ -352,8 +352,9 @@ export default function LearningPage() {
                                     <TopStats/>
                                     <LeaderboardCard
                                         title="Bảng xếp hạng"
-                                        subtitle="Top 3 người có tổng KN cao nhất"
+                                        subtitle="Top 3 tuần này (theo XP)"
                                         limit={3}
+                                        period="WEEK"
                                         showViewMore
                                     />
                                     <InfoCard

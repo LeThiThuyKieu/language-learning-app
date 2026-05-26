@@ -4,15 +4,23 @@ import { useAuthStore } from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
+import type { LeaderboardPeriod } from "@/services/leaderboardService";
 import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 import { Crown } from "lucide-react";
 
 export default function LeaderboardPage() {
     const navigate = useNavigate();
     const { isAuthenticated, logout, user } = useAuthStore();
-    const { entries, isLoading, error } = useLeaderboard(10);
+    const [period, setPeriod] = useState<LeaderboardPeriod>("WEEK");
+    const { entries, isLoading, error } = useLeaderboard(10, period);
     const [moreOpen, setMoreOpen] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+    const scoreLabel = "XP";
+    const subtitle =
+        period === "WEEK"
+            ? "Top 10 tuần này (theo XP)"
+            : "Top 10 tháng này (theo XP)";
 
     const orderedTopTen = Array.from({ length: 10 }, (_, idx) => {
         const rank = idx + 1;
@@ -87,7 +95,29 @@ export default function LeaderboardPage() {
                         <div className="mx-auto w-full max-w-4xl rounded-3xl border border-primary-100 bg-white p-4 shadow-sm sm:p-6">
                             <div className="text-center">
                                 <h1 className="text-3xl font-black text-primary-700">Bảng xếp hạng</h1>
-                                <p className="mt-1 text-sm font-medium text-gray-500">10 người có tổng KN cao nhất</p>
+                                <p className="mt-1 text-sm font-medium text-gray-500">{subtitle}</p>
+                            </div>
+
+                            <div className="mt-4 flex justify-center">
+                                <div className="inline-flex rounded-2xl bg-gray-100 p-1">
+                                    {([
+                                        { key: "WEEK", label: "Tuần" },
+                                        { key: "MONTH", label: "Tháng" },
+                                    ] as const).map((item) => (
+                                        <button
+                                            key={item.key}
+                                            type="button"
+                                            onClick={() => setPeriod(item.key)}
+                                            className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                                                period === item.key
+                                                    ? "bg-white text-primary-700 shadow-sm"
+                                                    : "text-gray-600 hover:text-gray-800"
+                                            }`}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             {isLoading ? (
@@ -124,7 +154,7 @@ export default function LeaderboardPage() {
                                                         <div className={`mx-auto rounded-full ring-4 bg-gray-100 ${avatarClass}`} />
                                                         <div className="mt-2 text-xs font-extrabold text-gray-400">#{rank}</div>
                                                         <div className="text-sm font-bold text-gray-400">Chưa có</div>
-                                                        <div className="mx-auto mt-1 inline-flex items-center rounded-xl bg-gray-200 px-3 py-1 text-xs font-black text-gray-500">0 KN</div>
+                                                        <div className="mx-auto mt-1 inline-flex items-center rounded-xl bg-gray-200 px-3 py-1 text-xs font-black text-gray-500">0 {scoreLabel}</div>
                                                         <div className="text-[11px] font-semibold text-gray-400">0 XP</div>
                                                     </div>
                                                 );
@@ -134,6 +164,8 @@ export default function LeaderboardPage() {
                                             const meAvatarHighlight = isMe
                                                 ? "ring-offset-2 ring-offset-white outline outline-2 outline-primary-400"
                                                 : "";
+
+                                            const scoreValue = entry.totalXp;
 
                                             return (
                                                 <div key={entry.userId} className={`text-center px-2 py-2 ${rankClass}`}>
@@ -147,7 +179,7 @@ export default function LeaderboardPage() {
                                                     <div className="mt-2 text-xs font-extrabold text-gray-700">#{entry.rankPosition}</div>
                                                     <div className="truncate text-sm font-bold text-gray-900">{isMe ? "Bạn" : entry.displayName}</div>
                                                     <div className={`mx-auto mt-1 inline-flex items-center gap-1 rounded-xl px-3 py-1 text-xs font-black text-white ${rank === 1 ? "bg-primary-600" : rank === 2 ? "bg-slate-500" : "bg-orange-500"}`}>
-                                                        {rank === 1 && <Crown className="h-3 w-3" />} {entry.totalKn} KN
+                                                        {rank === 1 && <Crown className="h-3 w-3" />} {scoreValue} {scoreLabel}
                                                     </div>
                                                     <div className="text-[11px] font-semibold text-gray-500">{entry.totalXp} XP</div>
                                                 </div>
@@ -163,7 +195,7 @@ export default function LeaderboardPage() {
                                                     <div className="truncate text-base font-black">{meInTopTen.displayName}</div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <div className="text-xl font-black">{meInTopTen.totalKn} KN</div>
+                                                    <div className="text-xl font-black">{meInTopTen.totalXp} {scoreLabel}</div>
                                                     <div className="text-[11px] font-semibold text-white/85">{meInTopTen.totalXp} XP</div>
                                                 </div>
                                             </div>
@@ -171,10 +203,13 @@ export default function LeaderboardPage() {
                                     )}
 
                                     <div className="mt-6">
-                                        <div className="mb-2 text-xs font-extrabold uppercase tracking-[0.15em] text-gray-500">Top 10 hệ thống</div>
+                                        <div className="mb-2 text-xs font-extrabold uppercase tracking-[0.15em] text-gray-500">
+                                            {period === "WEEK" ? "Top 10 tuần này" : "Top 10 tháng này"}
+                                        </div>
                                         <div className="space-y-2">
                                             {remaining.map((entry, idx) => {
                                                 const isMe = !!entry && user?.id === entry.userId;
+                                                const scoreValue = entry ? entry.totalXp : 0;
 
                                                 return (
                                                 <div
@@ -212,7 +247,7 @@ export default function LeaderboardPage() {
                                                         )}
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className="text-sm font-black text-primary-700">{entry?.totalKn ?? 0} KN</div>
+                                                        <div className="text-sm font-black text-primary-700">{scoreValue} {scoreLabel}</div>
                                                         <div className="text-[11px] font-semibold text-gray-500">{entry?.totalXp ?? 0} XP</div>
                                                     </div>
                                                 </div>

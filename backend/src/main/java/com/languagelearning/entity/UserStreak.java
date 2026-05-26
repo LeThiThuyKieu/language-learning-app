@@ -25,6 +25,9 @@ public class UserStreak {
 
     @Column(name = "earned_xp")
     private Integer earnedXp = 0;
+
+    @Column(name = "earned_kn")
+    private Integer earnedKn = 0;
 }
 
 

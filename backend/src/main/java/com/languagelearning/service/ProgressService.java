@@ -282,6 +282,21 @@ public class ProgressService {
         userKn.setTotalKn(userKn.getTotalKn() + amount);
         userKnRepository.save(userKn);
 
+        // Cập nhật earned_kn trong user_streak cho ngày hôm nay (tạo nếu chưa có)
+        LocalDate today = LocalDate.now();
+        userStreakRepository.findByUserAndDate(user, today).ifPresentOrElse(streak -> {
+            int cur = streak.getEarnedKn() == null ? 0 : streak.getEarnedKn();
+            streak.setEarnedKn(cur + amount);
+            userStreakRepository.save(streak);
+        }, () -> {
+            UserStreak newStreak = new UserStreak();
+            newStreak.setUser(user);
+            newStreak.setDate(today);
+            newStreak.setEarnedXp(0);
+            newStreak.setEarnedKn(amount);
+            userStreakRepository.save(newStreak);
+        });
+
         // Note: leaderboard update is performed by higher-level flow after both KN and XP are persisted.
     }
 

@@ -408,6 +408,7 @@ CREATE TABLE IF NOT EXISTS `user_streak` (
   `user_id` int(11) DEFAULT NULL,
   `date` date NOT NULL,
   `earned_xp` int(11) DEFAULT 0,
+    `earned_kn` int(11) DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_streak_date` (`user_id`,`date`),
   KEY `user_id` (`user_id`),
