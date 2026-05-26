@@ -113,8 +113,10 @@ public class ProgressService {
                     return p;
                 });
 
-        // Chỉ lưu earned_xp và max_xp ở lần đầu tiên
-        if (isFirstAttempt[0] || progress.getAttemptCount() == 0) {
+        // Chỉ lưu earned_xp và max_xp ở lần đầu tiên hoặc khi chưa có giá trị
+        // (bao gồm trường hợp bản ghi được tạo trước bởi REVIEW FAIL với earnedXp=0, maxXp=0)
+        if (isFirstAttempt[0] || progress.getAttemptCount() == 0
+                || (progress.getEarnedXp() == 0 && progress.getMaxXp() == 0 && correctCount > 0)) {
             progress.setEarnedXp(correctCount * 10);
             progress.setMaxXp(totalQuestions > 0 ? totalQuestions * 10 : correctCount * 10);
         }
