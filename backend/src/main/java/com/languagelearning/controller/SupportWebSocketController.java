@@ -1,19 +1,10 @@
 package com.languagelearning.controller;
 
-import com.languagelearning.dto.ApiResponse;
-import com.languagelearning.dto.support.SupportReplyRequest;
 import com.languagelearning.dto.support.SupportTicketDetailDto;
-import com.languagelearning.service.SupportService;
-import jakarta.validation.Valid;
+import com.languagelearning.service.support.SupportService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.ResponseEntity;
 
 /**
  * Xử lý WebSocket STOMP cho chat hỗ trợ.

@@ -19,28 +19,39 @@ public class UserNodeProgress {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-    
+
     @ManyToOne
     @JoinColumn(name = "node_id")
     private SkillNode node;
-    
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NodeProgressStatus status = NodeProgressStatus.not_started;
-    
-    private Integer score = 0;
-    
+
+    /**
+     * XP user kiếm được ở lần attempt đầu tiên (số câu đúng × 10).
+     * Các lần sau chỉ tăng attempt_count, không cập nhật earned_xp.
+     */
+    @Column(name = "earned_xp", nullable = false)
+    private Integer earnedXp = 0;
+
+    /**
+     * XP tối đa có thể đạt được khi làm node này (tổng số câu × 10).
+     */
+    @Column(name = "max_xp", nullable = false)
+    private Integer maxXp = 0;
+
     @Column(name = "attempt_count")
     private Integer attemptCount = 0;
-    
+
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
+
     public enum NodeProgressStatus {
         not_started, in_progress, completed
     }

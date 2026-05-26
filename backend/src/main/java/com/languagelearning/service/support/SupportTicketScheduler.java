@@ -1,4 +1,4 @@
-package com.languagelearning.service;
+package com.languagelearning.service.support;
 
 import com.languagelearning.entity.SupportTicket;
 import com.languagelearning.repository.mysql.SupportTicketRepository;

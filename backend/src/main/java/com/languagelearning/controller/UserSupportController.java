@@ -5,7 +5,7 @@ import com.languagelearning.dto.support.SupportCreateTicketRequest;
 import com.languagelearning.dto.support.SupportReplyRequest;
 import com.languagelearning.dto.support.SupportTicketDetailDto;
 import com.languagelearning.dto.support.SupportTicketListItemDto;
-import com.languagelearning.service.SupportService;
+import com.languagelearning.service.support.SupportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

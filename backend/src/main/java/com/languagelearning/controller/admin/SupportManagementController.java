@@ -2,7 +2,7 @@ package com.languagelearning.controller.admin;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.support.*;
-import com.languagelearning.service.SupportService;
+import com.languagelearning.service.support.SupportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
