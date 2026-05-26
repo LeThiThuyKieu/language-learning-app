@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,8 @@ import java.util.stream.Collectors;
  *   α  = 0.7 (hệ số ổn định EMA — tránh biến động đột ngột)
  *   F  = rating feedback (1=Rất dễ → 5=Rất khó), F/5 ∈ [0.2, 1.0]
  *
- * Điều kiện kích hoạt: tree có ≥ 30 mẫu hợp lệ
+ * Cập nhật mỗi tuần một lần (thứ Hai 02:00 AM).
+ * Cập nhật ngay khi có ít nhất 1 mẫu hợp lệ
  * (user đã done tree VÀ đã feedback cho tree đó).
  *
  * Sau khi cập nhật difficulty → sắp xếp lại order_index trong cùng level
@@ -46,7 +48,6 @@ public class AdaptiveDifficultyService {
     private static final double W1 = 0.7;   // trọng số accuracy
     private static final double W2 = 0.3;   // trọng số feedback
     private static final double ALPHA = 0.7; // hệ số ổn định EMA
-    private static final int MIN_SAMPLES = 30; // ngưỡng mẫu tối thiểu
 
     private final SkillTreeRepository skillTreeRepository;
     private final LevelRepository levelRepository;
@@ -95,9 +96,24 @@ public class AdaptiveDifficultyService {
 
     /**
      * Tính và cập nhật difficulty cho một tree.
-     * Trả về true nếu đã cập nhật (đủ mẫu), false nếu bỏ qua (chưa đủ mẫu).
+     * Chỉ cập nhật khi có dữ liệu mới (feedback hoặc progress done) kể từ lần cập nhật trước.
+     * Trả về true nếu đã cập nhật, false nếu bỏ qua.
      */
     private boolean updateDifficultyForTree(SkillTree tree) {
+        // Kiểm tra có dữ liệu mới kể từ lần cập nhật trước không
+        LocalDateTime lastUpdate = tree.getDifficultyUpdatedAt();
+        if (lastUpdate != null) {
+            boolean hasNewProgress = userSkillTreeProgressRepository
+                    .existsNewDoneProgressSince(tree.getId(), lastUpdate);
+            boolean hasNewFeedback = feedbackRepository
+                    .existsNewFeedbackSince(tree.getId(), lastUpdate);
+
+            if (!hasNewProgress && !hasNewFeedback) {
+                log.debug("[AdaptiveDifficulty] Tree {} has no new data since {} — skipping",
+                        tree.getId(), lastUpdate);
+                return false;
+            }
+        }
         // Lấy tất cả user đã done tree này
         List<UserSkillTreeProgress> doneList =
                 userSkillTreeProgressRepository.findDoneBySkillTreeId(tree.getId());
@@ -124,10 +140,9 @@ public class AdaptiveDifficultyService {
                 })
                 .toList();
 
-        // Kiểm tra ngưỡng mẫu tối thiểu
-        if (validSamples.size() < MIN_SAMPLES) {
-            log.debug("[AdaptiveDifficulty] Tree {} has only {}/{} samples — skipping",
-                    tree.getId(), validSamples.size(), MIN_SAMPLES);
+        // Kiểm tra: nếu không có mẫu hợp lệ nào thì giữ nguyên difficulty
+        if (validSamples.isEmpty()) {
+            log.debug("[AdaptiveDifficulty] Tree {} has no valid samples — skipping", tree.getId());
             return false;
         }
 
@@ -158,6 +173,7 @@ public class AdaptiveDifficultyService {
                 validSamples.size(), difficultyObs, difficultyOld, difficultyNew);
 
         tree.setDifficulty(difficultyNew);
+        tree.setDifficultyUpdatedAt(LocalDateTime.now());
         skillTreeRepository.save(tree);
         return true;
     }
@@ -165,6 +181,8 @@ public class AdaptiveDifficultyService {
     /**
      * Sắp xếp lại order_index của các tree trong cùng level theo difficulty tăng dần.
      * Tree dễ hơn (difficulty thấp) sẽ có order_index nhỏ hơn → hiển thị trước.
+     * Snapshot cũ (Redis + MySQL) giữ nguyên — user đang học thấy thứ tự cũ,
+     * user mới vào sau mới nhận được thứ tự mới.
      */
     private void reorderTreesByDifficulty(List<SkillTree> trees) {
         // Sắp xếp theo difficulty tăng dần

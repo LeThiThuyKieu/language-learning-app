@@ -161,7 +161,8 @@ CREATE TABLE IF NOT EXISTS `skill_tree` (
     `level_id` int(11) DEFAULT NULL,
     `order_index` int(11) DEFAULT NULL,
     `is_locked_by_default` tinyint(1) DEFAULT 1,
-    `difficulty` double NOT NULL DEFAULT 0.5 COMMENT 'Độ khó adaptive [0,1]. Mặc định 0.5 (Cold Start). Cập nhật hàng ngày khi ≥ 30 mẫu.',
+    `difficulty` double NOT NULL DEFAULT 0.5 COMMENT 'Độ khó adaptive [0,1]. Mặc định 0.5 (Cold Start). Cập nhật hàng tuần khi có dữ liệu mới.',
+    `difficulty_updated_at` datetime DEFAULT NULL COMMENT 'Thời điểm cập nhật difficulty gần nhất. NULL = chưa từng cập nhật.',
     PRIMARY KEY (`id`),
     KEY `level_id` (`level_id`),
     CONSTRAINT `skill_tree_ibfk_1` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`)

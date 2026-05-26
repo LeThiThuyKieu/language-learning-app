@@ -325,6 +325,25 @@ public class ProgressService {
                 reviewAttempt.setPassed(passed);
                 userReviewAttemptRepository.save(reviewAttempt);
 
+                // Đồng bộ attempt_count trong user_node_progress theo số lần thực tế trong user_review_attempt
+                int reviewAttemptCount = userReviewAttemptRepository.countByUserAndNodeId(user, reviewNode.getId());
+                final SkillNode finalReviewNode = reviewNode;
+                UserNodeProgress reviewNodeProgress = userNodeProgressRepository
+                        .findByUserAndNodeId(user, reviewNode.getId())
+                        .orElseGet(() -> {
+                            // Lần đầu FAIL/CARELESS: tạo bản ghi mới với status in_progress
+                            UserNodeProgress p = new UserNodeProgress();
+                            p.setUser(user);
+                            p.setNode(finalReviewNode);
+                            p.setStatus(UserNodeProgress.NodeProgressStatus.in_progress);
+                            p.setEarnedXp(0);
+                            p.setMaxXp(0);
+                            p.setAttemptCount(0);
+                            return p;
+                        });
+                reviewNodeProgress.setAttemptCount(reviewAttemptCount);
+                userNodeProgressRepository.save(reviewNodeProgress);
+
                 // Khi FAIL/CARELESS: completeNode không được gọi nên cần cập nhật
                 // (để accuracy phản ánh đúng kết quả lần đầu làm review)
                 // accuracy của tree thủ công (dùng lần đầu tiên trong user_review_attempt)

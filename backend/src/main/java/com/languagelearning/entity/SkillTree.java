@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "skill_tree")
 @Data
@@ -27,11 +29,19 @@ public class SkillTree {
 
     /**
      * Độ khó của tree, dùng cho adaptive learning.
-     * Mặc định 0.5 (Cold Start). Cập nhật hàng ngày khi có ≥ 30 mẫu hợp lệ.
+     * Mặc định 0.5 (Cold Start). Cập nhật hàng tuần khi có dữ liệu mới.
      * Phạm vi: [0.0, 1.0] — 0 = rất dễ, 1 = rất khó.
      */
     @Column(name = "difficulty", nullable = false)
     private Double difficulty = 0.5;
+
+    /**
+     * Thời điểm cập nhật difficulty gần nhất.
+     * NULL = chưa từng cập nhật.
+     * Dùng để kiểm tra có dữ liệu mới kể từ lần cập nhật trước không.
+     */
+    @Column(name = "difficulty_updated_at")
+    private LocalDateTime difficultyUpdatedAt;
 }
 
 

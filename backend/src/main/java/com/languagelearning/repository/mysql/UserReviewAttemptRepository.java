@@ -18,4 +18,11 @@ public interface UserReviewAttemptRepository extends JpaRepository<UserReviewAtt
      */
     @Query("SELECT r FROM UserReviewAttempt r WHERE r.user = :user AND r.node.id = :nodeId ORDER BY r.attemptedAt ASC LIMIT 1")
     Optional<UserReviewAttempt> findFirstByUserAndNodeId(@Param("user") User user, @Param("nodeId") Integer nodeId);
+
+    /**
+     * Đếm tổng số lần user đã làm review cho một node (kể cả FAIL/CARELESS).
+     * Dùng để đồng bộ attempt_count trong user_node_progress.
+     */
+    @Query("SELECT COUNT(r) FROM UserReviewAttempt r WHERE r.user = :user AND r.node.id = :nodeId")
+    int countByUserAndNodeId(@Param("user") User user, @Param("nodeId") Integer nodeId);
 }
