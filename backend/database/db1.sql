@@ -426,7 +426,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `status` enum('active','banned') DEFAULT 'active',
   `auth_provider` enum('LOCAL','GOOGLE','FACEBOOK') DEFAULT 'LOCAL',
   `provider_user_id` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
+    `email_verified` BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
