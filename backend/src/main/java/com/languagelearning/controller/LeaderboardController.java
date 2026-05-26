@@ -26,9 +26,12 @@ public class LeaderboardController {
      */
     @GetMapping("/top")
     public ResponseEntity<ApiResponse<List<LeaderboardEntryResponse>>> getTopLeaderboard(
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(defaultValue = "WEEK") String period
     ) {
-        List<LeaderboardEntryResponse> entries = leaderboardService.getTopLeaderboard(limit);
+        List<LeaderboardEntryResponse> entries = leaderboardService.getTopLeaderboard(
+                10,
+                LeaderboardService.LeaderboardPeriod.from(period)
+        );
         return ResponseEntity.ok(ApiResponse.success("Get leaderboard successfully", entries));
     }
 }

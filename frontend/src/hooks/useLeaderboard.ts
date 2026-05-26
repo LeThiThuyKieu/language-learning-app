@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
 import SockJS from "sockjs-client";
 import { Stomp } from "@stomp/stompjs";
-import { leaderboardService, type LeaderboardEntry } from "@/services/leaderboardService";
+import { leaderboardService, type LeaderboardEntry, type LeaderboardPeriod } from "@/services/leaderboardService";
 
-export function useLeaderboard(limit = 10) {
+export function useLeaderboard(limit = 10, period: LeaderboardPeriod = "WEEK") {
     const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
-        const socket = new SockJS("/ws");
-        const stompClient = Stomp.over(socket);
+        let stompClient: any | null = null;
+        let subscription: any | null = null;
 
         const loadLeaderboard = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
-                const data = await leaderboardService.getTopLeaderboard(limit);
+                const data = await leaderboardService.getTopLeaderboard(period);
                 if (!cancelled) {
-                    setEntries(data);
+                    setEntries(data.slice(0, Math.max(1, Math.min(limit, 10))));
                 }
             } catch {
                 if (!cancelled) {
@@ -34,30 +34,36 @@ export function useLeaderboard(limit = 10) {
 
         void loadLeaderboard();
 
-        // WebSocket: nhận snapshot BXH mới nhất từ backend để không cần polling.
-        stompClient.debug = () => {};
-        stompClient.connect({}, () => {
-            stompClient.subscribe("/topic/leaderboard", (message: { body: string }) => {
-                try {
-                    const data = JSON.parse(message.body) as LeaderboardEntry[];
-                    if (!cancelled) {
-                        setEntries(data);
+        // Subscribe to websocket snapshot for realtime updates
+        try {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, () => {
+                subscription = stompClient.subscribe(`/topic/leaderboard/${period}`, (message: { body: string }) => {
+                    try {
+                        const data: LeaderboardEntry[] = JSON.parse(message.body);
+                        if (!cancelled) {
+                            setEntries(data.slice(0, Math.max(1, Math.min(limit, 10))));
+                        }
+                    } catch (e) {
+                        // ignore parse errors
                     }
-                } catch {
-                    if (!cancelled) {
-                        setError("Dữ liệu BXH nhận từ WebSocket không hợp lệ");
-                    }
-                }
+                });
             });
-        });
+        } catch (e) {
+            // ignore websocket errors; fallback to polling
+        }
 
         return () => {
             cancelled = true;
-            if (stompClient.connected) {
-                stompClient.disconnect(() => undefined);
-            }
+            try {
+                if (subscription) subscription.unsubscribe();
+            } catch (e) {}
+            try {
+                if (stompClient && stompClient.connected) stompClient.disconnect();
+            } catch (e) {}
         };
-    }, [limit]);
+    }, [limit, period]);
 
     return { entries, isLoading, error };
 }

@@ -307,8 +307,9 @@ export default function ProfilePage() {
                                 <div className="xl:sticky xl:top-6 space-y-5 sm:space-y-7">
                                     <LeaderboardCard
                                         title="Bảng xếp hạng"
-                                        subtitle="Top 3 người có tổng KN cao nhất"
+                                        subtitle="Top 3 (theo tổng KN)"
                                         limit={3}
+                                        period="ALL"
                                         showViewMore
                                     />
                                     <BadgeProgress

@@ -2,6 +2,7 @@ import { Crown, Medal, Trophy } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
+import type { LeaderboardPeriod } from "@/services/leaderboardService";
 import { useNavigate } from "react-router-dom";
 
 interface LeaderboardCardProps {
@@ -9,6 +10,7 @@ interface LeaderboardCardProps {
     subtitle?: string;
     className?: string;
     limit?: number;
+    period?: LeaderboardPeriod;
     showViewMore?: boolean;
 }
 
@@ -16,14 +18,15 @@ const formatter = new Intl.NumberFormat("vi-VN");
 
 export default function LeaderboardCard({
     title = "Bảng xếp hạng",
-    subtitle = "10 người có tổng KN cao nhất",
+    subtitle = "Top 10 tuần này (theo KN)",
     className = "",
     limit = 10,
+    period = "WEEK",
     showViewMore = false,
 }: LeaderboardCardProps) {
     const navigate = useNavigate();
     const { user } = useAuthStore();
-    const { entries, isLoading, error } = useLeaderboard(limit);
+    const { entries, isLoading, error } = useLeaderboard(limit, period);
 
     return (
         <div className={`overflow-hidden rounded-3xl border border-primary-100 bg-white shadow-sm ${className}`}>

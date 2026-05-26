@@ -14,7 +14,7 @@ const resolveBackendBaseUrl = () => {
     return apiBaseUrl.replace(/\/api\/?$/, "");
 };
 
-// ─── Forgot Password Modal ────────────────────────────────────────────────────
+// danh sách các trạng thái màn hình của modal quên mật khẩu
 type ForgotStep = "email" | "otp" | "reset";
 
 function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
@@ -61,7 +61,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         if (countdown > 0) return;
         setLoading(true);
         try {
-            // TODO: bỏ comment khi BE sẵn sàng
+            
             await authService.forgotPassword(email.trim());
             toast.success("Đã gửi lại mã OTP");
             setCountdown(60);
@@ -388,7 +388,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
     );
 }
 
-// ─── Login Page ───────────────────────────────────────────────────────────────
+//  Login Page
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -421,7 +421,6 @@ export default function LoginPage() {
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
         const verified = queryParams.get("verified");
-        const verifiedEmail = queryParams.get("email");
         if (verified) {
             toast.success("Xác thực email thành công! Vui lòng đăng nhập.");
             // clean URL
@@ -494,32 +493,32 @@ export default function LoginPage() {
 
     return (
         <>
-            <div className={`h-screen w-full flex overflow-hidden bg-white font-sans transition-all duration-300 ${showForgot ? "blur-sm brightness-75" : ""}`}>
+            <div className={`min-h-[100dvh] w-full overflow-x-hidden bg-[#FFF8F1] font-sans transition-all duration-300 lg:flex ${showForgot ? "blur-sm brightness-75" : ""}`}>
                 {/* BÊN TRÁI */}
-                <div className="hidden lg:block lg:w-1/2 h-full relative bg-[#FEEED8]">
+                <div className="hidden lg:block lg:w-1/2 lg:min-h-[100dvh] relative bg-[#FEEED8]">
                     <img src="/auth/background.jpg" alt="Banner" className="h-full w-full object-cover" />
                 </div>
 
                 {/* BÊN PHẢI */}
-                <div className="w-full lg:w-1/2 h-full flex items-center justify-center p-8 sm:p-12 lg:p-20 bg-white">
-                    <div className="w-full max-w-md">
+                <div className="relative flex min-h-[100dvh] w-full items-start justify-center overflow-y-auto bg-white px-4 py-6 sm:px-6 sm:py-10 lg:w-1/2 lg:px-10 lg:py-16">
+                    <div className="relative w-full max-w-md pb-4 pt-14 sm:pt-12 lg:max-w-lg">
 
                         {/* Nút home — góc trên phải */}
                         <button
                             onClick={() => navigate("/")}
-                            className="fixed top-5 right-6 z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-white shadow-sm hover:-translate-y-0.5 hover:bg-[#FFE0B2] transition-all duration-300"
+                            className="absolute right-0 top-0 z-10 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFE0B2]"
                             style={{ boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}
                         >
                             <Home className="w-5 h-5 text-gray-500" />
                             <span className="text-sm font-medium text-gray-600">Trang chủ</span>
                         </button>
 
-                        <div className="text-center mb-10">
-                            <h2 className="text-4xl font-black text-[#1F2937] tracking-tight">Đăng nhập</h2>
+                        <div className="text-center mb-8 sm:mb-10">
+                            <h2 className="text-3xl sm:text-4xl font-black text-[#1F2937] tracking-tight">Đăng nhập</h2>
                         </div>
 
-                        <form className="space-y-6" onSubmit={handleSubmit}>
-                            <div className="space-y-5">
+                        <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
+                            <div className="space-y-4 sm:space-y-5">
                                 {/* Email */}
                                 <div className="space-y-2">
                                     <label className="text-[15px] font-bold text-gray-700 ml-1">Email</label>
@@ -527,7 +526,7 @@ export default function LoginPage() {
                                         type="email" required value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="Email"
-                                        className="w-full px-5 py-4 bg-[#F3F4F6] border-none rounded-[20px] focus:ring-2 focus:ring-[#FE4D01] outline-none transition-all placeholder:text-gray-400 font-medium"
+                                        className="w-full px-4 py-3.5 sm:px-5 sm:py-4 bg-[#F3F4F6] border-none rounded-[20px] focus:ring-2 focus:ring-[#FE4D01] outline-none transition-all placeholder:text-gray-400 font-medium"
                                     />
                                 </div>
 
@@ -542,7 +541,7 @@ export default function LoginPage() {
                                             required value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             placeholder="Mật khẩu"
-                                            className="w-full px-5 py-4 pr-12 bg-[#F3F4F6] border-none rounded-[20px] focus:ring-2 focus:ring-[#FE4D01] outline-none transition-all placeholder:text-gray-400 font-medium"
+                                            className="w-full px-4 py-3.5 sm:px-5 sm:py-4 pr-12 bg-[#F3F4F6] border-none rounded-[20px] focus:ring-2 focus:ring-[#FE4D01] outline-none transition-all placeholder:text-gray-400 font-medium"
                                         />
                                         <button
                                             type="button"
@@ -564,16 +563,16 @@ export default function LoginPage() {
                                 </div>
                             </div>
 
-                            <div className="pt-4">
+                            <div className="pt-2 sm:pt-4">
                                 <button
                                     type="submit" disabled={loading}
-                                    className="w-full py-4 rounded-full text-lg font-semibold text-orange-100 bg-[#D84315] hover:bg-[#BF360C] shadow-md shadow-black/20 active:scale-[0.97] transition-all disabled:opacity-50"
+                                    className="w-full py-3.5 sm:py-4 rounded-full text-base sm:text-lg font-semibold text-orange-100 bg-[#D84315] hover:bg-[#BF360C] shadow-md shadow-black/20 active:scale-[0.97] transition-all disabled:opacity-50"
                                 >
                                     {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                                 </button>
                             </div>
 
-                            <div className="text-center mt-8">
+                            <div className="text-center mt-6 sm:mt-8">
                                 <p className="text-gray-500 font-medium">
                                     Chưa có tài khoản?{" "}
                                     <Link to="/register" className="font-bold text-[#FE4D01] hover:underline transition-colors">
@@ -582,13 +581,13 @@ export default function LoginPage() {
                                 </p>
                             </div>
 
-                            <div className="flex items-center my-6">
+                            <div className="flex items-center my-5 sm:my-6">
                                 <div className="flex-1 h-px bg-gray-300"></div>
                                 <span className="px-4 text-sm text-gray-400 font-medium">Hoặc</span>
                                 <div className="flex-1 h-px bg-gray-300"></div>
                             </div>
 
-                            <div className="flex justify-center gap-6">
+                            <div className="flex justify-center gap-4 sm:gap-6">
                                 <button type="button" title="Google"
                                     onClick={() => window.location.href = `${socialConfig.backendBaseUrl}/oauth2/authorization/google`}
                                     disabled={loading}
