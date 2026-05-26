@@ -2,7 +2,7 @@ package com.languagelearning.controller;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.LeaderboardEntryResponse;
-import com.languagelearning.service.LeaderboardService;
+import com.languagelearning.service.leaderboard.LeaderboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

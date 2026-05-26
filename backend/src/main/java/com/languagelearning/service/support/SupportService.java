@@ -1,8 +1,9 @@
-package com.languagelearning.service;
+package com.languagelearning.service.support;
 
 import com.languagelearning.dto.support.*;
 import com.languagelearning.entity.*;
 import com.languagelearning.repository.mysql.*;
+import com.languagelearning.service.EmailService;
 import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
