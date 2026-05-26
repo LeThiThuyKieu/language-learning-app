@@ -18,7 +18,7 @@ const formatter = new Intl.NumberFormat("vi-VN");
 
 export default function LeaderboardCard({
     title = "Bảng xếp hạng",
-    subtitle = "Top 10 tuần này (theo XP)",
+    subtitle = "Top 10 tuần này (theo KN)",
     className = "",
     limit = 10,
     period = "WEEK",

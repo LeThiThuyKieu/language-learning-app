@@ -122,7 +122,8 @@ public class LeaderboardService {
             int oldRankSafe = oldRank == null ? Integer.MAX_VALUE : oldRank;
             int newRankSafe = newRank == null ? Integer.MAX_VALUE : newRank;
             if (oldRankSafe <= 10 || newRankSafe <= 10) {
-                broadcastLeaderboardSnapshot();
+                // Broadcast snapshots for all periods so clients update realtime
+                broadcastAllPeriodSnapshots();
             }
 
         } catch (Exception e) {
@@ -313,10 +314,25 @@ public class LeaderboardService {
     private void broadcastLeaderboardSnapshot() {
         try {
             List<LeaderboardEntryResponse> snapshot = getTopLeaderboard(10, LeaderboardPeriod.ALL);
-            messagingTemplate.convertAndSend("/topic/leaderboard", snapshot);
+            messagingTemplate.convertAndSend("/topic/leaderboard/ALL", snapshot);
         } catch (Exception e) {
             log.error("[WebSocket] Error broadcasting leaderboard snapshot: {}", e.getMessage());
         }
+    }
+
+    private void broadcastLeaderboardSnapshot(LeaderboardPeriod period) {
+        try {
+            List<LeaderboardEntryResponse> snapshot = getTopLeaderboard(10, period);
+            messagingTemplate.convertAndSend("/topic/leaderboard/" + period.name(), snapshot);
+        } catch (Exception e) {
+            log.error("[WebSocket] Error broadcasting leaderboard snapshot ({}): {}", period, e.getMessage());
+        }
+    }
+
+    private void broadcastAllPeriodSnapshots() {
+        broadcastLeaderboardSnapshot(LeaderboardPeriod.WEEK);
+        broadcastLeaderboardSnapshot(LeaderboardPeriod.MONTH);
+        broadcastLeaderboardSnapshot(LeaderboardPeriod.ALL);
     }
 
     private LeaderboardEntryResponse toPeriodResponse(Object[] row, Integer rankPosition) {

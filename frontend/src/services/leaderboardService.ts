@@ -16,7 +16,7 @@ export interface LeaderboardEntry {
     updatedAt: string;
 }
 
-export type LeaderboardPeriod = "WEEK" | "MONTH";
+export type LeaderboardPeriod = "WEEK" | "MONTH" | "ALL";
 
 export const leaderboardService = {
     getTopLeaderboard: async (period: LeaderboardPeriod = "WEEK"): Promise<LeaderboardEntry[]> => {
