@@ -109,7 +109,7 @@ export default function FeedbackPage() {
           return;
         }
 
-        setFeedbacks(data);
+        setFeedbacks(data.items ?? []);
       } catch (error) {
         if (!isActive) {
           return;

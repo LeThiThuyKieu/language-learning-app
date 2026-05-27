@@ -9,8 +9,17 @@ import com.languagelearning.repository.mysql.FeedbackRepository;
 import com.languagelearning.repository.mysql.SkillTreeRepository;
 import com.languagelearning.repository.mysql.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+import java.util.Optional;
+import com.languagelearning.dto.admin.feedback.AdminFeedbackDto;
 
 @Service
 @RequiredArgsConstructor
@@ -58,5 +67,71 @@ public class FeedbackService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
         return feedbackRepository.existsByUserAndSkillTreeId(user, treeId);
+    }
+
+    /**
+     * Admin: search feedbacks with optional filters and paging.
+     */
+    @Transactional(readOnly = true)
+    public Page<AdminFeedbackDto> searchFeedbacks(
+            Integer treeId,
+            String userEmail,
+            Integer minRating,
+            Integer maxRating,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable
+    ) {
+        Specification<Feedback> spec = Specification.where(null);
+
+        if (treeId != null) {
+            spec = spec.and((root, cq, cb) -> cb.equal(root.get("skillTree").get("id"), treeId));
+        }
+        if (userEmail != null && !userEmail.isBlank()) {
+            spec = spec.and((root, cq, cb) -> cb.like(cb.lower(root.get("user").get("email")), "%" + userEmail.toLowerCase() + "%"));
+        }
+        if (minRating != null) {
+            spec = spec.and((root, cq, cb) -> cb.greaterThanOrEqualTo(root.get("rating"), minRating));
+        }
+        if (maxRating != null) {
+            spec = spec.and((root, cq, cb) -> cb.lessThanOrEqualTo(root.get("rating"), maxRating));
+        }
+        if (from != null) {
+            spec = spec.and((root, cq, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from));
+        }
+        if (to != null) {
+            spec = spec.and((root, cq, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to));
+        }
+
+        var page = feedbackRepository.findAll(spec, pageable);
+
+        var dtoPage = new PageImpl<AdminFeedbackDto>(
+            page.stream().map(f -> {
+                var dto = new AdminFeedbackDto();
+                dto.setId(f.getId());
+                dto.setUserId(f.getUser() != null ? f.getUser().getId() : null);
+                dto.setEmail(f.getUser() != null ? f.getUser().getEmail() : null);
+                dto.setTreeId(f.getSkillTree() != null ? f.getSkillTree().getId() : null);
+                // SkillTree doesn't store a title; provide a placeholder or null.
+                dto.setTree(f.getSkillTree() != null ? ("Tree #" + f.getSkillTree().getId()) : null);
+                dto.setRating(f.getRating());
+                dto.setCreatedAt(f.getCreatedAt());
+                return dto;
+            }).collect(Collectors.toList()),
+            pageable,
+            page.getTotalElements()
+        );
+
+        return dtoPage;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Feedback> findById(Integer id) {
+        return feedbackRepository.findById(id);
+    }
+
+    @Transactional
+    public void deleteById(Integer id) {
+        feedbackRepository.deleteById(id);
     }
 }
