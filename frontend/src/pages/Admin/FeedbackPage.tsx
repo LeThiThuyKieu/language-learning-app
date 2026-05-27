@@ -1,9 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Filter, MessageSquare, Search, Star, TreePine, Users } from "lucide-react";
 import AdminStatCard from "@/components/admin/common/AdminStatCard";
 import { feedbackService, type AdminFeedbackItem } from "@/services/admin/feedbackService";
 
-const ratingOptions = ["Tất cả", "5 sao", "4 sao", "3 sao", "2 sao", "1 sao"];
+const ratingOptions = [
+  { label: "Tất cả", value: "Tất cả", stars: 1 },
+  { label: "5 sao", value: "5 sao", stars: 5 },
+  { label: "4 sao", value: "4 sao", stars: 4 },
+  { label: "3 sao", value: "3 sao", stars: 3 },
+  { label: "2 sao", value: "2 sao", stars: 2 },
+  { label: "1 sao", value: "1 sao", stars: 1 },
+];
 const sortOptions = [
   { value: "newest", label: "Mới nhất" },
   { value: "oldest", label: "Cũ nhất" },
@@ -94,6 +101,34 @@ export default function FeedbackPage() {
   const [draftRatingFilter, setDraftRatingFilter] = useState("Tất cả");
   const [draftSortBy, setDraftSortBy] = useState("newest");
   const [page, setPage] = useState(0);
+  const [isTreeFilterOpen, setIsTreeFilterOpen] = useState(false);
+  const [isRatingFilterOpen, setIsRatingFilterOpen] = useState(false);
+  const [isSortFilterOpen, setIsSortFilterOpen] = useState(false);
+  const treeFilterRef = useRef<HTMLDivElement | null>(null);
+  const ratingFilterRef = useRef<HTMLDivElement | null>(null);
+  const sortFilterRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedTreeOption = draftTreeFilter;
+  const selectedRatingOption =
+    ratingOptions.find((option) => option.value === draftRatingFilter) ?? ratingOptions[0];
+  const selectedSortOption = sortOptions.find((option) => option.value === draftSortBy) ?? sortOptions[0];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (treeFilterRef.current && !treeFilterRef.current.contains(event.target as Node)) {
+        setIsTreeFilterOpen(false);
+      }
+      if (ratingFilterRef.current && !ratingFilterRef.current.contains(event.target as Node)) {
+        setIsRatingFilterOpen(false);
+      }
+      if (sortFilterRef.current && !sortFilterRef.current.contains(event.target as Node)) {
+        setIsSortFilterOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -197,8 +232,8 @@ export default function FeedbackPage() {
       )}
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          <label className="space-y-2 lg:col-span-1">
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-7 lg:gap-x-6 lg:gap-y-4 lg:items-start">
+          <label className="flex flex-col gap-2 lg:col-span-3">
             <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Tìm người dùng</span>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -211,59 +246,168 @@ export default function FeedbackPage() {
             </div>
           </label>
 
-          <label className="space-y-2">
+          <div className="flex flex-col gap-2 lg:min-w-[calc(100%+10px)]" ref={treeFilterRef}>
             <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Lọc theo tree</span>
-            <select
-              value={draftTreeFilter}
-              onChange={(event) => setDraftTreeFilter(event.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-orange-500 focus:bg-white"
-            >
-              {treeOptions.map((tree) => (
-                <option key={tree} value={tree}>{tree}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Lọc theo đánh giá</span>
-            <select
-              value={draftRatingFilter}
-              onChange={(event) => setDraftRatingFilter(event.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-orange-500 focus:bg-white"
-            >
-              {ratingOptions.map((rating) => (
-                <option key={rating} value={rating}>{rating}</option>
-              ))}
-            </select>
-          </label>
-
-          <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">Sắp xếp</label>
-            <div className="flex gap-3">
-              <select
-                value={draftSortBy}
-                onChange={(event) => setDraftSortBy(event.target.value)}
-                className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-orange-500 focus:bg-white"
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+            <div className="relative">
               <button
                 type="button"
-                onClick={() => {
-                  setSearchText(draftSearchText);
-                  setTreeFilter(draftTreeFilter);
-                  setRatingFilter(draftRatingFilter);
-                  setSortBy(draftSortBy);
-                  setPage(0);
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-700"
+                onClick={() => setIsTreeFilterOpen((current) => !current)}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 outline-none transition hover:border-orange-300 hover:bg-white hover:text-orange-600"
               >
-                <Filter size={16} />
-                Áp dụng
+                <span>{selectedTreeOption}</span>
+                <span className="text-xs text-gray-400">{isTreeFilterOpen ? "▲" : "▼"}</span>
               </button>
+
+              {isTreeFilterOpen && (
+                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                  {treeOptions.map((tree) => {
+                    const isActive = draftTreeFilter === tree;
+
+                    return (
+                      <button
+                        key={tree}
+                        type="button"
+                        onClick={() => {
+                          setDraftTreeFilter(tree);
+                          setIsTreeFilterOpen(false);
+                        }}
+                        className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition ${
+                          isActive
+                            ? "bg-orange-50 text-orange-700"
+                            : "text-gray-700 hover:bg-gray-50 hover:text-orange-600"
+                        }`}
+                      >
+                        <span className="font-semibold">{tree}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2 lg:min-w-[calc(100%+10px)]" ref={ratingFilterRef}>
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Lọc theo đánh giá</span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsRatingFilterOpen((current) => !current)}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 outline-none transition hover:border-orange-300 hover:bg-white hover:text-orange-600"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-0.5 text-amber-400">
+                    {Array.from({ length: selectedRatingOption.stars }, (_, index) => (
+                      <Star
+                        key={index}
+                        size={13}
+                        className={
+                          selectedRatingOption.value === "Tất cả"
+                            ? "text-amber-400"
+                            : "fill-amber-400 text-amber-400"
+                        }
+                        fill={selectedRatingOption.value === "Tất cả" ? "none" : "currentColor"}
+                      />
+                    ))}
+                  </span>
+                  <span>{selectedRatingOption.label}</span>
+                </span>
+                <span className="text-xs text-gray-400">{isRatingFilterOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {isRatingFilterOpen && (
+                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                  {ratingOptions.map((rating) => {
+                    const isActive = draftRatingFilter === rating.value;
+
+                    return (
+                      <button
+                        key={rating.value}
+                        type="button"
+                        onClick={() => {
+                          setDraftRatingFilter(rating.value);
+                          setIsRatingFilterOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition ${
+                          isActive
+                            ? "bg-orange-50 text-orange-700"
+                            : "text-gray-700 hover:bg-gray-50 hover:text-orange-600"
+                        }`}
+                      >
+                        <span className="flex items-center gap-0.5 text-amber-400">
+                          {Array.from({ length: rating.stars }, (_, index) => (
+                            <Star
+                              key={index}
+                              size={13}
+                              className={rating.value === "Tất cả" ? "text-amber-400" : "fill-amber-400 text-amber-400"}
+                              fill={rating.value === "Tất cả" ? "none" : "currentColor"}
+                            />
+                          ))}
+                        </span>
+                        <span className="font-semibold">{rating.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 lg:min-w-[calc(100%+10px)]" ref={sortFilterRef}>
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Sắp xếp</span>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsSortFilterOpen((current) => !current)}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 outline-none transition hover:border-orange-300 hover:bg-white hover:text-orange-600"
+              >
+                <span>{selectedSortOption.label}</span>
+                <span className="text-xs text-gray-400">{isSortFilterOpen ? "▲" : "▼"}</span>
+              </button>
+
+              {isSortFilterOpen && (
+                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                  {sortOptions.map((option) => {
+                    const isActive = draftSortBy === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          setDraftSortBy(option.value);
+                          setIsSortFilterOpen(false);
+                        }}
+                        className={`flex w-full items-center px-4 py-2.5 text-left text-sm transition ${
+                          isActive
+                            ? "bg-orange-50 text-orange-700"
+                            : "text-gray-700 hover:bg-gray-50 hover:text-orange-600"
+                        }`}
+                      >
+                        <span className="font-semibold">{option.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400">Áp dụng</label>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchText(draftSearchText);
+                setTreeFilter(draftTreeFilter);
+                setRatingFilter(draftRatingFilter);
+                setSortBy(draftSortBy);
+                setPage(0);
+              }}
+              className="inline-flex w-fit items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-orange-600 px-[10px] py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-700"
+            >
+              <Filter size={16} />
+              Áp dụng
+            </button>
           </div>
         </div>
       </div>
