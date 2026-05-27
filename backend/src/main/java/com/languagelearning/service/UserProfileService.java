@@ -197,29 +197,38 @@ public class UserProfileService {
                 }
             }
 
-            // Tìm tree đang học (in_progress hoặc tree đầu tiên chưa done)
+            // Tìm tree đang học: ưu tiên tree có status in_progress,
+            // nếu không có thì lấy tree đầu tiên chưa done (locked/not started)
+            int activeTreeIdx = -1;
             for (int ti = 0; ti < trees.size(); ti++) {
                 SkillTree tree = trees.get(ti);
                 UserSkillTreeProgress.ProgressStatus treeStatus =
                         treeStatusMap.getOrDefault(tree.getId(), UserSkillTreeProgress.ProgressStatus.locked);
-                if (treeStatus != UserSkillTreeProgress.ProgressStatus.done) {
-                    // Tìm node đang active trong tree này
-                    List<SkillNode> nodes = skillNodeRepository.findBySkillTree_IdOrderByOrderIndex(tree.getId());
-                    int activeNodeIdx = 1;
-                    for (int ni = 0; ni < nodes.size(); ni++) {
-                        SkillNode node = nodes.get(ni);
-                        if (nodeStatusMap.getOrDefault(node.getId(), UserNodeProgress.NodeProgressStatus.not_started)
-                                == UserNodeProgress.NodeProgressStatus.completed) {
-                            activeNodeIdx = ni + 2; // node tiếp theo
-                        } else {
-                            activeNodeIdx = ni + 1;
-                            break;
-                        }
-                    }
-                    activeNodeIdx = Math.min(activeNodeIdx, nodes.size());
-                    currentProgressLabel = "Tree " + (ti + 1) + " - Node " + activeNodeIdx + "/" + nodes.size();
-                    break;
+                if (treeStatus == UserSkillTreeProgress.ProgressStatus.in_progress) {
+                    activeTreeIdx = ti;
+                    break; // in_progress được ưu tiên cao nhất
                 }
+                if (treeStatus != UserSkillTreeProgress.ProgressStatus.done && activeTreeIdx == -1) {
+                    activeTreeIdx = ti; // ghi nhận tree đầu tiên chưa done, tiếp tục tìm in_progress
+                }
+            }
+
+            if (activeTreeIdx >= 0) {
+                SkillTree activeTree = trees.get(activeTreeIdx);
+                List<SkillNode> nodes = skillNodeRepository.findBySkillTree_IdOrderByOrderIndex(activeTree.getId());
+                int activeNodeIdx = 1;
+                for (int ni = 0; ni < nodes.size(); ni++) {
+                    SkillNode node = nodes.get(ni);
+                    if (nodeStatusMap.getOrDefault(node.getId(), UserNodeProgress.NodeProgressStatus.not_started)
+                            == UserNodeProgress.NodeProgressStatus.completed) {
+                        activeNodeIdx = ni + 2;
+                    } else {
+                        activeNodeIdx = ni + 1;
+                        break;
+                    }
+                }
+                activeNodeIdx = Math.min(activeNodeIdx, nodes.size());
+                currentProgressLabel = "Tree " + (activeTreeIdx + 1) + " - Node " + activeNodeIdx + "/" + nodes.size();
             }
         }
 

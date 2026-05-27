@@ -261,12 +261,9 @@ export default function LearningPage() {
                                             aria-hidden
                                         />
                                         <div
-                                            className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-5 flex items-center justify-between`}
+                                            className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-7 flex items-center justify-between`}
                                         >
                                             <div className="max-w-[72%]">
-                                                <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
-                                                    Phần {activeTreeIndex + 1}, Cửa 1
-                                                </div>
                                                 <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
                                                     {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${activeTreeIndex + 1}`}
                                                 </h1>
