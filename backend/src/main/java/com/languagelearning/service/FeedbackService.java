@@ -4,10 +4,14 @@ import com.languagelearning.dto.feedback.FeedbackRequest;
 import com.languagelearning.entity.Feedback;
 import com.languagelearning.entity.SkillTree;
 import com.languagelearning.entity.User;
+import com.languagelearning.entity.UserProfile;
+import com.languagelearning.entity.UserSkillTreeProgress;
 import com.languagelearning.exception.BadCredentialsException;
 import com.languagelearning.repository.mysql.FeedbackRepository;
 import com.languagelearning.repository.mysql.SkillTreeRepository;
 import com.languagelearning.repository.mysql.UserRepository;
+import com.languagelearning.repository.mysql.UserProfileRepository;
+import com.languagelearning.repository.mysql.UserSkillTreeProgressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -28,6 +32,8 @@ public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
     private final SkillTreeRepository skillTreeRepository;
+    private final UserProfileRepository userProfileRepository;
+    private final UserSkillTreeProgressRepository userSkillTreeProgressRepository;
 
     /**
      * Lưu feedback của user cho một skill tree.
@@ -111,10 +117,19 @@ public class FeedbackService {
                 dto.setId(f.getId());
                 dto.setUserId(f.getUser() != null ? f.getUser().getId() : null);
                 dto.setEmail(f.getUser() != null ? f.getUser().getEmail() : null);
+                    if (f.getUser() != null) {
+                        UserProfile profile = userProfileRepository.findByUser(f.getUser()).orElse(null);
+                        dto.setName(profile != null && profile.getFullName() != null ? profile.getFullName() : f.getUser().getEmail());
+                    }
                 dto.setTreeId(f.getSkillTree() != null ? f.getSkillTree().getId() : null);
-                // SkillTree doesn't store a title; provide a placeholder or null.
-                dto.setTree(f.getSkillTree() != null ? ("Tree #" + f.getSkillTree().getId()) : null);
+                    dto.setTree(buildTreeLabel(f.getSkillTree()));
                 dto.setRating(f.getRating());
+                    if (f.getUser() != null && f.getSkillTree() != null) {
+                        UserSkillTreeProgress progress = userSkillTreeProgressRepository
+                                .findByUserAndSkillTreeId(f.getUser(), f.getSkillTree().getId())
+                                .orElse(null);
+                        dto.setAccuracy(progress != null ? progress.getAccuracy() : null);
+                    }
                 dto.setCreatedAt(f.getCreatedAt());
                 return dto;
             }).collect(Collectors.toList()),
@@ -123,6 +138,25 @@ public class FeedbackService {
         );
 
         return dtoPage;
+    }
+
+    private String buildTreeLabel(SkillTree skillTree) {
+        if (skillTree == null) {
+            return null;
+        }
+        String levelName = skillTree.getLevel() != null ? skillTree.getLevel().getLevelName() : null;
+        Integer orderIndex = skillTree.getOrderIndex();
+
+        if (levelName != null && orderIndex != null) {
+            return levelName + " - Tree " + orderIndex;
+        }
+        if (levelName != null) {
+            return levelName;
+        }
+        if (orderIndex != null) {
+            return "Tree " + orderIndex;
+        }
+        return "Tree #" + skillTree.getId();
     }
 
     @Transactional(readOnly = true)

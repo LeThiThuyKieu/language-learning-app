@@ -17,7 +17,7 @@ public class AdminFeedbackDto {
     private Integer treeId;
     private String tree;
     private Integer rating;
-    private Integer accuracy; // placeholder (not currently stored)
+    private Double accuracy;
     private LocalDateTime createdAt;
     private String comment;
 }

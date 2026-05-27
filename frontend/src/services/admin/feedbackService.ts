@@ -29,9 +29,25 @@ export const feedbackService = {
     /**
      * Lấy toàn bộ feedback cho trang Admin.
      */
-    async getFeedbacks(): Promise<AdminFeedbackItem[]> {
-        const response = await apiClient.get<ApiResponse<AdminFeedbackItem[]>>("/admin/feedback");
-        return response.data.data ?? [];
+    async getFeedbacks(params?: {
+        page?: number;
+        size?: number;
+        treeId?: number;
+        userEmail?: string;
+        minRating?: number;
+        maxRating?: number;
+        from?: string;
+        to?: string;
+    }): Promise<{ items: AdminFeedbackItem[]; page: number; size: number; totalElements: number; totalPages: number }> {
+        const response = await apiClient.get<ApiResponse<any>>("/admin/feedback", { params });
+        const data = response.data.data ?? { items: [] };
+        return {
+            items: data.items ?? [],
+            page: data.page ?? 0,
+            size: data.size ?? 0,
+            totalElements: data.totalElements ?? 0,
+            totalPages: data.totalPages ?? 0,
+        };
     },
 
     /**
