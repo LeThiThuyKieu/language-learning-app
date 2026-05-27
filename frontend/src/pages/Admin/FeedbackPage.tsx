@@ -1,34 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Filter, MessageSquare, Search, Star, TreePine, Users } from "lucide-react";
 import AdminStatCard from "@/components/admin/common/AdminStatCard";
+import { feedbackService, type AdminFeedbackItem } from "@/services/admin/feedbackService";
 
-type FeedbackItem = {
-  id: number;
-  tree: string;
-  user: string;
-  name: string;
-  rating: number;
-  accuracy: number;
-  createdAt: string;
-  comment: string;
-};
-
-const mockFeedback: FeedbackItem[] = [
-  { id: 101, tree: "Basic Vocabulary", user: "alice@example.com", name: "Alice", rating: 3, accuracy: 84, createdAt: "2026-05-20 10:12", comment: "Nội dung dễ theo dõi, nhưng cần thêm ví dụ." },
-  { id: 102, tree: "Verb Tenses", user: "bob@example.com", name: "Bob", rating: 5, accuracy: 98, createdAt: "2026-05-21 14:03", comment: "Tree rất rõ ràng và dễ học." },
-  { id: 103, tree: "Listening 1", user: "carol@example.com", name: "Carol", rating: 2, accuracy: 71, createdAt: "2026-05-22 08:45", comment: "Phần nghe hơi nhanh với người mới." },
-  { id: 104, tree: "Travel Basics", user: "david@example.com", name: "David", rating: 4, accuracy: 90, createdAt: "2026-05-22 19:20", comment: "Bộ tree du lịch khá thực tế." },
-  { id: 105, tree: "Food & Drinks", user: "emma@example.com", name: "Emma", rating: 5, accuracy: 96, createdAt: "2026-05-23 11:05", comment: "Rất thích phần từ vựng chủ đề." },
-  { id: 106, tree: "Daily Routine", user: "frank@example.com", name: "Frank", rating: 4, accuracy: 88, createdAt: "2026-05-23 16:48", comment: "Bài tập vừa sức, mạch học tốt." },
-  { id: 107, tree: "Grammar Path", user: "grace@example.com", name: "Grace", rating: 5, accuracy: 99, createdAt: "2026-05-24 09:32", comment: "Cấu trúc tree giúp học theo lộ trình." },
-  { id: 108, tree: "Speaking Basics", user: "henry@example.com", name: "Henry", rating: 3, accuracy: 80, createdAt: "2026-05-24 18:10", comment: "Nên bổ sung thêm phản hồi phát âm." },
-  { id: 109, tree: "Travel Basics", user: "ivy@example.com", name: "Ivy", rating: 4, accuracy: 92, createdAt: "2026-05-25 10:00", comment: "Phần luyện tập phù hợp mục tiêu giao tiếp." },
-  { id: 110, tree: "Listening 1", user: "jack@example.com", name: "Jack", rating: 2, accuracy: 68, createdAt: "2026-05-25 13:25", comment: "Cần thêm hướng dẫn trước khi nghe." },
-  { id: 111, tree: "Food & Drinks", user: "kate@example.com", name: "Kate", rating: 5, accuracy: 97, createdAt: "2026-05-26 09:45", comment: "Tree đẹp, nội dung dễ nhớ." },
-  { id: 112, tree: "Daily Routine", user: "leo@example.com", name: "Leo", rating: 4, accuracy: 89, createdAt: "2026-05-26 15:15", comment: "Lộ trình học hợp lý và không bị rối." },
-];
-
-const treeOptions = ["Tất cả tree", ...Array.from(new Set(mockFeedback.map((item) => item.tree)))];
 const ratingOptions = ["Tất cả", "5 sao", "4 sao", "3 sao", "2 sao", "1 sao"];
 const sortOptions = [
   { value: "newest", label: "Mới nhất" },
@@ -52,9 +26,25 @@ function getInitials(name: string) {
     .join("");
 }
 
-function buildFeedbackStats(items: FeedbackItem[]) {
+function formatCreatedAt(value: string) {
+  const date = new Date(value.replace(" ", "T"));
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+function buildFeedbackStats(items: AdminFeedbackItem[]) {
   const totalFeedback = items.length;
-  const uniqueUsers = new Set(items.map((item) => item.user)).size;
+  const uniqueUsers = new Set(items.map((item) => item.email)).size;
   const uniqueTrees = new Set(items.map((item) => item.tree)).size;
 
   return [
@@ -92,6 +82,9 @@ function buildFeedbackStats(items: FeedbackItem[]) {
 }
 
 export default function FeedbackPage() {
+  const [feedbacks, setFeedbacks] = useState<AdminFeedbackItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [treeFilter, setTreeFilter] = useState("Tất cả tree");
   const [ratingFilter, setRatingFilter] = useState("Tất cả");
@@ -102,18 +95,60 @@ export default function FeedbackPage() {
   const [draftSortBy, setDraftSortBy] = useState("newest");
   const [page, setPage] = useState(0);
 
-  const stats = useMemo(() => buildFeedbackStats(mockFeedback), []);
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadFeedbacks() {
+      setLoading(true);
+      setLoadError(null);
+
+      try {
+        const data = await feedbackService.getFeedbacks();
+
+        if (!isActive) {
+          return;
+        }
+
+        setFeedbacks(data);
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        console.error("Lỗi tải feedback:", error);
+        setFeedbacks([]);
+        setLoadError("Không thể tải dữ liệu đánh giá từ máy chủ.");
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadFeedbacks();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const treeOptions = useMemo(
+    () => ["Tất cả tree", ...Array.from(new Set(feedbacks.map((item) => item.tree)))],
+    [feedbacks],
+  );
+
+  const stats = useMemo(() => buildFeedbackStats(feedbacks), [feedbacks]);
 
   const filteredFeedback = useMemo(() => {
     const search = searchText.trim().toLowerCase();
 
-    const filtered = mockFeedback.filter((item) => {
+    const filtered = feedbacks.filter((item) => {
       const matchesSearch =
         search.length === 0 ||
         item.name.toLowerCase().includes(search) ||
-        item.user.toLowerCase().includes(search) ||
+        item.email.toLowerCase().includes(search) ||
         item.tree.toLowerCase().includes(search) ||
-        item.comment.toLowerCase().includes(search);
+        (item.comment?.toLowerCase().includes(search) ?? false);
 
       const matchesTree = treeFilter === "Tất cả tree" || item.tree === treeFilter;
       const matchesRating = ratingFilter === "Tất cả" || item.rating === Number(ratingFilter[0]);
@@ -132,12 +167,13 @@ export default function FeedbackPage() {
     });
 
     return filtered;
-  }, [ratingFilter, searchText, sortBy, treeFilter]);
+  }, [feedbacks, ratingFilter, searchText, sortBy, treeFilter]);
 
-  const pageSize = 5;
+  const pageSize = 10;
   const totalPages = Math.max(1, Math.ceil(filteredFeedback.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
   const pagedFeedback = filteredFeedback.slice(safePage * pageSize, safePage * pageSize + pageSize);
+  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index);
 
   return (
     <div className="space-y-6">
@@ -153,6 +189,12 @@ export default function FeedbackPage() {
           <AdminStatCard key={stat.label} {...stat} />
         ))}
       </div>
+
+      {loadError && (
+        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {loadError}
+        </div>
+      )}
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
@@ -234,12 +276,18 @@ export default function FeedbackPage() {
                 <th className="px-5 py-4 text-left">Người dùng</th>
                 <th className="px-5 py-4 text-left">Tree</th>
                 <th className="px-5 py-4 text-left">Đánh giá</th>
-                <th className="px-5 py-4 text-left">Ngày</th>
                 <th className="px-5 py-4 text-left">Accuracy</th>
+                <th className="px-5 py-4 text-left">Ngày tạo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {pagedFeedback.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td className="px-5 py-10 text-center text-sm text-gray-500" colSpan={5}>
+                    Đang tải dữ liệu đánh giá...
+                  </td>
+                </tr>
+              ) : pagedFeedback.length === 0 ? (
                 <tr>
                   <td className="px-5 py-10 text-center text-sm text-gray-500" colSpan={5}>
                     Không tìm thấy đánh giá phù hợp.
@@ -255,21 +303,20 @@ export default function FeedbackPage() {
                         </div>
                         <div>
                           <div className="font-semibold text-gray-900">{item.name}</div>
-                          <div className="text-xs text-gray-500">{item.user}</div>
+                          <div className="text-xs text-gray-500">{item.email}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm font-medium text-gray-700">{item.tree}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1">{renderStars(item.rating)}</div>
-                      <div className="mt-1 text-xs font-medium text-gray-500">{item.rating}/5</div>
                     </td>
-                    <td className="px-5 py-4 text-sm text-gray-600">{item.createdAt}</td>
                     <td className="px-5 py-4">
                       <div className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
                         {item.accuracy}%
                       </div>
                     </td>
+                    <td className="px-5 py-4 text-sm text-gray-600">{formatCreatedAt(item.createdAt)}</td>
                   </tr>
                 ))
               )}
@@ -279,7 +326,7 @@ export default function FeedbackPage() {
 
         <div className="flex flex-col gap-4 border-t border-gray-100 bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-gray-600">
-            Trang {safePage + 1} / {totalPages} - Tổng {filteredFeedback.length} đánh giá
+            Trang {safePage + 1}/{totalPages} - Tổng {filteredFeedback.length} đánh giá
           </p>
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <button
@@ -290,12 +337,20 @@ export default function FeedbackPage() {
             >
               &lt;
             </button>
-            <button
-              type="button"
-              className="rounded-md bg-orange-500 px-3 py-2 text-sm font-bold text-white shadow-sm"
-            >
-              {safePage + 1}
-            </button>
+            {pageNumbers.map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setPage(pageNumber)}
+                className={`rounded-md px-3 py-2 text-sm font-bold shadow-sm transition ${
+                  pageNumber === safePage
+                    ? "bg-orange-500 text-white"
+                    : "border border-gray-200 bg-white text-gray-500 hover:border-orange-300 hover:text-orange-600"
+                }`}
+              >
+                {pageNumber + 1}
+              </button>
+            ))}
             <button
               type="button"
               onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
