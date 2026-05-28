@@ -30,6 +30,8 @@ interface LocationState {
     nextLevelId?: number;
     nextLevelKey?: string;
     nextLevelName?: string;
+    /** Danh sách level ID lấy câu hỏi (test tổng hợp). Mặc định = [nextLevelId - 1] */
+    sourceLevelIds?: number[];
 }
 
 // Helpers
@@ -133,14 +135,21 @@ function useConfetti(active: boolean) {
 function IntroScreen({
     nextLevelId,
     nextLevelName,
+    sourceLevelIds,
     onSkip,
     onContinue,
 }: {
     nextLevelId: number;
     nextLevelName: string;
+    sourceLevelIds: number[];
     onSkip: () => void;
     onContinue: () => void;
 }) {
+    const isMultiLevel = sourceLevelIds.length > 1;
+    const sourceDesc = isMultiLevel
+        ? `Level ${sourceLevelIds.join(" + Level ")}`
+        : `Level ${sourceLevelIds[0]}`;
+
     return (
         <div
             className="min-h-screen flex flex-col px-8 md:px-16 lg:px-32 py-12"
@@ -178,7 +187,10 @@ function IntroScreen({
                 {/* Sub text */}
                 <p className="text-white/60 text-base md:text-lg leading-relaxed text-center max-w-md">
                     Bài test gồm từ vựng, nghe, nói và nối từ.<br />
-                    Đạt từ 70% để mở khóa lộ trình mới.
+                    {isMultiLevel
+                        ? `Câu hỏi tổng hợp từ ${sourceDesc} — đạt 70% để mở khóa.`
+                        : "Đạt từ 70% để mở khóa lộ trình mới."
+                    }
                 </p>
             </div>
 
@@ -405,6 +417,8 @@ export default function SkipTestPage() {
     const nextLevelId = state.nextLevelId ?? 3;
     const nextLevelKey = state.nextLevelKey ?? "advanced";
     const nextLevelName = state.nextLevelName ?? "Advanced";
+    // sourceLevelIds: các level lấy câu hỏi. Mặc định = level liền trước nextLevelId
+    const sourceLevelIds = state.sourceLevelIds ?? [Math.max(1, nextLevelId - 1)];
 
     const [stage, setStage] = useState<Stage>("INTRO");
     const [loading, setLoading] = useState(false);
@@ -427,7 +441,7 @@ export default function SkipTestPage() {
         setLoading(true);
         setError(null);
         try {
-            const data = await learningService.getSkipTestQuestions(nextLevelId);
+            const data = await learningService.getSkipTestQuestions(nextLevelId, sourceLevelIds);
             // data is SkillTreeQuestionsData — flatten all questions from all nodes
             const flat: SkillTreeEnrichedQuestion[] = (data.nodes ?? []).flatMap(n => n.questions ?? []);
             setAllQuestions(flat);
@@ -502,6 +516,7 @@ export default function SkipTestPage() {
             <IntroScreen
                 nextLevelId={nextLevelId}
                 nextLevelName={nextLevelName}
+                sourceLevelIds={sourceLevelIds}
                 onSkip={() => navigate("/learn")}
                 onContinue={loadAndStart}
             />

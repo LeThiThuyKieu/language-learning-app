@@ -104,9 +104,12 @@ export const learningService = {
   },
 
   /** Lấy bộ câu hỏi ngẫu nhiên cho bài test học vượt level — mỗi lần gọi là random mới */
-  getSkipTestQuestions: async (levelId: number) => {
+  getSkipTestQuestions: async (levelId: number, sourceLevelIds: number[] = []) => {
+    const params = sourceLevelIds.length > 0
+      ? "?" + sourceLevelIds.map((id) => `sourceLevelIds=${id}`).join("&")
+      : "";
     const response = await apiClient.get<SkillTreeQuestionsData>(
-      `/learning/levels/${levelId}/skip-test`
+      `/learning/levels/${levelId}/skip-test${params}`
     );
     return response.data;
   },

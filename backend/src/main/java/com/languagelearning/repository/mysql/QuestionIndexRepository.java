@@ -43,4 +43,27 @@ public interface QuestionIndexRepository extends JpaRepository<QuestionIndex, Lo
             @Param("ids") List<Long> ids,
             @Param("limit") int limit
     );
+
+    /** Lấy ngẫu nhiên câu hỏi từ nhiều level (dùng cho skip-test tổng hợp) */
+    @Query(
+            value = "SELECT * FROM questions WHERE level_id IN (:levelIds) AND question_type = :type ORDER BY RAND() LIMIT :limit",
+            nativeQuery = true
+    )
+    List<QuestionIndex> findRandomByLevelsAndType(
+            @Param("levelIds") List<Integer> levelIds,
+            @Param("type") String type,
+            @Param("limit") int limit
+    );
+
+    /** Lấy ngẫu nhiên câu hỏi từ nhiều level, loại trừ các id đã dùng */
+    @Query(
+            value = "SELECT * FROM questions WHERE level_id IN (:levelIds) AND question_type = :type AND id NOT IN (:ids) ORDER BY RAND() LIMIT :limit",
+            nativeQuery = true
+    )
+    List<QuestionIndex> findRandomByLevelsAndTypeExcludingIds(
+            @Param("levelIds") List<Integer> levelIds,
+            @Param("type") String type,
+            @Param("ids") List<Long> ids,
+            @Param("limit") int limit
+    );
 }

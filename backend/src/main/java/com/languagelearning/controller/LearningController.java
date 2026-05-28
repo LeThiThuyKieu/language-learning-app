@@ -66,16 +66,25 @@ public class LearningController {
      * Lấy bộ câu hỏi ngẫu nhiên cho bài test học vượt level.
      * Cấu trúc giống REVIEW node: 4 VOCAB + 4 MATCHING + 1 LISTENING + 1 SPEAKING.
      * Mỗi lần gọi là random mới (không cache).
+     *
+     * @param levelId       Level đích muốn vượt lên (dùng để lưu attempt)
+     * @param sourceLevelIds Danh sách level lấy câu hỏi (mặc định = [levelId - 1]).
+     *                       Ví dụ: vượt lên Level 3 từ Level 1 → sourceLevelIds = [1, 2]
      */
     @GetMapping(value = "/levels/{levelId}/skip-test", produces = MediaType.APPLICATION_JSON_VALUE)
     public SkillTreeQuestionsResponse getSkipTestQuestions(
             @PathVariable Integer levelId,
+            @RequestParam(required = false) List<Integer> sourceLevelIds,
             Authentication authentication
     ) {
         if (authentication == null || authentication.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
-        return skillTreeQuestionService.buildRandomSkipTestForLevel(levelId);
+        // Nếu không truyền sourceLevelIds → mặc định lấy câu từ level liền trước
+        List<Integer> sources = (sourceLevelIds != null && !sourceLevelIds.isEmpty())
+                ? sourceLevelIds
+                : List.of(Math.max(1, levelId - 1));
+        return skillTreeQuestionService.buildRandomSkipTestForLevels(sources);
     }
 
     /**
