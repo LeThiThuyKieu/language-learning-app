@@ -15,5 +15,6 @@ public class BadgeDto {
     private String description;
     private Integer requiredKn;
     private String iconUrl;
+    private String status;
     private long recipientCount;
 }

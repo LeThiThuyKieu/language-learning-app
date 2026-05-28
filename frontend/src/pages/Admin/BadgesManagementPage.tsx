@@ -11,6 +11,7 @@ import {
     Search,
     Sparkles,
     ToggleRight,
+    ToggleLeft,
     Users,
 } from "lucide-react";
 
@@ -71,6 +72,16 @@ function BadgePreview({ badge }: { badge: Pick<AdminBadge, "badgeName" | "iconUr
     return <img src={src} alt={badge.badgeName} onError={() => setSrc(DEFAULT_ICON)} className="h-full w-full object-cover" />;
 }
 
+function getBadgeStatusLabel(status: AdminBadge["status"]) {
+    return status === "inactive" ? "Inactive" : "Active";
+}
+
+function getBadgeStatusStyles(status: AdminBadge["status"]) {
+    return status === "inactive"
+        ? "bg-slate-100 text-slate-600"
+        : "bg-emerald-50 text-emerald-700";
+}
+
 export default function BadgesManagementPage() {
     const [badges, setBadges] = useState<AdminBadge[]>([]);
     const [stats, setStats] = useState<AdminStatCardProps[]>([]);
@@ -123,7 +134,7 @@ export default function BadgesManagementPage() {
         setBadgeModalOpen(true);
     }
 
-    async function handleSaveBadge(payload: { badgeName: string; description: string; requiredKn: number; file?: File | null }) {
+    async function handleSaveBadge(payload: { badgeName: string; description: string; requiredKn: number; status: "active" | "inactive"; file?: File | null }) {
         try {
             if (editingBadge) {
                 await badgeManagementService.updateBadge(editingBadge.id, payload);
@@ -139,6 +150,29 @@ export default function BadgesManagementPage() {
         } catch (error) {
             const message = error instanceof Error ? error.message : "Không thể lưu badge";
             toast.error(message);
+        }
+    }
+
+    const [togglingId, setTogglingId] = useState<number | null>(null);
+
+    async function handleToggleBadgeStatus(badge: AdminBadge) {
+        try {
+            setTogglingId(badge.id);
+            const nextStatus = badge.status === "inactive" ? "active" : "inactive";
+            const updated = await badgeManagementService.updateBadge(badge.id, {
+                badgeName: badge.badgeName,
+                description: badge.description || "",
+                requiredKn: badge.requiredKn,
+                status: nextStatus,
+            });
+
+            // Update local list like ChatbotRulesPage — no toast, no full refetch
+            setBadges((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+        } catch (error) {
+            // Fail silently like chatbot rules page; log for debugging
+            console.error("Failed toggling badge status", error);
+        } finally {
+            setTogglingId(null);
         }
     }
 
@@ -254,9 +288,9 @@ export default function BadgesManagementPage() {
                                                 <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
                                                     Trạng thái
                                                 </div>
-                                                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                                                <div className={`mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${getBadgeStatusStyles(badge.status)}`}>
                                                     <Sparkles className="h-3.5 w-3.5" />
-                                                    Active
+                                                    {getBadgeStatusLabel(badge.status)}
                                                 </div>
                                             </div>
                                         </div>
@@ -272,10 +306,16 @@ export default function BadgesManagementPage() {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                                                onClick={() => void handleToggleBadgeStatus(badge)}
+                                                disabled={togglingId === badge.id}
+                                                title={badge.status === "inactive" ? "Bật badge" : "Tắt badge"}
+                                                className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
                                             >
-                                                <ToggleRight className="h-3.5 w-3.5" />
-                                                Active
+                                                {togglingId === badge.id
+                                                    ? <Loader2 className="h-5 w-5 animate-spin" />
+                                                    : badge.status === "active"
+                                                        ? <ToggleRight className="h-5 w-5 text-emerald-500" />
+                                                        : <ToggleLeft className="h-5 w-5 text-gray-400" />}
                                             </button>
                                         </div>
                                     </article>

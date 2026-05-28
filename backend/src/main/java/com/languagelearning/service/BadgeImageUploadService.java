@@ -20,13 +20,12 @@ public class BadgeImageUploadService {
             "image/png",
             "image/webp"
     );
-    private static final Set<String> ALLOWED_FILE_EXTENSIONS = Set.of(
+        private static final Set<String> ALLOWED_FILE_EXTENSIONS = Set.of(
             ".jpg",
             ".jpeg",
-            ".jprg",
             ".png",
             ".webp"
-    );
+        );
 
     private final String cloudName;
     private final String apiKey;

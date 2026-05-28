@@ -419,6 +419,7 @@ public class ProgressService {
                 .orElse(0);
 
         List<Badge> eligibleBadges = badgeRepository.findAll().stream()
+            .filter(b -> b.getStatus() == null || "active".equalsIgnoreCase(b.getStatus()))
                 .filter(b -> b.getRequiredKn() != null && totalKn >= b.getRequiredKn())
                 .toList();
 

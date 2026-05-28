@@ -130,6 +130,7 @@ public class BadgeManagementService {
                 .description(badge.getDescription())
                 .requiredKn(badge.getRequiredKn())
                 .iconUrl(badge.getIconUrl())
+                                .status(normalizeBadgeStatus(badge.getStatus()))
                 .recipientCount(recipientCount)
                 .build();
     }
@@ -145,10 +146,11 @@ public class BadgeManagementService {
     }
 
         @Transactional
-        public BadgeDto createBadge(String badgeName, String description, Integer requiredKn, MultipartFile file) {
+        public BadgeDto createBadge(String badgeName, String description, Integer requiredKn, String status, MultipartFile file) {
                 String normalizedBadgeName = normalizeBadgeName(badgeName);
                 Integer normalizedRequiredKn = normalizeRequiredKn(requiredKn);
                 String normalizedDescription = normalizeDescription(description);
+                String normalizedStatus = normalizeBadgeStatus(status);
 
                 String iconUrl = badgeImageUploadService.uploadBadgeImage(file);
 
@@ -157,19 +159,24 @@ public class BadgeManagementService {
                 badge.setDescription(normalizedDescription);
                 badge.setRequiredKn(normalizedRequiredKn);
                 badge.setIconUrl(iconUrl);
+                badge.setStatus(normalizedStatus);
 
                 Badge saved = badgeRepository.save(badge);
                 return toDto(saved, 0L);
         }
 
         @Transactional
-        public BadgeDto updateBadge(Integer id, String badgeName, String description, Integer requiredKn, MultipartFile file) {
+        public BadgeDto updateBadge(Integer id, String badgeName, String description, Integer requiredKn, String status, MultipartFile file) {
                 Badge badge = badgeRepository.findById(id)
                                 .orElseThrow(() -> new IllegalArgumentException("Badge not found"));
 
                 badge.setBadgeName(normalizeBadgeName(badgeName));
                 badge.setDescription(normalizeDescription(description));
                 badge.setRequiredKn(normalizeRequiredKn(requiredKn));
+
+                if (status != null && !status.isBlank()) {
+                        badge.setStatus(normalizeBadgeStatus(status));
+                }
 
                 if (file != null && !file.isEmpty()) {
                         String previousIconUrl = badge.getIconUrl();
@@ -203,5 +210,18 @@ public class BadgeManagementService {
                 }
                 String trimmed = description.trim();
                 return trimmed.isEmpty() ? null : trimmed;
+        }
+
+        private String normalizeBadgeStatus(String status) {
+                if (status == null || status.isBlank()) {
+                        return "active";
+                }
+
+                String normalized = status.trim().toLowerCase(Locale.ROOT);
+                if (!normalized.equals("active") && !normalized.equals("inactive")) {
+                        throw new IllegalArgumentException("Invalid badge status");
+                }
+
+                return normalized;
         }
 }

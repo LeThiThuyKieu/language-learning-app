@@ -36,8 +36,9 @@ public class BadgeManagementController {
             @RequestParam String badgeName,
             @RequestParam(required = false) String description,
             @RequestParam Integer requiredKn,
+            @RequestParam(required = false) String status,
             @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.createBadge(badgeName, description, requiredKn, file)));
+        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.createBadge(badgeName, description, requiredKn, status, file)));
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -46,7 +47,8 @@ public class BadgeManagementController {
             @RequestParam String badgeName,
             @RequestParam(required = false) String description,
             @RequestParam Integer requiredKn,
+            @RequestParam(required = false) String status,
             @RequestParam(value = "file", required = false) MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.updateBadge(id, badgeName, description, requiredKn, file)));
+        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.updateBadge(id, badgeName, description, requiredKn, status, file)));
     }
 }

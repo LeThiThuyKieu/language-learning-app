@@ -14,6 +14,7 @@ type FormState = {
     badgeName: string;
     description: string;
     requiredKn: string;
+    status: "active" | "inactive";
 };
 
 export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Props) {
@@ -22,6 +23,7 @@ export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Pr
         badgeName: "",
         description: "",
         requiredKn: "",
+        status: "active",
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -33,6 +35,7 @@ export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Pr
             badgeName: badge?.badgeName || "",
             description: badge?.description || "",
             requiredKn: badge?.requiredKn ? String(badge.requiredKn) : "",
+            status: badge?.status || "active",
         });
         setSelectedFile(null);
         setErrors({});
@@ -78,6 +81,7 @@ export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Pr
             badgeName: form.badgeName.trim(),
             description: form.description.trim(),
             requiredKn: Number(form.requiredKn),
+            status: form.status,
             file: selectedFile,
         });
     }
@@ -168,6 +172,18 @@ export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Pr
                                     placeholder="30"
                                 />
                                 {errors.requiredKn && <p className="mt-1 text-xs text-red-500">{errors.requiredKn}</p>}
+                            </div>
+
+                            <div>
+                                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Trạng thái</label>
+                                <select
+                                    value={form.status}
+                                    onChange={(event) => setForm({ ...form, status: event.target.value as FormState["status"] })}
+                                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white"
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
                             </div>
                         </div>
                     </div>

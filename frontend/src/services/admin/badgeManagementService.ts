@@ -20,6 +20,7 @@ export interface AdminBadge {
     description: string | null;
     requiredKn: number;
     iconUrl: string | null;
+    status: "active" | "inactive";
     recipientCount: number;
 }
 
@@ -47,6 +48,7 @@ export interface BadgeUpsertPayload {
     badgeName: string;
     description: string;
     requiredKn: number;
+    status: "active" | "inactive";
     file?: File | null;
 }
 
@@ -55,6 +57,7 @@ function mapBadge(badge: AdminBadge): AdminBadge {
         ...badge,
         description: badge.description?.trim() ? badge.description : null,
         iconUrl: badge.iconUrl?.trim() ? badge.iconUrl : null,
+        status: badge.status === "inactive" ? "inactive" : "active",
     };
 }
 
@@ -63,6 +66,7 @@ function buildBadgeFormData(payload: BadgeUpsertPayload): FormData {
     formData.append("badgeName", payload.badgeName);
     formData.append("description", payload.description);
     formData.append("requiredKn", String(payload.requiredKn));
+    formData.append("status", payload.status);
 
     if (payload.file) {
         formData.append("file", payload.file);
