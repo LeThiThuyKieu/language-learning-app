@@ -89,15 +89,21 @@ public class LearnProgressService {
                                     p -> p,
                                     (a, b) -> a));
 
-            // Sort: trees user đã interact (không phải locked) → sort theo treeId (thứ tự gốc khi học)
-            //       trees chưa học (locked) → sort theo order_index hiện tại (thứ tự mới)
+            // Sort theo lộ trình gốc của user:
+            // - Trees đã interact: dùng initialOrderIndex (order_index lúc user bắt đầu học tree đó)
+            //   Fallback về treeId nếu initialOrderIndex null (bản ghi cũ trước khi có cột này)
+            // - Trees chưa học (locked/không có progress): dùng order_index hiện tại
             List<SkillTree> trees = allTrees.stream()
                     .sorted((a, b) -> {
                         UserSkillTreeProgress pa = treeProgressMap.get(a.getId());
                         UserSkillTreeProgress pb = treeProgressMap.get(b.getId());
                         boolean aInteracted = pa != null && pa.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
                         boolean bInteracted = pb != null && pb.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
-                        if (aInteracted && bInteracted) return Integer.compare(a.getId(), b.getId());
+                        if (aInteracted && bInteracted) {
+                            int oa = pa.getInitialOrderIndex() != null ? pa.getInitialOrderIndex() : a.getId();
+                            int ob = pb.getInitialOrderIndex() != null ? pb.getInitialOrderIndex() : b.getId();
+                            return Integer.compare(oa, ob);
+                        }
                         if (aInteracted) return -1;
                         if (bInteracted) return 1;
                         return Integer.compare(a.getOrderIndex(), b.getOrderIndex());
@@ -217,14 +223,21 @@ public class LearnProgressService {
                                     p -> p,
                                     (a, b) -> a));
 
-            // Sort: trees đã interact → theo treeId (thứ tự gốc); locked → theo order_index hiện tại
+            // Sort theo lộ trình gốc của user:
+            // - Trees đã interact: dùng initialOrderIndex (order_index lúc user bắt đầu học tree đó)
+            //   Fallback về treeId nếu initialOrderIndex null (bản ghi cũ trước khi có cột này)
+            // - Trees chưa học (locked/không có progress): dùng order_index hiện tại
             List<SkillTree> trees = allTrees.stream()
                     .sorted((a, b) -> {
                         UserSkillTreeProgress pa = treeProgressMap.get(a.getId());
                         UserSkillTreeProgress pb = treeProgressMap.get(b.getId());
                         boolean aInteracted = pa != null && pa.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
                         boolean bInteracted = pb != null && pb.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
-                        if (aInteracted && bInteracted) return Integer.compare(a.getId(), b.getId());
+                        if (aInteracted && bInteracted) {
+                            int oa = pa.getInitialOrderIndex() != null ? pa.getInitialOrderIndex() : a.getId();
+                            int ob = pb.getInitialOrderIndex() != null ? pb.getInitialOrderIndex() : b.getId();
+                            return Integer.compare(oa, ob);
+                        }
                         if (aInteracted) return -1;
                         if (bInteracted) return 1;
                         return Integer.compare(a.getOrderIndex(), b.getOrderIndex());

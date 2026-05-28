@@ -416,6 +416,7 @@ CREATE TABLE IF NOT EXISTS `user_skill_tree_progress` (
     `status` enum('locked','in_progress','done') DEFAULT 'locked',
     `accuracy` double NOT NULL,
     `updated_at` datetime DEFAULT current_timestamp(),
+    `initial_order_index` int(11) DEFAULT NULL COMMENT 'order_index của tree tại thời điểm user bắt đầu học. Dùng để sort lộ trình đúng thứ tự gốc dù adaptive difficulty có đổi thứ tự sau.',
     PRIMARY KEY (`id`),
     KEY `user_id` (`user_id`),
     KEY `skill_tree_id` (`skill_tree_id`),
