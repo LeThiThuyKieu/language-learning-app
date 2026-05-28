@@ -486,6 +486,7 @@ function ProfileCard({onCreateProfile}: { onCreateProfile: () => void }) {
 }
 
 function TopStats() {
+    const location = useLocation();
     const [profile, setProfile] = useState<{ streakCount: number; totalKn: number; totalXp: number; badgeCount: number } | null>(null);
 
     useEffect(() => {
@@ -497,7 +498,7 @@ function TopStats() {
                 badgeCount: p.badges?.filter(b => b.earned).length ?? 0,
             }))
             .catch(() => {/* ignore */});
-    }, []);
+    }, [location.key]); // refetch mỗi khi navigate về /learn
 
     const stats = [
         { label: "Streak", value: profile?.streakCount ?? "—", icon: <Flame className="h-5 w-5 text-orange-500" /> },
