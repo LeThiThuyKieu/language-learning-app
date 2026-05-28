@@ -111,6 +111,14 @@ export const learningService = {
     return response.data;
   },
 
+  /** Lưu kết quả bài skip-test vào DB */
+  submitSkipTest: async (
+    levelId: number,
+    payload: { correctCount: number; totalCount: number; accuracy: number; passed: boolean }
+  ): Promise<void> => {
+    await apiClient.post(`/learning/levels/${levelId}/skip-test/submit`, payload);
+  },
+
   /** Kiểm tra user đã feedback cho tree này chưa */
   checkFeedback: async (treeId: number): Promise<boolean> => {
     const response = await apiClient.get<{ done: boolean }>(`/feedback/check/${treeId}`);

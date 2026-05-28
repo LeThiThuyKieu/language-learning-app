@@ -1,21 +1,22 @@
 package com.languagelearning.controller;
 
+import com.languagelearning.dto.learning.SkipTestSubmitRequest;
 import com.languagelearning.dto.learning.SkillTreeQuestionsResponse;
 import com.languagelearning.entity.User;
 import com.languagelearning.repository.mysql.UserRepository;
 import com.languagelearning.service.SkillTreeQuestionService;
 import com.languagelearning.service.SkillTreeQuestionTextFormatter;
+import com.languagelearning.service.SkipTestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/learning")
@@ -24,6 +25,7 @@ public class LearningController {
 
     private final SkillTreeQuestionService skillTreeQuestionService;
     private final UserRepository userRepository;
+    private final SkipTestService skipTestService;
 
     // Lấy bộ câu hỏi cho một skill tree (5 node) — cố định theo user (snapshot level).
     @GetMapping(value = "/trees/{treeId}/questions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -74,6 +76,27 @@ public class LearningController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
         return skillTreeQuestionService.buildRandomSkipTestForLevel(levelId);
+    }
+
+    /**
+     * Lưu kết quả bài test học vượt level vào DB (user_skip_test_attempt).
+     * Gọi sau khi user hoàn thành tất cả câu hỏi.
+     */
+    @PostMapping(value = "/levels/{levelId}/skip-test/submit", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> submitSkipTest(
+            @PathVariable Integer levelId,
+            @RequestBody SkipTestSubmitRequest request,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        skipTestService.saveAttempt(authentication.getName(), levelId, request);
+        return ResponseEntity.ok(Map.of(
+                "saved", true,
+                "passed", request.isPassed(),
+                "accuracy", request.getAccuracy()
+        ));
     }
 
     private int resolveUserId(Authentication authentication) {

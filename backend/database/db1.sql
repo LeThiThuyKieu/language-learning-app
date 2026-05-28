@@ -426,6 +426,25 @@ CREATE TABLE IF NOT EXISTS `user_skill_tree_progress` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table language_learning_app.user_skip_test_attempt
+CREATE TABLE IF NOT EXISTS `user_skip_test_attempt` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `target_level_id` int(11) NOT NULL,
+    `correct_count` int(11) NOT NULL DEFAULT 0,
+    `total_count` int(11) NOT NULL DEFAULT 0,
+    `accuracy` int(11) NOT NULL DEFAULT 0 COMMENT 'Tỷ lệ đúng 0-100%',
+    `passed` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 nếu đạt (accuracy >= 70%)',
+    `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_skip_test_user` (`user_id`),
+    KEY `idx_skip_test_level` (`target_level_id`),
+    CONSTRAINT `fk_skip_test_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_skip_test_level` FOREIGN KEY (`target_level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử các lần thử học vượt level của user';
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table language_learning_app.user_streak
 CREATE TABLE IF NOT EXISTS `user_streak` (
                                              `id` int(11) NOT NULL AUTO_INCREMENT,

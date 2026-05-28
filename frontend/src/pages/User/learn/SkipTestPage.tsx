@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowRight, ClipboardList, RotateCcw, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowRight, ClipboardList, RotateCcw, CheckCircle2, XCircle, LogOut } from "lucide-react";
 import { learningService } from "@/services/learningService";
 import { profileService } from "@/services/profileService";
 import type { AttemptItem } from "@/services/learningService";
@@ -216,6 +216,7 @@ function ResultScreen({
     questions,
     onContinue,
     onRetry,
+    onExit,
 }: {
     passed: boolean;
     accuracy: number;
@@ -227,6 +228,7 @@ function ResultScreen({
     questions: SkillTreeEnrichedQuestion[];
     onContinue: () => void;
     onRetry: () => void;
+    onExit: () => void;
 }) {
     const canvasRef = useConfetti(passed);
     const [visible, setVisible] = useState(false);
@@ -357,23 +359,33 @@ function ResultScreen({
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    type="button"
-                                    onClick={onRetry}
-                                    className={`w-full rounded-2xl bg-gradient-to-r ${gradient} hover:opacity-90 active:scale-95 text-white font-extrabold py-4 text-sm uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2`}
-                                >
-                                    <RotateCcw className="w-4 h-4" /> Thử lại
-                                </button>
+                            /* Fail: 3 nút 1 hàng ngang — Xem lại bài làm | Thoát | Thử lại */
+                            <div className="flex gap-2 items-stretch">
                                 {attempts.length > 0 && (
                                     <button
                                         type="button"
                                         onClick={() => setShowSheet(true)}
-                                        className="w-full rounded-2xl border-2 border-gray-200 text-gray-600 font-bold py-3.5 text-sm uppercase tracking-wide transition hover:bg-gray-50 active:scale-95 flex items-center justify-center gap-2"
+                                        className="flex-1 rounded-2xl border-2 border-gray-200 bg-white text-gray-600 font-bold py-3 text-xs uppercase tracking-wide transition hover:bg-gray-50 active:scale-95 flex flex-col items-center justify-center gap-1.5 min-w-0"
                                     >
-                                        <ClipboardList className="w-4 h-4" /> Xem lại bài làm
+                                        <ClipboardList className="w-5 h-5 shrink-0" />
+                                        <span className="leading-tight text-center">Xem lại<br />bài làm</span>
                                     </button>
                                 )}
+                                <button
+                                    type="button"
+                                    onClick={onExit}
+                                    className="flex-1 rounded-2xl border-2 border-gray-200 bg-white text-gray-600 font-bold py-3 text-xs uppercase tracking-wide transition hover:bg-gray-50 active:scale-95 flex flex-col items-center justify-center gap-1.5 min-w-0"
+                                >
+                                    <LogOut className="w-5 h-5 shrink-0" />
+                                    <span className="leading-tight text-center">Thoát</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={onRetry}
+                                    className={`flex-[2] rounded-2xl bg-gradient-to-r ${gradient} hover:opacity-90 active:scale-95 text-white font-extrabold py-3 text-sm uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2 min-w-0`}
+                                >
+                                    <RotateCcw className="w-4 h-4 shrink-0" /> Thử lại
+                                </button>
                             </div>
                         )}
                     </div>
@@ -460,6 +472,18 @@ export default function SkipTestPage() {
         setResultTotal(total);
         setPassed(didPass);
 
+        // Lưu kết quả vào DB (user_skip_test_attempt)
+        try {
+            await learningService.submitSkipTest(nextLevelId, {
+                correctCount: correct,
+                totalCount: total,
+                accuracy,
+                passed: didPass,
+            });
+        } catch {
+            // ignore — vẫn hiện kết quả dù lưu DB thất bại
+        }
+
         // Nếu pass → cập nhật level của user
         if (didPass) {
             try {
@@ -533,6 +557,7 @@ export default function SkipTestPage() {
                     setAllQuestions([]);
                     loadAndStart();
                 }}
+                onExit={() => navigate("/learn")}
             />
         );
     }
