@@ -7,7 +7,7 @@ import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
-import {Flame, Medal, MoreHorizontal, Star, Zap} from "lucide-react";
+import {Flame, Lock, Medal, MoreHorizontal, Star, Zap} from "lucide-react";
 import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
@@ -338,6 +338,25 @@ export default function LearningPage() {
                                             </div>
                                         );
                                     })}
+                                {/* Banner level tiếp theo — hiện sau tree cuối cùng */}
+                                {trees.length > 0 && !treesLoading && (() => {
+                                    const nextLevelMap: Record<LevelKey, { key: LevelKey; id: number; name: string } | null> = {
+                                        beginner: { key: "intermediate", id: 2, name: "Intermediate" },
+                                        intermediate: { key: "advanced", id: 3, name: "Advanced" },
+                                        advanced: null,
+                                    };
+                                    const next = nextLevelMap[level];
+                                    if (!next) return null;
+                                    return (
+                                        <NextLevelBanner
+                                            nextLevelId={next.id}
+                                            nextLevelName={next.name}
+                                            onGoToNextLevel={() => {
+                                                navigate("/learn/skip-test", { state: { nextLevelId: next.id, nextLevelKey: next.key, nextLevelName: next.name } });
+                                            }}
+                                        />
+                                    );
+                                })()}
                                 </div>
                             </div>
 
@@ -351,11 +370,6 @@ export default function LearningPage() {
                                         limit={3}
                                         period="WEEK"
                                         showViewMore
-                                    />
-                                    <InfoCard
-                                        title="Mở khóa Bảng xếp hạng!"
-                                        subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
-                                        iconSrc="/icons/learn/lock-bxh.svg"
                                     />
                                     <DailyCard/>
                                     <ProfileCard onCreateProfile={() => navigate("/profile")}/>
@@ -376,6 +390,65 @@ export default function LearningPage() {
                 }}
                 message="Bạn có chắc chắn muốn đăng xuất không?"
             />
+        </div>
+    );
+}
+
+function NextLevelBanner({
+    nextLevelId,
+    nextLevelName,
+    onGoToNextLevel,
+}: {
+    nextLevelId: number;
+    nextLevelName: string;
+    onGoToNextLevel: () => void;
+}) {
+    return (
+        <div className="mt-10 mb-6 mx-auto w-full max-w-sm relative">
+            {/* Nút scroll lên đầu — góc phải, màu cam */}
+            <button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="absolute -right-14 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white shadow-md transition"
+                title="Lên đầu trang"
+                aria-label="Cuộn lên đầu trang"
+            >
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
+                </svg>
+            </button>
+
+            <div className="relative rounded-3xl border-2 border-gray-200 bg-white px-6 py-7 shadow-sm text-center">
+                {/* Label KẾ TIẾP */}
+                <span className="inline-block rounded-full bg-gray-100 px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest text-gray-500 mb-3">
+                    Kế tiếp
+                </span>
+
+                {/* Tên level */}
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    <Lock className="h-5 w-5 text-gray-500 shrink-0" />
+                    <h2 className="text-xl font-extrabold text-gray-800">
+                        Level {nextLevelId}: {nextLevelName}
+                    </h2>
+                </div>
+
+                {/* Mô tả */}
+                <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                    Tiếp tục luyện tập với bài học khó hơn để củng cố vốn từ và kỹ năng nghe — nói của bạn
+                </p>
+
+                {/* Nút học vượt — màu cam chủ đạo */}
+                <button
+                    type="button"
+                    onClick={onGoToNextLevel}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white px-6 py-3 text-sm font-extrabold uppercase tracking-wide shadow-md transition"
+                >
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    Học vượt
+                </button>
+            </div>
         </div>
     );
 }

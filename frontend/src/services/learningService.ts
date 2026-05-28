@@ -103,6 +103,14 @@ export const learningService = {
     return response.data;
   },
 
+  /** Lấy bộ câu hỏi ngẫu nhiên cho bài test học vượt level — mỗi lần gọi là random mới */
+  getSkipTestQuestions: async (levelId: number) => {
+    const response = await apiClient.get<SkillTreeQuestionsData>(
+      `/learning/levels/${levelId}/skip-test`
+    );
+    return response.data;
+  },
+
   /** Kiểm tra user đã feedback cho tree này chưa */
   checkFeedback: async (treeId: number): Promise<boolean> => {
     const response = await apiClient.get<{ done: boolean }>(`/feedback/check/${treeId}`);

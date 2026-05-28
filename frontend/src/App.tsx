@@ -23,6 +23,7 @@ import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLesso
 import SpeakingLessonPage from "@/pages/User/learn/question_type/SpeakingLessonPage.tsx";
 import MatchingLessonPage from "@/pages/User/learn/question_type/MatchingLessonPage.tsx";
 import ReviewLessonPage from "@/pages/User/learn/question_type/ReviewLessonPage.tsx";
+import SkipTestPage from "@/pages/User/learn/SkipTestPage.tsx";
 import LeaderboardPage from "@/pages/User/learn/LeaderboardPage.tsx";
 import ProfilePage from "@/pages/User/ProfilePage";
 import LionWelcome from "@/components/user/home/LionWelcome";
@@ -117,6 +118,7 @@ function App() {
                     <Route path="/learn/speaking" element={<SpeakingLessonPage/>}/>
                     <Route path="/learn/matching" element={<MatchingLessonPage/>}/>
                     <Route path="/learn/review" element={<ReviewLessonPage/>}/>
+                    <Route path="/learn/skip-test" element={<SkipTestPage/>}/>
 
                     {/* Trang Welcome */}
                     <Route path="/welcome"

@@ -60,6 +60,22 @@ public class LearningController {
         return skillTreeQuestionService.getOrCreateLevelSnapshot(userId, levelId);
     }
 
+    /**
+     * Lấy bộ câu hỏi ngẫu nhiên cho bài test học vượt level.
+     * Cấu trúc giống REVIEW node: 4 VOCAB + 4 MATCHING + 1 LISTENING + 1 SPEAKING.
+     * Mỗi lần gọi là random mới (không cache).
+     */
+    @GetMapping(value = "/levels/{levelId}/skip-test", produces = MediaType.APPLICATION_JSON_VALUE)
+    public SkillTreeQuestionsResponse getSkipTestQuestions(
+            @PathVariable Integer levelId,
+            Authentication authentication
+    ) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        return skillTreeQuestionService.buildRandomSkipTestForLevel(levelId);
+    }
+
     private int resolveUserId(Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
