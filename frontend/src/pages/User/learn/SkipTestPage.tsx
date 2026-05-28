@@ -22,7 +22,7 @@ import ReviewSpeakingView from "@/components/user/learn/question_type/review/Rev
 import ReviewMatchingView from "@/components/user/learn/question_type/review/ReviewMatchingView";
 import ReviewAnswerSheet from "@/components/user/learn/ReviewAnswerSheet";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// Types
 
 type Stage = "INTRO" | "VOCAB" | "LISTENING" | "SPEAKING" | "MATCHING" | "RESULT";
 
@@ -32,7 +32,7 @@ interface LocationState {
     nextLevelName?: string;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Helpers
 
 function pickByType(questions: SkillTreeEnrichedQuestion[], type: string, limit: number) {
     return questions.filter((q) => q.questionType === type).slice(0, limit);
@@ -53,7 +53,7 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
     return <>{val}{suffix}</>;
 }
 
-// ─── Lion Mascot ─────────────────────────────────────────────────────────────
+//  Lion Mascot
 
 function LionMascot({ mood }: { mood: "happy" | "sad" }) {
     const cls = mood === "happy" ? "animate-lion-bounce" : "animate-lion-droop";
@@ -69,7 +69,7 @@ function LionMascot({ mood }: { mood: "happy" | "sad" }) {
     );
 }
 
-// ─── Confetti ────────────────────────────────────────────────────────────────
+// Confetti
 
 interface Particle {
     id: number; x: number; y: number; color: string; size: number;
@@ -128,7 +128,7 @@ function useConfetti(active: boolean) {
     return canvasRef;
 }
 
-// ─── Intro Screen ─────────────────────────────────────────────────────────────
+// Intro Screen
 
 function IntroScreen({
     nextLevelId,
@@ -142,38 +142,68 @@ function IntroScreen({
     onContinue: () => void;
 }) {
     return (
-        <div className="min-h-screen bg-white flex flex-col items-center justify-between px-6 py-10">
-            <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center max-w-sm">
-                <LionMascot mood="happy" />
-                <h1 className="text-xl font-extrabold text-gray-900 leading-snug">
-                    Vượt qua bài kiểm tra này để học vượt lên Level {nextLevelId}: {nextLevelName}!
-                </h1>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                    Bài test gồm từ vựng, nghe, nói và nối từ. Đạt ≥ 70% để mở khóa lộ trình mới.
+        <div
+            className="min-h-screen flex flex-col px-8 md:px-16 lg:px-32 py-12"
+            style={{
+                background: "radial-gradient(ellipse at 60% 30%, #1a1035 0%, #0d0820 60%, #060412 100%)",
+            }}
+        >
+            {/* Decorative blobs */}
+            <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+                <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-primary-600/20 blur-3xl" />
+                <div className="absolute top-1/3 -right-24 w-96 h-96 rounded-full bg-purple-600/15 blur-3xl" />
+                <div className="absolute bottom-0 left-1/3 w-[420px] h-[420px] rounded-full bg-primary-500/10 blur-3xl" />
+            </div>
+
+            {/* Main content — giãn đều theo chiều dọc */}
+            <div className="flex-1 flex flex-col items-center justify-center gap-10 relative z-10">
+                {/* Speech bubble */}
+                <div className="relative bg-white rounded-3xl px-8 py-5 shadow-2xl max-w-lg w-full text-center">
+                    <p className="text-gray-900 font-extrabold text-xl md:text-2xl leading-snug">
+                        Vượt qua bài kiểm tra để học vượt lên<br />
+                        <span className="text-primary-600">Level {nextLevelId}: {nextLevelName}!</span>
+                    </p>
+                    {/* Bubble tail */}
+                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-white rotate-45 rounded-sm" />
+                </div>
+
+                {/* Lion — lớn hơn */}
+                <img
+                    src="/logo/lion.png"
+                    alt="Lion mascot"
+                    className="w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-2xl select-none animate-lion-bounce"
+                    draggable={false}
+                />
+
+                {/* Sub text */}
+                <p className="text-white/60 text-base md:text-lg leading-relaxed text-center max-w-md">
+                    Bài test gồm từ vựng, nghe, nói và nối từ.<br />
+                    Đạt từ 70% để mở khóa lộ trình mới.
                 </p>
             </div>
 
-            <div className="w-full max-w-sm flex items-center justify-between gap-4 pt-6 border-t border-gray-100">
+            {/* Bottom actions */}
+            <div className="relative z-10 flex items-center justify-between gap-6 pt-8 max-w-lg mx-auto w-full">
                 <button
                     type="button"
                     onClick={onSkip}
-                    className="text-sm font-bold uppercase tracking-wide text-gray-400 hover:text-gray-600 transition px-4 py-3"
+                    className="text-base font-bold uppercase tracking-widest text-white/40 hover:text-white/70 transition px-4 py-3"
                 >
                     Để sau
                 </button>
                 <button
                     type="button"
                     onClick={onContinue}
-                    className="flex-1 rounded-2xl bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white font-extrabold py-3.5 text-sm uppercase tracking-wide shadow-md transition flex items-center justify-center gap-2"
+                    className="flex-1 rounded-2xl bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white font-extrabold py-4 text-base uppercase tracking-widest shadow-lg shadow-primary-500/30 transition flex items-center justify-center gap-2"
                 >
-                    Tiếp tục <ArrowRight className="w-4 h-4" />
+                    Tiếp tục <ArrowRight className="w-5 h-5" />
                 </button>
             </div>
         </div>
     );
 }
 
-// ─── Result Screen ────────────────────────────────────────────────────────────
+// Result Screen
 
 function ResultScreen({
     passed,
@@ -353,7 +383,7 @@ function ResultScreen({
     );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// Main Page
 
 export default function SkipTestPage() {
     const navigate = useNavigate();
@@ -442,7 +472,7 @@ export default function SkipTestPage() {
         setStage("RESULT");
     }
 
-    // ── INTRO ──
+    // INTRO
     if (stage === "INTRO") {
         return (
             <IntroScreen
@@ -454,7 +484,7 @@ export default function SkipTestPage() {
         );
     }
 
-    // ── Loading / Error ──
+    // Loading / Error
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-500 text-sm">
@@ -481,7 +511,7 @@ export default function SkipTestPage() {
         );
     }
 
-    // ── RESULT ──
+    // RESULT
     if (stage === "RESULT") {
         return (
             <ResultScreen
@@ -507,7 +537,7 @@ export default function SkipTestPage() {
         );
     }
 
-    // ── TEST STAGES ──
+    // TEST STAGES
     return (
         <div className="min-h-screen w-full bg-gray-50">
             {stage === "VOCAB" && vocabNode.questions.length > 0 && (
