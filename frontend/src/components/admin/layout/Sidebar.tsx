@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
     LayoutDashboard,
     Users,
-    BookOpen,
     Medal,
     BarChart2,
     MessagesSquare,
@@ -125,7 +124,6 @@ export default function Sidebar() {
                         </div>
 
                         {navLink("/admin/badges",                   Medal,           "Badge")}
-                        {navLink("/admin/lessons",                   BookOpen,        "Lessons")}
                         {navLink("/admin/placement-test-management", ClipboardList,   "Placement Tests")}
                         {navLink("/admin/feedback",                  MessagesSquare,   "Feedback")}
                         {navLink("/admin/reports",                   BarChart2,       "Reports")}
