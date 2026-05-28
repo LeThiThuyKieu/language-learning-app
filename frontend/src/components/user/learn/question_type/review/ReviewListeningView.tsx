@@ -84,18 +84,23 @@ export default function ReviewListeningView({
 
     if (isFinished) return null;
 
+    // Chỉ lấy những từ bị sai để hiển thị đáp án (giống ListeningLessonView)
+    const wrongAnswers = checked
+        ? expected
+              .map((v, i) => ({ index: i, value: v, wrong: !tokenMatches(inputs[i] ?? "", v) }))
+              .filter((x) => x.wrong)
+        : [];
+
     const answerListDetail =
-        expected.length > 0 ? (
-            <ol className="mt-1 list-decimal space-y-1.5 pl-5 font-semibold text-red-900/95">
-                {expected.map((v, i) => (
-                    <li key={i} className="pl-1 marker:font-extrabold">
-                        {v}
-                    </li>
+        wrongAnswers.length > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5">
+                {wrongAnswers.map(({ index, value }) => (
+                    <span key={index} className="whitespace-nowrap font-semibold text-red-900/95">
+                        <span className="font-extrabold text-red-700">{index + 1}.</span> {value}
+                    </span>
                 ))}
-            </ol>
-        ) : (
-            <span className="font-semibold">(không có đáp án)</span>
-        );
+            </div>
+        ) : null;
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -208,8 +213,8 @@ export default function ReviewListeningView({
                 ) : (
                     <LessonResultFooter
                         variant={isCorrect ? "correct" : "incorrect"}
-                        title={isCorrect ? "Tuyệt vời!" : "Đáp án đúng:"}
-                        detail={isCorrect ? undefined : answerListDetail}
+                        title={isCorrect ? "Tuyệt vời!" : wrongAnswers.length > 0 ? "Đáp án đúng:" : "Sai rồi!"}
+                        detail={!isCorrect && wrongAnswers.length > 0 ? answerListDetail : undefined}
                         onContinue={handleContinue}
                     />
                 )}
