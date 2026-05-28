@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Award,
     BadgeCheck,
@@ -8,7 +8,6 @@ import {
     ImageIcon,
     Loader2,
     Search,
-    ShieldCheck,
     Sparkles,
     ToggleRight,
     Trash2,
@@ -24,10 +23,6 @@ const PAGE_SIZE = 8;
 
 function formatNumber(value: number) {
     return value.toLocaleString("vi-VN");
-}
-
-function formatDecimal(value: number) {
-    return value.toLocaleString("vi-VN", { maximumFractionDigits: 1, minimumFractionDigits: 1 });
 }
 
 function buildStats(stats: BadgeStats): AdminStatCardProps[] {
@@ -78,7 +73,6 @@ function BadgePreview({ badge }: { badge: Pick<AdminBadge, "badgeName" | "iconUr
 export default function BadgesManagementPage() {
     const [badges, setBadges] = useState<AdminBadge[]>([]);
     const [stats, setStats] = useState<AdminStatCardProps[]>([]);
-    const [usageData, setUsageData] = useState<BadgeStats["badgeUsage"]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
@@ -98,7 +92,6 @@ export default function BadgesManagementPage() {
             setTotalPages(Math.max(1, badgeRes.totalPages));
             setTotalItems(badgeRes.total);
             setStats(buildStats(statRes));
-            setUsageData(statRes.badgeUsage ?? []);
         } catch (error) {
             console.error("Lỗi tải badge:", error);
             toast.error("Không thể tải dữ liệu badge");
@@ -111,11 +104,6 @@ export default function BadgesManagementPage() {
         fetchData(0, "");
     }, []);
 
-    const chartData = useMemo(
-        () => usageData.slice(0, 8).map((item) => ({ badgeName: item.badgeName, recipientCount: item.recipientCount })),
-        [usageData],
-    );
-
     async function handleSearch() {
         const nextKeyword = keywordInput.trim();
         setKeyword(nextKeyword);
@@ -124,24 +112,12 @@ export default function BadgesManagementPage() {
 
     return (
         <div className="space-y-6">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 via-orange-500 to-amber-500 p-7 shadow-lg">
-                <div className="absolute -right-12 -top-10 h-40 w-40 rounded-full bg-white/10" />
-                <div className="absolute -bottom-12 right-24 h-32 w-32 rounded-full bg-white/10" />
-                <div className="relative flex items-start justify-between gap-6">
-                    <div className="max-w-2xl">
-                        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-white/90">
-                            <ShieldCheck className="h-3.5 w-3.5" />
-                            Badge Management
-                        </div>
-                        <h1 className="text-3xl font-extrabold text-white leading-tight">Quản lý Badge</h1>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-white/85">
-                            Trang chỉ xem dữ liệu badge từ DB, hiển thị dưới dạng card kèm thống kê sử dụng.
-                        </p>
-                    </div>
-                </div>
+            <div>
+                <h1 className="text-2xl font-extrabold text-gray-900">Quản lý Badge</h1>
+                <p className="mt-1 text-sm text-gray-500">Theo dõi badge của người dùng theo dạng card và thống kê sử dụng.</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3 xl:grid-cols-3">
                 {stats.map((stat) => (
                     <AdminStatCard key={stat.label} {...stat} />
                 ))}
