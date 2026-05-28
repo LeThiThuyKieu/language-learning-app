@@ -77,24 +77,37 @@ public class LearnProgressService {
         String currentProgressLabel = null;
 
         if (levelId != null) {
-            List<SkillTree> trees = skillTreeRepository.findByLevel_IdOrderByOrderIndex(levelId);
-            totalTrees = trees.size();
+            // Lấy tất cả trees của level (chưa sort)
+            List<SkillTree> allTrees = skillTreeRepository.findByLevel_IdOrderByOrderIndex(levelId);
+            totalTrees = allTrees.size();
 
-            Map<Integer, UserSkillTreeProgress.ProgressStatus> treeStatusMap =
+            Map<Integer, UserSkillTreeProgress> treeProgressMap =
                     userSkillTreeProgressRepository.findByUser(user).stream()
                             .filter(p -> p.getSkillTree() != null)
                             .collect(Collectors.toMap(
                                     p -> p.getSkillTree().getId(),
-                                    UserSkillTreeProgress::getStatus,
+                                    p -> p,
                                     (a, b) -> a));
 
-            Map<Integer, Double> treeAccuracyMap =
-                    userSkillTreeProgressRepository.findByUser(user).stream()
-                            .filter(p -> p.getSkillTree() != null)
-                            .collect(Collectors.toMap(
-                                    p -> p.getSkillTree().getId(),
-                                    p -> p.getAccuracy() != null ? p.getAccuracy() : 0.0,
-                                    (a, b) -> a));
+            // Sort: trees user đã interact (không phải locked) → sort theo treeId (thứ tự gốc khi học)
+            //       trees chưa học (locked) → sort theo order_index hiện tại (thứ tự mới)
+            List<SkillTree> trees = allTrees.stream()
+                    .sorted((a, b) -> {
+                        UserSkillTreeProgress pa = treeProgressMap.get(a.getId());
+                        UserSkillTreeProgress pb = treeProgressMap.get(b.getId());
+                        boolean aInteracted = pa != null && pa.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
+                        boolean bInteracted = pb != null && pb.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
+                        if (aInteracted && bInteracted) return Integer.compare(a.getId(), b.getId());
+                        if (aInteracted) return -1;
+                        if (bInteracted) return 1;
+                        return Integer.compare(a.getOrderIndex(), b.getOrderIndex());
+                    })
+                    .collect(Collectors.toList());
+
+            Map<Integer, Double> treeAccuracyMap = treeProgressMap.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> e.getValue().getAccuracy() != null ? e.getValue().getAccuracy() : 0.0));
 
             Map<Integer, UserNodeProgress> nodeProgressMap =
                     userNodeProgressRepository.findByUser(user).stream()
@@ -108,8 +121,9 @@ public class LearnProgressService {
 
             for (int ti = 0; ti < trees.size(); ti++) {
                 SkillTree tree = trees.get(ti);
+                UserSkillTreeProgress tp = treeProgressMap.get(tree.getId());
                 UserSkillTreeProgress.ProgressStatus treeStatus =
-                        treeStatusMap.getOrDefault(tree.getId(), UserSkillTreeProgress.ProgressStatus.locked);
+                        tp != null ? tp.getStatus() : UserSkillTreeProgress.ProgressStatus.locked;
 
                 if (treeStatus == UserSkillTreeProgress.ProgressStatus.done) completedTrees++;
                 if (treeStatus == UserSkillTreeProgress.ProgressStatus.in_progress && activeTreeIdx == -1)
@@ -192,16 +206,30 @@ public class LearnProgressService {
 
         if (levelId != null) {
             levelName = levelRepository.findById(levelId).map(Level::getLevelName).orElse(null);
-            List<SkillTree> trees = skillTreeRepository.findByLevel_IdOrderByOrderIndex(levelId);
-            totalTrees = trees.size();
+            List<SkillTree> allTrees = skillTreeRepository.findByLevel_IdOrderByOrderIndex(levelId);
+            totalTrees = allTrees.size();
 
-            Map<Integer, UserSkillTreeProgress.ProgressStatus> treeStatusMap =
+            Map<Integer, UserSkillTreeProgress> treeProgressMap =
                     userSkillTreeProgressRepository.findByUser(user).stream()
                             .filter(p -> p.getSkillTree() != null)
                             .collect(Collectors.toMap(
                                     p -> p.getSkillTree().getId(),
-                                    UserSkillTreeProgress::getStatus,
+                                    p -> p,
                                     (a, b) -> a));
+
+            // Sort: trees đã interact → theo treeId (thứ tự gốc); locked → theo order_index hiện tại
+            List<SkillTree> trees = allTrees.stream()
+                    .sorted((a, b) -> {
+                        UserSkillTreeProgress pa = treeProgressMap.get(a.getId());
+                        UserSkillTreeProgress pb = treeProgressMap.get(b.getId());
+                        boolean aInteracted = pa != null && pa.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
+                        boolean bInteracted = pb != null && pb.getStatus() != UserSkillTreeProgress.ProgressStatus.locked;
+                        if (aInteracted && bInteracted) return Integer.compare(a.getId(), b.getId());
+                        if (aInteracted) return -1;
+                        if (bInteracted) return 1;
+                        return Integer.compare(a.getOrderIndex(), b.getOrderIndex());
+                    })
+                    .collect(Collectors.toList());
 
             Map<Integer, UserNodeProgress> nodeProgressMap =
                     userNodeProgressRepository.findByUser(user).stream()
@@ -213,8 +241,9 @@ public class LearnProgressService {
 
             int activeTreeIdx = -1;
             for (int ti = 0; ti < trees.size(); ti++) {
+                UserSkillTreeProgress tp = treeProgressMap.get(trees.get(ti).getId());
                 UserSkillTreeProgress.ProgressStatus s =
-                        treeStatusMap.getOrDefault(trees.get(ti).getId(), UserSkillTreeProgress.ProgressStatus.locked);
+                        tp != null ? tp.getStatus() : UserSkillTreeProgress.ProgressStatus.locked;
                 if (s == UserSkillTreeProgress.ProgressStatus.done) completedTrees++;
                 if (s == UserSkillTreeProgress.ProgressStatus.in_progress && activeTreeIdx == -1) activeTreeIdx = ti;
                 if (s != UserSkillTreeProgress.ProgressStatus.done && activeTreeIdx == -1) activeTreeIdx = ti;
