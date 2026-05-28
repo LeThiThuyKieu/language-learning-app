@@ -40,6 +40,14 @@ public class UserSkillTreeProgress {
     @Column(name = "accuracy", nullable = false)
     private Double accuracy = 0.0;
 
+    /**
+     * order_index của tree tại thời điểm user bắt đầu học.
+     * Dùng để sort lộ trình đúng thứ tự gốc dù adaptive difficulty có đổi thứ tự sau.
+     * NULL = bản ghi cũ (trước khi có cột này), fallback về treeId khi sort.
+     */
+    @Column(name = "initial_order_index")
+    private Integer initialOrderIndex;
+
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

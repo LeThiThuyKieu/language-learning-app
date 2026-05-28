@@ -224,6 +224,8 @@ public class ProgressService {
                     tp.setUser(user);
                     tp.setSkillTree(tree);
                     tp.setAccuracy(0.0);
+                    // Lưu order_index hiện tại làm thứ tự gốc của user này
+                    tp.setInitialOrderIndex(tree.getOrderIndex());
                     return tp;
                 });
 
