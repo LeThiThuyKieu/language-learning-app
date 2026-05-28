@@ -7,12 +7,14 @@ import com.languagelearning.entity.Badge;
 import com.languagelearning.entity.UserBadge;
 import com.languagelearning.repository.mysql.BadgeRepository;
 import com.languagelearning.repository.mysql.UserBadgeRepository;
+import com.languagelearning.service.BadgeImageUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Comparator;
 import java.util.List;
@@ -27,6 +29,7 @@ public class BadgeManagementService {
 
     private final BadgeRepository badgeRepository;
     private final UserBadgeRepository userBadgeRepository;
+        private final BadgeImageUploadService badgeImageUploadService;
 
     @Transactional(readOnly = true)
     public Page<BadgeDto> getBadges(int page, int size, String keyword) {
@@ -140,4 +143,65 @@ public class BadgeManagementService {
     private boolean containsIgnoreCase(String value, String keyword) {
         return value != null && value.toLowerCase(Locale.ROOT).contains(keyword);
     }
+
+        @Transactional
+        public BadgeDto createBadge(String badgeName, String description, Integer requiredKn, MultipartFile file) {
+                String normalizedBadgeName = normalizeBadgeName(badgeName);
+                Integer normalizedRequiredKn = normalizeRequiredKn(requiredKn);
+                String normalizedDescription = normalizeDescription(description);
+
+                String iconUrl = badgeImageUploadService.uploadBadgeImage(file);
+
+                Badge badge = new Badge();
+                badge.setBadgeName(normalizedBadgeName);
+                badge.setDescription(normalizedDescription);
+                badge.setRequiredKn(normalizedRequiredKn);
+                badge.setIconUrl(iconUrl);
+
+                Badge saved = badgeRepository.save(badge);
+                return toDto(saved, 0L);
+        }
+
+        @Transactional
+        public BadgeDto updateBadge(Integer id, String badgeName, String description, Integer requiredKn, MultipartFile file) {
+                Badge badge = badgeRepository.findById(id)
+                                .orElseThrow(() -> new IllegalArgumentException("Badge not found"));
+
+                badge.setBadgeName(normalizeBadgeName(badgeName));
+                badge.setDescription(normalizeDescription(description));
+                badge.setRequiredKn(normalizeRequiredKn(requiredKn));
+
+                if (file != null && !file.isEmpty()) {
+                        String previousIconUrl = badge.getIconUrl();
+                        String iconUrl = badgeImageUploadService.uploadBadgeImage(file);
+                        badge.setIconUrl(iconUrl);
+                        badgeImageUploadService.deleteBadgeImageIfManaged(previousIconUrl);
+                }
+
+                Badge saved = badgeRepository.save(badge);
+                Map<Integer, Long> recipientCounts = getRecipientCounts();
+                return toDto(saved, recipientCounts.getOrDefault(saved.getId(), 0L));
+        }
+
+        private String normalizeBadgeName(String badgeName) {
+                if (badgeName == null || badgeName.trim().isEmpty()) {
+                        throw new IllegalArgumentException("Badge name is required");
+                }
+                return badgeName.trim();
+        }
+
+        private Integer normalizeRequiredKn(Integer requiredKn) {
+                if (requiredKn == null || requiredKn <= 0) {
+                        throw new IllegalArgumentException("Required KN must be greater than 0");
+                }
+                return requiredKn;
+        }
+
+        private String normalizeDescription(String description) {
+                if (description == null) {
+                        return null;
+                }
+                String trimmed = description.trim();
+                return trimmed.isEmpty() ? null : trimmed;
+        }
 }
