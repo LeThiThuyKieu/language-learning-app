@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Bot, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Loader2, X, Save, ChevronDown, ChevronUp } from "lucide-react";
-import AdminStatCard from "@/components/admin/common/AdminStatCard";
 import apiClient from "@/config/api";
 
 interface Category {
@@ -455,6 +454,9 @@ export default function ChatbotRulesPage() {
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-primary-50 flex items-center justify-center">
+                        <Bot className="w-5 h-5 text-primary-600" />
+                    </div>
                     <div>
                         <h1 className="text-2xl font-extrabold text-gray-900">Chatbot Rules</h1>
                         <p className="text-sm text-gray-500 mt-0.5">
@@ -472,38 +474,16 @@ export default function ChatbotRulesPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-3 gap-4">
                 {[
-                    {
-                        label: "Tổng rule",
-                        value: rules.length.toLocaleString(),
-                        icon: <Bot size={24} />,
-                        iconBg: "bg-gray-50",
-                        iconText: "text-gray-900",
-                        borderColor: "border-l-orange-500",
-                    },
-                    {
-                        label: "Đang bật",
-                        value: activeCount.toLocaleString(),
-                        icon: <ToggleRight size={24} />,
-                        iconBg: "bg-emerald-50",
-                        iconText: "text-emerald-700",
-                        borderColor: "border-l-emerald-500",
-                        change: "Số rule đang hoạt động",
-                        trend: "up",
-                    },
-                    {
-                        label: "Đang tắt",
-                        value: inactiveCount.toLocaleString(),
-                        icon: <ToggleLeft size={24} />,
-                        iconBg: "bg-gray-50",
-                        iconText: "text-gray-500",
-                        borderColor: "border-l-gray-400",
-                        change: "Số rule vô hiệu hóa",
-                        trend: "down",
-                    },
+                    { label: "Tổng rule",  value: rules.length,  color: "text-gray-900",    bg: "bg-gray-50"     },
+                    { label: "Đang bật",   value: activeCount,   color: "text-emerald-700", bg: "bg-emerald-50"  },
+                    { label: "Đang tắt",   value: inactiveCount, color: "text-gray-500",    bg: "bg-gray-100"    },
                 ].map((s) => (
-                    <AdminStatCard key={s.label} {...s as any} />
+                    <div key={s.label} className={`${s.bg} rounded-2xl px-5 py-4`}>
+                        <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+                        <p className={`text-2xl font-extrabold mt-1 ${s.color}`}>{s.value}</p>
+                    </div>
                 ))}
             </div>
 
