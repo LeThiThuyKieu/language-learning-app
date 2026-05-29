@@ -13,6 +13,7 @@ import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
 import LeaderboardCard from "@/components/user/common/LeaderboardCard";
+import LevelOverviewPanel from "@/components/user/learn/LevelOverviewPanel";
 
 export default function LearningPage() {
     const location = useLocation();
@@ -21,6 +22,8 @@ export default function LearningPage() {
     const [resolvedLevel, setResolvedLevel] = useState<LevelKey | null>(null);
     const [bootstrapping, setBootstrapping] = useState(true);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    // Level thật của user trên profile (không đổi khi user xem lộ trình level khác để ôn tập)
+    const [userProfileLevelId, setUserProfileLevelId] = useState<number>(1);
 
     const levelIdMap: Record<LevelKey, number> = useMemo(
         () => ({
@@ -41,6 +44,7 @@ export default function LearningPage() {
     );
 
     const [moreOpen, setMoreOpen] = useState(false);
+    const [showOverview, setShowOverview] = useState(false);
     const [trees, setTrees] = useState<SkillTreeQuestionsData[]>([]);
     const [treesLoading, setTreesLoading] = useState(true);
     const [treesError, setTreesError] = useState<string | null>(null);
@@ -86,6 +90,8 @@ export default function LearningPage() {
                     navigate("/welcome", {replace: true});
                     return;
                 }
+                // Lưu level thật của user (dùng cho LevelOverviewPanel)
+                setUserProfileLevelId(profile.currentLevelId as number);
                 const fromState = location.state?.level;
                 const level: LevelKey = isLevelKeyFromState(fromState)
                     ? fromState
@@ -261,18 +267,35 @@ export default function LearningPage() {
                                             aria-hidden
                                         />
                                         <div
-                                            className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-7 flex items-center justify-between`}
+                                            className={`${showOverview ? "bg-gray-700" : bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-4 flex flex-col gap-1`}
                                         >
-                                            <div className="max-w-[72%]">
-                                                <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
-                                                    {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${activeTreeIndex + 1}`}
-                                                </h1>
-                                            </div>
+                                            {/* Dòng trên: nút Tổng quan / Lộ trình */}
                                             <button
-                                                className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition"
+                                                type="button"
+                                                onClick={() => setShowOverview(v => !v)}
+                                                className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs font-extrabold uppercase tracking-widest transition w-fit"
                                             >
-                                                <span>Hướng dẫn</span>
+                                                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M19 12H5M12 5l-7 7 7 7"/>
+                                                </svg>
+                                                {showOverview ? "Lộ trình học" : "Tổng quan"}
                                             </button>
+                                            {/* Dòng dưới: tiêu đề + nút Hướng dẫn */}
+                                            <div className="flex items-center justify-between">
+                                                <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
+                                                    {showOverview
+                                                        ? "Tổng quan lộ trình"
+                                                        : `Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${activeTreeIndex + 1}`
+                                                    }
+                                                </h1>
+                                                {!showOverview && (
+                                                    <button
+                                                        className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition shrink-0"
+                                                    >
+                                                        <span>Hướng dẫn</span>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -283,8 +306,29 @@ export default function LearningPage() {
                                 )}
                                 {treesLoading && <LearningPathLoading/>}
 
+                                {/* Overview panel — thay thế lộ trình khi showOverview = true */}
+                                {showOverview && (
+                                    <LevelOverviewPanel
+                                        currentLevelId={userProfileLevelId}
+                                        onReview={(levelId) => {
+                                            setShowOverview(false);
+                                            navigate("/learn", { state: { level: mapLevelIdToKey(levelId) } });
+                                        }}
+                                        onContinue={() => {
+                                            // Quay về lộ trình level thật của user (không phải level đang ôn tập)
+                                            setResolvedLevel(mapLevelIdToKey(userProfileLevelId));
+                                            setShowOverview(false);
+                                        }}
+                                        onSkipTest={(targetLevelId, targetLevelKey, targetLevelName, sourceLevelIds) => {
+                                            navigate("/learn/skip-test", {
+                                                state: { nextLevelId: targetLevelId, nextLevelKey: targetLevelKey, nextLevelName: targetLevelName, sourceLevelIds },
+                                            });
+                                        }}
+                                    />
+                                )}
+
                                 {/* Lộ trình cuộn dưới banner (z-0 < z-[45] của banner) */}
-                                <div className="relative z-0 flex flex-col mt-2">
+                                <div className={`relative z-0 flex flex-col mt-2 ${showOverview ? "hidden" : ""}`}>
                                     {trees.map((tree, idx) => {
                                         const accentKey = accentForIndex(idx);
                                         const treeData = tree;
@@ -338,8 +382,8 @@ export default function LearningPage() {
                                             </div>
                                         );
                                     })}
-                                {/* Banner level tiếp theo — hiện sau tree cuối cùng */}
-                                {trees.length > 0 && !treesLoading && (() => {
+                                {/* Banner level tiếp theo — chỉ hiện khi đang xem đúng level của user */}
+                                {trees.length > 0 && !treesLoading && levelIdMap[level] === userProfileLevelId && (() => {
                                     const nextLevelMap: Record<LevelKey, { key: LevelKey; id: number; name: string; sourceLevelIds: number[] }[]> = {
                                         beginner: [
                                             // Vượt lên Level 2: test kiến thức Level 1
