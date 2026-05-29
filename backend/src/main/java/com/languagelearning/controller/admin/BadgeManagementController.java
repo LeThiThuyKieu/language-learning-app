@@ -31,14 +31,20 @@ public class BadgeManagementController {
         return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.getStats()));
     }
 
+    @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadBadgeImage(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.uploadBadgeImage(file)));
+    }
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<BadgeDto>> createBadge(
             @RequestParam String badgeName,
             @RequestParam(required = false) String description,
             @RequestParam Integer requiredKn,
             @RequestParam(required = false) String status,
-            @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.createBadge(badgeName, description, requiredKn, status, file)));
+            @RequestParam(required = false) String iconUrl,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.createBadge(badgeName, description, requiredKn, status, iconUrl, file)));
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -48,7 +54,8 @@ public class BadgeManagementController {
             @RequestParam(required = false) String description,
             @RequestParam Integer requiredKn,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String iconUrl,
             @RequestParam(value = "file", required = false) MultipartFile file) {
-        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.updateBadge(id, badgeName, description, requiredKn, status, file)));
+        return ResponseEntity.ok(ApiResponse.success("OK", badgeManagementService.updateBadge(id, badgeName, description, requiredKn, status, iconUrl, file)));
     }
 }

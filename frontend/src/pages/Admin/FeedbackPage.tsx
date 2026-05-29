@@ -4,12 +4,12 @@ import AdminStatCard from "@/components/admin/common/AdminStatCard";
 import { feedbackService, type AdminFeedbackItem } from "@/services/admin/feedbackService";
 
 const ratingOptions = [
-  { label: "Tất cả", value: "Tất cả", stars: 1 },
-  { label: "5 sao", value: "5 sao", stars: 5 },
-  { label: "4 sao", value: "4 sao", stars: 4 },
-  { label: "3 sao", value: "3 sao", stars: 3 },
-  { label: "2 sao", value: "2 sao", stars: 2 },
-  { label: "1 sao", value: "1 sao", stars: 1 },
+  { label: "Tất cả", value: "all", rating: 0 },
+  { label: "Rất dễ", value: "1", rating: 1 },
+  { label: "Dễ", value: "2", rating: 2 },
+  { label: "Trung bình", value: "3", rating: 3 },
+  { label: "Khó", value: "4", rating: 4 },
+  { label: "Rất khó", value: "5", rating: 5 },
 ];
 const sortOptions = [
   { value: "newest", label: "Mới nhất" },
@@ -18,10 +18,21 @@ const sortOptions = [
   { value: "lowest", label: "Điểm thấp nhất" },
 ];
 
-function renderStars(rating: number) {
-  return Array.from({ length: 5 }, (_, index) => (
-    <Star key={index} size={14} className={index < rating ? "fill-amber-400 text-amber-400" : "text-slate-300"} />
-  ));
+function getRatingLabel(rating: number) {
+  switch (rating) {
+    case 1:
+      return "Rất dễ";
+    case 2:
+      return "Dễ";
+    case 3:
+      return "Trung bình";
+    case 4:
+      return "Khó";
+    case 5:
+      return "Rất khó";
+    default:
+      return "—";
+  }
 }
 
 function getInitials(name: string) {
@@ -94,11 +105,11 @@ export default function FeedbackPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [treeFilter, setTreeFilter] = useState("Tất cả tree");
-  const [ratingFilter, setRatingFilter] = useState("Tất cả");
+  const [ratingFilter, setRatingFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [draftSearchText, setDraftSearchText] = useState("");
   const [draftTreeFilter, setDraftTreeFilter] = useState("Tất cả tree");
-  const [draftRatingFilter, setDraftRatingFilter] = useState("Tất cả");
+  const [draftRatingFilter, setDraftRatingFilter] = useState("all");
   const [draftSortBy, setDraftSortBy] = useState("newest");
   const [page, setPage] = useState(0);
   const [isTreeFilterOpen, setIsTreeFilterOpen] = useState(false);
@@ -186,7 +197,7 @@ export default function FeedbackPage() {
         (item.comment?.toLowerCase().includes(search) ?? false);
 
       const matchesTree = treeFilter === "Tất cả tree" || item.tree === treeFilter;
-      const matchesRating = ratingFilter === "Tất cả" || item.rating === Number(ratingFilter[0]);
+      const matchesRating = ratingFilter === "all" || item.rating === Number(ratingFilter);
 
       return matchesSearch && matchesTree && matchesRating;
     });
@@ -295,21 +306,7 @@ export default function FeedbackPage() {
                 className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 outline-none transition hover:border-orange-300 hover:bg-white hover:text-orange-600"
               >
                 <span className="flex items-center gap-2">
-                  <span className="flex items-center gap-0.5 text-amber-400">
-                    {Array.from({ length: selectedRatingOption.stars }, (_, index) => (
-                      <Star
-                        key={index}
-                        size={13}
-                        className={
-                          selectedRatingOption.value === "Tất cả"
-                            ? "text-amber-400"
-                            : "fill-amber-400 text-amber-400"
-                        }
-                        fill={selectedRatingOption.value === "Tất cả" ? "none" : "currentColor"}
-                      />
-                    ))}
-                  </span>
-                  <span>{selectedRatingOption.label}</span>
+                  <span className="font-semibold">{selectedRatingOption.label}</span>
                 </span>
                 <span className="text-xs text-gray-400">{isRatingFilterOpen ? "▲" : "▼"}</span>
               </button>
@@ -333,16 +330,6 @@ export default function FeedbackPage() {
                             : "text-gray-700 hover:bg-gray-50 hover:text-orange-600"
                         }`}
                       >
-                        <span className="flex items-center gap-0.5 text-amber-400">
-                          {Array.from({ length: rating.stars }, (_, index) => (
-                            <Star
-                              key={index}
-                              size={13}
-                              className={rating.value === "Tất cả" ? "text-amber-400" : "fill-amber-400 text-amber-400"}
-                              fill={rating.value === "Tất cả" ? "none" : "currentColor"}
-                            />
-                          ))}
-                        </span>
                         <span className="font-semibold">{rating.label}</span>
                       </button>
                     );
@@ -441,23 +428,20 @@ export default function FeedbackPage() {
                 pagedFeedback.map((item) => (
                   <tr key={item.id} className="transition hover:bg-orange-50/40">
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-amber-100 text-sm font-extrabold text-orange-700">
-                          {getInitials(item.name)}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{item.name}</div>
-                          <div className="text-xs text-gray-500">{item.email}</div>
-                        </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">{item.name}</div>
+                        <div className="text-xs text-gray-500">{item.email}</div>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm font-medium text-gray-700">{item.tree}</td>
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-1">{renderStars(item.rating)}</div>
+                      <div className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700">
+                        {getRatingLabel(item.rating)}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                        {item.accuracy}%
+                        {item.accuracy}
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm text-gray-600">{formatCreatedAt(item.createdAt)}</td>

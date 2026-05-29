@@ -50,6 +50,7 @@ export interface BadgeUpsertPayload {
     requiredKn: number;
     status: "active" | "inactive";
     file?: File | null;
+    iconUrl?: string | null;
 }
 
 function mapBadge(badge: AdminBadge): AdminBadge {
@@ -67,6 +68,10 @@ function buildBadgeFormData(payload: BadgeUpsertPayload): FormData {
     formData.append("description", payload.description);
     formData.append("requiredKn", String(payload.requiredKn));
     formData.append("status", payload.status);
+
+    if (payload.iconUrl) {
+        formData.append("iconUrl", payload.iconUrl);
+    }
 
     if (payload.file) {
         formData.append("file", payload.file);
@@ -92,6 +97,19 @@ export const badgeManagementService = {
 
     async getStats(): Promise<BadgeStats> {
         const res = await apiClient.get<ApiResponse<BadgeStats>>("/admin/badges/stats");
+        return res.data.data;
+    },
+
+    async uploadBadgeImage(file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await apiClient.post<ApiResponse<string>>("/admin/badges/image", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+
         return res.data.data;
     },
 

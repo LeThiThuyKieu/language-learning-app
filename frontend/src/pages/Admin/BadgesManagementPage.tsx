@@ -18,7 +18,7 @@ import {
 import toast from "react-hot-toast";
 import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import AddEditBadgeModal from "@/components/admin/badge_management/AddEditBadgeModal";
-import { badgeManagementService, type AdminBadge, type BadgeStats } from "@/services/admin/badgeManagementService";
+import { badgeManagementService, type AdminBadge, type BadgeStats, type BadgeUpsertPayload } from "@/services/admin/badgeManagementService";
 
 const DEFAULT_ICON = "/badges/badge_1.png";
 const PAGE_SIZE = 8;
@@ -134,7 +134,7 @@ export default function BadgesManagementPage() {
         setBadgeModalOpen(true);
     }
 
-    async function handleSaveBadge(payload: { badgeName: string; description: string; requiredKn: number; status: "active" | "inactive"; file?: File | null }) {
+    async function handleSaveBadge(payload: BadgeUpsertPayload) {
         try {
             if (editingBadge) {
                 await badgeManagementService.updateBadge(editingBadge.id, payload);

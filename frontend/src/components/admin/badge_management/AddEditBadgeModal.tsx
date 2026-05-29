@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, Upload, X } from "lucide-react";
+import { badgeManagementService } from "@/services/admin/badgeManagementService";
 import type { AdminBadge, BadgeUpsertPayload } from "@/services/admin/badgeManagementService";
 
 interface Props {
@@ -28,6 +29,7 @@ export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Pr
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string>("");
     const [errors, setErrors] = useState<Partial<Record<keyof FormState | "file", string>>>({});
+    const [uploadingImage, setUploadingImage] = useState(false);
     const isEdit = mode === "edit";
 
     useEffect(() => {
@@ -77,12 +79,26 @@ export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Pr
         event.preventDefault();
         if (!validate()) return;
 
+        let iconUrl = badge?.iconUrl || "";
+        if (selectedFile) {
+            try {
+                setUploadingImage(true);
+                iconUrl = await badgeManagementService.uploadBadgeImage(selectedFile);
+            } catch (error) {
+                console.error("Upload badge image failed", error);
+                setErrors((current) => ({ ...current, file: "Không thể tải ảnh badge lên cloud" }));
+                return;
+            } finally {
+                setUploadingImage(false);
+            }
+        }
+
         await onSubmit({
             badgeName: form.badgeName.trim(),
             description: form.description.trim(),
             requiredKn: Number(form.requiredKn),
             status: form.status,
-            file: selectedFile,
+            iconUrl: iconUrl || undefined,
         });
     }
 
@@ -192,8 +208,8 @@ export default function AddEditBadgeModal({ mode, badge, onClose, onSubmit }: Pr
                         <button type="button" onClick={onClose} className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">
                             Hủy
                         </button>
-                        <button type="submit" className="rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600">
-                            {isEdit ? "Lưu thay đổi" : "Thêm badge"}
+                        <button type="submit" disabled={uploadingImage} className="rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60">
+                            {uploadingImage ? "Đang tải ảnh..." : isEdit ? "Lưu thay đổi" : "Thêm badge"}
                         </button>
                     </div>
                 </form>
