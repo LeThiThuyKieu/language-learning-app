@@ -4,6 +4,7 @@ import com.languagelearning.entity.Feedback;
 import com.languagelearning.entity.SkillTree;
 import com.languagelearning.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
+public interface FeedbackRepository extends JpaRepository<Feedback, Integer>, JpaSpecificationExecutor<Feedback> {
     List<Feedback> findBySkillTree(SkillTree skillTree);
     List<Feedback> findBySkillTreeId(Integer skillTreeId);
     boolean existsByUserAndSkillTreeId(User user, Integer skillTreeId);
