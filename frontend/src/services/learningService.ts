@@ -103,6 +103,25 @@ export const learningService = {
     return response.data;
   },
 
+  /** Lấy bộ câu hỏi ngẫu nhiên cho bài test học vượt level — mỗi lần gọi là random mới */
+  getSkipTestQuestions: async (levelId: number, sourceLevelIds: number[] = []) => {
+    const params = sourceLevelIds.length > 0
+      ? "?" + sourceLevelIds.map((id) => `sourceLevelIds=${id}`).join("&")
+      : "";
+    const response = await apiClient.get<SkillTreeQuestionsData>(
+      `/learning/levels/${levelId}/skip-test${params}`
+    );
+    return response.data;
+  },
+
+  /** Lưu kết quả bài skip-test vào DB */
+  submitSkipTest: async (
+    levelId: number,
+    payload: { correctCount: number; totalCount: number; accuracy: number; passed: boolean }
+  ): Promise<void> => {
+    await apiClient.post(`/learning/levels/${levelId}/skip-test/submit`, payload);
+  },
+
   /** Kiểm tra user đã feedback cho tree này chưa */
   checkFeedback: async (treeId: number): Promise<boolean> => {
     const response = await apiClient.get<{ done: boolean }>(`/feedback/check/${treeId}`);

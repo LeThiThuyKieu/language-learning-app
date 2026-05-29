@@ -275,10 +275,93 @@ public class SkillTreeQuestionService {
         return enrichFromMongo(rows);
     }
 
+    /**
+     * Sinh ngẫu nhiên bộ câu hỏi cho bài test học vượt level.
+     * Cấu trúc: 4 VOCAB + 4 MATCHING + 1 LISTENING + 1 SPEAKING (giống REVIEW node).
+     * Không cache — mỗi lần gọi là random mới.
+     */
+    @Transactional(readOnly = true)
+    public SkillTreeQuestionsResponse buildRandomSkipTestForLevel(Integer levelId) {
+        return buildRandomSkipTestForLevels(List.of(levelId));
+    }
+
+    /**
+     * Sinh ngẫu nhiên bộ câu hỏi cho bài test học vượt tổng hợp nhiều level.
+     * Dùng khi user muốn nhảy vượt nhiều cấp (ví dụ: Level 1 → Level 3 thì lấy câu từ Level 1 + Level 2).
+     * Cấu trúc: 4 VOCAB + 4 MATCHING + 1 LISTENING + 1 SPEAKING, random từ tất cả các level nguồn.
+     * Không cache — mỗi lần gọi là random mới.
+     */
+    @Transactional(readOnly = true)
+    public SkillTreeQuestionsResponse buildRandomSkipTestForLevels(List<Integer> sourceLevelIds) {
+        List<EnrichedQuestionDto> questions = new ArrayList<>();
+        Set<Long> exclude = new HashSet<>();
+
+        List<EnrichedQuestionDto> vocab = sampleByLevelsAndType(sourceLevelIds, QuestionType.VOCAB, exclude, 4);
+        questions.addAll(vocab);
+        vocab.stream().map(EnrichedQuestionDto::getId).filter(Objects::nonNull).forEach(exclude::add);
+
+        List<EnrichedQuestionDto> matching = sampleByLevelsAndType(sourceLevelIds, QuestionType.MATCHING, exclude, 4);
+        questions.addAll(matching);
+        matching.stream().map(EnrichedQuestionDto::getId).filter(Objects::nonNull).forEach(exclude::add);
+
+        List<EnrichedQuestionDto> listening = sampleByLevelsAndType(sourceLevelIds, QuestionType.LISTENING, exclude, 1);
+        questions.addAll(listening);
+        listening.stream().map(EnrichedQuestionDto::getId).filter(Objects::nonNull).forEach(exclude::add);
+
+        List<EnrichedQuestionDto> speaking = sampleByLevelsAndType(sourceLevelIds, QuestionType.SPEAKING, exclude, 1);
+        questions.addAll(speaking);
+
+        // Tiêu đề mô tả các level nguồn
+        String title = sourceLevelIds.size() > 1
+                ? "Kiểm tra học vượt (tổng hợp " + sourceLevelIds.size() + " level)"
+                : "Kiểm tra học vượt";
+
+        // Đóng gói vào một "virtual" node REVIEW với nodeId = -1 (không lưu DB)
+        NodeQuestionsDto reviewNode = NodeQuestionsDto.builder()
+                .nodeId(-1)
+                .title(title)
+                .nodeType("REVIEW")
+                .questions(questions)
+                .build();
+
+        // levelId trả về là level cao nhất trong danh sách nguồn
+        int representativeLevelId = sourceLevelIds.stream().mapToInt(Integer::intValue).max().orElse(-1);
+
+        return SkillTreeQuestionsResponse.builder()
+                .treeId(-1)
+                .levelId(representativeLevelId)
+                .nodes(List.of(reviewNode))
+                .build();
+    }
+
+    /**
+     * Lấy ngẫu nhiên câu hỏi từ nhiều level theo type, loại trừ các id đã dùng.
+     */
+    private List<EnrichedQuestionDto> sampleByLevelsAndType(
+            List<Integer> levelIds,
+            QuestionType type,
+            Set<Long> exclude,
+            int limit
+    ) {
+        // Nếu chỉ có 1 level, dùng query đơn level cũ để tương thích
+        if (levelIds.size() == 1) {
+            return sampleReviewByType(levelIds.get(0), type, exclude, limit);
+        }
+        List<Long> excludeList = new ArrayList<>(exclude);
+        List<QuestionIndex> rows;
+        if (excludeList.isEmpty()) {
+            rows = questionIndexRepository.findRandomByLevelsAndType(levelIds, type.name(), limit);
+        } else {
+            rows = questionIndexRepository.findRandomByLevelsAndTypeExcludingIds(levelIds, type.name(), excludeList, limit);
+        }
+        return enrichFromMongo(rows);
+    }
+
     /** Lấy ra thông tin question, kết hợp MySQL và MongoDB */
     public List<EnrichedQuestionDto> enrichQuestionRows(List<QuestionIndex> rows) {
         return enrichFromMongo(rows);
     }
+
 
     private List<EnrichedQuestionDto> enrichFromMongo(List<QuestionIndex> rows) {
         if (rows == null || rows.isEmpty()) {

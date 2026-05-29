@@ -7,12 +7,13 @@ import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
-import {Flame, Medal, MoreHorizontal, Star, Zap} from "lucide-react";
+import {Flame, Lock, Medal, MoreHorizontal, Star, Zap} from "lucide-react";
 import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
 import LeaderboardCard from "@/components/user/common/LeaderboardCard";
+import LevelOverviewPanel from "@/components/user/learn/LevelOverviewPanel";
 
 export default function LearningPage() {
     const location = useLocation();
@@ -21,6 +22,8 @@ export default function LearningPage() {
     const [resolvedLevel, setResolvedLevel] = useState<LevelKey | null>(null);
     const [bootstrapping, setBootstrapping] = useState(true);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    // Level thật của user trên profile (không đổi khi user xem lộ trình level khác để ôn tập)
+    const [userProfileLevelId, setUserProfileLevelId] = useState<number>(1);
 
     const levelIdMap: Record<LevelKey, number> = useMemo(
         () => ({
@@ -41,6 +44,7 @@ export default function LearningPage() {
     );
 
     const [moreOpen, setMoreOpen] = useState(false);
+    const [showOverview, setShowOverview] = useState(false);
     const [trees, setTrees] = useState<SkillTreeQuestionsData[]>([]);
     const [treesLoading, setTreesLoading] = useState(true);
     const [treesError, setTreesError] = useState<string | null>(null);
@@ -86,6 +90,8 @@ export default function LearningPage() {
                     navigate("/welcome", {replace: true});
                     return;
                 }
+                // Lưu level thật của user (dùng cho LevelOverviewPanel)
+                setUserProfileLevelId(profile.currentLevelId as number);
                 const fromState = location.state?.level;
                 const level: LevelKey = isLevelKeyFromState(fromState)
                     ? fromState
@@ -261,18 +267,35 @@ export default function LearningPage() {
                                             aria-hidden
                                         />
                                         <div
-                                            className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-7 flex items-center justify-between`}
+                                            className={`${showOverview ? "bg-gray-700" : bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-4 flex flex-col gap-1`}
                                         >
-                                            <div className="max-w-[72%]">
-                                                <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
-                                                    {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${activeTreeIndex + 1}`}
-                                                </h1>
-                                            </div>
+                                            {/* Dòng trên: nút Tổng quan / Lộ trình */}
                                             <button
-                                                className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition"
+                                                type="button"
+                                                onClick={() => setShowOverview(v => !v)}
+                                                className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs font-extrabold uppercase tracking-widest transition w-fit"
                                             >
-                                                <span>Hướng dẫn</span>
+                                                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M19 12H5M12 5l-7 7 7 7"/>
+                                                </svg>
+                                                {showOverview ? "Lộ trình học" : "Tổng quan"}
                                             </button>
+                                            {/* Dòng dưới: tiêu đề + nút Hướng dẫn */}
+                                            <div className="flex items-center justify-between">
+                                                <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
+                                                    {showOverview
+                                                        ? "Tổng quan lộ trình"
+                                                        : `Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${activeTreeIndex + 1}`
+                                                    }
+                                                </h1>
+                                                {!showOverview && (
+                                                    <button
+                                                        className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition shrink-0"
+                                                    >
+                                                        <span>Hướng dẫn</span>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -283,8 +306,29 @@ export default function LearningPage() {
                                 )}
                                 {treesLoading && <LearningPathLoading/>}
 
+                                {/* Overview panel — thay thế lộ trình khi showOverview = true */}
+                                {showOverview && (
+                                    <LevelOverviewPanel
+                                        currentLevelId={userProfileLevelId}
+                                        onReview={(levelId) => {
+                                            setShowOverview(false);
+                                            navigate("/learn", { state: { level: mapLevelIdToKey(levelId) } });
+                                        }}
+                                        onContinue={() => {
+                                            // Quay về lộ trình level thật của user (không phải level đang ôn tập)
+                                            setResolvedLevel(mapLevelIdToKey(userProfileLevelId));
+                                            setShowOverview(false);
+                                        }}
+                                        onSkipTest={(targetLevelId, targetLevelKey, targetLevelName, sourceLevelIds) => {
+                                            navigate("/learn/skip-test", {
+                                                state: { nextLevelId: targetLevelId, nextLevelKey: targetLevelKey, nextLevelName: targetLevelName, sourceLevelIds },
+                                            });
+                                        }}
+                                    />
+                                )}
+
                                 {/* Lộ trình cuộn dưới banner (z-0 < z-[45] của banner) */}
-                                <div className="relative z-0 flex flex-col mt-2">
+                                <div className={`relative z-0 flex flex-col mt-2 ${showOverview ? "hidden" : ""}`}>
                                     {trees.map((tree, idx) => {
                                         const accentKey = accentForIndex(idx);
                                         const treeData = tree;
@@ -338,6 +382,46 @@ export default function LearningPage() {
                                             </div>
                                         );
                                     })}
+                                {/* Banner level tiếp theo — chỉ hiện khi đang xem đúng level của user */}
+                                {trees.length > 0 && !treesLoading && levelIdMap[level] === userProfileLevelId && (() => {
+                                    const nextLevelMap: Record<LevelKey, { key: LevelKey; id: number; name: string; sourceLevelIds: number[] }[]> = {
+                                        beginner: [
+                                            // Vượt lên Level 2: test kiến thức Level 1
+                                            { key: "intermediate", id: 2, name: "Intermediate", sourceLevelIds: [1] },
+                                            // Vượt lên Level 3: test tổng hợp Level 1 + Level 2
+                                            { key: "advanced",     id: 3, name: "Advanced",     sourceLevelIds: [1, 2] },
+                                        ],
+                                        intermediate: [
+                                            // Vượt lên Level 3: test kiến thức Level 2
+                                            { key: "advanced", id: 3, name: "Advanced", sourceLevelIds: [2] },
+                                        ],
+                                        advanced: [],
+                                    };
+                                    const nexts = nextLevelMap[level];
+                                    if (!nexts.length) return null;
+                                    return (
+                                        <>
+                                            {nexts.map((next, i) => (
+                                                <NextLevelBanner
+                                                    key={next.id}
+                                                    nextLevelId={next.id}
+                                                    nextLevelName={next.name}
+                                                    isSkipTwo={i === 1}
+                                                    onGoToNextLevel={() => {
+                                                        navigate("/learn/skip-test", {
+                                                            state: {
+                                                                nextLevelId: next.id,
+                                                                nextLevelKey: next.key,
+                                                                nextLevelName: next.name,
+                                                                sourceLevelIds: next.sourceLevelIds,
+                                                            },
+                                                        });
+                                                    }}
+                                                />
+                                            ))}
+                                        </>
+                                    );
+                                })()}
                                 </div>
                             </div>
 
@@ -351,11 +435,6 @@ export default function LearningPage() {
                                         limit={3}
                                         period="WEEK"
                                         showViewMore
-                                    />
-                                    <InfoCard
-                                        title="Mở khóa Bảng xếp hạng!"
-                                        subtitle="Hoàn thành thêm 9 bài học để bắt đầu thi đua"
-                                        iconSrc="/icons/learn/lock-bxh.svg"
                                     />
                                     <DailyCard/>
                                     <ProfileCard onCreateProfile={() => navigate("/profile")}/>
@@ -376,6 +455,84 @@ export default function LearningPage() {
                 }}
                 message="Bạn có chắc chắn muốn đăng xuất không?"
             />
+        </div>
+    );
+}
+
+function NextLevelBanner({
+    nextLevelId,
+    nextLevelName,
+    isSkipTwo = false,
+    onGoToNextLevel,
+}: {
+    nextLevelId: number;
+    nextLevelName: string;
+    isSkipTwo?: boolean;
+    onGoToNextLevel: () => void;
+}) {
+    return (
+        <div className={`mx-auto w-full max-w-sm relative ${isSkipTwo ? "mt-4 mb-6" : "mt-10 mb-2"}`}>
+            {/* Nút scroll lên đầu — chỉ hiện ở banner đầu tiên */}
+            {!isSkipTwo && (
+                <button
+                    type="button"
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    className="absolute -right-14 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white shadow-md transition"
+                    title="Lên đầu trang"
+                    aria-label="Cuộn lên đầu trang"
+                >
+                    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 19V5M5 12l7-7 7 7"/>
+                    </svg>
+                </button>
+            )}
+
+            <div className={`relative rounded-3xl border-2 bg-white px-6 py-7 shadow-sm text-center ${
+                isSkipTwo
+                    ? "border-purple-200"
+                    : "border-gray-200"
+            }`}>
+                {/* Nhãn */}
+                <span className={`inline-block rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest mb-3 ${
+                    isSkipTwo
+                        ? "bg-purple-100 text-purple-600"
+                        : "bg-gray-100 text-gray-500"
+                }`}>
+                    {isSkipTwo ? "Học vượt 2 cấp" : "Kế tiếp"}
+                </span>
+
+                {/* Tên level */}
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    <Lock className={`h-5 w-5 shrink-0 ${isSkipTwo ? "text-purple-400" : "text-gray-500"}`} />
+                    <h2 className="text-xl font-extrabold text-gray-800">
+                        Level {nextLevelId}: {nextLevelName}
+                    </h2>
+                </div>
+
+                {/* Mô tả */}
+                <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                    {isSkipTwo
+                        ? "Thử thách bản thân — vượt thẳng lên cấp độ cao nhất nếu bạn tự tin vào năng lực của mình!"
+                        : "Tiếp tục luyện tập với bài học khó hơn để củng cố vốn từ và kỹ năng nghe — nói của bạn"
+                    }
+                </p>
+
+                {/* Nút học vượt */}
+                <button
+                    type="button"
+                    onClick={onGoToNextLevel}
+                    className={`inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-extrabold uppercase tracking-wide shadow-md transition text-white ${
+                        isSkipTwo
+                            ? "bg-purple-500 hover:bg-purple-600 active:bg-purple-700"
+                            : "bg-primary-500 hover:bg-primary-600 active:bg-primary-700"
+                    }`}
+                >
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    {isSkipTwo ? "Thử thách ngay" : "Học vượt"}
+                </button>
+            </div>
         </div>
     );
 }
@@ -411,27 +568,6 @@ function MoreItem({label, onClick}: { label: string; onClick?: () => void }) {
             {label}
         </button>
     );
-}
-
-function InfoCard({title, subtitle, iconSrc}: {
-    title: string;
-    subtitle: string;
-    iconSrc?: string;
-}) {
-    return (<div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
-        <div className="flex items-center gap-3">
-            {iconSrc && (
-                <div
-                    className="h-[54px] w-[54px] rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                    <img src={iconSrc} alt="" className="h-[26px] w-[26px] object-contain"/>
-                </div>
-            )}
-            <div className="flex-1">
-                <div className="text-gray-900 font-extrabold text-basic mb-1.5">{title}</div>
-                <div className="text-gray-600 text-basic leading-snug">{subtitle}</div>
-            </div>
-        </div>
-    </div>);
 }
 
 function DailyCard() {
