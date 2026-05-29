@@ -14,16 +14,17 @@ export default function LessonResultFooter({variant, title, detail, onContinue}:
         <div
             className={[
                 "fixed bottom-0 left-0 right-0 z-20 border-t-2 shadow-[0_-8px_30px_rgba(0,0,0,0.06)]",
+                "max-h-[38vh] overflow-y-auto",
                 isOk
                     ? "border-emerald-300 bg-gradient-to-b from-emerald-50 to-emerald-100/90"
                     : "border-red-300 bg-gradient-to-b from-red-50 to-red-100/90",
             ].join(" ")}
         >
-            <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-5 px-4 py-6 md:px-8 md:py-7">
+            <div className="mx-auto flex w-full max-w-4xl flex-wrap items-start justify-between gap-4 px-4 py-4 md:px-8 md:py-5">
                 <div className="flex min-w-0 flex-1 items-start gap-4">
                     <div
                         className={[
-                            "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl shadow-lg ring-4 ring-white",
+                            "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-lg ring-4 ring-white",
                             isOk
                                 ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white"
                                 : "bg-gradient-to-br from-red-400 to-red-600 text-white",
@@ -31,12 +32,12 @@ export default function LessonResultFooter({variant, title, detail, onContinue}:
                         aria-hidden
                     >
                         {isOk ? (
-                            <CheckCircle2 className="h-10 w-10" strokeWidth={2.5}/>
+                            <CheckCircle2 className="h-9 w-9" strokeWidth={2.5}/>
                         ) : (
-                            <XCircle className="h-10 w-10" strokeWidth={2.5}/>
+                            <XCircle className="h-9 w-9" strokeWidth={2.5}/>
                         )}
                     </div>
-                    <div className="min-w-0 pt-0.5">
+                    <div className="min-w-0 pt-0.5 flex-1">
                         <div
                             className={[
                                 "text-lg font-extrabold md:text-xl",
@@ -60,7 +61,7 @@ export default function LessonResultFooter({variant, title, detail, onContinue}:
                 <button
                     type="button"
                     onClick={onContinue}
-                    className="min-w-[168px] rounded-2xl bg-primary-600 px-6 py-3.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-md transition hover:bg-primary-700 hover:shadow-lg"
+                    className="shrink-0 self-center min-w-[148px] rounded-2xl bg-primary-600 px-6 py-3 text-sm font-extrabold uppercase tracking-wide text-white shadow-md transition hover:bg-primary-700 hover:shadow-lg"
                 >
                     Tiếp tục
                 </button>

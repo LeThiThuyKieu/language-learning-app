@@ -23,7 +23,7 @@ public class AdaptiveDifficultyScheduler {
      * Chạy trước LeaderboardScheduler (03:00) để tránh xung đột.
      * Cron: 0 0 2 * * MON
      */
-    @Scheduled(cron = "0 5 15 * * TUE")
+    @Scheduled(cron = "0 59 10 * * THU")
     public void updateDifficultiesWeekly() {
         log.info("[AdaptiveDifficultyScheduler] Starting weekly difficulty update...");
         try {

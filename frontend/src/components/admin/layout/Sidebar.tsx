@@ -13,6 +13,7 @@ import {
     Bot,
     ChevronDown,
     LogOut,
+    TrendingUp,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore.ts";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
@@ -69,6 +70,7 @@ export default function Sidebar() {
                     <nav className="space-y-1">
                         {navLink("/admin/dashboard",                 LayoutDashboard, "Dashboard")}
                         {navLink("/admin/user-management",           Users,           "User Management")}
+                        {navLink("/admin/learn-progress",            TrendingUp,      "Learn Progress")}
 
                         {/* ── Support group ── */}
                         <div>

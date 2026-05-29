@@ -261,12 +261,9 @@ export default function LearningPage() {
                                             aria-hidden
                                         />
                                         <div
-                                            className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-5 flex items-center justify-between`}
+                                            className={`${bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-7 flex items-center justify-between`}
                                         >
                                             <div className="max-w-[72%]">
-                                                <div className="uppercase tracking-wide text-white/90 text-sm font-extrabold">
-                                                    Phần {activeTreeIndex + 1}, Cửa 1
-                                                </div>
                                                 <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
                                                     {`Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${activeTreeIndex + 1}`}
                                                 </h1>
@@ -489,6 +486,7 @@ function ProfileCard({onCreateProfile}: { onCreateProfile: () => void }) {
 }
 
 function TopStats() {
+    const location = useLocation();
     const [profile, setProfile] = useState<{ streakCount: number; totalKn: number; totalXp: number; badgeCount: number } | null>(null);
 
     useEffect(() => {
@@ -500,7 +498,7 @@ function TopStats() {
                 badgeCount: p.badges?.filter(b => b.earned).length ?? 0,
             }))
             .catch(() => {/* ignore */});
-    }, []);
+    }, [location.key]); // refetch mỗi khi navigate về /learn
 
     const stats = [
         { label: "Streak", value: profile?.streakCount ?? "—", icon: <Flame className="h-5 w-5 text-orange-500" /> },
