@@ -11,6 +11,7 @@ export interface AdminFeedbackItem {
     userId: number;
     email: string;
     name: string;
+    avatarUrl: string | null;
     treeId: number;
     tree: string;
     rating: number;

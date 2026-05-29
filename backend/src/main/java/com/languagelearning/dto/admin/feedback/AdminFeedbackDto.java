@@ -14,6 +14,7 @@ public class AdminFeedbackDto {
     private Integer userId;
     private String email;
     private String name;
+    private String avatarUrl;
     private Integer treeId;
     private String tree;
     private Integer rating;

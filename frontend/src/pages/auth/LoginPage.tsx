@@ -493,21 +493,22 @@ export default function LoginPage() {
 
     return (
         <>
-            <div className={`min-h-[100dvh] w-full overflow-x-hidden bg-[#FFF8F1] font-sans transition-all duration-300 lg:flex ${showForgot ? "blur-sm brightness-75" : ""}`}>
+            <div className={`h-[100dvh] w-full overflow-hidden bg-[#FFF8F1] font-sans transition-all duration-300 lg:flex ${showForgot ? "blur-sm brightness-75" : ""}`}>
                 {/* BÊN TRÁI */}
                 <div className="hidden lg:block lg:w-1/2 lg:min-h-[100dvh] relative bg-[#FEEED8]">
                     <img src="/auth/background.jpg" alt="Banner" className="h-full w-full object-cover" />
                 </div>
 
                 {/* BÊN PHẢI */}
-                <div className="relative flex min-h-[100dvh] w-full items-start justify-center overflow-y-auto bg-white px-4 py-6 sm:px-6 sm:py-10 lg:w-1/2 lg:px-10 lg:py-16">
-                    <div className="relative w-full max-w-md pb-4 pt-14 sm:pt-12 lg:max-w-lg">
+                <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-white px-4 py-6 sm:px-6 lg:w-1/2 lg:px-10">
+                    <div className="relative w-full max-w-md pt-12 lg:max-w-lg">
 
                         {/* Nút home — góc trên phải */}
                         <button
+                            type="button"
                             onClick={() => navigate("/")}
-                            className="absolute right-0 top-0 z-10 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFE0B2]"
-                            style={{ boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}
+                            className="absolute right-0 z-10 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FFE0B2]"
+                            style={{ top: 10, boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}
                         >
                             <Home className="w-5 h-5 text-gray-500" />
                             <span className="text-sm font-medium text-gray-600">Trang chủ</span>
