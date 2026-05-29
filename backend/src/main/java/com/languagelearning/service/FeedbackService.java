@@ -118,8 +118,9 @@ public class FeedbackService {
                 dto.setUserId(f.getUser() != null ? f.getUser().getId() : null);
                 dto.setEmail(f.getUser() != null ? f.getUser().getEmail() : null);
                     if (f.getUser() != null) {
-                        UserProfile profile = userProfileRepository.findByUser(f.getUser()).orElse(null);
+                        UserProfile profile = userProfileRepository.findByUserId(f.getUser().getId()).orElse(null);
                         dto.setName(profile != null && profile.getFullName() != null ? profile.getFullName() : f.getUser().getEmail());
+                        dto.setAvatarUrl(profile != null ? profile.getAvatarUrl() : null);
                     }
                 dto.setTreeId(f.getSkillTree() != null ? f.getSkillTree().getId() : null);
                     dto.setTree(buildTreeLabel(f.getSkillTree()));

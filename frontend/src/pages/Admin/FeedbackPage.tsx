@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Filter, MessageSquare, Search, Star, TreePine, Users } from "lucide-react";
+import { Filter, MessageSquare, Search, TreePine, Users } from "lucide-react";
 import AdminStatCard from "@/components/admin/common/AdminStatCard";
 import { feedbackService, type AdminFeedbackItem } from "@/services/admin/feedbackService";
 
@@ -33,15 +33,6 @@ function getRatingLabel(rating: number) {
     default:
       return "—";
   }
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }
 
 function formatCreatedAt(value: string) {
@@ -428,9 +419,16 @@ export default function FeedbackPage() {
                 pagedFeedback.map((item) => (
                   <tr key={item.id} className="transition hover:bg-orange-50/40">
                     <td className="px-5 py-4">
-                      <div>
-                        <div className="font-semibold text-gray-900">{item.name}</div>
-                        <div className="text-xs text-gray-500">{item.email}</div>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || item.email || "U")}&background=f97316&color=fff`}
+                          alt={item.name}
+                          className="h-10 w-10 rounded-full object-cover ring-2 ring-gray-100"
+                        />
+                        <div>
+                          <div className="font-semibold text-gray-900">{item.name}</div>
+                          <div className="text-xs text-gray-500">{item.email}</div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm font-medium text-gray-700">{item.tree}</td>

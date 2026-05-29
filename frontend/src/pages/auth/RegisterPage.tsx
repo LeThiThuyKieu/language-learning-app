@@ -60,12 +60,14 @@ export default function RegisterPage() {
             {/* RIGHT */}
             <div className="relative flex h-full w-full items-center justify-center bg-white px-4 sm:px-6 lg:w-1/2 lg:px-10">
 
-                <div className="relative w-full max-w-md lg:max-w-lg">
+                <div className="relative w-full max-w-md pt-4 lg:max-w-lg">
 
                     {/* Home */}
                     <button
+                        type="button"
                         onClick={() => navigate("/")}
-                        className="absolute right-0 -top-12 z-10 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm transition hover:bg-[#FFE0B2]"
+                        className="absolute right-0 z-10 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm transition hover:bg-[#FFE0B2]"
+                        style={{ top: -10 }}
                     >
                         <Home className="w-5 h-5 text-gray-500" />
                         <span className="text-sm font-medium text-gray-600">
