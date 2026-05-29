@@ -26,6 +26,9 @@ public class Badge {
     
     @Column(name = "icon_url", columnDefinition = "TEXT")
     private String iconUrl;
+
+    @Column(name = "status", nullable = false)
+    private String status = "active";
 }
 
 

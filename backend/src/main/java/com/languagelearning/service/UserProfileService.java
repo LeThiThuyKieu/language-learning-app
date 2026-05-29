@@ -252,7 +252,7 @@ public class UserProfileService {
 
         Integer todayXp = activityByDate.getOrDefault(today, 0);
 
-        // Tất cả badges (earned + not-earned), sắp xếp theo required_kn tăng dần
+        // Tất cả badges đang active (earned + not-earned), sắp xếp theo required_kn tăng dần
         Set<Integer> earnedBadgeIds = userBadges.stream()
                 .map(ub -> ub.getBadge().getId())
                 .collect(Collectors.toSet());
@@ -264,6 +264,7 @@ public class UserProfileService {
                 ));
 
         List<UserProfileResponse.BadgeItem> badgeItems = badgeRepository.findAll().stream()
+                .filter(badge -> badge.getStatus() == null || "active".equalsIgnoreCase(badge.getStatus()))
                 .sorted(Comparator.comparingInt(b -> b.getRequiredKn() == null ? 0 : b.getRequiredKn()))
                 .map(badge -> new UserProfileResponse.BadgeItem(
                         badge.getId(),
