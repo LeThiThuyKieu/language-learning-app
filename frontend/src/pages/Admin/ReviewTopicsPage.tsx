@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { BookOpen, PlusCircle, X, Edit3, ToggleRight, ToggleLeft, Loader2 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const sampleTopics: Topic[] = [
 ];
 
 export default function ReviewTopicsPage() {
+    const navigate = useNavigate();
     const [topics, setTopics] = useState<Topic[]>(sampleTopics);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
@@ -114,7 +116,7 @@ export default function ReviewTopicsPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={() => handleToggleTopicStatus(t)} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                                <button onClick={(e) => { e.stopPropagation(); handleToggleTopicStatus(t); }} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
                                         {togglingId === t.id ? (
                                             <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
                                         ) : t.status === "Active" ? (
@@ -124,9 +126,9 @@ export default function ReviewTopicsPage() {
                                         )}
                                 </button>
 
-                                    <button onClick={() => openEditModal(t)} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
-                                        <Edit3 className="w-5 h-5" />
-                                    </button>
+                                <button onClick={(e) => { e.stopPropagation(); openEditModal(t); }} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+                                    <Edit3 className="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
 
@@ -156,7 +158,7 @@ export default function ReviewTopicsPage() {
 
                         <div className="mt-4">
                             <button
-                                onClick={() => openEditModal(t)}
+                                onClick={(e) => { e.stopPropagation(); navigate(`/admin/review-topics/${t.id}`); }}
                                 className={`w-full py-2 rounded-lg text-sm font-semibold ${t.status === "Inactive" ? "bg-gray-100 text-gray-500" : "bg-orange-50 text-orange-600"}`}
                             >
                                 Manage

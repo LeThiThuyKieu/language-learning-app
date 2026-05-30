@@ -20,6 +20,7 @@ import ChatbotRulesPage from "@/pages/Admin/support_management/ChatbotRulesPage.
 import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
 import ReviewTopicsPage from "@/pages/Admin/ReviewTopicsPage";
+import ReviewTopicListPage from "@/pages/Admin/ReviewTopicListPage";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
 import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";
@@ -149,6 +150,7 @@ function App() {
                         <Route path="badges" element={<BadgesManagementPage/>} />
                         <Route path="feedback" element={<FeedbackPage/>} />
                         <Route path="review-topics" element={<ReviewTopicsPage/>} />
+                        <Route path="review-topics/:id" element={<ReviewTopicListPage/>} />
                     </Route>
                 </Routes>
                 <SupportFloatingButton />
