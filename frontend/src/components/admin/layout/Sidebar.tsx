@@ -7,6 +7,7 @@ import {
     BarChart2,
     MessagesSquare,
     ClipboardList,
+    BookOpen,
     Mail,
     MessageCircle,
     Headphones,
@@ -71,6 +72,7 @@ export default function Sidebar() {
                         {navLink("/admin/dashboard",                 LayoutDashboard, "Dashboard")}
                         {navLink("/admin/user-management",           Users,           "User Management")}
                         {navLink("/admin/learn-progress",            TrendingUp,      "Learn Progress")}
+                        {navLink("/admin/review-topics",            BookOpen,        "Review Topics")}
 
                         {/* ── Support group ── */}
                         <div>
