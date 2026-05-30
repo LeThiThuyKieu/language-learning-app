@@ -14,6 +14,8 @@ import ReviewResultView, {type ReviewOutcome} from "@/components/user/learn/Revi
 import FeedbackModal from "@/components/user/learn/FeedbackModal.tsx";
 import {toast} from "react-hot-toast";
 import { AlertTriangle, Clock, Timer } from "lucide-react";
+import {profileService} from "@/services/profileService";
+import {mapLevelIdToKey} from "@/utils/learningLevel";
 
 type Stage = "VOCAB" | "LISTENING" | "SPEAKING" | "MATCHING" | "RESULT" | "COMPLETE";
 
@@ -63,6 +65,14 @@ export default function ReviewLessonPage() {
     const [allAttempts, setAllAttempts] = useState<AttemptItem[]>([]);
     const [reviewBadges, setReviewBadges] = useState<BadgeInfo[]>([]);
     const completingRef = useRef(false);
+
+    // Level hiện tại của user (để tính next level cho skip-test)
+    const [userLevelId, setUserLevelId] = useState<number>(1);
+    useEffect(() => {
+        profileService.getMyProfile()
+            .then(p => setUserLevelId(p.currentLevelId ?? 1))
+            .catch(() => {/* ignore */});
+    }, []);
 
     // Feedback state
     const [showFeedback, setShowFeedback] = useState(false);
@@ -233,6 +243,12 @@ export default function ReviewLessonPage() {
 
     // Màn hình kết quả adaptive
     if (stage === "RESULT") {
+        // Tính next level cho skip-test (chỉ dùng khi FAST_TRACKER)
+        const nextLevelId = userLevelId < 3 ? userLevelId + 1 : null;
+        const nextLevelKey = nextLevelId ? mapLevelIdToKey(nextLevelId) : null;
+        const nextLevelNameMap: Record<number, string> = { 1: "Beginner", 2: "Intermediate", 3: "Advanced" };
+        const nextLevelName = nextLevelId ? (nextLevelNameMap[nextLevelId] ?? "") : "";
+
         return (
             <ReviewResultView
                 accuracy={resultAccuracy}
@@ -253,6 +269,18 @@ export default function ReviewLessonPage() {
                     setTimedOut(false);
                     setStage("VOCAB");
                 }}
+                onSkipTest={nextLevelId && nextLevelKey ? () => {
+                    // Clear cache để khi quay về /learn, loadProgressFromDB rebuild đúng từ DB
+                    clearAllTreeCache();
+                    navigate("/learn/skip-test", {
+                        state: {
+                            nextLevelId,
+                            nextLevelKey,
+                            nextLevelName,
+                            sourceLevelIds: [userLevelId],
+                        },
+                    });
+                } : undefined}
             />
         );
     }
