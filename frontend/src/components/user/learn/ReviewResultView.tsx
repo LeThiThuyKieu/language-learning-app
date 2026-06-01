@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
     CheckCircle2, XCircle, Clock, Zap, AlertTriangle,
     TrendingUp, Lightbulb, ArrowRight, RotateCcw, BookOpen,
-    Star, PartyPopper, Frown, Meh, HelpCircle, FlaskConical,
+    Star, PartyPopper, Frown, Meh, HelpCircle,
     ClipboardList,
 } from "lucide-react";
 import ReviewAnswerSheet from "@/components/user/learn/ReviewAnswerSheet.tsx";
@@ -31,8 +31,6 @@ interface Props {
     questions?: SkillTreeEnrichedQuestion[];
     onContinue: () => void;
     onRetry: () => void;
-    /** Chỉ dùng cho FAST_TRACKER: navigate sang skip-test */
-    onSkipTest?: () => void;
 }
 
 // Confetti
@@ -114,7 +112,7 @@ const OUTCOME_CONFIG: Record<ReviewOutcome, {
         title: "Xuất sắc! Bạn hoàn thành rất nhanh!",
         subtitle: "Bạn nắm kiến thức rất vững. Hệ thống ghi nhận bạn là Fast-Tracker!",
         tip: "Bạn học rất nhanh! Hãy thử học vượt lên Level cao hơn để thử thách bản thân nhé.",
-        showPlacementBtn: true,
+        showPlacementBtn: false,
         canPass: true,
         gradient: "from-amber-400 via-orange-400 to-primary-600",
         badgeBg: "bg-amber-50",
@@ -257,7 +255,7 @@ function AnimatedNumber({ target, suffix = "" }: { target: number; suffix?: stri
 // Main component
 export default function ReviewResultView({
     accuracy, correctCount, totalCount, elapsedSeconds, totalSeconds,
-    timedOut, outcome, attempts, questions, onContinue, onRetry, onSkipTest,
+    timedOut, outcome, attempts, questions, onContinue, onRetry,
 }: Props) {
     const cfg = OUTCOME_CONFIG[outcome];
     const canvasRef = useConfetti(cfg.canPass);
@@ -401,18 +399,6 @@ export default function ReviewResultView({
                                     >
                                         <ClipboardList className="w-5 h-5 shrink-0" />
                                         <span className="leading-tight text-center">Xem lại<br />bài làm</span>
-                                    </button>
-                                )}
-
-                                {/* Học vượt level — chỉ FAST_TRACKER */}
-                                {cfg.showPlacementBtn && onSkipTest && (
-                                    <button
-                                        type="button"
-                                        onClick={onSkipTest}
-                                        className="flex-1 rounded-2xl border-2 border-amber-300 bg-amber-50 text-amber-700 font-bold py-3 text-xs uppercase tracking-wide transition hover:bg-amber-100 active:scale-95 flex flex-col items-center justify-center gap-1.5 min-w-0"
-                                    >
-                                        <FlaskConical className="w-5 h-5 shrink-0" />
-                                        <span className="leading-tight text-center">Học vượt<br />level</span>
                                     </button>
                                 )}
 
