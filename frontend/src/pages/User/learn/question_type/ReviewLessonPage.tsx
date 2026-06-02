@@ -64,8 +64,7 @@ export default function ReviewLessonPage() {
     const [reviewBadges, setReviewBadges] = useState<BadgeInfo[]>([]);
     const completingRef = useRef(false);
 
-    // Feedback state
-    const [showFeedback, setShowFeedback] = useState(false);
+    // Feedback state    const [showFeedback, setShowFeedback] = useState(false);
 
     // Timer state
     const startTimeRef = useRef<number>(Date.now());
@@ -246,7 +245,6 @@ export default function ReviewLessonPage() {
                 questions={reviewNode?.questions ?? []}
                 onContinue={() => setStage("COMPLETE")}
                 onRetry={() => {
-                    // Reset để làm lại
                     completingRef.current = false;
                     startTimeRef.current = Date.now();
                     setAllAttempts([]);
