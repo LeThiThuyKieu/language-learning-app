@@ -1,5 +1,6 @@
 import {useLocation, useNavigate} from "react-router-dom";
 import {useEffect, useMemo, useRef, useState} from "react";
+import {createPortal} from "react-dom";
 import {learningService} from "@/services/learningService.ts";
 import type {SkillTreeQuestionsData} from "@/types";
 import {loadProgressFromDB} from "@/utils/learnTreeProgress";
@@ -7,7 +8,7 @@ import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
-import {Flame, Lock, Medal, MoreHorizontal, Star, Zap} from "lucide-react";
+import {Flame, Lock, Medal, MoreHorizontal, PartyPopper, Star, Zap} from "lucide-react";
 import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
@@ -45,6 +46,9 @@ export default function LearningPage() {
 
     const [moreOpen, setMoreOpen] = useState(false);
     const [showOverview, setShowOverview] = useState(false);
+    // Modal chúc mừng mở khoá level mới
+    const [unlockModal, setUnlockModal] = useState<{ nextLevelId: number; nextLevelKey: LevelKey; nextLevelName: string } | null>(null);
+    const [unlocking, setUnlocking] = useState(false);
     const [trees, setTrees] = useState<SkillTreeQuestionsData[]>([]);
     const [treesLoading, setTreesLoading] = useState(true);
     const [treesError, setTreesError] = useState<string | null>(null);
@@ -176,6 +180,13 @@ export default function LearningPage() {
         return () => observer.disconnect();
     }, [trees.length, treesLoading]);
 
+    // Level hoàn thành khi tất cả trees đều có unlockedCount >= 5 (5 nodes đã completed)
+    // PHẢI đặt trước early returns để không vi phạm Rules of Hooks
+    const isCurrentLevelCompleted = useMemo(() => {
+        if (trees.length === 0 || treesLoading) return false;
+        return trees.every(t => (unlockedCounts[t.treeId] ?? 0) >= 5);
+    }, [trees, unlockedCounts, treesLoading]);
+
     if (!isAuthenticated) {
         return <GuestPrompt/>;
     }
@@ -189,6 +200,28 @@ export default function LearningPage() {
     }
 
     const level = resolvedLevel;
+
+    async function handleUnlockLevel(nextLevelId: number, nextLevelKey: LevelKey, nextLevelName: string) {
+        setUnlockModal({ nextLevelId, nextLevelKey, nextLevelName });
+    }
+
+    async function confirmUnlockLevel() {
+        if (!unlockModal || unlocking) return;
+        setUnlocking(true);
+        try {
+            await profileService.updateMyProfile({ currentLevelId: unlockModal.nextLevelId });
+            setUserProfileLevelId(unlockModal.nextLevelId);
+            setUnlockModal(null);
+            // Navigate sang level mới
+            navigate("/learn", { state: { level: unlockModal.nextLevelKey }, replace: true });
+        } catch {
+            // ignore — vẫn navigate
+            setUnlockModal(null);
+            navigate("/learn", { state: { level: unlockModal.nextLevelKey }, replace: true });
+        } finally {
+            setUnlocking(false);
+        }
+    }
 
     return (
         <div className="relative left-1/2 right-1/2 -translate-x-1/2 w-screen min-h-screen bg-white -mt-8">
@@ -407,15 +440,20 @@ export default function LearningPage() {
                                                     nextLevelId={next.id}
                                                     nextLevelName={next.name}
                                                     isSkipTwo={i === 1}
+                                                    isLevelCompleted={i === 0 && isCurrentLevelCompleted}
                                                     onGoToNextLevel={() => {
-                                                        navigate("/learn/skip-test", {
-                                                            state: {
-                                                                nextLevelId: next.id,
-                                                                nextLevelKey: next.key,
-                                                                nextLevelName: next.name,
-                                                                sourceLevelIds: next.sourceLevelIds,
-                                                            },
-                                                        });
+                                                        if (i === 0 && isCurrentLevelCompleted) {
+                                                            handleUnlockLevel(next.id, next.key, next.name);
+                                                        } else {
+                                                            navigate("/learn/skip-test", {
+                                                                state: {
+                                                                    nextLevelId: next.id,
+                                                                    nextLevelKey: next.key,
+                                                                    nextLevelName: next.name,
+                                                                    sourceLevelIds: next.sourceLevelIds,
+                                                                },
+                                                            });
+                                                        }
                                                     }}
                                                 />
                                             ))}
@@ -455,6 +493,52 @@ export default function LearningPage() {
                 }}
                 message="Bạn có chắc chắn muốn đăng xuất không?"
             />
+
+            {/* Modal chúc mừng mở khoá level mới */}
+            {unlockModal && createPortal(
+                <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !unlocking && setUnlockModal(null)} />
+                    <div className="relative w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        {/* Gradient top strip */}
+                        <div className="h-2 w-full bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500" />
+                        <div className="px-7 py-8 flex flex-col items-center text-center gap-4">
+                            {/* Icon */}
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+                                <PartyPopper className="h-8 w-8 text-emerald-600" />
+                            </div>
+                            {/* Lion */}
+                            <img src="/logo/lion.png" alt="Lion mascot" className="w-20 h-20 object-contain drop-shadow-lg select-none" draggable={false} />
+                            {/* Text */}
+                            <div>
+                                <h2 className="text-xl font-extrabold text-gray-900 mb-1">
+                                    Chúc mừng! 🎉
+                                </h2>
+                                <p className="text-sm text-gray-500 leading-relaxed">
+                                    Bạn đã hoàn thành toàn bộ lộ trình!<br />
+                                    <span className="font-bold text-emerald-600">Level {unlockModal.nextLevelId}: {unlockModal.nextLevelName}</span> đã được mở khoá.
+                                </p>
+                            </div>
+                            {/* Button */}
+                            <button
+                                type="button"
+                                onClick={confirmUnlockLevel}
+                                disabled={unlocking}
+                                className="w-full rounded-2xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:opacity-90 active:scale-95 text-white font-extrabold py-3.5 text-sm uppercase tracking-widest transition-all shadow-md disabled:opacity-60"
+                            >
+                                {unlocking ? "Đang mở khoá…" : "Bắt đầu học ngay →"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setUnlockModal(null)}
+                                disabled={unlocking}
+                                className="text-xs text-gray-400 hover:text-gray-600 transition"
+                            >
+                                Để sau
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            , document.body)}
         </div>
     );
 }
@@ -463,13 +547,18 @@ function NextLevelBanner({
     nextLevelId,
     nextLevelName,
     isSkipTwo = false,
+    isLevelCompleted = false,
     onGoToNextLevel,
 }: {
     nextLevelId: number;
     nextLevelName: string;
     isSkipTwo?: boolean;
+    isLevelCompleted?: boolean;
     onGoToNextLevel: () => void;
 }) {
+    // Khi level hoàn thành và đây là banner kế tiếp (không phải skip 2): đổi sang "Mở khoá"
+    const showUnlock = isLevelCompleted && !isSkipTwo;
+
     return (
         <div className={`mx-auto w-full max-w-sm relative ${isSkipTwo ? "mt-4 mb-6" : "mt-10 mb-2"}`}>
             {/* Nút scroll lên đầu — chỉ hiện ở banner đầu tiên */}
@@ -488,22 +577,26 @@ function NextLevelBanner({
             )}
 
             <div className={`relative rounded-3xl border-2 bg-white px-6 py-7 shadow-sm text-center ${
-                isSkipTwo
-                    ? "border-purple-200"
-                    : "border-gray-200"
+                showUnlock
+                    ? "border-emerald-300"
+                    : isSkipTwo
+                        ? "border-purple-200"
+                        : "border-gray-200"
             }`}>
                 {/* Nhãn */}
                 <span className={`inline-block rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest mb-3 ${
-                    isSkipTwo
-                        ? "bg-purple-100 text-purple-600"
-                        : "bg-gray-100 text-gray-500"
+                    showUnlock
+                        ? "bg-emerald-100 text-emerald-600"
+                        : isSkipTwo
+                            ? "bg-purple-100 text-purple-600"
+                            : "bg-gray-100 text-gray-500"
                 }`}>
-                    {isSkipTwo ? "Học vượt 2 cấp" : "Kế tiếp"}
+                    {showUnlock ? "Sẵn sàng mở khoá" : isSkipTwo ? "Học vượt 2 cấp" : "Kế tiếp"}
                 </span>
 
                 {/* Tên level */}
                 <div className="flex items-center justify-center gap-2 mb-2">
-                    <Lock className={`h-5 w-5 shrink-0 ${isSkipTwo ? "text-purple-400" : "text-gray-500"}`} />
+                    <Lock className={`h-5 w-5 shrink-0 ${showUnlock ? "text-emerald-400" : isSkipTwo ? "text-purple-400" : "text-gray-500"}`} />
                     <h2 className="text-xl font-extrabold text-gray-800">
                         Level {nextLevelId}: {nextLevelName}
                     </h2>
@@ -511,26 +604,39 @@ function NextLevelBanner({
 
                 {/* Mô tả */}
                 <p className="text-sm text-gray-500 leading-relaxed mb-6">
-                    {isSkipTwo
-                        ? "Thử thách bản thân — vượt thẳng lên cấp độ cao nhất nếu bạn tự tin vào năng lực của mình!"
-                        : "Tiếp tục luyện tập với bài học khó hơn để củng cố vốn từ và kỹ năng nghe — nói của bạn"
+                    {showUnlock
+                        ? "Bạn đã hoàn thành toàn bộ lộ trình! Hãy mở khoá level tiếp theo để tiếp tục hành trình."
+                        : isSkipTwo
+                            ? "Thử thách bản thân — vượt thẳng lên cấp độ cao nhất nếu bạn tự tin vào năng lực của mình!"
+                            : "Tiếp tục luyện tập với bài học khó hơn để củng cố vốn từ và kỹ năng nghe — nói của bạn"
                     }
                 </p>
 
-                {/* Nút học vượt */}
+                {/* Nút */}
                 <button
                     type="button"
                     onClick={onGoToNextLevel}
                     className={`inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-extrabold uppercase tracking-wide shadow-md transition text-white ${
-                        isSkipTwo
-                            ? "bg-purple-500 hover:bg-purple-600 active:bg-purple-700"
-                            : "bg-primary-500 hover:bg-primary-600 active:bg-primary-700"
+                        showUnlock
+                            ? "bg-gradient-to-r from-emerald-400 to-teal-500 hover:opacity-90 active:scale-95"
+                            : isSkipTwo
+                                ? "bg-purple-500 hover:bg-purple-600 active:bg-purple-700"
+                                : "bg-primary-500 hover:bg-primary-600 active:bg-primary-700"
                     }`}
                 >
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                    {isSkipTwo ? "Thử thách ngay" : "Học vượt"}
+                    {showUnlock ? (
+                        <>
+                            <PartyPopper className="h-5 w-5" />
+                            Mở khoá
+                        </>
+                    ) : (
+                        <>
+                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                            {isSkipTwo ? "Thử thách ngay" : "Học vượt"}
+                        </>
+                    )}
                 </button>
             </div>
         </div>
