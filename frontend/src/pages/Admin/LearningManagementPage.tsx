@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     BookOpen,
     Copy,
@@ -13,8 +14,7 @@ import {
     PlusCircle,
     Search,
     Trash2,
-    Upload,
-    X,
+    
     ClipboardList,
     PenLine,
 } from "lucide-react";
@@ -36,15 +36,7 @@ type LearningQuestion = {
     note: string;
 };
 
-type LearningQuestionForm = {
-    level: LearningLevel;
-    type: LearningType;
-    title: string;
-    preview: string;
-    audio: string;
-    status: LearningStatus;
-    note: string;
-};
+// form type lives in edit page; not needed here
 
 const initialQuestions: LearningQuestion[] = [
     {
@@ -126,18 +118,7 @@ export default function LearningManagementPage() {
     const [levelFilter, setLevelFilter] = useState<"all" | LearningLevel>("all");
     const [typeFilter, setTypeFilter] = useState<"all" | LearningType>("all");
     const [statusFilter, setStatusFilter] = useState<"all" | LearningStatus>("all");
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("view");
-    const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
-    const [questionForm, setQuestionForm] = useState<LearningQuestionForm>({
-        level: "L1",
-        type: "Trắc nghiệm",
-        title: "",
-        preview: "",
-        audio: "",
-        status: "Hiển thị",
-        note: "",
-    });
+    const navigate = useNavigate();
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<LearningQuestion | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
@@ -153,50 +134,7 @@ export default function LearningManagementPage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    function openQuestionModal(mode: "add" | "edit" | "view", question?: LearningQuestion) {
-        setModalMode(mode);
-        setEditingQuestionId(question?.id ?? null);
-        setQuestionForm({
-            level: question?.level ?? "L1",
-            type: question?.type ?? "Trắc nghiệm",
-            title: question?.title ?? "",
-            preview: question?.preview ?? "",
-            audio: question?.audio ?? "",
-            status: question?.status ?? "Hiển thị",
-            note: question?.note ?? "",
-        });
-        setIsModalOpen(true);
-        setOpenMenuId(null);
-    }
-
-    function closeQuestionModal() {
-        setIsModalOpen(false);
-        setEditingQuestionId(null);
-    }
-
-    function saveQuestion() {
-        const nextQuestion: LearningQuestion = {
-            id: editingQuestionId ?? Date.now(),
-            level: questionForm.level,
-            type: questionForm.type,
-            title: questionForm.title.trim(),
-            preview: questionForm.preview.trim(),
-            audio: questionForm.audio.trim() || undefined,
-            status: questionForm.status,
-            note: questionForm.note.trim(),
-        };
-
-        setQuestions((current) => {
-            if (editingQuestionId === null) {
-                return [nextQuestion, ...current];
-            }
-
-            return current.map((item) => (item.id === editingQuestionId ? nextQuestion : item));
-        });
-
-        toast.success(modalMode === "add" ? "Đã thêm câu hỏi" : "Đã lưu thay đổi");
-        closeQuestionModal();
-    }
+    // navigation will open dedicated pages for view/edit/add
 
     function handleDuplicateQuestion(question: LearningQuestion) {
         const duplicated: LearningQuestion = {
@@ -315,7 +253,7 @@ export default function LearningManagementPage() {
                     </button>
                     <button
                         type="button"
-                        onClick={() => openQuestionModal("add")}
+                        onClick={() => navigate('/admin/learning/new')}
                         className="inline-flex items-center gap-2 rounded-xl bg-[#b56b47] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#9c5636]"
                     >
                         <PlusCircle className="h-4 w-4" />
@@ -331,8 +269,8 @@ export default function LearningManagementPage() {
             </div>
 
             <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-                    <label className="lg:col-span-2">
+                <div className="flex items-center gap-4 overflow-x-auto">
+                    <label className="flex-1 min-w-0">
                         <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Tìm kiếm</span>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -345,12 +283,12 @@ export default function LearningManagementPage() {
                         </div>
                     </label>
 
-                    <label>
+                    <label className="w-40 flex-shrink-0">
                         <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Level</span>
                         <select
                             value={levelFilter}
                             onChange={(event) => setLevelFilter(event.target.value as "all" | LearningLevel)}
-                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
                         >
                             {levelOptions.map((option) => (
                                 <option key={option} value={option}>
@@ -360,12 +298,12 @@ export default function LearningManagementPage() {
                         </select>
                     </label>
 
-                    <label>
+                    <label className="w-44 flex-shrink-0">
                         <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Loại</span>
                         <select
                             value={typeFilter}
                             onChange={(event) => setTypeFilter(event.target.value as "all" | LearningType)}
-                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
                         >
                             {typeOptions.map((option) => (
                                 <option key={option} value={option}>
@@ -375,12 +313,12 @@ export default function LearningManagementPage() {
                         </select>
                     </label>
 
-                    <label>
+                    <label className="w-40 flex-shrink-0">
                         <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Trạng thái</span>
                         <select
                             value={statusFilter}
                             onChange={(event) => setStatusFilter(event.target.value as "all" | LearningStatus)}
-                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
                         >
                             {statusOptions.map((option) => (
                                 <option key={option} value={option}>
@@ -478,7 +416,7 @@ export default function LearningManagementPage() {
                                                         <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border border-gray-100 bg-white p-1 shadow-xl">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => openQuestionModal("view", question)}
+                                                                onClick={() => navigate(`/admin/learning/${question.id}`, { state: { question } })}
                                                                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                                                             >
                                                                 <Eye className="h-4 w-4" />
@@ -486,7 +424,7 @@ export default function LearningManagementPage() {
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                onClick={() => openQuestionModal("edit", question)}
+                                                                onClick={() => navigate(`/admin/learning/${question.id}/edit`, { state: { question } })}
                                                                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                                                             >
                                                                 <PencilLine className="h-4 w-4" />
@@ -550,141 +488,7 @@ export default function LearningManagementPage() {
                 </div>
             </div>
 
-            {isModalOpen && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex items-start justify-between px-7 pt-6 pb-4">
-                            <div>
-                                <h2 className="text-xl font-extrabold text-slate-900">
-                                    {modalMode === "add" ? "Thêm câu hỏi" : modalMode === "edit" ? "Sửa câu hỏi" : "Xem câu hỏi"}
-                                </h2>
-                                <p className="mt-1 text-sm text-slate-500">
-                                    {modalMode === "view"
-                                        ? "Xem nhanh nội dung câu hỏi đang được quản lý."
-                                        : "Chỉnh sửa dữ liệu cục bộ theo đúng style admin hiện tại."}
-                                </p>
-                            </div>
-                            <button type="button" onClick={closeQuestionModal} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-5 px-7 pb-7">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div>
-                                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">Level</label>
-                                    <select
-                                        value={questionForm.level}
-                                        disabled={modalMode === "view"}
-                                        onChange={(event) => setQuestionForm((current) => ({ ...current, level: event.target.value as LearningLevel }))}
-                                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white disabled:cursor-not-allowed disabled:bg-slate-100"
-                                    >
-                                        <option value="L1">L1</option>
-                                        <option value="L2">L2</option>
-                                        <option value="L3">L3</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">Loại</label>
-                                    <select
-                                        value={questionForm.type}
-                                        disabled={modalMode === "view"}
-                                        onChange={(event) => setQuestionForm((current) => ({ ...current, type: event.target.value as LearningType }))}
-                                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white disabled:cursor-not-allowed disabled:bg-slate-100"
-                                    >
-                                        <option value="Trắc nghiệm">Trắc nghiệm</option>
-                                        <option value="Nghe">Nghe</option>
-                                        <option value="Nói">Nói</option>
-                                        <option value="Đọc">Đọc</option>
-                                        <option value="Viết">Viết</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Câu hỏi</label>
-                                <input
-                                    value={questionForm.title}
-                                    disabled={modalMode === "view"}
-                                    onChange={(event) => setQuestionForm((current) => ({ ...current, title: event.target.value }))}
-                                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white disabled:cursor-not-allowed disabled:bg-slate-100"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Nội dung preview</label>
-                                <textarea
-                                    value={questionForm.preview}
-                                    disabled={modalMode === "view"}
-                                    onChange={(event) => setQuestionForm((current) => ({ ...current, preview: event.target.value }))}
-                                    className="min-h-[120px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white disabled:cursor-not-allowed disabled:bg-slate-100"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <div>
-                                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">Audio</label>
-                                    <input
-                                        value={questionForm.audio}
-                                        disabled={modalMode === "view"}
-                                        onChange={(event) => setQuestionForm((current) => ({ ...current, audio: event.target.value }))}
-                                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white disabled:cursor-not-allowed disabled:bg-slate-100"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="mb-1.5 block text-sm font-semibold text-slate-700">Trạng thái</label>
-                                    <select
-                                        value={questionForm.status}
-                                        disabled={modalMode === "view"}
-                                        onChange={(event) => setQuestionForm((current) => ({ ...current, status: event.target.value as LearningStatus }))}
-                                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white disabled:cursor-not-allowed disabled:bg-slate-100"
-                                    >
-                                        <option value="Hiển thị">Hiển thị</option>
-                                        <option value="Ẩn">Ẩn</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ghi chú</label>
-                                <textarea
-                                    value={questionForm.note}
-                                    disabled={modalMode === "view"}
-                                    onChange={(event) => setQuestionForm((current) => ({ ...current, note: event.target.value }))}
-                                    className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white disabled:cursor-not-allowed disabled:bg-slate-100"
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-between rounded-2xl border border-orange-100 bg-orange-50/60 px-4 py-3">
-                                <div>
-                                    <div className="text-xs font-bold uppercase tracking-wider text-orange-700">Ngữ cảnh</div>
-                                    <div className="mt-1 text-sm font-semibold text-slate-800">Learning</div>
-                                </div>
-                                <div className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 ring-1 ring-orange-100">{modalMode.toUpperCase()}</div>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-3 pt-2">
-                                <button type="button" onClick={closeQuestionModal} className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">
-                                    {modalMode === "view" ? "Đóng" : "Huỷ"}
-                                </button>
-                                {modalMode !== "view" && (
-                                    <button
-                                        type="button"
-                                        onClick={saveQuestion}
-                                        className="inline-flex items-center gap-2 rounded-xl bg-[#b56b47] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#9c5636]"
-                                    >
-                                        <Upload className="h-4 w-4" />
-                                        {modalMode === "add" ? "Thêm câu hỏi" : "Lưu thay đổi"}
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>,
-                document.body,
-            )}
+            {/* View/Edit/Add now use dedicated pages; modal removed */}
 
             {deleteTarget && createPortal(
                 <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
