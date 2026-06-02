@@ -21,7 +21,7 @@ import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
 import LearningManagementPage from "@/pages/Admin/LearningManagementPage";
 import LearningQuestionDetailPage from "@/pages/Admin/LearningQuestionDetailPage";
-import LearningQuestionEditPage from "@/pages/Admin/LearningQuestionEditPage";
+// import LearningQuestionEditPage from "@/pages/Admin/LearningQuestionEditPage";
 import ReviewTopicsPage from "@/pages/Admin/ReviewTopicsPage";
 import ReviewTopicListPage from "@/pages/Admin/ReviewTopicListPage";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
@@ -153,9 +153,9 @@ function App() {
                         <Route path="badges" element={<BadgesManagementPage/>} />
                         <Route path="feedback" element={<FeedbackPage/>} />
                         <Route path="learning" element={<LearningManagementPage/>} />
-                        <Route path="learning/new" element={<LearningQuestionEditPage/>} />
+                        <Route path="learning/new" element={<LearningQuestionDetailPage/>} />
                         <Route path="learning/:id" element={<LearningQuestionDetailPage/>} />
-                        <Route path="learning/:id/edit" element={<LearningQuestionEditPage/>} />
+                        <Route path="learning/:id/edit" element={<LearningQuestionDetailPage/>} />
                         <Route path="review-topics" element={<ReviewTopicsPage/>} />
                         <Route path="review-topics/:id" element={<ReviewTopicListPage/>} />
                     </Route>

@@ -31,7 +31,6 @@ export default function LearningQuestionDetailPage() {
       sampleAnswer?: string;
       keywords?: string[];
       audio?: string;
-      note?: string;
     };
   }
 
@@ -50,13 +49,14 @@ export default function LearningQuestionDetailPage() {
     correctAnswer: question?.correctAnswer ?? "",
     // LISTENING
     blankCount: question?.blankCount ?? 0,
-    // SPEAKING
+    // SPEAKING: tách title thành array câu
+    speakingSentences: question?.title 
+      ? question.title.split('\n').map(s => s.trim()).filter(Boolean)
+      : [""],
     sampleAnswer: question?.sampleAnswer ?? "",
     keywords: question?.keywords ?? [],
     // Chung
     audio: question?.audio ?? "",
-    // status: question?.status ?? "Hiển thị",
-    note: question?.note ?? "",
   }));
 
   const [selectedAnswer, setSelectedAnswer] = useState<string>(question?.correctAnswer ?? question?.options?.[0] ?? "");
@@ -78,18 +78,20 @@ export default function LearningQuestionDetailPage() {
       setLoading(true);
       getQuestion(id)
         .then((q) => {
+          const titleRaw = q.title ?? "";
           setForm({
             level: q.level ?? "L1",
             type: normalizeType(q.type),
-            title: q.title ?? "",
+            title: titleRaw,
             options: q.options ?? [],
             correctAnswer: q.correctAnswer ?? "",
             blankCount: q.blankCount ?? 0,
+            speakingSentences: titleRaw
+              ? titleRaw.split('\n').map((s: string) => s.trim()).filter(Boolean)
+              : [""],
             sampleAnswer: q.sampleAnswer ?? "",
             keywords: q.keywords ?? [],
             audio: q.audio ?? "",
-            // status: q.status ?? "Hiển thị",
-            note: q.note ?? "",
           });
           setSelectedAnswer(q.correctAnswer ?? q.options?.[0] ?? "");
         })
@@ -99,12 +101,12 @@ export default function LearningQuestionDetailPage() {
   }, [id, question]);
 
   async function handleSave() {
-    if (!form.title.trim()) {
+    const typeUpper = form.type.toUpperCase();
+
+    if (typeUpper !== "SPEAKING" && !form.title.trim()) {
       toast.error("Vui lòng nhập câu hỏi");
       return;
     }
-
-    const typeUpper = form.type.toUpperCase();
     
     // Validate type-specific fields
     if (typeUpper === "VOCAB") {
@@ -126,8 +128,8 @@ export default function LearningQuestionDetailPage() {
         return;
       }
     } else if (typeUpper === "SPEAKING") {
-      if (!form.sampleAnswer.trim()) {
-        toast.error("Vui lòng nhập đáp án mẫu");
+      if (form.speakingSentences.filter(s => s.trim()).length === 0) {
+        toast.error("Vui lòng nhập ít nhất 1 câu cho Speaking");
         return;
       }
     } else if (typeUpper === "MATCHING") {
@@ -145,7 +147,6 @@ export default function LearningQuestionDetailPage() {
           type: typeUpper,
           questionText: form.title,
           audioUrl: form.audio || undefined,
-          explanation: form.note || undefined,
         };
         
         // Add type-specific fields
@@ -156,9 +157,12 @@ export default function LearningQuestionDetailPage() {
           payload.blankCount = form.blankCount;
           payload.correctAnswer = form.correctAnswer;
         } else if (typeUpper === "SPEAKING") {
+          // Ghép speakingSentences lại thành 1 string, lưu vào questionText
+          payload.questionText = form.speakingSentences.filter(s => s.trim()).join('\n');
           payload.sampleAnswer = form.sampleAnswer;
         } else if (typeUpper === "MATCHING") {
-          payload.correctAnswer = form.correctAnswer;        }
+          payload.correctAnswer = form.correctAnswer;
+        }
 
         const result = await adminApi.createQuestion(payload);
         toast.success("Đã thêm câu hỏi");
@@ -179,7 +183,6 @@ export default function LearningQuestionDetailPage() {
           type: typeUpper,
           questionText: form.title,
           audioUrl: form.audio || undefined,
-          explanation: form.note || undefined,
         };
         
         // Add type-specific fields
@@ -190,6 +193,8 @@ export default function LearningQuestionDetailPage() {
           payload.blankCount = form.blankCount;
           payload.correctAnswer = form.correctAnswer;
         } else if (typeUpper === "SPEAKING") {
+          // Ghép speakingSentences lại thành 1 string, lưu vào questionText
+          payload.questionText = form.speakingSentences.filter(s => s.trim()).join('\n');
           payload.sampleAnswer = form.sampleAnswer;
         } else if (typeUpper === "MATCHING") {
           payload.correctAnswer = form.correctAnswer;
@@ -252,10 +257,12 @@ export default function LearningQuestionDetailPage() {
             </select>
           </label>
 
-          <label className="md:col-span-2">
-            <div className="text-xs text-gray-400">Câu hỏi</div>
-            <input value={form.title} disabled={mode === 'view'} onChange={(e) => setForm({...form, title: e.target.value})} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
-          </label>
+          {form.type !== 'Speaking' && (
+            <label className="md:col-span-2">
+              <div className="text-xs text-gray-400">Câu hỏi</div>
+              <input value={form.title} disabled={mode === 'view'} onChange={(e) => setForm({...form, title: e.target.value})} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
+            </label>
+          )}
 
           {/* ========== VOCAB ========== */}
           {form.type === 'Vocab' && (
@@ -350,16 +357,61 @@ export default function LearningQuestionDetailPage() {
 
           {/* ========== SPEAKING ========== */}
           {form.type === 'Speaking' && (
-            <label className="md:col-span-2">
-              <div className="text-xs text-gray-400">Đáp án mẫu</div>
-              <textarea 
-                value={form.sampleAnswer} 
-                disabled={mode === 'view'} 
-                onChange={(e) => setForm({...form, sampleAnswer: e.target.value})} 
-                className="mt-1 min-h-[120px] w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" 
-                placeholder="Nhập đáp án mẫu"
-              />
-            </label>
+            <div className="md:col-span-2 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-gray-400">Danh sách câu (mỗi câu = 1 dòng luyện nói)</div>
+                {mode !== 'view' && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, speakingSentences: [...form.speakingSentences, ""] })}
+                    className="text-xs font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1"
+                  >
+                    + Thêm câu
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {form.speakingSentences.map((sentence, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="shrink-0 text-xs font-bold text-gray-400 w-14">Câu {idx + 1}</span>
+                    {mode === 'view' ? (
+                      <div className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800">
+                        {sentence || <span className="text-gray-400 italic">(trống)</span>}
+                      </div>
+                    ) : (
+                      <>
+                        <input
+                          value={sentence}
+                          onChange={(e) => {
+                            const next = [...form.speakingSentences];
+                            next[idx] = e.target.value;
+                            setForm({ ...form, speakingSentences: next });
+                          }}
+                          className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none"
+                          placeholder={`Câu ${idx + 1}...`}
+                        />
+                        {form.speakingSentences.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = form.speakingSentences.filter((_, i) => i !== idx);
+                              setForm({ ...form, speakingSentences: next });
+                            }}
+                            className="shrink-0 text-red-400 hover:text-red-600 text-xs font-bold px-1"
+                            aria-label="Xóa câu"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {form.speakingSentences.length === 0 && mode !== 'view' && (
+                <p className="text-xs text-gray-400 italic">Chưa có câu nào. Nhấn "+ Thêm câu" để thêm.</p>
+              )}
+            </div>
           )}
 
           {/* ========== MATCHING ========== */}
@@ -392,11 +444,6 @@ export default function LearningQuestionDetailPage() {
           <label>
             <div className="text-xs text-gray-400">Audio</div>
             <input value={form.audio} disabled={mode === 'view'} onChange={(e) => setForm({...form, audio: e.target.value})} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
-          </label>
-
-          <label className="md:col-span-2">
-            <div className="text-xs text-gray-400">Ghi chú</div>
-            <textarea value={form.note} disabled={mode === 'view'} onChange={(e) => setForm({...form, note: e.target.value})} className="mt-1 min-h-[100px] w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
           </label>
         </div>
         )}
