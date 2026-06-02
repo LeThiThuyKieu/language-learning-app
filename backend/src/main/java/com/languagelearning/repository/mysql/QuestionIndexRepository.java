@@ -2,6 +2,7 @@ package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.QuestionIndex;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface QuestionIndexRepository extends JpaRepository<QuestionIndex, Long> {
+public interface QuestionIndexRepository extends JpaRepository<QuestionIndex, Long>, JpaSpecificationExecutor<QuestionIndex> {
 
     java.util.Optional<QuestionIndex> findByMongoQuestionId(String mongoQuestionId);
 
@@ -66,4 +67,7 @@ public interface QuestionIndexRepository extends JpaRepository<QuestionIndex, Lo
             @Param("ids") List<Long> ids,
             @Param("limit") int limit
     );
+
+    @Query(value = "SELECT DISTINCT question_type FROM questions", nativeQuery = true)
+    List<String> findDistinctQuestionTypes();
 }

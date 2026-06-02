@@ -20,9 +20,10 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import AdminStatCard from "@/components/admin/common/AdminStatCard";
+import { adminApi, adminMeta } from "@/services/learningService";
 
 type LearningLevel = "L1" | "L2" | "L3";
-type LearningType = "Trắc nghiệm" | "Nghe" | "Nói" | "Đọc" | "Viết";
+type LearningType = "Vocab" | "Listening" | "Speaking" | "Matching";
 type LearningStatus = "Hiển thị" | "Ẩn";
 
 type LearningQuestion = {
@@ -36,60 +37,6 @@ type LearningQuestion = {
     note: string;
 };
 
-// form type lives in edit page; not needed here
-
-const initialQuestions: LearningQuestion[] = [
-    {
-        id: 1,
-        level: "L1",
-        type: "Trắc nghiệm",
-        title: "Hello nghĩa là gì?",
-        preview: "Học viên chọn đáp án đúng cho từ chào hỏi cơ bản.",
-        status: "Hiển thị",
-        note: "4 phương án, 1 đáp án đúng",
-    },
-    {
-        id: 2,
-        level: "L2",
-        type: "Nghe",
-        title: "Conversation greeting",
-        preview: "Nghe đoạn hội thoại ngắn và chọn phản hồi phù hợp.",
-        audio: "greeting.mp3",
-        status: "Hiển thị",
-        note: "Có file audio đính kèm",
-    },
-    {
-        id: 3,
-        level: "L3",
-        type: "Nói",
-        title: "Introduce yourself",
-        preview: "Thực hành giới thiệu bản thân bằng 3 câu ngắn.",
-        audio: "speaking_intro.mp3",
-        status: "Ẩn",
-        note: "Bài nói ghi âm",
-    },
-    {
-        id: 4,
-        level: "L1",
-        type: "Đọc",
-        title: "Read the dialogue",
-        preview: "Đọc đoạn hội thoại và xác định ngữ cảnh giao tiếp.",
-        status: "Hiển thị",
-        note: "Bài đọc hiểu ngắn",
-    },
-    {
-        id: 5,
-        level: "L2",
-        type: "Viết",
-        title: "Write a short reply",
-        preview: "Viết câu trả lời ngắn theo ngữ cảnh đã cho.",
-        status: "Hiển thị",
-        note: "Luyện câu phản hồi",
-    },
-];
-
-const levelOptions: Array<"all" | LearningLevel> = ["all", "L1", "L2", "L3"];
-const typeOptions: Array<"all" | LearningType> = ["all", "Trắc nghiệm", "Nghe", "Nói", "Đọc", "Viết"];
 const statusOptions: Array<"all" | LearningStatus> = ["all", "Hiển thị", "Ẩn"];
 
 const levelLabelMap: Record<LearningLevel, string> = {
@@ -104,20 +51,33 @@ const levelClassMap: Record<LearningLevel, string> = {
     L3: "bg-emerald-100 text-emerald-700",
 };
 
+const typeLabelMap: Record<string, LearningType> = {
+    VOCAB: "Vocab",
+    LISTENING: "Listening",
+    SPEAKING: "Speaking",
+    MATCHING: "Matching",
+};
+
 const typeIconMap: Record<LearningType, ElementType> = {
-    "Trắc nghiệm": ClipboardList,
-    "Nghe": Headphones,
-    "Nói": Mic,
-    "Đọc": BookOpen,
-    "Viết": PenLine,
+    Vocab: ClipboardList,
+    Listening: Headphones,
+    Speaking: Mic,
+    Matching: BookOpen,
 };
 
 export default function LearningManagementPage() {
-    const [questions, setQuestions] = useState<LearningQuestion[]>(initialQuestions);
+    const [questions, setQuestions] = useState<LearningQuestion[]>([]);
     const [searchText, setSearchText] = useState("");
-    const [levelFilter, setLevelFilter] = useState<"all" | LearningLevel>("all");
-    const [typeFilter, setTypeFilter] = useState<"all" | LearningType>("all");
+    const [levelFilter, setLevelFilter] = useState<"all" | number>("all");
+    const [typeFilter, setTypeFilter] = useState<"all" | string>("all");
     const [statusFilter, setStatusFilter] = useState<"all" | LearningStatus>("all");
+    const [page, setPage] = useState(0);
+    const [size, setSize] = useState(20);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [levelOptions, setLevelOptions] = useState<Array<{ id: number; label: string }>>([]);
+    const [typeOptionsState, setTypeOptionsState] = useState<Array<string>>([]);
     const navigate = useNavigate();
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<LearningQuestion | null>(null);
@@ -169,24 +129,65 @@ export default function LearningManagementPage() {
         );
     }
 
-    const filteredQuestions = useMemo(() => {
-        const search = searchText.trim().toLowerCase();
+    // Map between Vietnamese UI types and backend QuestionType enum
+    const uiToBackendType: Record<LearningType, string> = {
+        Vocab: "VOCAB",
+        Listening: "LISTENING",
+        Speaking: "SPEAKING",
+        Matching: "MATCHING",
+    };
 
-        return questions.filter((item) => {
-            const matchesSearch =
-                search.length === 0 ||
-                item.title.toLowerCase().includes(search) ||
-                item.preview.toLowerCase().includes(search) ||
-                item.audio?.toLowerCase().includes(search) ||
-                item.note.toLowerCase().includes(search);
+    useEffect(() => {
+        let active = true;
+        const fetchList = async () => {
+            setLoading(true);
+            try {
+                const params: any = { page, size };
+                if (searchText.trim()) params.q = searchText.trim();
+                if (levelFilter !== "all") params.levelId = levelFilter;
+                if (typeFilter !== "all") params.type = typeFilter;
+                const res = await adminApi.listQuestions(params);
+                if (!active) return;
+                setQuestions(res.items.map((it) => ({
+                    id: it.id,
+                    level: it.levelId ? (`L${it.levelId}` as LearningLevel) : "L1",
+                    type: (Object.keys(uiToBackendType).find(k => uiToBackendType[k as LearningType] === it.questionType) as LearningType) || "Trắc nghiệm",
+                    title: it.questionText || "",
+                    preview: it.correctAnswer || (it.options ? it.options.join(' | ') : ""),
+                    audio: it.audioUrl || undefined,
+                    status: "Hiển thị",
+                    note: it.phonetic || "",
+                })));
+                setTotal(res.total || 0);
+            } catch (e) {
+                console.error(e);
+                toast.error('Không thể tải danh sách câu hỏi');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchList();
+        return () => { active = false; };
+    }, [page, size, searchText, levelFilter, typeFilter]);
 
-            const matchesLevel = levelFilter === "all" || item.level === levelFilter;
-            const matchesType = typeFilter === "all" || item.type === typeFilter;
-            const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+    useEffect(() => {
+        let active = true;
+        const fetchMeta = async () => {
+            try {
+                const [types, levels] = await Promise.all([adminMeta.getTypes(), adminMeta.getLevels()]);
+                if (!active) return;
+                setTypeOptionsState(types.filter(Boolean));
+                setLevelOptions(levels.map((level) => ({ id: level.id, label: level.levelName || `L${level.id}`})));
+            } catch (e) {
+                console.error(e);
+                toast.error('Không thể lấy dữ liệu bộ lọc');
+            }
+        };
+        fetchMeta();
+        return () => { active = false; };
+    }, []);
 
-            return matchesSearch && matchesLevel && matchesType && matchesStatus;
-        });
-    }, [levelFilter, questions, searchText, statusFilter, typeFilter]);
+    const filteredQuestions = questions.filter((item) => statusFilter === 'all' || item.status === statusFilter);
 
     const stats = useMemo(() => {
         const totalQuestions = questions.length;
@@ -287,12 +288,13 @@ export default function LearningManagementPage() {
                         <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Level</span>
                         <select
                             value={levelFilter}
-                            onChange={(event) => setLevelFilter(event.target.value as "all" | LearningLevel)}
+                            onChange={(event) => setLevelFilter(event.target.value === 'all' ? 'all' : parseInt(event.target.value))}
                             className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
                         >
+                            <option value="all">Tất cả</option>
                             {levelOptions.map((option) => (
-                                <option key={option} value={option}>
-                                    {option === "all" ? "Tất cả" : option}
+                                <option key={option.id} value={String(option.id)}>
+                                    {option.label}
                                 </option>
                             ))}
                         </select>
@@ -302,13 +304,12 @@ export default function LearningManagementPage() {
                         <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Loại</span>
                         <select
                             value={typeFilter}
-                            onChange={(event) => setTypeFilter(event.target.value as "all" | LearningType)}
+                            onChange={(event) => setTypeFilter(event.target.value === 'all' ? 'all' : event.target.value)}
                             className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
                         >
-                            {typeOptions.map((option) => (
-                                <option key={option} value={option}>
-                                    {option === "all" ? "Tất cả" : option}
-                                </option>
+                            <option value="all">Tất cả</option>
+                            {typeOptionsState.map((option) => (
+                                <option key={option} value={option}>{typeLabelMap[option] ?? option}</option>
                             ))}
                         </select>
                     </label>
@@ -335,6 +336,11 @@ export default function LearningManagementPage() {
                     <table className="min-w-full divide-y divide-gray-100">
                         <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-500">
                             <tr>
+                                <th className="px-5 py-4 text-left">
+                                    <input type="checkbox" className="h-4 w-4" checked={selectedIds.length === questions.length && questions.length>0} onChange={(e) => {
+                                        if (e.target.checked) setSelectedIds(questions.map(q => q.id)); else setSelectedIds([]);
+                                    }} />
+                                </th>
                                 <th className="px-5 py-4 text-left">Level</th>
                                 <th className="px-5 py-4 text-left">Loại</th>
                                 <th className="px-5 py-4 text-left">Nội dung preview</th>
@@ -357,6 +363,11 @@ export default function LearningManagementPage() {
                                     return (
                                         <tr key={question.id} className="transition hover:bg-orange-50/40">
                                             <td className="px-5 py-4">
+                                                <input type="checkbox" className="h-4 w-4" checked={selectedIds.includes(question.id)} onChange={(e) => {
+                                                    if (e.target.checked) setSelectedIds((cur) => [...cur, question.id]); else setSelectedIds((cur) => cur.filter(x => x !== question.id));
+                                                }} />
+                                            </td>
+                                            <td className="px-5 py-4">
                                                 <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${levelClassMap[question.level]}`}>
                                                     {levelLabelMap[question.level]}
                                                 </span>
@@ -377,9 +388,12 @@ export default function LearningManagementPage() {
                                             </td>
                                             <td className="px-5 py-4">
                                                 {question.audio ? (
-                                                    <span className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-                                                        <FileUp className="h-3.5 w-3.5" />
-                                                        {question.audio}
+                                                    <span
+                                                        className="inline-flex max-w-[180px] items-center gap-2 overflow-hidden rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
+                                                        title={question.audio}
+                                                    >
+                                                        <FileUp className="h-3.5 w-3.5 flex-shrink-0" />
+                                                        <span className="truncate">{question.audio}</span>
                                                     </span>
                                                 ) : (
                                                     <span className="text-sm text-slate-400">—</span>
@@ -465,23 +479,27 @@ export default function LearningManagementPage() {
                 </div>
 
                 <div className="flex flex-col gap-4 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm text-slate-500">
-                        Hiển thị {filteredQuestions.length} trên tổng số {questions.length} câu hỏi
-                    </p>
+                    <div className="flex items-center gap-3">
+                        <p className="text-sm text-slate-500">
+                            Hiển thị {filteredQuestions.length} trên tổng số {questions.length} câu hỏi
+                        </p>
+                        <button disabled={selectedIds.length===0} onClick={async () => {
+                            if (!confirm(`Xác nhận xoá ${selectedIds.length} câu hỏi?`)) return;
+                            try {
+                                const svc = (await import("@/services/learningService")).adminApi;
+                                await svc.bulkAction({ action: 'delete', ids: selectedIds });
+                                setQuestions((cur) => cur.filter(q => !selectedIds.includes(q.id)));
+                                setSelectedIds([]);
+                                toast.success('Đã xoá');
+                            } catch (e) { toast.error('Lỗi khi xoá'); }
+                        }} className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-rose-600">Xoá đã chọn</button>
+                    </div>
                     <div className="flex items-center gap-2">
-                        <button type="button" className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-400 transition hover:bg-gray-50">
+                        <button type="button" onClick={() => setPage((p) => Math.max(0, p-1))} disabled={page<=0} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-400 transition hover:bg-gray-50">
                             &lt;
                         </button>
-                        <button type="button" className="rounded-lg bg-[#9f5f43] px-3 py-2 text-sm font-bold text-white shadow-sm">
-                            1
-                        </button>
-                        <button type="button" className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-500 transition hover:bg-gray-50">
-                            2
-                        </button>
-                        <button type="button" className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-500 transition hover:bg-gray-50">
-                            3
-                        </button>
-                        <button type="button" className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-400 transition hover:bg-gray-50">
+                        <div className="px-3 py-2 text-sm">Trang {page+1} / {Math.max(1, Math.ceil(total / size))}</div>
+                        <button type="button" onClick={() => setPage((p) => p+1)} disabled={(page+1)*size>=total} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-500 transition hover:bg-gray-50">
                             &gt;
                         </button>
                     </div>

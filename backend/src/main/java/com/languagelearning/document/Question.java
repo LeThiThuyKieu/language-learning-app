@@ -9,9 +9,16 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Khớp schema Mongo dùng bởi Node ({@code question_text}, {@code distractors}, {@code metadata.audio_url}, …).
+ * Hỗ trợ 4 type: VOCAB, LISTENING, SPEAKING, MATCHING
+ * 
+ * - VOCAB: question_text + distractors + correct_answers
+ * - LISTENING: question_text (có .......) + audioUrl + blankCount
+ * - SPEAKING: question_text (prompt) + sampleAnswer + keywords + audioUrl
+ * - MATCHING: leftItems + rightItems + correctPairs (map)
  */
 @Document(collection = "questions")
 @Data
@@ -24,12 +31,14 @@ public class Question {
     @Field("question_text")
     private String questionText;
     /**
-     * MULTIPLE_CHOICE, FILL_BLANK, TRUE_FALSE, MATCHING, ORDER, SPEAKING, LISTENING
+     * VOCAB, LISTENING, SPEAKING, MATCHING
      */
     @Field("question_type")
     private String questionType;
+    
+    // ========== VOCAB / Trắc nghiệm ==========
     /**
-     * Trong DB Node/Mongoose thường là {@code distractors}; giữ tên field Java {@code options} cho phần còn lại của app.
+     * Trong DB Node/Mongoose thường là {@code distractors}; giữ tên field Java {@code options}.
      */
     @Field("distractors")
     private List<String> options;
@@ -40,8 +49,27 @@ public class Question {
 
     @Field("correct_answers")
     private List<String> correctAnswers;
+    
+    // ========== LISTENING ==========
+    /** Số khoảng trống .......... cần điền cho LISTENING */
+    private Integer blankCount;
+    
+    // ========== SPEAKING ==========
+    /** Sample answer / sample response cho SPEAKING */
+    private String sampleAnswer;
+    /** Keywords cần nói cho SPEAKING */
+    private List<String> keywords;
+    
+    // ========== MATCHING ==========
+    /** Left items (column 1) cho MATCHING */
+    private List<String> leftItems;
+    /** Right items (column 2) cho MATCHING */
+    private List<String> rightItems;
+    /** Map: leftItemId -> rightItemId cho MATCHING */
+    private Map<String, String> correctPairs;
+    
+    // ========== Chung ==========
     private String explanation;
-
     private Integer points;
 
     @Indexed
