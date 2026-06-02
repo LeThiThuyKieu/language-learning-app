@@ -359,9 +359,6 @@ export default function GeneralRevisionView({ onStartTask }: GeneralRevisionView
       <div className="rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white px-6 py-5 shadow-md">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-widest text-white/70 mb-1">
-              Ôn tập tổng hợp
-            </p>
             <h2 className="text-2xl font-extrabold leading-tight">10 Chủ đề</h2>
             <p className="text-sm text-white/80 mt-1 leading-snug">
               Ôn luyện toàn diện từ vựng, nghe, nói và ghép đôi theo từng chủ đề thực tế.

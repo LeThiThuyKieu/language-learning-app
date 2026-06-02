@@ -189,11 +189,12 @@ export default function LearningPage() {
         return () => observer.disconnect();
     }, [trees.length, treesLoading]);
 
-    // Level hoàn thành khi tất cả trees đều có unlockedCount >= 5 (5 nodes đã completed)
-    // PHẢI đặt trước early returns để không vi phạm Rules of Hooks
+    // Level hoàn thành khi tất cả trees đều có unlockedCount > 5
+    // Backend trả về nodes.size() + 1 (= 6) khi TẤT CẢ 5 nodes (kể cả REVIEW) đã completed
+    // unlockedCount = 5 chỉ nghĩa là node 5 (REVIEW) vừa unlock, chưa làm xong
     const isCurrentLevelCompleted = useMemo(() => {
         if (trees.length === 0 || treesLoading) return false;
-        return trees.every(t => (unlockedCounts[t.treeId] ?? 0) >= 5);
+        return trees.every(t => (unlockedCounts[t.treeId] ?? 0) > 5);
     }, [trees, unlockedCounts, treesLoading]);
 
     // Tất cả 3 level đã hoàn thành → mở khoá Review Hub
@@ -204,16 +205,16 @@ export default function LearningPage() {
         isCurrentLevelCompleted;
 
     // Hiển thị modal gợi ý ôn tập 1 lần duy nhất khi vừa hoàn thành tất cả
-    // Dùng sessionStorage để reset khi đóng tab (không lưu vĩnh viễn)
+    // Lưu vào localStorage để không hiện lại nữa sau khi user đã thấy (ngay cả khi reload)
     useEffect(() => {
         if (!isAllLevelsCompleted || !isAuthenticated) return;
-        
-        const sessionKey = `generalRevisionModalShown_${userProfileLevelId}`;
-        const alreadyShown = sessionStorage.getItem(sessionKey);
-        
+
+        const storageKey = `generalRevisionModalShown_user_${userProfileLevelId}`;
+        const alreadyShown = localStorage.getItem(storageKey);
+
         if (!alreadyShown && !reviewModalShownRef.current) {
             reviewModalShownRef.current = true;
-            sessionStorage.setItem(sessionKey, 'true');
+            localStorage.setItem(storageKey, 'true');
             setShowReviewUnlockModal(true);
         }
     }, [isAllLevelsCompleted, userProfileLevelId, isAuthenticated]);
