@@ -64,7 +64,8 @@ export default function ReviewLessonPage() {
     const [reviewBadges, setReviewBadges] = useState<BadgeInfo[]>([]);
     const completingRef = useRef(false);
 
-    // Feedback state    const [showFeedback, setShowFeedback] = useState(false);
+    // Feedback state
+    const [showFeedback, setShowFeedback] = useState(false);
 
     // Timer state
     const startTimeRef = useRef<number>(Date.now());

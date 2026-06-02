@@ -15,6 +15,9 @@ import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/ut
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
 import LeaderboardCard from "@/components/user/common/LeaderboardCard";
 import LevelOverviewPanel from "@/components/user/learn/LevelOverviewPanel";
+import GeneralRevisionView from "@/components/user/learn/general_revision/GeneralRevisionView";
+import GeneralRevisionUnlockModal from "@/components/user/learn/general_revision/GeneralRevisionUnlockModal";
+import type {RevisionTask} from "@/components/user/learn/general_revision/GeneralRevisionView";
 
 export default function LearningPage() {
     const location = useLocation();
@@ -46,6 +49,12 @@ export default function LearningPage() {
 
     const [moreOpen, setMoreOpen] = useState(false);
     const [showOverview, setShowOverview] = useState(false);
+    // ── General Revision ────────────────────────────────────
+    const [showGeneralRevision, setShowGeneralRevision] = useState(false);
+    const [showReviewUnlockModal, setShowReviewUnlockModal] = useState(false);
+    // Đã hiển thị modal gợi ý ôn tập rồi (không hiện lại lần 2)
+    const reviewModalShownRef = useRef(false);
+    // ────────────────────────────────────────────────────────
     // Modal chúc mừng mở khoá level mới
     const [unlockModal, setUnlockModal] = useState<{ nextLevelId: number; nextLevelKey: LevelKey; nextLevelName: string } | null>(null);
     const [unlocking, setUnlocking] = useState(false);
@@ -187,6 +196,28 @@ export default function LearningPage() {
         return trees.every(t => (unlockedCounts[t.treeId] ?? 0) >= 5);
     }, [trees, unlockedCounts, treesLoading]);
 
+    // Tất cả 3 level đã hoàn thành → mở khoá Review Hub
+    // Phải đảm bảo: đang ở level 3 (Advanced) VÀ level đó đã xong hết trees
+    const isAllLevelsCompleted = 
+        userProfileLevelId >= 3 && 
+        resolvedLevel === "advanced" &&  // Chỉ check khi đang xem level 3
+        isCurrentLevelCompleted;
+
+    // Hiển thị modal gợi ý ôn tập 1 lần duy nhất khi vừa hoàn thành tất cả
+    // Dùng sessionStorage để reset khi đóng tab (không lưu vĩnh viễn)
+    useEffect(() => {
+        if (!isAllLevelsCompleted || !isAuthenticated) return;
+        
+        const sessionKey = `generalRevisionModalShown_${userProfileLevelId}`;
+        const alreadyShown = sessionStorage.getItem(sessionKey);
+        
+        if (!alreadyShown && !reviewModalShownRef.current) {
+            reviewModalShownRef.current = true;
+            sessionStorage.setItem(sessionKey, 'true');
+            setShowReviewUnlockModal(true);
+        }
+    }, [isAllLevelsCompleted, userProfileLevelId, isAuthenticated]);
+
     if (!isAuthenticated) {
         return <GuestPrompt/>;
     }
@@ -249,6 +280,17 @@ export default function LearningPage() {
                                     icon={<img src="/icons/learn/task.svg" alt=""
                                                className="h-8 w-8 shrink-0 object-contain"/>}
                                 />
+                                {/* ── Ôn tập — locked until all 3 levels done ─── */}
+                                <ReviewSidebarItem
+                                    isUnlocked={isAllLevelsCompleted}
+                                    isActive={showGeneralRevision}
+                                    onClick={() => {
+                                        if (isAllLevelsCompleted) {
+                                            setShowGeneralRevision(v => !v);
+                                            setShowOverview(false);
+                                        }
+                                    }}
+                                />
                                 <div className="relative w-full pt-0.5">
                                     <button
                                         type="button"
@@ -300,28 +342,36 @@ export default function LearningPage() {
                                             aria-hidden
                                         />
                                         <div
-                                            className={`${showOverview ? "bg-gray-700" : bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-4 flex flex-col gap-1`}
+                                            className={`${showOverview ? "bg-gray-700" : showGeneralRevision ? "bg-gradient-to-r from-violet-500 to-purple-600" : bannerBgByAccent[accentForIndex(activeTreeIndex)]} text-white px-6 py-4 flex flex-col gap-1`}
                                         >
-                                            {/* Dòng trên: nút Tổng quan / Lộ trình */}
+                                            {/* Dòng trên: nút Tổng quan / Lộ trình / Ôn tập */}
                                             <button
                                                 type="button"
-                                                onClick={() => setShowOverview(v => !v)}
+                                                onClick={() => {
+                                                    if (showGeneralRevision) {
+                                                        setShowGeneralRevision(false);
+                                                    } else {
+                                                        setShowOverview(v => !v);
+                                                    }
+                                                }}
                                                 className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs font-extrabold uppercase tracking-widest transition w-fit"
                                             >
                                                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                     <path d="M19 12H5M12 5l-7 7 7 7"/>
                                                 </svg>
-                                                {showOverview ? "Lộ trình học" : "Tổng quan"}
+                                                {showGeneralRevision ? "Lộ trình học" : showOverview ? "Lộ trình học" : "Tổng quan"}
                                             </button>
                                             {/* Dòng dưới: tiêu đề + nút Hướng dẫn */}
                                             <div className="flex items-center justify-between">
                                                 <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
-                                                    {showOverview
+                                                    {showGeneralRevision
+                                                        ? "Ôn tập tổng hợp"
+                                                        : showOverview
                                                         ? "Tổng quan lộ trình"
                                                         : `Level ${levelIdMap[level]}: ${levelNameMap[level]}, Tree ${activeTreeIndex + 1}`
                                                     }
                                                 </h1>
-                                                {!showOverview && (
+                                                {!showOverview && !showGeneralRevision && (
                                                     <button
                                                         className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition shrink-0"
                                                     >
@@ -339,8 +389,18 @@ export default function LearningPage() {
                                 )}
                                 {treesLoading && <LearningPathLoading/>}
 
+                                {/* General Revision — thay thế lộ trình khi showGeneralRevision = true */}
+                                {showGeneralRevision && (
+                                    <GeneralRevisionView
+                                        onStartTask={(_topicId: number, _task: RevisionTask) => {
+                                            // TODO: navigate đến trang làm bài tương ứng
+                                            // navigate("/learn/general-revision/task", { state: { topicId, task } })
+                                        }}
+                                    />
+                                )}
+
                                 {/* Overview panel — thay thế lộ trình khi showOverview = true */}
-                                {showOverview && (
+                                {showOverview && !showGeneralRevision && (
                                     <LevelOverviewPanel
                                         currentLevelId={userProfileLevelId}
                                         onReview={(levelId) => {
@@ -361,7 +421,7 @@ export default function LearningPage() {
                                 )}
 
                                 {/* Lộ trình cuộn dưới banner (z-0 < z-[45] của banner) */}
-                                <div className={`relative z-0 flex flex-col mt-2 ${showOverview ? "hidden" : ""}`}>
+                                <div className={`relative z-0 flex flex-col mt-2 ${(showOverview || showGeneralRevision) ? "hidden" : ""}`}>
                                     {trees.map((tree, idx) => {
                                         const accentKey = accentForIndex(idx);
                                         const treeData = tree;
@@ -492,6 +552,17 @@ export default function LearningPage() {
                     setShowLogoutConfirm(false);
                 }}
                 message="Bạn có chắc chắn muốn đăng xuất không?"
+            />
+
+            {/* Modal gợi ý Ôn tập tổng hợp khi đã hoàn thành 3 level */}
+            <GeneralRevisionUnlockModal
+                isOpen={showReviewUnlockModal}
+                onClose={() => setShowReviewUnlockModal(false)}
+                onGoToRevision={() => {
+                    setShowReviewUnlockModal(false);
+                    setShowGeneralRevision(true);
+                    setShowOverview(false);
+                }}
             />
 
             {/* Modal chúc mừng mở khoá level mới */}
@@ -639,6 +710,61 @@ function NextLevelBanner({
                     )}
                 </button>
             </div>
+        </div>
+    );
+}
+
+function ReviewSidebarItem({
+    isUnlocked,
+    isActive,
+    onClick,
+}: {
+    isUnlocked: boolean;
+    isActive: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <div className="relative w-full group">
+            <button
+                type="button"
+                onClick={onClick}
+                className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm transition ${
+                    isActive
+                        ? "border-violet-300 bg-violet-50 font-bold text-violet-700 shadow-sm"
+                        : "border-transparent font-semibold text-gray-600 hover:bg-gray-100"
+                }`}
+            >
+                {/* Icon — luôn hiển thị đầy đủ dù locked hay không */}
+                <span className="flex shrink-0 items-center justify-center">
+                    <img
+                        src="/icons/learn/general_revision.svg"
+                        alt=""
+                        className="h-8 w-8 shrink-0 object-contain"
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                    />
+                </span>
+                <span className="uppercase tracking-wide">Ôn tập</span>
+                {isUnlocked && (
+                    <span className="ml-auto shrink-0 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-extrabold text-violet-600">
+                        MỚI
+                    </span>
+                )}
+            </button>
+
+            {/* Tooltip — hiện khi hover bất kể locked hay unlocked */}
+            {!isUnlocked && (
+                <div className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 z-50
+                    hidden group-hover:flex
+                    items-center gap-1.5
+                    whitespace-nowrap rounded-xl bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-lg
+                    before:absolute before:right-full before:top-1/2 before:-translate-y-1/2
+                    before:border-4 before:border-transparent before:border-r-gray-900 before:content-['']">
+                    <Lock className="w-3 h-3 text-gray-300 shrink-0" />
+                    Hoàn thành các level để mở khoá
+                </div>
+            )}
         </div>
     );
 }
