@@ -70,4 +70,7 @@ public interface QuestionIndexRepository extends JpaRepository<QuestionIndex, Lo
 
     @Query(value = "SELECT DISTINCT question_type FROM questions", nativeQuery = true)
     List<String> findDistinctQuestionTypes();
+
+    @Query(value = "SELECT COUNT(*) FROM questions WHERE question_type = :type", nativeQuery = true)
+    long countByType(@Param("type") String type);
 }

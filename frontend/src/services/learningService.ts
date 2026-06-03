@@ -184,11 +184,17 @@ export interface QuestionPayload {
 export interface QuestionItem {
   id: number;
   mongoQuestionId: string;
-  level: string;
-  type: string;
-  title: string;
-  preview: string;
+
+  levelId?: number;
+  questionType?: string;
+  questionText?: string;
+
   correctAnswer?: string;
+  options?: string[];
+
+  audioUrl?: string;
+  phonetic?: string;
+
   status?: string;
 }
 
@@ -232,5 +238,11 @@ export const adminMeta = {
   getLevels: async () => {
     const res = await apiClient.get<{ id: number; levelName: string; cefrCode?: string }[]>(`/admin/learning/levels`);
     return res.data;
-  }
+  },
+  getStats: async () => {
+    const res = await apiClient.get<{ vocab: number; listening: number; speaking: number; matching: number }>(
+      `/admin/learning/stats`
+    );
+    return res.data;
+  },
 };

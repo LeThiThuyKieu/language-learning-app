@@ -19,11 +19,11 @@ import ChatSupportPage from "@/pages/Admin/support_management/ChatSupportPage.ts
 import ChatbotRulesPage from "@/pages/Admin/support_management/ChatbotRulesPage.tsx";
 import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
-import LearningManagementPage from "@/pages/Admin/LearningManagementPage";
-import LearningQuestionDetailPage from "@/pages/Admin/LearningQuestionDetailPage";
+import LearningManagementPage from "@/pages/Admin/learning_management/LearningManagementPage.tsx";
+import LearningQuestionDetailPage from "@/pages/Admin/learning_management/LearningQuestionDetailPage.tsx";
 // import LearningQuestionEditPage from "@/pages/Admin/LearningQuestionEditPage";
-import ReviewTopicsPage from "@/pages/Admin/ReviewTopicsPage";
-import ReviewTopicListPage from "@/pages/Admin/ReviewTopicListPage";
+import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
+import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
 import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";

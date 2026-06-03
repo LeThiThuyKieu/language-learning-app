@@ -1,30 +1,26 @@
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
+import { useEffect, useRef, useState, type ElementType } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import {
     BookOpen,
-    Copy,
     Eye,
     FileUp,
     Headphones,
     Mic,
     MoreVertical,
     PencilLine,
-    PlusCircle,
     Search,
     Trash2,
-    
     ClipboardList,
-    PenLine,
+    Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import AdminStatCard from "@/components/admin/common/AdminStatCard";
-import { adminApi, adminMeta } from "@/services/learningService";
+import AdminStatCard from "@/components/admin/common/AdminStatCard.tsx";
+import { adminApi, adminMeta } from "@/services/learningService.ts";
 
 type LearningLevel = "L1" | "L2" | "L3";
 type LearningType = "Vocab" | "Listening" | "Speaking" | "Matching";
-type LearningStatus = "Hiển thị" | "Ẩn";
 
 type LearningQuestion = {
     id: number;
@@ -33,11 +29,8 @@ type LearningQuestion = {
     title: string;
     preview: string;
     audio?: string;
-    status: LearningStatus;
     note: string;
 };
-
-const statusOptions: Array<"all" | LearningStatus> = ["all", "Hiển thị", "Ẩn"];
 
 const levelLabelMap: Record<LearningLevel, string> = {
     L1: "L1",
@@ -70,9 +63,7 @@ export default function LearningManagementPage() {
     const [searchText, setSearchText] = useState("");
     const [levelFilter, setLevelFilter] = useState<"all" | number>("all");
     const [typeFilter, setTypeFilter] = useState<"all" | string>("all");
-    const [statusFilter, setStatusFilter] = useState<"all" | LearningStatus>("all");
     const [page, setPage] = useState(0);
-    const [size, setSize] = useState(20);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -80,9 +71,12 @@ export default function LearningManagementPage() {
     const [typeOptionsState, setTypeOptionsState] = useState<Array<string>>([]);
     const navigate = useNavigate();
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const [stats, setStats] = useState<{ vocab: number; listening: number; speaking: number; matching: number }>({
+        vocab: 0, listening: 0, speaking: 0, matching: 0,
+    });
     const [deleteTarget, setDeleteTarget] = useState<LearningQuestion | null>(null);
     const menuRef = useRef<HTMLDivElement | null>(null);
-
+    const size = 20;
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -96,18 +90,6 @@ export default function LearningManagementPage() {
 
     // navigation will open dedicated pages for view/edit/add
 
-    function handleDuplicateQuestion(question: LearningQuestion) {
-        const duplicated: LearningQuestion = {
-            ...question,
-            id: Date.now(),
-            title: `${question.title} (Bản sao)`,
-        };
-
-        setQuestions((current) => [duplicated, ...current]);
-        setOpenMenuId(null);
-        toast.success("Đã nhân bản câu hỏi");
-    }
-
     function handleDeleteQuestion() {
         if (!deleteTarget) {
             return;
@@ -117,16 +99,6 @@ export default function LearningManagementPage() {
         setDeleteTarget(null);
         setOpenMenuId(null);
         toast.success("Đã xoá câu hỏi");
-    }
-
-    function toggleQuestionStatus(questionId: number) {
-        setQuestions((current) =>
-            current.map((item) =>
-                item.id === questionId
-                    ? { ...item, status: item.status === "Hiển thị" ? "Ẩn" : "Hiển thị" }
-                    : item,
-            ),
-        );
     }
 
     // Map between Vietnamese UI types and backend QuestionType enum
@@ -142,7 +114,10 @@ export default function LearningManagementPage() {
         const fetchList = async () => {
             setLoading(true);
             try {
-                const params: any = { page, size };
+                const params: Record<string, string | number> = {
+                    page,
+                    size,
+                };
                 if (searchText.trim()) params.q = searchText.trim();
                 if (levelFilter !== "all") params.levelId = levelFilter;
                 if (typeFilter !== "all") params.type = typeFilter;
@@ -155,7 +130,6 @@ export default function LearningManagementPage() {
                     title: it.questionText || "",
                     preview: it.correctAnswer || (it.options ? it.options.join(' | ') : ""),
                     audio: it.audioUrl || undefined,
-                    status: "Hiển thị",
                     note: it.phonetic || "",
                 })));
                 setTotal(res.total || 0);
@@ -187,46 +161,16 @@ export default function LearningManagementPage() {
         return () => { active = false; };
     }, []);
 
-    const filteredQuestions = questions.filter((item) => statusFilter === 'all' || item.status === statusFilter);
+    const filteredQuestions = questions;
 
-    const stats = useMemo(() => {
-        const totalQuestions = questions.length;
-        const visibleQuestions = questions.filter((item) => item.status === "Hiển thị").length;
-        const audioQuestions = questions.filter((item) => Boolean(item.audio)).length;
-
-        return [
-            {
-                label: "Tổng câu hỏi",
-                value: totalQuestions.toLocaleString(),
-                icon: <BookOpen size={24} />,
-                iconBg: "bg-orange-50",
-                iconText: "text-orange-500",
-                borderColor: "border-l-orange-500",
-                change: "Toàn bộ dữ liệu đang quản lý",
-                trend: "up" as const,
-            },
-            {
-                label: "Đang hiển thị",
-                value: visibleQuestions.toLocaleString(),
-                icon: <Eye size={24} />,
-                iconBg: "bg-blue-50",
-                iconText: "text-blue-500",
-                borderColor: "border-l-blue-500",
-                change: "Câu hỏi đang bật trên giao diện",
-                pulsing: true,
-            },
-            {
-                label: "Có audio",
-                value: audioQuestions.toLocaleString(),
-                icon: <Headphones size={24} />,
-                iconBg: "bg-green-50",
-                iconText: "text-green-600",
-                borderColor: "border-l-green-500",
-                change: "Mục có file âm thanh đi kèm",
-                trend: "up" as const,
-            },
-        ];
-    }, [questions]);
+    // Fetch stats theo type từ backend
+    useEffect(() => {
+        let active = true;
+        adminMeta.getStats()
+            .then((s) => { if (active) setStats(s); })
+            .catch(() => {/* silent */});
+        return () => { active = false; };
+    }, []);
 
     return (
         <div className="space-y-6 p-6">
@@ -255,18 +199,55 @@ export default function LearningManagementPage() {
                     <button
                         type="button"
                         onClick={() => navigate('/admin/learning/new')}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#b56b47] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#9c5636]"
+                        className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
                     >
-                        <PlusCircle className="h-4 w-4" />
+                        <Plus size={16} />
                         Thêm câu hỏi
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                {stats.map((stat) => (
-                    <AdminStatCard key={stat.label} {...stat} />
-                ))}
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+                <AdminStatCard
+                    label="Vocab"
+                    value={stats.vocab.toLocaleString()}
+                    icon={<ClipboardList size={24} />}
+                    iconBg="bg-orange-50"
+                    iconText="text-orange-500"
+                    borderColor="border-l-orange-500"
+                    change="Câu hỏi từ vựng"
+                    trend="up"
+                />
+                <AdminStatCard
+                    label="Listening"
+                    value={stats.listening.toLocaleString()}
+                    icon={<Headphones size={24} />}
+                    iconBg="bg-blue-50"
+                    iconText="text-blue-500"
+                    borderColor="border-l-blue-500"
+                    change="Câu hỏi nghe điền"
+                    trend="up"
+                />
+                <AdminStatCard
+                    label="Speaking"
+                    value={stats.speaking.toLocaleString()}
+                    icon={<Mic size={24} />}
+                    iconBg="bg-emerald-50"
+                    iconText="text-emerald-500"
+                    borderColor="border-l-emerald-500"
+                    change="Câu hỏi luyện nói"
+                    trend="up"
+                />
+                <AdminStatCard
+                    label="Matching"
+                    value={stats.matching.toLocaleString()}
+                    icon={<BookOpen size={24} />}
+                    iconBg="bg-purple-50"
+                    iconText="text-purple-500"
+                    borderColor="border-l-purple-500"
+                    change="Câu hỏi nối từ"
+                    trend="up"
+                />
             </div>
 
             <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm">
@@ -313,21 +294,6 @@ export default function LearningManagementPage() {
                             ))}
                         </select>
                     </label>
-
-                    <label className="w-40 flex-shrink-0">
-                        <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">Trạng thái</span>
-                        <select
-                            value={statusFilter}
-                            onChange={(event) => setStatusFilter(event.target.value as "all" | LearningStatus)}
-                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-500 focus:bg-white"
-                        >
-                            {statusOptions.map((option) => (
-                                <option key={option} value={option}>
-                                    {option === "all" ? "Tất cả" : option}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
                 </div>
             </div>
 
@@ -345,7 +311,6 @@ export default function LearningManagementPage() {
                                 <th className="px-5 py-4 text-left">Loại</th>
                                 <th className="px-5 py-4 text-left">Nội dung preview</th>
                                 <th className="px-5 py-4 text-left">Audio</th>
-                                <th className="px-5 py-4 text-left">Trạng thái</th>
                                 <th className="px-5 py-4 text-left">Actions</th>
                             </tr>
                         </thead>
@@ -400,22 +365,6 @@ export default function LearningManagementPage() {
                                                 )}
                                             </td>
                                             <td className="px-5 py-4">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleQuestionStatus(question.id)}
-                                                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                                                        question.status === "Hiển thị"
-                                                            ? "bg-orange-50 text-orange-700 hover:bg-orange-100"
-                                                            : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                                                    }`}
-                                                >
-                                                    <span
-                                                        className={`h-3 w-3 rounded-full ${question.status === "Hiển thị" ? "bg-orange-500" : "bg-slate-400"}`}
-                                                    />
-                                                    {question.status}
-                                                </button>
-                                            </td>
-                                            <td className="px-5 py-4">
                                                 <div className="relative inline-flex" ref={openMenuId === question.id ? menuRef : undefined}>
                                                     <button
                                                         type="button"
@@ -452,20 +401,6 @@ export default function LearningManagementPage() {
                                                                 <Trash2 className="h-4 w-4" />
                                                                 Xoá
                                                             </button>
-                                                            <div className="group relative">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleDuplicateQuestion(question)}
-                                                                    title="Nhân bản câu hỏi này"
-                                                                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                                                                >
-                                                                    <Copy className="h-4 w-4" />
-                                                                    Nhân bản
-                                                                </button>
-                                                                <div className="pointer-events-none absolute right-full top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-lg group-hover:block">
-                                                                    Tạo bản sao câu hỏi này
-                                                                </div>
-                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -486,7 +421,7 @@ export default function LearningManagementPage() {
                         <button disabled={selectedIds.length===0} onClick={async () => {
                             if (!confirm(`Xác nhận xoá ${selectedIds.length} câu hỏi?`)) return;
                             try {
-                                const svc = (await import("@/services/learningService")).adminApi;
+                                const svc = (await import("@/services/learningService.ts")).adminApi;
                                 await svc.bulkAction({ action: 'delete', ids: selectedIds });
                                 setQuestions((cur) => cur.filter(q => !selectedIds.includes(q.id)));
                                 setSelectedIds([]);

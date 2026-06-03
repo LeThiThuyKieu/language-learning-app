@@ -167,6 +167,16 @@ public class AdminLearningController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping(value = "/stats", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> getStats() {
+        Map<String, Object> out = new HashMap<>();
+        for (String type : List.of("VOCAB", "LISTENING", "SPEAKING", "MATCHING")) {
+            long count = questionIndexRepository.countByType(type);
+            out.put(type.toLowerCase(), count);
+        }
+        return out;
+    }
+
     @GetMapping(value = "/questions/debug", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> debugCounts() {
         Map<String, Object> out = new HashMap<>();

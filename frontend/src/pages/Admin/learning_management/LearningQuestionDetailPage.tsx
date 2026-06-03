@@ -2,7 +2,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
-import {getQuestion, adminApi, QuestionPayload} from "@/services/learningService";
+import {getQuestion, adminApi, QuestionPayload} from "@/services/learningService.ts";
 
 const backendTypeToUiType: Record<string, string> = {
   VOCAB: "Vocab",
@@ -27,7 +27,6 @@ export default function LearningQuestionDetailPage() {
       title?: string;
       options?: string[];
       correctAnswer?: string;
-      blankCount?: number;
       sampleAnswer?: string;
       keywords?: string[];
       audio?: string;
@@ -47,8 +46,6 @@ export default function LearningQuestionDetailPage() {
     // VOCAB
     options: question?.options ?? [],
     correctAnswer: question?.correctAnswer ?? "",
-    // LISTENING
-    blankCount: question?.blankCount ?? 0,
     // SPEAKING: tách title thành array câu
     speakingSentences: question?.title 
       ? question.title.split('\n').map(s => s.trim()).filter(Boolean)
@@ -78,14 +75,13 @@ export default function LearningQuestionDetailPage() {
       setLoading(true);
       getQuestion(id)
         .then((q) => {
-          const titleRaw = q.title ?? "";
+          const titleRaw = (q.title ?? "").replace(/\\n/g, "\n");
           setForm({
             level: q.level ?? "L1",
             type: normalizeType(q.type),
             title: titleRaw,
             options: q.options ?? [],
             correctAnswer: q.correctAnswer ?? "",
-            blankCount: q.blankCount ?? 0,
             speakingSentences: titleRaw
               ? titleRaw.split('\n').map((s: string) => s.trim()).filter(Boolean)
               : [""],
@@ -100,6 +96,18 @@ export default function LearningQuestionDetailPage() {
     }
   }, [id, question]);
 
+  function convertListeningBlanks(text: string) {
+    const currentNumbers = [
+      ...(text.match(/_______\((\d+)\)/g) || [])
+    ];
+
+    let index = currentNumbers.length + 1;
+
+    return text.replace(
+        /\[blank\]/gi,
+        () => `_______(${index++})`
+    );
+  }
   async function handleSave() {
     const typeUpper = form.type.toUpperCase();
 
@@ -119,10 +127,6 @@ export default function LearningQuestionDetailPage() {
         return;
       }
     } else if (typeUpper === "LISTENING") {
-      if (!form.blankCount || form.blankCount < 1) {
-        toast.error("Vui lòng nhập số khoảng trống");
-        return;
-      }
       if (!form.correctAnswer.trim()) {
         toast.error("Vui lòng nhập đáp án nghe cho listening");
         return;
@@ -154,10 +158,18 @@ export default function LearningQuestionDetailPage() {
           payload.options = form.options;
           payload.correctAnswer = form.correctAnswer;
         } else if (typeUpper === "LISTENING") {
-          payload.blankCount = form.blankCount;
+          payload.questionText = convertListeningBlanks(form.title)
+              .replace(/\n/g, "\\n");
           payload.correctAnswer = form.correctAnswer;
         } else if (typeUpper === "SPEAKING") {
-          // Ghép speakingSentences lại thành 1 string, lưu vào questionText
+          // Ghép speakingSentences lại thành 1 string,function convertListeningBlanks(text: string) {
+          //   let index = 1;
+          //
+          //   return text.replace(
+          //     /\[blank\]/gi,
+          //     () => `_______(${index++})`
+          //   );
+          // } lưu vào questionText
           payload.questionText = form.speakingSentences.filter(s => s.trim()).join('\n');
           payload.sampleAnswer = form.sampleAnswer;
         } else if (typeUpper === "MATCHING") {
@@ -190,7 +202,8 @@ export default function LearningQuestionDetailPage() {
           payload.options = form.options;
           payload.correctAnswer = form.correctAnswer;
         } else if (typeUpper === "LISTENING") {
-          payload.blankCount = form.blankCount;
+          payload.questionText = convertListeningBlanks(form.title)
+              .replace(/\n/g, "\\n");
           payload.correctAnswer = form.correctAnswer;
         } else if (typeUpper === "SPEAKING") {
           // Ghép speakingSentences lại thành 1 string, lưu vào questionText
@@ -258,10 +271,33 @@ export default function LearningQuestionDetailPage() {
           </label>
 
           {form.type !== 'Speaking' && (
-            <label className="md:col-span-2">
-              <div className="text-xs text-gray-400">Câu hỏi</div>
-              <input value={form.title} disabled={mode === 'view'} onChange={(e) => setForm({...form, title: e.target.value})} className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" />
-            </label>
+              <label className="md:col-span-2">
+                <div className="text-xs text-gray-400">Câu hỏi</div>
+
+                {form.type === 'Listening' ? (
+                    <textarea
+                        value={form.title}
+                        disabled={mode === 'view'}
+                        onChange={(e) =>
+                            setForm({
+                              ...form,
+                              title: e.target.value,
+                            })
+                        }
+                        rows={8}
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+                    />
+                ) : (
+                    <input
+                        value={form.title}
+                        disabled={mode === 'view'}
+                        onChange={(e) =>
+                            setForm({ ...form, title: e.target.value })
+                        }
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+                    />
+                )}
+              </label>
           )}
 
           {/* ========== VOCAB ========== */}
@@ -330,27 +366,35 @@ export default function LearningQuestionDetailPage() {
           {form.type === 'Listening' && (
             <>
               <label className="md:col-span-2">
-                <div className="text-xs text-gray-400">Số khoảng trống cần điền</div>
-                <input 
-                  type="number" 
-                  min="1" 
-                  value={form.blankCount} 
-                  disabled={mode === 'view'} 
-                  onChange={(e) => setForm({...form, blankCount: parseInt(e.target.value) || 0})} 
-                  className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" 
-                />
-              </label>
-
-              <label className="md:col-span-2">
                 <div className="text-xs text-gray-400">Đáp án nghe điền vào</div>
-                <textarea 
-                  value={form.correctAnswer} 
-                  disabled={mode === 'view'} 
-                  onChange={(e) => setForm({...form, correctAnswer: e.target.value})} 
-                  className="mt-1 min-h-[120px] w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm" 
-                  placeholder="Nhập dạng 1:name\n2:Nice\n3:live hoặc 1:name | 2:Nice | 3:live"
-                />
-                <p className="mt-2 text-xs text-slate-500">Mỗi _______(1) hoặc _______(2) trong câu là chỗ cần điền.</p>
+                {mode === "view" ? (
+                    <div className="space-y-2">
+                      {form.correctAnswer
+                          .split("|")
+                          .map((item) => item.trim())
+                          .filter(Boolean)
+                          .map((item, index) => (
+                              <div
+                                  key={index}
+                                  className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700"
+                              >
+                                {item}
+                              </div>
+                          ))}
+                    </div>
+                ) : (
+                    <textarea
+                        value={form.correctAnswer}
+                        onChange={(e) =>
+                            setForm({
+                              ...form,
+                              correctAnswer: e.target.value,
+                            })
+                        }
+                        className="mt-1 min-h-[120px] w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+                        placeholder="1:name | 2:Nice | 3:live"
+                    />
+                )}
               </label>
             </>
           )}
