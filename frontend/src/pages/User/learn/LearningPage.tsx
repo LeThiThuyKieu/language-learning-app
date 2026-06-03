@@ -8,21 +8,22 @@ import NodePath, {type NodeAccentKey} from "@/components/user/learn/NodePath.tsx
 import {useAuthStore} from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearningPathLoading from "@/components/user/learn/LearningPathLoading";
-import {Flame, Lock, Medal, MoreHorizontal, PartyPopper, Star, Zap} from "lucide-react";
+import {Lock, MoreHorizontal, PartyPopper} from "lucide-react";
 import {profileService} from "@/services/profileService";
 import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
-import ConfirmModal from "@/components/user/layout/ConfirmModal";
-import LeaderboardCard from "@/components/user/common/LeaderboardCard";
 import LevelOverviewPanel from "@/components/user/learn/LevelOverviewPanel";
+import GeneralRevisionUnlockModal from "@/components/user/learn/general_revision/GeneralRevisionUnlockModal";
+import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
+import LearnRightPanel from "@/components/user/learn/common/LearnRightPanel.tsx";
+import {setGeneralRevisionUnlocked} from "@/utils/generalRevisionAccess";
 
 export default function LearningPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const {isAuthenticated, logout} = useAuthStore();
+    const {isAuthenticated, logout, user} = useAuthStore();
     const [resolvedLevel, setResolvedLevel] = useState<LevelKey | null>(null);
     const [bootstrapping, setBootstrapping] = useState(true);
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     // Level thật của user trên profile (không đổi khi user xem lộ trình level khác để ôn tập)
     const [userProfileLevelId, setUserProfileLevelId] = useState<number>(1);
 
@@ -44,8 +45,11 @@ export default function LearningPage() {
         []
     );
 
-    const [moreOpen, setMoreOpen] = useState(false);
     const [showOverview, setShowOverview] = useState(false);
+    // General Revision — navigate sang /general-revision thay vì render inline
+    const [showReviewUnlockModal, setShowReviewUnlockModal] = useState(false);
+    // Đã hiển thị modal gợi ý ôn tập rồi (không hiện lại lần 2)
+    const reviewModalShownRef = useRef(false);
     // Modal chúc mừng mở khoá level mới
     const [unlockModal, setUnlockModal] = useState<{ nextLevelId: number; nextLevelKey: LevelKey; nextLevelName: string } | null>(null);
     const [unlocking, setUnlocking] = useState(false);
@@ -180,12 +184,38 @@ export default function LearningPage() {
         return () => observer.disconnect();
     }, [trees.length, treesLoading]);
 
-    // Level hoàn thành khi tất cả trees đều có unlockedCount >= 5 (5 nodes đã completed)
-    // PHẢI đặt trước early returns để không vi phạm Rules of Hooks
+    // Level hoàn thành khi tất cả trees đều có unlockedCount > 5
+    // Backend trả về nodes.size() + 1 (= 6) khi TẤT CẢ 5 nodes (kể cả REVIEW) đã completed
+    // unlockedCount = 5 chỉ nghĩa là node 5 (REVIEW) vừa unlock, chưa làm xong
     const isCurrentLevelCompleted = useMemo(() => {
         if (trees.length === 0 || treesLoading) return false;
-        return trees.every(t => (unlockedCounts[t.treeId] ?? 0) >= 5);
+        return trees.every(t => (unlockedCounts[t.treeId] ?? 0) > 5);
     }, [trees, unlockedCounts, treesLoading]);
+
+    // Tất cả 3 level đã hoàn thành → mở khoá Review Hub
+    // Phải đảm bảo: đang ở level 3 (Advanced) VÀ level đó đã xong hết trees
+    const isAllLevelsCompleted = 
+        userProfileLevelId >= 3 && 
+        resolvedLevel === "advanced" &&  // Chỉ check khi đang xem level 3
+        isCurrentLevelCompleted;
+
+    // Hiển thị modal gợi ý ôn tập 1 lần duy nhất khi vừa hoàn thành tất cả
+    // Đồng thời ghi vào localStorage để các trang khác (leaderboard…) biết ngay trạng thái mở khoá
+    useEffect(() => {
+        if (!isAllLevelsCompleted || !isAuthenticated) return;
+
+        // Persist trạng thái mở khoá — dùng userId để tránh nhầm giữa các account
+        setGeneralRevisionUnlocked(user?.id);
+
+        const storageKey = `generalRevisionModalShown_user_${userProfileLevelId}`;
+        const alreadyShown = localStorage.getItem(storageKey);
+
+        if (!alreadyShown && !reviewModalShownRef.current) {
+            reviewModalShownRef.current = true;
+            localStorage.setItem(storageKey, 'true');
+            setShowReviewUnlockModal(true);
+        }
+    }, [isAllLevelsCompleted, userProfileLevelId, isAuthenticated, user?.id]);
 
     if (!isAuthenticated) {
         return <GuestPrompt/>;
@@ -228,64 +258,16 @@ export default function LearningPage() {
             {/* Một lớp pt duy nhất; pt trên aside/main riêng sẽ cuộn mất còn sticky top-* là khoảng cách thật khi dính header */}
             <div className="w-full px-4 pb-8 pt-5 md:px-8 md:pt-6">
                 <div className="grid grid-cols-12 gap-6">
-                    <aside
-                        className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-3 md:pl-0 lg:pr-6">
-                        <div className="md:sticky md:top-24">
-                            <nav className="mt-1 flex w-full max-w-[16.5rem] flex-col gap-1">
-                                <SidebarItem
-                                    label="Học"
-                                    active
-                                    icon={<img src="/icons/learn/hoc.svg" alt=""
-                                               className="h-8 w-8 shrink-0 object-contain"/>}
-                                />
-                                <SidebarItem
-                                    label="Bảng xếp hạng"
-                                    onClick={() => navigate("/leaderboard")}
-                                    icon={<img src="/icons/learn/bxh.svg" alt=""
-                                               className="h-8 w-8 shrink-0 object-contain"/>}
-                                />
-                                <SidebarItem
-                                    label="Nhiệm vụ"
-                                    icon={<img src="/icons/learn/task.svg" alt=""
-                                               className="h-8 w-8 shrink-0 object-contain"/>}
-                                />
-                                <div className="relative w-full pt-0.5">
-                                    <button
-                                        type="button"
-                                        onClick={() => setMoreOpen((v) => !v)}
-                                        className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent px-4 py-3 text-left text-gray-600 transition hover:bg-gray-100"
-                                    >
-                      <span className="flex items-center gap-3">
-                        <img src="/icons/learn/more-info.svg" alt="" className="h-8 w-8 shrink-0 object-contain"/>
-                        <span className="text-sm font-semibold uppercase tracking-wide">Xem thêm</span>
-                      </span>
-                                        <svg
-                                            className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${
-                                                moreOpen ? "rotate-180" : ""
-                                            }`}
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <path d="M6 9l6 6 6-6"/>
-                                        </svg>
-                                    </button>
-
-                                {moreOpen && (
-                                    <div
-                                        className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
-                                        <MoreItem label="Hồ sơ" onClick={() => navigate("/profile")}/>
-                                        <MoreItem label="Cài đặt" onClick={() => navigate("/settings")}/>
-                                        <MoreItem label="Đăng xuất" onClick={() => setShowLogoutConfirm(true)}/>
-                                    </div>
-                                )}
-                            </div>
-                        </nav>
-                    </div>
-                </aside>
+                    <LearnSidebar
+                        isAllLevelsCompleted={isAllLevelsCompleted}
+                        showGeneralRevision={false}
+                        onToggleGeneralRevision={() => navigate("/general-revision")}
+                        onNavigate={(path) => navigate(path)}
+                        onLogout={() => {
+                            logout();
+                            navigate("/login", { replace: true });
+                        }}
+                    />
 
                     <main className="col-span-12 md:col-span-9 lg:col-span-9">
                         <div className="grid grid-cols-12 gap-6">
@@ -463,35 +445,20 @@ export default function LearningPage() {
                                 </div>
                             </div>
 
-                            {/* Cột phải: TopStats, các card bên dưới (sticky để đứng yên khi cuộn) */}
-                            <div className="col-span-12 lg:col-span-4">
-                                <div className="flex flex-col gap-3 lg:sticky lg:top-24">
-                                    <TopStats/>
-                                    <LeaderboardCard
-                                        title="Bảng xếp hạng"
-                                        subtitle="Top 3 tuần này (theo KN)"
-                                        limit={3}
-                                        period="WEEK"
-                                        showViewMore
-                                    />
-                                    <DailyCard/>
-                                    <ProfileCard onCreateProfile={() => navigate("/profile")}/>
-                                </div>
-                            </div>
+                            <LearnRightPanel onCreateProfile={() => navigate("/profile")} />
                         </div>
                     </main>
                 </div>
             </div>
 
-            <ConfirmModal
-                isOpen={showLogoutConfirm}
-                onClose={() => setShowLogoutConfirm(false)}
-                onConfirm={() => {
-                    logout();
-                    navigate("/login", { replace: true });
-                    setShowLogoutConfirm(false);
+            {/* Modal gợi ý Ôn tập tổng hợp khi đã hoàn thành 3 level */}
+            <GeneralRevisionUnlockModal
+                isOpen={showReviewUnlockModal}
+                onClose={() => setShowReviewUnlockModal(false)}
+                onGoToRevision={() => {
+                    setShowReviewUnlockModal(false);
+                    navigate("/general-revision");
                 }}
-                message="Bạn có chắc chắn muốn đăng xuất không?"
             />
 
             {/* Modal chúc mừng mở khoá level mới */}
@@ -638,127 +605,6 @@ function NextLevelBanner({
                         </>
                     )}
                 </button>
-            </div>
-        </div>
-    );
-}
-
-function SidebarItem({label, active = false, icon, onClick}: {
-    label: string;
-    active?: boolean;
-    icon?: React.ReactNode;
-    onClick?: () => void;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm transition ${
-                active
-                    ? "border-primary-300 bg-primary-50 font-bold text-primary-700 shadow-sm"
-                    : "border-transparent font-semibold text-gray-600 hover:bg-gray-100"
-            }`}
-        >
-            {icon && <span className="flex shrink-0 items-center justify-center">{icon}</span>}
-            <span className="uppercase tracking-wide">{label}</span>
-        </button>
-    );
-}
-
-function MoreItem({label, onClick}: { label: string; onClick?: () => void }) {
-    return (
-        <button
-            onClick={onClick}
-            className="w-full text-left px-4 py-3 text-sm font-semibold uppercase tracking-wide text-gray-600 hover:bg-gray-100 transition"
-        >
-            {label}
-        </button>
-    );
-}
-
-function DailyCard() {
-    const currentKn = 0;
-    const targetKn = 20;
-    const percent = (currentKn / targetKn) * 100;
-
-    return (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
-            <div className="flex items-center justify-between">
-                <div className="text-gray-900 font-extrabold text-basic">Nhiệm vụ hằng ngày</div>
-                <button className="text-primary-600 font-semibold text-sm uppercase tracking-wide">
-                    Xem tất cả
-                </button>
-            </div>
-            <div className="mt-4 flex items-center gap-3">
-                <img
-                    src="/icons/learn/lightning.svg"
-                    alt=""
-                    className="h-10 w-10 object-contain shrink-0"
-                />
-                <div className="flex-1">
-                    <div className="text-gray-700 font-semibold text-sm mb-2">Kiếm {targetKn} KN</div>
-                    <div className="relative w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                            className="h-full bg-yellow-400 rounded-full"
-                            style={{width: `${percent}%`}}
-                        />
-                        <div
-                            className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-gray-500">
-                            {currentKn} / {targetKn}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ProfileCard({onCreateProfile}: { onCreateProfile: () => void }) {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
-            <div className="text-gray-900 font-extrabold text-basic mb-1.5">Tạo hồ sơ lưu tiến trình của bạn!</div>
-            <button
-                onClick={onCreateProfile}
-                className="mt-3 w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl transition"
-            >
-                Tạo hồ sơ
-            </button>
-        </div>
-    );
-}
-
-function TopStats() {
-    const location = useLocation();
-    const [profile, setProfile] = useState<{ streakCount: number; totalKn: number; totalXp: number; badgeCount: number } | null>(null);
-
-    useEffect(() => {
-        profileService.getMyProfile()
-            .then((p) => setProfile({
-                streakCount: p.streakCount,
-                totalKn: p.totalKn ?? 0,
-                totalXp: p.totalXp ?? 0,
-                badgeCount: p.badges?.filter(b => b.earned).length ?? 0,
-            }))
-            .catch(() => {/* ignore */});
-    }, [location.key]); // refetch mỗi khi navigate về /learn
-
-    const stats = [
-        { label: "Streak", value: profile?.streakCount ?? "—", icon: <Flame className="h-5 w-5 text-orange-500" /> },
-        { label: "Tổng KN", value: profile?.totalKn ?? "—", icon: <Zap className="h-5 w-5 text-yellow-400" /> },
-        { label: "Tổng XP", value: profile?.totalXp ?? "—", icon: <Star className="h-5 w-5 text-primary-500" /> },
-        { label: "Badges", value: profile?.badgeCount ?? "—", icon: <Medal className="h-5 w-5 text-blue-500" /> },
-    ];
-
-    return (
-        <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm">
-            <div className="grid grid-cols-4 gap-2">
-                {stats.map((item) => (
-                    <div key={item.label} className="text-center">
-                        <div className="flex justify-center mb-0.5">{item.icon}</div>
-                        <div className="text-lg font-extrabold text-gray-900">{item.value}</div>
-                        <div className="text-xs text-gray-500 font-semibold">{item.label}</div>
-                    </div>
-                ))}
             </div>
         </div>
     );

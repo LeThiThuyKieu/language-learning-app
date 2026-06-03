@@ -2,19 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
-import ConfirmModal from "@/components/user/layout/ConfirmModal";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import type { LeaderboardPeriod } from "@/services/leaderboardService";
 import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 import { Crown } from "lucide-react";
+import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
 
 export default function LeaderboardPage() {
     const navigate = useNavigate();
     const { isAuthenticated, logout, user } = useAuthStore();
     const [period, setPeriod] = useState<LeaderboardPeriod>("WEEK");
     const { entries, isLoading, error } = useLeaderboard(10, period);
-    const [moreOpen, setMoreOpen] = useState(false);
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     const scoreLabel = "KN";
     const subtitle =
@@ -40,58 +38,17 @@ export default function LeaderboardPage() {
         <div className="relative left-1/2 right-1/2 min-h-screen w-screen -translate-x-1/2 bg-white -mt-8">
             <div className="w-full px-4 pb-8 pt-5 md:px-8 md:pt-6">
                 <div className="grid grid-cols-12 gap-6">
-                    <aside className="col-span-12 md:col-span-3 lg:col-span-3 md:border-r md:border-gray-200 md:pr-3 md:pl-0 lg:pr-6">
-                        <div className="md:sticky md:top-24">
-                            <nav className="mt-1 flex w-full max-w-[16.5rem] flex-col gap-1">
-                                <SidebarItem
-                                    label="Học"
-                                    onClick={() => navigate("/learn")}
-                                    icon={<img src="/icons/learn/hoc.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />}
-                                />
-                                <SidebarItem
-                                    label="Bảng xếp hạng"
-                                    active
-                                    icon={<img src="/icons/learn/bxh.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />}
-                                />
-                                <SidebarItem
-                                    label="Nhiệm vụ"
-                                    icon={<img src="/icons/learn/task.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />}
-                                />
-
-                                <div className="relative w-full pt-0.5">
-                                    <button
-                                        type="button"
-                                        onClick={() => setMoreOpen((v) => !v)}
-                                        className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-transparent px-4 py-3 text-left text-gray-600 transition hover:bg-gray-100"
-                                    >
-                                    <span className="flex items-center gap-3">
-                                        <img src="/icons/learn/more-info.svg" alt="" className="h-8 w-8 shrink-0 object-contain" />
-                                        <span className="text-sm font-semibold uppercase tracking-wide">Xem thêm</span>
-                                    </span>
-                                        <svg
-                                            className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${moreOpen ? "rotate-180" : ""}`}
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                    </button>
-
-                                    {moreOpen && (
-                                        <div className="mt-1 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
-                                            <MoreItem label="Hồ sơ" onClick={() => navigate("/profile")} />
-                                            <MoreItem label="Cài đặt" onClick={() => navigate("/settings")} />
-                                            <MoreItem label="Đăng xuất" onClick={() => setShowLogoutConfirm(true)} />
-                                        </div>
-                                    )}
-                                </div>
-                            </nav>
-                        </div>
-                    </aside>
+                    <LearnSidebar
+                        isAllLevelsCompleted={false}
+                        showGeneralRevision={false}
+                        onToggleGeneralRevision={() => navigate("/general-revision")}
+                        activeItem="leaderboard"
+                        onNavigate={(path) => navigate(path)}
+                        onLogout={() => {
+                            logout();
+                            navigate("/login", { replace: true });
+                        }}
+                    />
 
                     <main className="col-span-12 md:col-span-9 lg:col-span-9">
                         <div className="mx-auto w-full max-w-5xl rounded-3xl border border-primary-100 bg-white px-5 py-6 shadow-sm sm:px-8 sm:py-8">
@@ -305,55 +262,6 @@ export default function LeaderboardPage() {
                     </main>
                 </div>
             </div>
-
-            <ConfirmModal
-                isOpen={showLogoutConfirm}
-                onClose={() => setShowLogoutConfirm(false)}
-                onConfirm={() => {
-                    logout();
-                    navigate("/login", { replace: true });
-                    setShowLogoutConfirm(false);
-                }}
-                message="Bạn có chắc chắn muốn đăng xuất không?"
-            />
         </div>
-    );
-}
-
-function SidebarItem({
-    label,
-    active = false,
-    icon,
-    onClick,
-}: {
-    label: string;
-    active?: boolean;
-    icon?: React.ReactNode;
-    onClick?: () => void;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm transition ${
-                active
-                    ? "border-primary-300 bg-primary-50 font-bold text-primary-700 shadow-sm"
-                    : "border-transparent font-semibold text-gray-600 hover:bg-gray-100"
-            }`}
-        >
-            {icon && <span className="flex shrink-0 items-center justify-center">{icon}</span>}
-            <span className="uppercase tracking-wide">{label}</span>
-        </button>
-    );
-}
-
-function MoreItem({ label, onClick }: { label: string; onClick?: () => void }) {
-    return (
-        <button
-            onClick={onClick}
-            className="w-full text-left px-4 py-3 text-sm font-semibold uppercase tracking-wide text-gray-600 hover:bg-gray-100 transition"
-        >
-            {label}
-        </button>
     );
 }
