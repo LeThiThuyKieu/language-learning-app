@@ -26,8 +26,9 @@ CREATE TABLE IF NOT EXISTS `badges` (
     `description` text DEFAULT NULL,
     `required_kn` int(11) DEFAULT NULL,
     `icon_url` text DEFAULT NULL,
+    `status` varchar(255) NOT NULL,
     PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -62,7 +63,36 @@ CREATE TABLE IF NOT EXISTS `feedback` (
     KEY `skill_tree_id` (`skill_tree_id`),
     CONSTRAINT `feedback_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `feedback_ibfk_2` FOREIGN KEY (`skill_tree_id`) REFERENCES `skill_tree` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.general_revision_task
+CREATE TABLE IF NOT EXISTS `general_revision_task` (
+                                                       `id` int(11) NOT NULL AUTO_INCREMENT,
+    `topic_id` int(11) NOT NULL,
+    `task_index` tinyint(4) NOT NULL COMMENT '1..4 — thứ tự trong chủ đề',
+    `task_label` varchar(100) NOT NULL COMMENT 'Tên task hiển thị, vd: Từ vựng, Nghe hiểu…',
+    `question_type` varchar(50) NOT NULL COMMENT 'Loại bài: VOCAB | LISTENING | SPEAKING | MATCHING | READING | WRITING | DICTATION | …',
+    `description` varchar(255) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_grt_topic_task` (`topic_id`,`task_index`),
+    KEY `idx_grt_topic` (`topic_id`),
+    CONSTRAINT `fk_grt_topic` FOREIGN KEY (`topic_id`) REFERENCES `general_revision_topic` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='4 task của mỗi chủ đề ôn tập tổng hợp; mỗi task ứng 1 dạng bài';
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.general_revision_topic
+CREATE TABLE IF NOT EXISTS `general_revision_topic` (
+                                                        `id` int(11) NOT NULL AUTO_INCREMENT,
+    `title` varchar(255) NOT NULL COMMENT 'Tên chủ đề, vd: Daily Life, Travel, Business…',
+    `description` text DEFAULT NULL,
+    `icon_url` varchar(512) DEFAULT NULL,
+    `order_index` int(11) NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
+    `is_active` tinyint(1) NOT NULL DEFAULT 1,
+    PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='10 chủ đề ôn tập tổng hợp';
 
 -- Data exporting was unselected.
 
@@ -77,7 +107,7 @@ CREATE TABLE IF NOT EXISTS `leaderboard` (
     PRIMARY KEY (`id`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `leaderboard_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -108,7 +138,7 @@ CREATE TABLE IF NOT EXISTS `placement_test` (
     KEY `fk_placement_session_level` (`detected_level_id`),
     CONSTRAINT `fk_placement_session_level` FOREIGN KEY (`detected_level_id`) REFERENCES `levels` (`id`),
     CONSTRAINT `fk_placement_session_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -266,7 +296,48 @@ CREATE TABLE IF NOT EXISTS `user_badges` (
     KEY `badge_id` (`badge_id`),
     CONSTRAINT `user_badges_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_badges_ibfk_2` FOREIGN KEY (`badge_id`) REFERENCES `badges` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.user_general_revision_task_attempt
+CREATE TABLE IF NOT EXISTS `user_general_revision_task_attempt` (
+                                                                    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `task_id` int(11) NOT NULL,
+    `correct_count` int(11) NOT NULL DEFAULT 0,
+    `total_count` int(11) NOT NULL DEFAULT 0,
+    `score` int(11) NOT NULL DEFAULT 0 COMMENT 'Điểm 0-100',
+    `elapsed_seconds` int(11) NOT NULL DEFAULT 0,
+    `passed` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 nếu score >= 70',
+    `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_ugrta_user` (`user_id`),
+    KEY `idx_ugrta_task` (`task_id`),
+    CONSTRAINT `fk_ugrta_task` FOREIGN KEY (`task_id`) REFERENCES `general_revision_task` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_ugrta_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử làm từng task ôn tập tổng hợp';
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.user_general_revision_topic_progress
+CREATE TABLE IF NOT EXISTS `user_general_revision_topic_progress` (
+                                                                      `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `topic_id` int(11) NOT NULL,
+    `completed_tasks` tinyint(4) NOT NULL DEFAULT 0,
+    `status` enum('not_started','in_progress','completed') NOT NULL DEFAULT 'not_started',
+    `last_score` int(11) DEFAULT NULL COMMENT 'Điểm lần làm gần nhất (0-100)',
+    `best_score` int(11) DEFAULT NULL COMMENT 'Điểm cao nhất từ trước đến nay',
+    `attempt_count` int(11) NOT NULL DEFAULT 0,
+    `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_ugrtp_user_topic` (`user_id`,`topic_id`),
+    KEY `idx_ugrtp_user` (`user_id`),
+    KEY `idx_ugrtp_topic` (`topic_id`),
+    CONSTRAINT `fk_ugrtp_topic` FOREIGN KEY (`topic_id`) REFERENCES `general_revision_topic` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_ugrtp_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tiến trình ôn tập tổng hợp của user theo từng chủ đề';
 
 -- Data exporting was unselected.
 
@@ -279,7 +350,7 @@ CREATE TABLE IF NOT EXISTS `user_kn` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `UK_s272e3aqu0gch92qj97fw74mp` (`user_id`),
     CONSTRAINT `FKtijrmdli7n3k26lv3byssd75s` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -296,7 +367,7 @@ CREATE TABLE IF NOT EXISTS `user_level_question_snapshot` (
     KEY `level_id` (`level_id`),
     CONSTRAINT `fk_ulqs_level` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ulqs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -333,7 +404,7 @@ CREATE TABLE IF NOT EXISTS `user_node_progress` (
     KEY `node_id` (`node_id`),
     CONSTRAINT `user_node_progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_node_progress_ibfk_2` FOREIGN KEY (`node_id`) REFERENCES `skill_node` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=131 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -370,7 +441,7 @@ CREATE TABLE IF NOT EXISTS `user_question_attempt` (
     KEY `question_id` (`question_id`),
     CONSTRAINT `user_question_attempt_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_question_attempt_ibfk_2` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=272 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=1157 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -392,7 +463,7 @@ CREATE TABLE IF NOT EXISTS `user_review_attempt` (
     KEY `idx_review_attempt_node` (`node_id`),
     CONSTRAINT `fk_review_attempt_node` FOREIGN KEY (`node_id`) REFERENCES `skill_node` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_review_attempt_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -415,22 +486,22 @@ CREATE TABLE IF NOT EXISTS `user_skill_tree_progress` (
     `skill_tree_id` int(11) DEFAULT NULL,
     `status` enum('locked','in_progress','done') DEFAULT 'locked',
     `accuracy` double NOT NULL,
-    `updated_at` datetime DEFAULT current_timestamp(),
     `initial_order_index` int(11) DEFAULT NULL COMMENT 'order_index của tree tại thời điểm user bắt đầu học. Dùng để sort lộ trình đúng thứ tự gốc dù adaptive difficulty có đổi thứ tự sau.',
+    `updated_at` datetime DEFAULT current_timestamp(),
     PRIMARY KEY (`id`),
     KEY `user_id` (`user_id`),
     KEY `skill_tree_id` (`skill_tree_id`),
     CONSTRAINT `user_skill_tree_progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_skill_tree_progress_ibfk_2` FOREIGN KEY (`skill_tree_id`) REFERENCES `skill_tree` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
 -- Dumping structure for table language_learning_app.user_skip_test_attempt
 CREATE TABLE IF NOT EXISTS `user_skip_test_attempt` (
-    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                                        `id` bigint(20) NOT NULL AUTO_INCREMENT,
     `user_id` int(11) NOT NULL,
-    `target_level_id` int(11) NOT NULL,
+    `target_level_id` int(11) NOT NULL COMMENT 'Level muốn học vượt lên',
     `correct_count` int(11) NOT NULL DEFAULT 0,
     `total_count` int(11) NOT NULL DEFAULT 0,
     `accuracy` int(11) NOT NULL DEFAULT 0 COMMENT 'Tỷ lệ đúng 0-100%',
@@ -439,9 +510,9 @@ CREATE TABLE IF NOT EXISTS `user_skip_test_attempt` (
     PRIMARY KEY (`id`),
     KEY `idx_skip_test_user` (`user_id`),
     KEY `idx_skip_test_level` (`target_level_id`),
-    CONSTRAINT `fk_skip_test_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_skip_test_level` FOREIGN KEY (`target_level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử các lần thử học vượt level của user';
+    CONSTRAINT `fk_skip_test_level` FOREIGN KEY (`target_level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_skip_test_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lưu lịch sử các lần user thử học vượt level';
 
 -- Data exporting was unselected.
 
@@ -456,7 +527,7 @@ CREATE TABLE IF NOT EXISTS `user_streak` (
     UNIQUE KEY `uk_user_streak_date` (`user_id`,`date`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `streak_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 

@@ -361,7 +361,7 @@ export default function GeneralRevisionView({ onStartTask }: GeneralRevisionView
           <div>
             <h2 className="text-2xl font-extrabold leading-tight">10 Chủ đề</h2>
             <p className="text-sm text-white/80 mt-1 leading-snug">
-              Ôn luyện toàn diện từ vựng, nghe, nói và ghép đôi theo từng chủ đề thực tế.
+              Ôn luyện toàn diện nâng cao tư duy theo từng chủ đề thực tế.
             </p>
           </div>
           <img
