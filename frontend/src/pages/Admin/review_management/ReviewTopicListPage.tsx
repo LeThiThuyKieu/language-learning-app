@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams, Link } from "react-router-dom";
-import { BookOpen, Eye, Mic, PenLine, PencilLine, PlusCircle, Puzzle, RotateCcw, Save, Search, Speaker, X } from "lucide-react";
+import { BookOpen, Eye, Mic, PenLine, PencilLine, PlusCircle, Puzzle, RotateCcw, Save, Speaker, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 type TabKey = "Quiz" | "Listening" | "Speaking" | "Reading" | "Writing" | "Random Settings";

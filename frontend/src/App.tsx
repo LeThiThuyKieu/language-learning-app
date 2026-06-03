@@ -25,6 +25,7 @@ import LearningQuestionDetailPage from "@/pages/Admin/learning_management/Learni
 import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
 import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
+import GeneralRevisionPage from "@/pages/User/learn/GeneralRevisionPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
 import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";
 import SpeakingLessonPage from "@/pages/User/learn/question_type/SpeakingLessonPage.tsx";
@@ -113,6 +114,7 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="general-revision" element={<GeneralRevisionPage/>}/>
                         <Route path="leaderboard" element={<LeaderboardPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
                         <Route path="settings" element={<SettingsPage/>}/>
