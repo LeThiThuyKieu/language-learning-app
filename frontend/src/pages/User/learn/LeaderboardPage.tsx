@@ -41,7 +41,7 @@ export default function LeaderboardPage() {
                     <LearnSidebar
                         isAllLevelsCompleted={false}
                         showGeneralRevision={false}
-                        onToggleGeneralRevision={() => {}}
+                        onToggleGeneralRevision={() => navigate("/general-revision")}
                         activeItem="leaderboard"
                         onNavigate={(path) => navigate(path)}
                         onLogout={() => {

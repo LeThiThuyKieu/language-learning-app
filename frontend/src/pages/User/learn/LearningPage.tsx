@@ -16,11 +16,12 @@ import LevelOverviewPanel from "@/components/user/learn/LevelOverviewPanel";
 import GeneralRevisionUnlockModal from "@/components/user/learn/general_revision/GeneralRevisionUnlockModal";
 import LearnSidebar from "@/components/user/common/LearnSidebar";
 import LearnRightPanel from "@/components/user/common/LearnRightPanel";
+import {setGeneralRevisionUnlocked} from "@/utils/generalRevisionAccess";
 
 export default function LearningPage() {
     const location = useLocation();
     const navigate = useNavigate();
-    const {isAuthenticated, logout} = useAuthStore();
+    const {isAuthenticated, logout, user} = useAuthStore();
     const [resolvedLevel, setResolvedLevel] = useState<LevelKey | null>(null);
     const [bootstrapping, setBootstrapping] = useState(true);
     // Level thật của user trên profile (không đổi khi user xem lộ trình level khác để ôn tập)
@@ -199,9 +200,12 @@ export default function LearningPage() {
         isCurrentLevelCompleted;
 
     // Hiển thị modal gợi ý ôn tập 1 lần duy nhất khi vừa hoàn thành tất cả
-    // Lưu vào localStorage để không hiện lại nữa sau khi user đã thấy (ngay cả khi reload)
+    // Đồng thời ghi vào localStorage để các trang khác (leaderboard…) biết ngay trạng thái mở khoá
     useEffect(() => {
         if (!isAllLevelsCompleted || !isAuthenticated) return;
+
+        // Persist trạng thái mở khoá — dùng userId để tránh nhầm giữa các account
+        setGeneralRevisionUnlocked(user?.id);
 
         const storageKey = `generalRevisionModalShown_user_${userProfileLevelId}`;
         const alreadyShown = localStorage.getItem(storageKey);
@@ -211,7 +215,7 @@ export default function LearningPage() {
             localStorage.setItem(storageKey, 'true');
             setShowReviewUnlockModal(true);
         }
-    }, [isAllLevelsCompleted, userProfileLevelId, isAuthenticated]);
+    }, [isAllLevelsCompleted, userProfileLevelId, isAuthenticated, user?.id]);
 
     if (!isAuthenticated) {
         return <GuestPrompt/>;

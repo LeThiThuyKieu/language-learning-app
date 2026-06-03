@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Lock } from "lucide-react";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
+import { useAuthStore } from "@/store/authStore";
+import { getGeneralRevisionUnlocked } from "@/utils/generalRevisionAccess";
 
 interface LearnSidebarProps {
   isAllLevelsCompleted: boolean;
@@ -125,6 +127,22 @@ export default function LearnSidebar({
 }: LearnSidebarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { user } = useAuthStore();
+
+  // Đọc từ localStorage ngay khi mount — không cần chờ LearningPage load trees
+  const [persistedUnlocked, setPersistedUnlocked] = useState(() =>
+    getGeneralRevisionUnlocked(user?.id)
+  );
+
+  // Cập nhật khi prop thay đổi (khi LearningPage vừa xác nhận đủ điều kiện)
+  useEffect(() => {
+    if (isAllLevelsCompleted) {
+      setPersistedUnlocked(true);
+    }
+  }, [isAllLevelsCompleted]);
+
+  // Giá trị cuối: true nếu localStorage đã lưu HOẶC LearningPage xác nhận
+  const revisionUnlocked = persistedUnlocked || isAllLevelsCompleted;
 
   return (
     <>
@@ -168,10 +186,10 @@ export default function LearnSidebar({
             />
             {/* Ôn tập — locked until all 3 levels done */}
             <ReviewSidebarItem
-              isUnlocked={isAllLevelsCompleted}
+              isUnlocked={revisionUnlocked}
               isActive={showGeneralRevision}
               onClick={() => {
-                if (isAllLevelsCompleted) {
+                if (revisionUnlocked) {
                   onToggleGeneralRevision();
                 }
               }}
