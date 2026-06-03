@@ -174,10 +174,11 @@ export default function SpeakingLessonView({
     const q = node.questions?.[0];
     const audioUrl = q?.audioUrl ?? "";
 
-    // Tách questionText (1 bài speaking) thành danh sách câu cần luyện (các cau nhỏ trong bài speaking)
+    // Tách questionText (1 bài speaking) thành danh sách câu cần luyện (các câu nhỏ trong bài speaking)
+    // question_text trong MongoDB chứa các câu ngăn cách bằng newline thật
     const lines = useMemo(
-        () => splitLines(q?.correctAnswer || q?.questionText),
-        [q?.correctAnswer, q?.questionText]
+        () => splitLines(q?.questionText),
+        [q?.questionText]
     );
 
     // lineIndex: câu đang luyện hiện tại
