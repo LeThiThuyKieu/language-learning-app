@@ -133,3 +133,116 @@ export const learningService = {
     await apiClient.post("/feedback", { treeId, rating });
   },
 };
+
+// Admin helper: lấy chi tiết một câu hỏi theo id (dùng bởi trang admin)
+export const getQuestion = async (id: string | number) => {
+  const response = await apiClient.get(`/admin/learning/questions/${id}`);
+  return response.data as {
+    id: number;
+    mongoQuestionId: string;
+    level: string;
+    type: string;
+    title: string;
+    preview: string;
+    // VOCAB
+    options?: string[];
+    correctAnswer?: string;
+    // LISTENING
+    blankCount?: number;
+    // SPEAKING
+    sampleAnswer?: string;
+    keywords?: string[];
+    // MATCHING
+    leftItems?: string[];
+    rightItems?: string[];
+    correctPairs?: Record<string, string>;
+    // Chung
+    audio?: string;
+    status: string;
+    note: string;
+  };
+};
+
+export interface QuestionPayload {
+  levelId: number;
+  type: string;
+  questionText: string;
+
+  options?: string[];
+  correctAnswer?: string;
+
+  blankCount?: number;
+
+  sampleAnswer?: string;
+  keywords?: string[];
+
+  audioUrl?: string;
+  explanation?: string;
+  nodeId?: number;
+}
+
+export interface QuestionItem {
+  id: number;
+  mongoQuestionId: string;
+
+  levelId?: number;
+  questionType?: string;
+  questionText?: string;
+
+  correctAnswer?: string;
+  options?: string[];
+
+  audioUrl?: string;
+  phonetic?: string;
+
+  status?: string;
+}
+
+export const adminApi = {
+  listQuestions: async (params: { page?: number; size?: number; q?: string; type?: string; levelId?: number }) => {
+    const response = await apiClient.get(`/admin/learning/questions`, { params });
+    return response.data as {
+      items: QuestionItem[];
+      total: number;
+      page: number;
+      size: number;
+      totalPages?: number;
+    };
+  },
+
+  createQuestion: async (payload: QuestionPayload) => {
+    const response = await apiClient.post(`/admin/learning/questions`, payload);
+    return response.data as { id: number; mongoQuestionId: string };
+  },
+
+  updateQuestion: async (
+      id: number | string,
+      payload: Partial<QuestionPayload>
+  ) => {
+    const response = await apiClient.put(`/admin/learning/questions/${id}`, payload);
+    return response.data as { id: number };
+  },
+
+  bulkAction: async (payload: { action: string; ids: number[]; targetLevelId?: number }) => {
+    const response = await apiClient.post(`/admin/learning/bulk`, payload);
+    return response.data;
+  }
+};
+
+// Admin metadata
+export const adminMeta = {
+  getTypes: async () => {
+    const res = await apiClient.get<string[]>(`/admin/learning/types`);
+    return res.data;
+  },
+  getLevels: async () => {
+    const res = await apiClient.get<{ id: number; levelName: string; cefrCode?: string }[]>(`/admin/learning/levels`);
+    return res.data;
+  },
+  getStats: async () => {
+    const res = await apiClient.get<{ vocab: number; listening: number; speaking: number; matching: number }>(
+      `/admin/learning/stats`
+    );
+    return res.data;
+  },
+};

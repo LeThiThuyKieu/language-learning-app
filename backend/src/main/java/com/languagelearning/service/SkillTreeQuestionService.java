@@ -400,6 +400,10 @@ public class SkillTreeQuestionService {
                 audioUrl = doc.getMetadata().getAudioUrl();
                 phonetic = doc.getMetadata().getPhonetic();
             }
+            // SPEAKING: đọc sampleAnswer và keywords từ MongoDB
+            String sampleAnswer = doc != null ? doc.getSampleAnswer() : null;
+            List<String> keywords = doc != null ? doc.getKeywords() : null;
+
             out.add(EnrichedQuestionDto.builder()
                     .id(row.getId())
                     .mongoQuestionId(row.getMongoQuestionId())
@@ -409,6 +413,8 @@ public class SkillTreeQuestionService {
                     .questionType(qType)
                     .audioUrl(audioUrl)
                     .phonetic(phonetic)
+                    .sampleAnswer(sampleAnswer)
+                    .keywords(keywords)
                     .build());
         }
         return out;

@@ -73,6 +73,9 @@ export interface SkillTreeEnrichedQuestion {
   questionType?: string;
   audioUrl?: string;
   phonetic?: string;
+  // SPEAKING
+  sampleAnswer?: string;
+  keywords?: string[];
 }
 
 export interface UserSkillTreeProgress {

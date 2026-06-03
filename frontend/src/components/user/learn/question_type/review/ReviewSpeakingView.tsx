@@ -136,7 +136,7 @@ export default function ReviewSpeakingView({
     const audioUrl = q?.audioUrl ?? "";
 
     const lines = useMemo(
-        () => splitLines((q as { correctAnswer?: string })?.correctAnswer || q?.questionText),
+        () => splitLines(q?.questionText),
         [q]
     );
 
