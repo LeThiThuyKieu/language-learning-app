@@ -14,8 +14,8 @@ import type {LevelKey} from "@/utils/learningLevel";
 import {hasChosenLearningLevel, isLevelKeyFromState, mapLevelIdToKey} from "@/utils/learningLevel";
 import LevelOverviewPanel from "@/components/user/learn/LevelOverviewPanel";
 import GeneralRevisionUnlockModal from "@/components/user/learn/general_revision/GeneralRevisionUnlockModal";
-import LearnSidebar from "@/components/user/common/LearnSidebar";
-import LearnRightPanel from "@/components/user/common/LearnRightPanel";
+import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
+import LearnRightPanel from "@/components/user/learn/common/LearnRightPanel.tsx";
 import {setGeneralRevisionUnlocked} from "@/utils/generalRevisionAccess";
 
 export default function LearningPage() {

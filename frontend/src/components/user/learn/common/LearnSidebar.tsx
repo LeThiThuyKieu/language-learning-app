@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Lock } from "lucide-react";
-import ConfirmModal from "@/components/user/layout/ConfirmModal";
-import { useAuthStore } from "@/store/authStore";
-import { getGeneralRevisionUnlocked } from "@/utils/generalRevisionAccess";
+import ConfirmModal from "@/components/user/layout/ConfirmModal.tsx";
+import { useAuthStore } from "@/store/authStore.ts";
+import { getGeneralRevisionUnlocked } from "@/utils/generalRevisionAccess.ts";
 
 interface LearnSidebarProps {
   isAllLevelsCompleted: boolean;
@@ -76,7 +76,7 @@ function ReviewSidebarItem({
         onClick={onClick}
         className={`flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm transition ${
           isActive
-            ? "border-violet-300 bg-violet-50 font-bold text-violet-700 shadow-sm"
+            ? "border-primary-300 bg-primary-50 font-bold text-primary-700 shadow-sm"
             : "border-transparent font-semibold text-gray-600 hover:bg-gray-100"
         }`}
       >
@@ -93,7 +93,7 @@ function ReviewSidebarItem({
         </span>
         <span className="uppercase tracking-wide">Ôn tập</span>
         {isUnlocked && (
-          <span className="ml-auto shrink-0 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-extrabold text-violet-600">
+          <span className="ml-auto shrink-0 rounded-full bg-primary-100 px-1.5 py-0.5 text-[10px] font-extrabold text-primary-600">
             MỚI
           </span>
         )}

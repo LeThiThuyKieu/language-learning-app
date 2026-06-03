@@ -6,7 +6,7 @@ import { useLeaderboard } from "@/hooks/useLeaderboard";
 import type { LeaderboardPeriod } from "@/services/leaderboardService";
 import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 import { Crown } from "lucide-react";
-import LearnSidebar from "@/components/user/common/LearnSidebar";
+import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
 
 export default function LeaderboardPage() {
     const navigate = useNavigate();

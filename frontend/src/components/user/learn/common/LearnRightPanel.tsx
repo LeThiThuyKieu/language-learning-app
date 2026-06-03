@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Flame, Medal, Star, Zap } from "lucide-react";
-import { profileService } from "@/services/profileService";
-import LeaderboardCard from "@/components/user/common/LeaderboardCard";
+import { profileService } from "@/services/profileService.ts";
+import LeaderboardCard from "@/components/user/common/LeaderboardCard.tsx";
 
 interface LearnRightPanelProps {
   onCreateProfile: () => void;

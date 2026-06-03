@@ -10,8 +10,6 @@ import {
   PlayCircle,
 } from "lucide-react";
 
-// Types
-
 /**
  * Loại bài trong General Revision.
  * Dùng string thay vì union cứng để dễ mở rộng thêm type mới
@@ -46,6 +44,8 @@ export interface RevisionTopic {
 
 interface GeneralRevisionViewProps {
   onStartTask: (topicId: number, task: RevisionTask) => void;
+  /** Callback navigate về trang học — truyền từ Page để View không phụ thuộc router */
+  onBack?: () => void;
 }
 
 //  Mock data
@@ -344,7 +344,7 @@ function TopicCard({
 
 // Main component
 
-export default function GeneralRevisionView({ onStartTask }: GeneralRevisionViewProps) {
+export default function GeneralRevisionView({ onStartTask, onBack }: GeneralRevisionViewProps) {
   const [openTopicId, setOpenTopicId] = useState<number | null>(null);
 
   const totalCompleted = MOCK_TOPICS.reduce((acc, t) => acc + (t.completedTasks >= 4 ? 1 : 0), 0);
@@ -355,34 +355,51 @@ export default function GeneralRevisionView({ onStartTask }: GeneralRevisionView
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
-      <div className="rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white px-6 py-5 shadow-md">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-extrabold leading-tight">10 Chủ đề</h2>
-            <p className="text-sm text-white/80 mt-1 leading-snug">
-              Ôn luyện toàn diện nâng cao tư duy theo từng chủ đề thực tế.
-            </p>
-          </div>
-          <img
-            src="/logo/lion.png"
-            alt="Lion mascot"
-            className="w-16 h-16 object-contain drop-shadow-lg select-none shrink-0 hidden sm:block"
-            draggable={false}
-          />
-        </div>
-
-        {/* Overall progress */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between text-xs text-white/70 font-bold mb-1.5">
-            <span>Tiến độ tổng thể</span>
-            <span>{totalCompleted}/10 chủ đề</span>
-          </div>
-          <div className="h-2 bg-white/30 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white rounded-full transition-all"
-              style={{ width: `${(totalCompleted / 10) * 100}%` }}
-            />
+      {/* Banner sticky — tiêu đề + tiến độ gộp 1, dính đầu trang khi scroll */}
+      <div className="sticky top-20 z-[45]">
+        <div className="overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5">
+          <div className="h-2 w-full bg-white pointer-events-none" aria-hidden />
+          <div className="bg-gradient-to-r from-primary-500 to-orange-500 text-white px-6 py-4">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="flex items-center gap-1.5 text-white/70 hover:text-white text-xs font-extrabold uppercase tracking-widest transition w-fit mb-1"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7" />
+                </svg>
+                Lộ trình học
+              </button>
+            )}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold leading-tight">
+                  Ôn tập tổng hợp
+                </h1>
+                <p className="text-sm text-white/80 mt-0.5 leading-snug">
+                  Ôn luyện toàn diện nâng cao tư duy theo từng chủ đề thực tế.
+                </p>
+              </div>
+              <img
+                src="/logo/lion.png"
+                alt="Lion mascot"
+                className="w-14 h-14 object-contain drop-shadow-lg select-none shrink-0 hidden sm:block"
+                draggable={false}
+              />
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs text-white/70 font-bold mb-1.5">
+                <span>Tiến độ tổng thể</span>
+                <span>{totalCompleted}/10 chủ đề</span>
+              </div>
+              <div className="h-2 bg-white/30 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white rounded-full transition-all"
+                  style={{ width: `${(totalCompleted / 10) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
