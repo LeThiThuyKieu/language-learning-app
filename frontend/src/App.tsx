@@ -25,7 +25,8 @@ import LearningQuestionDetailPage from "@/pages/Admin/learning_management/Learni
 import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
 import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
-import GeneralRevisionPage from "@/pages/User/learn/GeneralRevisionPage.tsx";
+import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
+import GeneralRevisionTaskPage from "@/pages/User/learn/general_revision/GeneralRevisionTaskPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
 import ListeningLessonPage from "@/pages/User/learn/question_type/ListeningLessonPage.tsx";
 import SpeakingLessonPage from "@/pages/User/learn/question_type/SpeakingLessonPage.tsx";
@@ -128,6 +129,9 @@ function App() {
                     <Route path="/learn/matching" element={<MatchingLessonPage/>}/>
                     <Route path="/learn/review" element={<ReviewLessonPage/>}/>
                     <Route path="/learn/skip-test" element={<SkipTestPage/>}/>
+
+                    {/* Ôn tập tổng hợp full màn hình: không Header/Footer layout trang chủ */}
+                    <Route path="/general-revision/task" element={<GeneralRevisionTaskPage/>}/>
 
                     {/* Trang Welcome */}
                     <Route path="/welcome"
