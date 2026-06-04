@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import type { RevisionQuestionDto } from "@/services/generalRevisionService";
 import LessonTopBar from "@/components/user/learn/LessonTopBar";
 import LessonExitModal from "@/components/user/learn/LessonExitModal";
+import LessonResultFooter from "@/components/user/learn/LessonResultFooter";
 
 interface Props {
   /** Đề bài từ bảng general_revision_task.description */
@@ -106,25 +107,14 @@ export default function GeneralRevisionVocabImageView({
                 ].join(" ")}
                 autoFocus
               />
-
-              {/* Feedback sau khi check */}
-              {checked && !isCorrect && (
-                <div className="text-sm font-semibold text-red-600">
-                  Đáp án đúng:{" "}
-                  <span className="font-extrabold">{current.correctAnswer}</span>
-                </div>
-              )}
-              {checked && isCorrect && (
-                <div className="text-sm font-extrabold text-emerald-600">Tuyệt vời! ✓</div>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Footer button */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white/95 backdrop-blur-md">
-          <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-end">
-            {!checked ? (
+        {/* Footer */}
+        {!checked ? (
+          <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white/95 backdrop-blur-md">
+            <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-end">
               <button
                 type="button"
                 disabled={!inputValue.trim()}
@@ -138,23 +128,30 @@ export default function GeneralRevisionVocabImageView({
               >
                 Kiểm tra
               </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleContinue}
-                className="min-w-[160px] h-12 rounded-2xl px-6 text-sm font-extrabold uppercase tracking-wide shadow-sm transition bg-primary-600 hover:bg-primary-700 text-white"
-              >
-                {index < total - 1 ? "Tiếp tục →" : "Hoàn thành →"}
-              </button>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <LessonResultFooter
+            variant={isCorrect ? "correct" : "incorrect"}
+            title={isCorrect ? "Tuyệt vời!" : "Đáp án đúng:"}
+            detail={
+              isCorrect ? undefined : (
+                <span className="font-bold text-red-900">
+                  {current.correctAnswer || "(không có đáp án)"}
+                </span>
+              )
+            }
+            onContinue={handleContinue}
+          />
+        )}
       </main>
 
       <LessonExitModal
         open={exitOpen}
         onContinue={() => setExitOpen(false)}
         onExit={() => { setExitOpen(false); onLeave(); }}
+        continueButtonText="Tiếp tục Ôn"
+        bodyText="Đợi chút, đừng đi mà! Bạn sẽ mất hết tiến trình của bài ôn tập này nếu thoát bây giờ."
       />
     </div>
   );
