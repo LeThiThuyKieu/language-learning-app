@@ -1,9 +1,11 @@
 package com.languagelearning.controller;
 
 import com.languagelearning.dto.ApiResponse;
+import com.languagelearning.dto.faq.FaqDto;
 import com.languagelearning.dto.support.SupportCategoryDto;
 import com.languagelearning.dto.support.SupportCreateTicketRequest;
 import com.languagelearning.dto.support.SupportTicketDetailDto;
+import com.languagelearning.service.FaqService;
 import com.languagelearning.service.support.SupportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.Map;
 public class PublicController {
 
     private final SupportService supportService;
+    private final FaqService faqService;
 
     @GetMapping("/health")
     public ResponseEntity<ApiResponse<Map<String, Object>>> healthCheck() {
@@ -47,6 +50,13 @@ public class PublicController {
     public ResponseEntity<ApiResponse<List<SupportCategoryDto>>> getCategories() {
         List<SupportCategoryDto> data = supportService.getCategories();
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách category thành công", data));
+    }
+
+    // Lấy danh sách câu hỏi thường gặp (public, không cần đăng nhập).
+    @GetMapping("/faqs")
+    public ResponseEntity<ApiResponse<List<FaqDto>>> getFaqs() {
+        List<FaqDto> data = faqService.getActiveFaqs();
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách FAQ thành công", data));
     }
 }
 
