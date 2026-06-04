@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { HelpCircle, Loader2, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { HelpCircle, Loader2, Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import AdminStatCard from "@/components/admin/common/AdminStatCard";
 import apiClient from "@/config/api";
 
@@ -121,6 +121,12 @@ export default function FaqManagementPage() {
                         Danh sách câu hỏi thường gặp hiển thị trên trang Help của người dùng
                     </p>
                 </div>
+                <button
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold transition shrink-0"
+                >
+                    <Plus className="w-4 h-4" />
+                    Thêm FAQ
+                </button>
             </div>
 
             {/* Stats */}
@@ -209,22 +215,38 @@ export default function FaqManagementPage() {
                                         <StatusBadge status={faq.status} />
                                     </div>
                                     {/* Chỉ có nút xem */}
-                                    <button
-                                        onClick={() => setViewFaq(faq)}
-                                        title="Xem chi tiết"
-                                        className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-primary-600"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => setViewFaq(faq)}
+                                            title="Xem chi tiết"
+                                            className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-primary-600"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => {/* TODO: edit */}}
+                                            title="Chỉnh sửa"
+                                            className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => {/* TODO: delete */}}
+                                            title="Xóa"
+                                            className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Question */}
-                                <p className="text-sm font-bold text-gray-900 mb-1.5">{faq.question}</p>
+                                <p className="text-base font-bold text-gray-900 mb-2">{faq.question}</p>
 
-                                {/* Answer preview (tất cả dòng) */}
-                                <div className="text-sm text-gray-500 space-y-0.5">
+                                {/* Answer */}
+                                <div className="space-y-1">
                                     {faq.answer.map((line, i) => (
-                                        <p key={i}>{line}</p>
+                                        <p key={i} className="text-sm text-gray-900">• {line}</p>
                                     ))}
                                 </div>
 

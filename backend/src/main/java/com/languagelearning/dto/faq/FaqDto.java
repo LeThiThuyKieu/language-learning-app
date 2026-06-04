@@ -17,4 +17,6 @@ public class FaqDto {
     /** Các dòng answer tách theo '\n' để hiển thị từng bullet */
     private List<String> answer;
     private Integer displayOrder;
+    private String status;
+    private String updatedAt;
 }

@@ -232,7 +232,7 @@ export default function HelpPage() {
                         Tìm câu trả lời nhanh hoặc gửi yêu cầu hỗ trợ tới admin.
                     </p>
 
-                    <div className="grid md:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto">
+                    <div className="grid grid-cols-2 gap-4 mt-10 max-w-sm mx-auto">
 
                         <div className="bg-white/15 rounded-3xl p-5 backdrop-blur-xl">
                             <p className="text-3xl font-black">24/7</p>

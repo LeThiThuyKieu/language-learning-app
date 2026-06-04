@@ -25,13 +25,31 @@ public class FaqService {
     public List<FaqDto> getActiveFaqs() {
         return faqRepository.findByStatusOrderByDisplayOrderAsc(Faq.FaqStatus.ACTIVE)
                 .stream()
-                .map(faq -> FaqDto.builder()
-                        .id(faq.getId())
-                        .question(faq.getQuestion())
-                        .answer(splitAnswer(faq.getAnswer()))
-                        .displayOrder(faq.getDisplayOrder())
-                        .build())
+                .map(this::toDto)
                 .toList();
+    }
+
+    /** Lấy tất cả FAQ (kể cả INACTIVE) dùng cho trang admin xem. */
+    @Transactional(readOnly = true)
+    public List<FaqDto> getAllFaqs() {
+        return faqRepository.findAll(org.springframework.data.domain.Sort.by("displayOrder"))
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    private FaqDto toDto(Faq faq) {
+        String updatedAt = faq.getUpdatedAt() != null
+                ? faq.getUpdatedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                : "";
+        return FaqDto.builder()
+                .id(faq.getId())
+                .question(faq.getQuestion())
+                .answer(splitAnswer(faq.getAnswer()))
+                .displayOrder(faq.getDisplayOrder())
+                .status(faq.getStatus().name())
+                .updatedAt(updatedAt)
+                .build();
     }
 
     /** Tách answer theo '\n', bỏ dòng trắng */

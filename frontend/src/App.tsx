@@ -17,6 +17,7 @@ import PlacementTestManagementPage from "@/pages/Admin/PlacementTestManagementPa
 import EmailSupportPage from "@/pages/Admin/support_management/EmailSupportPage.tsx";
 import ChatSupportPage from "@/pages/Admin/support_management/ChatSupportPage.tsx";
 import ChatbotRulesPage from "@/pages/Admin/support_management/ChatbotRulesPage.tsx";
+import FaqManagementPage from "@/pages/Admin/support_management/FaqManagementPage.tsx";
 import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
 import LearningManagementPage from "@/pages/Admin/learning_management/LearningManagementPage.tsx";
@@ -154,6 +155,7 @@ function App() {
                         <Route path="support-management/email-support" element={<EmailSupportPage/>}/>
                         <Route path="support-management/chat-support" element={<ChatSupportPage/>}/>
                         <Route path="support-management/chatbot-rules" element={<ChatbotRulesPage/>}/>
+                        <Route path="support-management/faq" element={<FaqManagementPage/>}/>
                         <Route path="badges" element={<BadgesManagementPage/>} />
                         <Route path="feedback" element={<FeedbackPage/>} />
                         <Route path="learning" element={<LearningManagementPage/>} />
