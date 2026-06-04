@@ -6,6 +6,7 @@ import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
 import GeneralRevisionVocabImageView from "@/components/user/learn/general_revision/task_views/GeneralRevisionVocabImageView";
 import GeneralRevisionListeningView from "@/components/user/learn/general_revision/task_views/GeneralRevisionListeningView";
 import GeneralRevisionWritingView from "@/components/user/learn/general_revision/task_views/GeneralRevisionWritingView";
+import GeneralRevisionMatchingView from "@/components/user/learn/general_revision/task_views/GeneralRevisionMatchingView";
 import { Loader2 } from "lucide-react";
 
 type LocationState = {
@@ -129,6 +130,17 @@ export default function GeneralRevisionTaskPage() {
     return (
       <GeneralRevisionWritingView
         taskDescription={task.description ?? "Look at the pictures and write the words"}
+        questions={questions}
+        onLeave={handleLeave}
+        onComplete={handleComplete}
+      />
+    );
+  }
+
+  if (qType === "MATCHING") {
+    return (
+      <GeneralRevisionMatchingView
+        taskDescription={task.description ?? "Match the word with its meaning"}
         questions={questions}
         onLeave={handleLeave}
         onComplete={handleComplete}
