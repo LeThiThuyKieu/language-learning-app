@@ -30,18 +30,18 @@ export interface RevisionQuestionDto {
   // VOCAB_IMAGE
   imageUrl?: string;
   correctAnswer?: string;
-  // LISTENING
-  questionText?: string;
-  distractors?: string[];
-  explanation?: string;
-  // SPEAKING
-  promptText?: string;
-  expectedKeywords?: string[];
   // MATCHING
   pairs?: { left: string; right: string }[];
+  // SPEAKING / WRITING
+  categories?: {
+    label: string;
+    slots: number;
+  }[];
+  images?: {
+    url: string;
+  }[];
   // Shared
   audioUrl?: string;
-  transcript?: string;
 }
 
 // Service

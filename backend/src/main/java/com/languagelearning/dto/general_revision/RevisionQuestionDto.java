@@ -25,19 +25,13 @@ public class RevisionQuestionDto {
     private String imageUrl;
     private String correctAnswer;
 
-    // LISTENING
-    private String questionText;
-    private List<String> distractors;
-    private String explanation;
-
-    // SPEAKING
-    private String promptText;
-    private List<String> expectedKeywords;
-
     // MATCHING
     private List<Map<String, String>> pairs;
 
+    // WRITING — categories và images từ MongoDB
+    private List<Map<String, Object>> categories;
+    private List<Map<String, String>> images;
+
     // Shared
     private String audioUrl;     // metadata.audio_url
-    private String transcript;   // metadata.transcript
 }

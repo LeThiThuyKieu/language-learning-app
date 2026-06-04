@@ -14,7 +14,6 @@ import java.util.Map;
 /**
  * MongoDB document cho collection general_revision_questions.
  * Hỗ trợ các question_type: VOCAB_IMAGE | LISTENING | SPEAKING | MATCHING
- * Chúng được lưu trong MySQL (bảng general_revision_questions) và mapping qua mongo_question_id (_id của document này).
  */
 @Document(collection = "general_revision_questions")
 @Data
@@ -29,32 +28,34 @@ public class GeneralRevisionQuestion {
     @Field("question_type")
     private String questionType;
 
-    // VOCAB_IMAGE: URL ảnh (Cloudinary)
+    //  VOCAB_IMAGE
     @Field("image_url")
     private String imageUrl;
 
-    // Thứ tự hiển thị trong task
     @Indexed
     @Field("order_index")
     private Integer orderIndex;
 
-    @Field("question_text")
-    private String questionText;
+    // LISTENING
+    // (chỉ có image_url + metadata.audio_url, không có question_text)
 
-    // Danh sách 4 lựa chọn
-    @Field("distractors")
-    private List<String> distractors;
+    // SPEAKING / WRITING
+    /**
+     * Danh sách nhóm/cột để user điền từ vào.
+     * Mỗi phần tử: { label: String, slots: Integer, correct_words: List<String> }
+     */
+    private List<Map<String, Object>> categories;
 
-    private String explanation;
+    /**
+     * Danh sách hình ảnh tham khảo — chỉ có url.
+     * [{ url: String }]
+     */
+    private List<Map<String, String>> images;
 
-    // SPEAKING
-    @Field("prompt_text")
-    private String promptText;
-
-    @Field("expected_keywords")
-    private List<String> expectedKeywords;
-
-    // MATCHING, Danh sách cặp ghép: [{ left: "kettle", right: "boil water" }, …]
+    // MATCHING
+    /**
+     * Danh sách cặp ghép: [{ left: "kettle", right: "boil water" }, …]
+     */
     private List<Map<String, String>> pairs;
 
     // Shared
@@ -66,6 +67,5 @@ public class GeneralRevisionQuestion {
     public static class Metadata {
         @Field("audio_url")
         private String audioUrl;
-        private String transcript;
     }
 }

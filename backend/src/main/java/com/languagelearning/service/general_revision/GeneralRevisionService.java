@@ -114,25 +114,19 @@ public class GeneralRevisionService {
         if (mongoDoc != null) {
             dto.setOrderIndex(mongoDoc.getOrderIndex());
             
-            // VOCAB_IMAGE
+            // VOCAB_IMAGE / LISTENING
             dto.setImageUrl(mongoDoc.getImageUrl());
-            
-            // LISTENING
-            dto.setQuestionText(mongoDoc.getQuestionText());
-            dto.setDistractors(mongoDoc.getDistractors());
-            dto.setExplanation(mongoDoc.getExplanation());
-            
-            // SPEAKING
-            dto.setPromptText(mongoDoc.getPromptText());
-            dto.setExpectedKeywords(mongoDoc.getExpectedKeywords());
-            
+
             // MATCHING
             dto.setPairs(mongoDoc.getPairs());
+
+            // WRITING
+            dto.setCategories(mongoDoc.getCategories());
+            dto.setImages(mongoDoc.getImages());
             
             // Metadata
             if (mongoDoc.getMetadata() != null) {
                 dto.setAudioUrl(mongoDoc.getMetadata().getAudioUrl());
-                dto.setTranscript(mongoDoc.getMetadata().getTranscript());
             }
         }
         

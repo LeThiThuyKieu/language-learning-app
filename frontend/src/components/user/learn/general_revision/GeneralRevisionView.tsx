@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   PlayCircle,
   Loader2,
+  PenLine,
 } from "lucide-react";
 import { generalRevisionService } from "@/services/generalRevisionService";
 import type { RevisionTopicDto, RevisionTaskDto } from "@/services/generalRevisionService";
@@ -26,7 +27,7 @@ interface GeneralRevisionViewProps {
 }
 
 // Helpers
-const KNOWN_TYPES = ["VOCAB", "VOCAB_IMAGE", "LISTENING", "SPEAKING", "MATCHING"] as const;
+const KNOWN_TYPES = ["VOCAB", "VOCAB_IMAGE", "LISTENING", "SPEAKING", "WRITING", "MATCHING"] as const;
 type KnownType = typeof KNOWN_TYPES[number];
 
 const TASK_ICON: Record<KnownType, React.ReactNode> = {
@@ -34,6 +35,7 @@ const TASK_ICON: Record<KnownType, React.ReactNode> = {
   VOCAB_IMAGE: <Image      className="w-4 h-4 shrink-0" />,
   LISTENING:   <Headphones className="w-4 h-4 shrink-0" />,
   SPEAKING:    <Mic        className="w-4 h-4 shrink-0" />,
+  WRITING:     <PenLine    className="w-4 h-4 shrink-0" />,
   MATCHING:    <Shuffle    className="w-4 h-4 shrink-0" />,
 };
 const TASK_COLOR: Record<KnownType, string> = {
@@ -41,6 +43,7 @@ const TASK_COLOR: Record<KnownType, string> = {
   VOCAB_IMAGE: "bg-cyan-100 text-cyan-700",
   LISTENING:   "bg-purple-100 text-purple-700",
   SPEAKING:    "bg-rose-100 text-rose-700",
+  WRITING:     "bg-rose-100 text-rose-700",
   MATCHING:    "bg-amber-100 text-amber-700",
 };
 const TASK_BTN_COLOR: Record<KnownType, string> = {
@@ -48,6 +51,7 @@ const TASK_BTN_COLOR: Record<KnownType, string> = {
   VOCAB_IMAGE: "bg-cyan-500 hover:bg-cyan-600",
   LISTENING:   "bg-purple-500 hover:bg-purple-600",
   SPEAKING:    "bg-rose-500 hover:bg-rose-600",
+  WRITING:     "bg-rose-500 hover:bg-rose-600",
   MATCHING:    "bg-amber-500 hover:bg-amber-600",
 };
 
