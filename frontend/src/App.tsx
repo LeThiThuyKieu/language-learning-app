@@ -24,6 +24,8 @@ import LearningQuestionDetailPage from "@/pages/Admin/learning_management/Learni
 // import LearningQuestionEditPage from "@/pages/Admin/LearningQuestionEditPage";
 import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
 import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
+import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
+import AdminSettingsPage from "@/pages/Admin/AdminSettingsPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/GeneralRevisionPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
@@ -160,6 +162,8 @@ function App() {
                         <Route path="learning/:id/edit" element={<LearningQuestionDetailPage/>} />
                         <Route path="review-topics" element={<ReviewTopicsPage/>} />
                         <Route path="review-topics/:id" element={<ReviewTopicListPage/>} />
+                        <Route path="profile" element={<AdminProfilePage/>} />
+                        <Route path="settings" element={<AdminSettingsPage/>} />
                     </Route>
                 </Routes>
                 <SupportFloatingButton />
