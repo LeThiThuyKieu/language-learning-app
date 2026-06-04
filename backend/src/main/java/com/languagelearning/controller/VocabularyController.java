@@ -1,7 +1,7 @@
 package com.languagelearning.controller;
 
 import com.languagelearning.dto.VocabularyDetailDto;
-import com.languagelearning.service.VocabularyLookupService;
+import com.languagelearning.service.learn.VocabularyLookupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -14,6 +14,7 @@ import java.util.Map;
 /**
  * MongoDB document cho collection general_revision_questions.
  * Hỗ trợ các question_type: VOCAB_IMAGE | LISTENING | SPEAKING | MATCHING
+ * Chúng được lưu trong MySQL (bảng general_revision_questions) và mapping qua mongo_question_id (_id của document này).
  */
 @Document(collection = "general_revision_questions")
 @Data
@@ -25,54 +26,38 @@ public class GeneralRevisionQuestion {
     private String id;
 
     @Indexed
-    @Field("topic_id")
-    private Integer topicId;
-
-    @Indexed
-    @Field("task_id")
-    private Integer taskId;
-
-    @Indexed
     @Field("question_type")
     private String questionType;
 
-    // ── VOCAB_IMAGE ────────────────────────────────────────
-    /** URL ảnh (Wikimedia / Cloudinary) */
+    // VOCAB_IMAGE: URL ảnh (Cloudinary)
     @Field("image_url")
     private String imageUrl;
 
-    /** Đáp án đúng (từ cần gõ) */
-    @Field("correct_answer")
-    private String correctAnswer;
-
-    /** Thứ tự hiển thị trong task */
+    // Thứ tự hiển thị trong task
+    @Indexed
     @Field("order_index")
     private Integer orderIndex;
 
-    // ── LISTENING ──────────────────────────────────────────
     @Field("question_text")
     private String questionText;
 
-    /** Danh sách 4 lựa chọn */
+    // Danh sách 4 lựa chọn
     @Field("distractors")
     private List<String> distractors;
 
     private String explanation;
 
-    // ── SPEAKING ───────────────────────────────────────────
+    // SPEAKING
     @Field("prompt_text")
     private String promptText;
 
     @Field("expected_keywords")
     private List<String> expectedKeywords;
 
-    // ── MATCHING ───────────────────────────────────────────
-    /**
-     * Danh sách cặp ghép: [{ left: "kettle", right: "boil water" }, …]
-     */
+    // MATCHING, Danh sách cặp ghép: [{ left: "kettle", right: "boil water" }, …]
     private List<Map<String, String>> pairs;
 
-    // ── Shared ─────────────────────────────────────────────
+    // Shared
     private Metadata metadata;
 
     @Data

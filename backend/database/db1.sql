@@ -67,11 +67,30 @@ CREATE TABLE IF NOT EXISTS `feedback` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table language_learning_app.general_revision_questions
+CREATE TABLE IF NOT EXISTS `general_revision_questions` (
+                                                            `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `mongo_question_id` varchar(50) NOT NULL COMMENT 'ObjectId từ MongoDB',
+    `topic_id` int(11) NOT NULL,
+    `task_id` int(11) NOT NULL,
+    `question_type` varchar(50) NOT NULL COMMENT 'VOCAB_IMAGE | LISTENING | SPEAKING | MATCHING',
+    `correct_answer` text DEFAULT NULL COMMENT 'Đáp án đúng, dùng cho chấm điểm',
+    `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_grq_mongo_id` (`mongo_question_id`),
+    KEY `idx_grq_topic` (`topic_id`),
+    KEY `idx_grq_task` (`task_id`),
+    CONSTRAINT `fk_grq_task` FOREIGN KEY (`task_id`) REFERENCES `general_revision_task` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_grq_topic` FOREIGN KEY (`topic_id`) REFERENCES `general_revision_topic` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Mapping câu hỏi ôn tập (Mongo <-> SQL) và lưu correct_answer';
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table language_learning_app.general_revision_task
 CREATE TABLE IF NOT EXISTS `general_revision_task` (
                                                        `id` int(11) NOT NULL AUTO_INCREMENT,
     `topic_id` int(11) NOT NULL,
-    `task_index` tinyint(4) NOT NULL COMMENT '1..4 — thứ tự trong chủ đề',
+    `task_index` int(11) NOT NULL,
     `task_label` varchar(100) NOT NULL COMMENT 'Tên task hiển thị, vd: Từ vựng, Nghe hiểu…',
     `question_type` varchar(50) NOT NULL COMMENT 'Loại bài: VOCAB | LISTENING | SPEAKING | MATCHING | READING | WRITING | DICTATION | …',
     `description` varchar(255) DEFAULT NULL,
@@ -88,7 +107,6 @@ CREATE TABLE IF NOT EXISTS `general_revision_topic` (
                                                         `id` int(11) NOT NULL AUTO_INCREMENT,
     `title` varchar(255) NOT NULL COMMENT 'Tên chủ đề, vd: Daily Life, Travel, Business…',
     `description` text DEFAULT NULL,
-    `icon_url` varchar(512) DEFAULT NULL,
     `order_index` int(11) NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
     `is_active` tinyint(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (`id`)
@@ -367,7 +385,7 @@ CREATE TABLE IF NOT EXISTS `user_level_question_snapshot` (
     KEY `level_id` (`level_id`),
     CONSTRAINT `fk_ulqs_level` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ulqs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 

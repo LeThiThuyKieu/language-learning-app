@@ -2,7 +2,7 @@ package com.languagelearning.controller;
 
 import com.languagelearning.dto.general_revision.RevisionQuestionDto;
 import com.languagelearning.dto.general_revision.RevisionTopicDto;
-import com.languagelearning.service.GeneralRevisionService;
+import com.languagelearning.service.general_revision.GeneralRevisionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;

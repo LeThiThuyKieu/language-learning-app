@@ -2,7 +2,7 @@ package com.languagelearning.controller;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.placement.*;
-import com.languagelearning.service.PlacementTestService;
+import com.languagelearning.service.placement_test.PlacementTestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

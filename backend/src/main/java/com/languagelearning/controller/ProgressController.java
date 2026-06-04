@@ -1,7 +1,7 @@
 package com.languagelearning.controller;
 
 import com.languagelearning.dto.SubmitAttemptsRequest;
-import com.languagelearning.service.ProgressService;
+import com.languagelearning.service.learn.ProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

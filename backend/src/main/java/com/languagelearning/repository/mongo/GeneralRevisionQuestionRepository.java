@@ -9,9 +9,13 @@ import java.util.List;
 @Repository
 public interface GeneralRevisionQuestionRepository extends MongoRepository<GeneralRevisionQuestion, String> {
 
-    /** Lấy tất cả câu hỏi của một task, sắp xếp theo order_index */
-    List<GeneralRevisionQuestion> findByTaskIdOrderByOrderIndexAsc(Integer taskId);
+    /**
+     * Lấy tất cả câu hỏi theo question_type (nếu cần filter)
+     */
+    List<GeneralRevisionQuestion> findByQuestionType(String questionType);
 
-    /** Lấy theo topic + task */
-    List<GeneralRevisionQuestion> findByTopicIdAndTaskIdOrderByOrderIndexAsc(Integer topicId, Integer taskId);
+    /**
+     * Lấy theo question_type và sắp xếp theo order_index
+     */
+    List<GeneralRevisionQuestion> findByQuestionTypeOrderByOrderIndexAsc(String questionType);
 }

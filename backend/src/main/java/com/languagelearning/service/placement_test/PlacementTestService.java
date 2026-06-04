@@ -1,4 +1,4 @@
-package com.languagelearning.service;
+package com.languagelearning.service.placement_test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +15,7 @@ import com.languagelearning.repository.mysql.LevelRepository;
 import com.languagelearning.repository.mysql.PlacementTestRepository;
 import com.languagelearning.repository.mysql.QuestionIndexRepository;
 import com.languagelearning.repository.mysql.UserRepository;
+import com.languagelearning.service.learn.SkillTreeQuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

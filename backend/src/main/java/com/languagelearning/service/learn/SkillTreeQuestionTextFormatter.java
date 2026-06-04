@@ -1,4 +1,4 @@
-package com.languagelearning.service;
+package com.languagelearning.service.learn;
 
 import com.languagelearning.dto.learning.EnrichedQuestionDto;
 import com.languagelearning.dto.learning.NodeQuestionsDto;
@@ -7,7 +7,6 @@ import com.languagelearning.dto.learning.SkillTreeQuestionsResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Xuất nội dung giống script Node {@code formatTree} (file .txt).
