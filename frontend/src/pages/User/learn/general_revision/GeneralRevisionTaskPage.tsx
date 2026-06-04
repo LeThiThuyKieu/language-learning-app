@@ -4,6 +4,7 @@ import { generalRevisionService } from "@/services/generalRevisionService";
 import type { RevisionQuestionDto, RevisionTaskDto } from "@/services/generalRevisionService";
 import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
 import GeneralRevisionVocabImageView from "@/components/user/learn/general_revision/task_views/GeneralRevisionVocabImageView";
+import GeneralRevisionListeningView from "@/components/user/learn/general_revision/task_views/GeneralRevisionListeningView";
 import { Loader2 } from "lucide-react";
 
 type LocationState = {
@@ -105,6 +106,17 @@ export default function GeneralRevisionTaskPage() {
     return (
       <GeneralRevisionVocabImageView
         taskDescription={task.description ?? "Write the correct word under each picture"}
+        questions={questions}
+        onLeave={handleLeave}
+        onComplete={handleComplete}
+      />
+    );
+  }
+
+  if (qType === "LISTENING") {
+    return (
+      <GeneralRevisionListeningView
+        taskDescription={task.description ?? "Listen to the audio and write the word"}
         questions={questions}
         onLeave={handleLeave}
         onComplete={handleComplete}
