@@ -5,6 +5,8 @@ type SupportEmailLogPanelProps = {
     logs: SupportEmailLog[];
     isLoading?: boolean;
     ticketId: number;
+    /** true khi hiển thị bên trong modal (ẩn tiêu đề section) */
+    embedded?: boolean;
 };
 
 function formatSentAt(sentAt: string): string {
@@ -20,16 +22,23 @@ function formatSentAt(sentAt: string): string {
     });
 }
 
-export default function SupportEmailLogPanel({ logs, isLoading = false, ticketId }: SupportEmailLogPanelProps) {
+export default function SupportEmailLogPanel({
+    logs,
+    isLoading = false,
+    ticketId,
+    embedded = false,
+}: SupportEmailLogPanelProps) {
     return (
-        <div className="border-t border-gray-100 pt-5">
-            <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-[11px] font-bold px-3 py-1 rounded-full">
-                    <Mail className="w-3 h-3" />
-                    LỊCH SỬ GỬI EMAIL
-                </span>
-                <span className="text-xs text-gray-400">Ticket #{ticketId}</span>
-            </div>
+        <div className={embedded ? "" : "border-t border-gray-100 pt-5"}>
+            {!embedded && (
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-[11px] font-bold px-3 py-1 rounded-full">
+                        <Mail className="w-3 h-3" />
+                        LỊCH SỬ GỬI EMAIL
+                    </span>
+                    <span className="text-xs text-gray-400">Ticket #{ticketId}</span>
+                </div>
+            )}
 
             {isLoading ? (
                 <div className="flex justify-center py-6">

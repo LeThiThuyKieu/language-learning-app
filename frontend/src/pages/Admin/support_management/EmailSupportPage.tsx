@@ -315,6 +315,7 @@ export default function EmailSupportPage() {
                             onBack={() => setMobileShowDetail(false)}
                             emailLogs={emailLogs}
                             isLoadingEmailLogs={isLoadingEmailLogs}
+                            onOpenEmailLogs={() => selectedThreadId && loadEmailLogs(selectedThreadId)}
                         />
                     </div>
                 )}
