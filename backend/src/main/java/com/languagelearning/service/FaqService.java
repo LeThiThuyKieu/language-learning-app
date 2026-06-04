@@ -1,6 +1,7 @@
 package com.languagelearning.service;
 
 import com.languagelearning.dto.faq.FaqDto;
+import com.languagelearning.dto.faq.FaqRequest;
 import com.languagelearning.entity.Faq;
 import com.languagelearning.repository.mysql.FaqRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,36 @@ public class FaqService {
                 .build();
     }
 
-    /** Tách answer theo '\n', bỏ dòng trắng */
+    /** Tạo FAQ mới. */
+    @Transactional
+    public FaqDto createFaq(FaqRequest request) {
+        Faq faq = new Faq();
+        faq.setQuestion(request.getQuestion().trim());
+        faq.setAnswer(request.getAnswer().trim());
+        faq.setDisplayOrder(request.getDisplayOrder());
+        faq.setStatus(parseStatus(request.getStatus()));
+        return toDto(faqRepository.save(faq));
+    }
+
+    /** Cập nhật FAQ theo id. */
+    @Transactional
+    public FaqDto updateFaq(Integer id, FaqRequest request) {
+        Faq faq = faqRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy FAQ: " + id));
+        faq.setQuestion(request.getQuestion().trim());
+        faq.setAnswer(request.getAnswer().trim());
+        faq.setDisplayOrder(request.getDisplayOrder());
+        faq.setStatus(parseStatus(request.getStatus()));
+        return toDto(faqRepository.save(faq));
+    }
+
+    private Faq.FaqStatus parseStatus(String status) {
+        try {
+            return Faq.FaqStatus.valueOf(status.trim().toUpperCase());
+        } catch (Exception e) {
+            return Faq.FaqStatus.ACTIVE;
+        }
+    }
     private List<String> splitAnswer(String raw) {
         if (raw == null || raw.isBlank()) return List.of();
         return Arrays.stream(raw.split("\n"))

@@ -2,13 +2,13 @@ package com.languagelearning.controller.admin;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.faq.FaqDto;
+import com.languagelearning.dto.faq.FaqRequest;
 import com.languagelearning.service.FaqService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,7 +23,21 @@ public class FaqManagementController {
     /** Admin xem toàn bộ FAQ (kể cả INACTIVE). */
     @GetMapping
     public ResponseEntity<ApiResponse<List<FaqDto>>> getAllFaqs() {
-        List<FaqDto> data = faqService.getAllFaqs();
-        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách FAQ thành công", data));
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách FAQ thành công", faqService.getAllFaqs()));
+    }
+
+    /** Tạo FAQ mới. */
+    @PostMapping
+    public ResponseEntity<ApiResponse<FaqDto>> createFaq(@Valid @RequestBody FaqRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Tạo FAQ thành công", faqService.createFaq(request)));
+    }
+
+    /** Cập nhật FAQ theo id. */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<FaqDto>> updateFaq(
+            @PathVariable Integer id,
+            @Valid @RequestBody FaqRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật FAQ thành công", faqService.updateFaq(id, request)));
     }
 }
