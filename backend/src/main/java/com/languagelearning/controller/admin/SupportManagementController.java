@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/admin/support-management")
@@ -50,6 +52,19 @@ public class SupportManagementController {
         String email = authentication.getName();
         SupportTicketDetailDto data = supportService.getAdminTicketDetail(email, ticketId);
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết ticket thành công", data));
+    }
+
+    /**
+     * Lấy lịch sử gửi email phản hồi của ticket (support_email_log).
+     */
+    @GetMapping("/tickets/{ticketId}/email-logs")
+    public ResponseEntity<ApiResponse<List<SupportEmailLogDto>>> getTicketEmailLogs(
+            Authentication authentication,
+            @PathVariable Integer ticketId
+    ) {
+        String email = authentication.getName();
+        List<SupportEmailLogDto> data = supportService.getTicketEmailLogs(email, ticketId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử email thành công", data));
     }
 
     /**

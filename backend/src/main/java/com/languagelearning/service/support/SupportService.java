@@ -27,6 +27,7 @@ public class SupportService {
     private final SupportCategoryRepository supportCategoryRepository;
     private final SupportTicketRepository supportTicketRepository;
     private final SupportMessageRepository supportMessageRepository;
+    private final SupportEmailLogRepository supportEmailLogRepository;
     private final EmailService emailService;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -251,6 +252,20 @@ public class SupportService {
         return toDetailDto(ticket);
     }
 
+    // Lấy lịch sử gửi email phản hồi của ticket (chỉ admin).
+    @Transactional(readOnly = true)
+    public List<SupportEmailLogDto> getTicketEmailLogs(String adminEmail, Integer ticketId) {
+        User admin = getUserByEmail(adminEmail);
+        ensureAdminUser(admin);
+
+        supportTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy ticket: " + ticketId));
+
+        return supportEmailLogRepository.findByTicketIdOrderBySentAtDesc(ticketId).stream()
+                .map(this::toEmailLogDto)
+                .toList();
+    }
+
     // Admin xem ticket lần đầu → tự động chuyển từ OPEN sang IN_PROGRESS
     @Transactional
     public SupportTicketDetailDto viewTicketAsAdmin(String adminEmail, Integer ticketId) {
@@ -316,6 +331,7 @@ public class SupportService {
                     .orElse("");
 
             emailService.sendSupportReply(
+                    ticket.getId(),
                     ticket.getRequesterEmail(),
                     ticket.getRequesterName(),
                     userQuestion,
@@ -451,6 +467,18 @@ public class SupportService {
                 .source(ticket.getSource().name())
                 .createdAt(ticket.getCreatedAt())
                 .messages(messageDtos)
+                .build();
+    }
+
+    private SupportEmailLogDto toEmailLogDto(SupportEmailLog log) {
+        return SupportEmailLogDto.builder()
+                .id(log.getId())
+                .ticketId(log.getTicket().getId())
+                .toEmail(log.getToEmail())
+                .subject(log.getSubject())
+                .status(log.getStatus().name())
+                .errorMessage(log.getErrorMessage())
+                .sentAt(log.getSentAt())
                 .build();
     }
 }
