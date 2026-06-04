@@ -1,5 +1,6 @@
 import { Send, Loader2, MessageSquare, ChevronLeft } from "lucide-react";
-import { type SupportThread, STATUS_STYLE, STATUS_LABEL } from "./supportTypes.ts";
+import SupportEmailLogPanel from "./SupportEmailLogPanel";
+import { type SupportEmailLog, type SupportThread, STATUS_STYLE, STATUS_LABEL } from "./supportTypes.ts";
 
 const AUTO_REPLY_TEXT = "Cảm ơn bạn đã liên hệ hỗ trợ 💬 Yêu cầu của bạn đã được gửi thành công. Admin sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát nhé!";
 
@@ -10,6 +11,8 @@ type SupportThreadDetailProps = {
     onSendReply: () => void;
     isSendingReply?: boolean;
     onBack?: () => void;
+    emailLogs?: SupportEmailLog[];
+    isLoadingEmailLogs?: boolean;
 };
 
 export default function SupportThreadDetail({
@@ -19,6 +22,8 @@ export default function SupportThreadDetail({
     onSendReply,
     isSendingReply = false,
     onBack,
+    emailLogs,
+    isLoadingEmailLogs = false,
 }: SupportThreadDetailProps) {
     if (!thread) return null;
 
@@ -121,6 +126,14 @@ export default function SupportThreadDetail({
                             </div>
                         ))}
                     </>
+                )}
+
+                {emailLogs !== undefined && (
+                    <SupportEmailLogPanel
+                        logs={emailLogs}
+                        isLoading={isLoadingEmailLogs}
+                        ticketId={thread.id}
+                    />
                 )}
             </div>
 

@@ -1,5 +1,5 @@
 import apiClient from "@/config/api";
-import type { SupportCategory, SupportStatus, SupportThread } from "@/components/admin/support_management/supportTypes";
+import type { SupportCategory, SupportEmailLog, SupportStatus, SupportThread } from "@/components/admin/support_management/supportTypes";
 
 type ApiResponse<T> = {
     success: boolean;
@@ -34,6 +34,16 @@ type BackendSupportMessage = {
     senderType: "USER" | "ADMIN" | "BOT";
     message: string;
     createdAt: string;
+};
+
+type BackendSupportEmailLog = {
+    id: number;
+    ticketId: number;
+    toEmail: string;
+    subject: string;
+    status: "SUCCESS" | "FAILED";
+    errorMessage: string | null;
+    sentAt: string;
 };
 
 /** Chi tiết ticket kèm toàn bộ hội thoại */
@@ -142,6 +152,22 @@ export const supportService = {
     async getAdminTicketDetail(ticketId: number): Promise<SupportThread> {
         const res = await apiClient.get<ApiResponse<BackendSupportDetail>>(`/admin/support-management/tickets/${ticketId}`);
         return mapDetailToThread(res.data.data);
+    },
+
+    /** Lấy lịch sử gửi email phản hồi của ticket */
+    async getTicketEmailLogs(ticketId: number): Promise<SupportEmailLog[]> {
+        const res = await apiClient.get<ApiResponse<BackendSupportEmailLog[]>>(
+            `/admin/support-management/tickets/${ticketId}/email-logs`,
+        );
+        return (res.data.data ?? []).map((log) => ({
+            id: log.id,
+            ticketId: log.ticketId,
+            toEmail: log.toEmail,
+            subject: log.subject,
+            status: log.status,
+            errorMessage: log.errorMessage,
+            sentAt: log.sentAt,
+        }));
     },
 
     /** Admin click mở ticket → tự động chuyển OPEN → IN_PROGRESS, trả về full conversation */

@@ -4,7 +4,7 @@ import { Mail, CheckCircle, XCircle, AlertCircle, Clock, Loader2, Search, Filter
 import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import SupportThreadDetail from "@/components/admin/support_management/SupportThreadDetail";
 import SupportThreadList from "@/components/admin/support_management/SupportThreadList";
-import { type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL } from "@/components/admin/support_management/supportTypes";
+import { type SupportEmailLog, type SupportStatus, type SupportThread, SUPPORT_STATUS_FILTERS, STATUS_LABEL } from "@/components/admin/support_management/supportTypes";
 import { supportService } from "@/services/supportService";
 import { useSupportSocket, useSupportListSocket } from "@/hooks/useSupportSocket";
 
@@ -37,8 +37,11 @@ export default function EmailSupportPage() {
     const [mobileShowDetail, setMobileShowDetail] = useState(false);
     // Set id các ticket có tin nhắn mới chưa xem (admin đang ở detail khác)
     const [unreadIds, setUnreadIds] = useState<Set<number>>(new Set());
+    const [emailLogs, setEmailLogs] = useState<SupportEmailLog[]>([]);
+    const [isLoadingEmailLogs, setIsLoadingEmailLogs] = useState(false);
 
     const loadedIds = useRef<Set<number>>(new Set());
+    const emailLogRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Ref để truy cập selectedThreadId mới nhất trong WS callback
     const selectedThreadIdRef = useRef<number | null>(null);
     selectedThreadIdRef.current = selectedThreadId;
@@ -119,6 +122,29 @@ export default function EmailSupportPage() {
         },
     });
 
+    const loadEmailLogs = (ticketId: number, delayMs = 0) => {
+        if (emailLogRefreshTimer.current) {
+            clearTimeout(emailLogRefreshTimer.current);
+            emailLogRefreshTimer.current = null;
+        }
+        const run = () => {
+            setIsLoadingEmailLogs(true);
+            supportService.getTicketEmailLogs(ticketId)
+                .then(setEmailLogs)
+                .catch(() => setEmailLogs([]))
+                .finally(() => setIsLoadingEmailLogs(false));
+        };
+        if (delayMs > 0) {
+            emailLogRefreshTimer.current = setTimeout(run, delayMs);
+        } else {
+            run();
+        }
+    };
+
+    useEffect(() => () => {
+        if (emailLogRefreshTimer.current) clearTimeout(emailLogRefreshTimer.current);
+    }, []);
+
     /** Load danh sách ticket lần đầu khi mount — không poll, WS xử lý realtime */
     useEffect(() => {
         let mounted = true;
@@ -145,6 +171,7 @@ export default function EmailSupportPage() {
         const thread = threads.find((t) => t.id === threadId);
         if (!thread) return;
         setDraftReply(`Chào ${thread.name}, admin đã ghi nhận phản hồi của bạn.`);
+        setEmailLogs([]);
 
         // Optimistic: đổi OPEN → IN_PROGRESS ngay lập tức, không chờ API
         if (thread.status === "OPEN") {
@@ -152,6 +179,8 @@ export default function EmailSupportPage() {
                 t.id === threadId ? { ...t, status: "IN_PROGRESS" } : t
             ));
         }
+
+        loadEmailLogs(threadId);
 
         if (loadedIds.current.has(threadId)) return;
         loadedIds.current.add(threadId);
@@ -178,6 +207,7 @@ export default function EmailSupportPage() {
             }));
             setDraftReply("");
             toast.success("Đã gửi phản hồi");
+            loadEmailLogs(selectedThread.id, 2000);
         } catch { toast.error("Không thể gửi phản hồi"); }
         finally { setIsSendingReply(false); }
     };
@@ -283,6 +313,8 @@ export default function EmailSupportPage() {
                             onSendReply={handleSendReply}
                             isSendingReply={isSendingReply}
                             onBack={() => setMobileShowDetail(false)}
+                            emailLogs={emailLogs}
+                            isLoadingEmailLogs={isLoadingEmailLogs}
                         />
                     </div>
                 )}
