@@ -40,4 +40,11 @@ public class FaqManagementController {
     ) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật FAQ thành công", faqService.updateFaq(id, request)));
     }
+
+    /** Xóa FAQ theo id. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteFaq(@PathVariable Integer id) {
+        faqService.deleteFaq(id);
+        return ResponseEntity.ok(ApiResponse.success("Xóa FAQ thành công", null));
+    }
 }

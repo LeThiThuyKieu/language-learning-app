@@ -76,6 +76,14 @@ public class FaqService {
         return toDto(faqRepository.save(faq));
     }
 
+    /** Xóa FAQ theo id. */
+    @Transactional
+    public void deleteFaq(Integer id) {
+        Faq faq = faqRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy FAQ: " + id));
+        faqRepository.delete(faq);
+    }
+
     private Faq.FaqStatus parseStatus(String status) {
         try {
             return Faq.FaqStatus.valueOf(status.trim().toUpperCase());

@@ -1,21 +1,23 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore.ts";
+import { useProfileStore } from "@/store/profileStore";
 import { LogOut, Settings, User } from "lucide-react";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
-import { profileService, UserProfileDetail } from "@/services/profileService";
+import { profileService } from "@/services/profileService";
+import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 
 export default function Navbar() {
     const { user, isAuthenticated, logout } = useAuthStore();
+    const { fullName, avatarUrl, email } = useProfileStore();
     const navigate = useNavigate();
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-    const [profile, setProfile] = useState<UserProfileDetail | null>(null);
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isAuthenticated) {
-            profileService.getMyProfile().then(setProfile).catch(() => {});
+            profileService.getMyProfile().catch(() => {});
         }
     }, [isAuthenticated]);
 
@@ -31,8 +33,8 @@ export default function Navbar() {
 
     const handleLogout = () => { logout(); navigate("/login"); };
 
-    const displayName = profile?.fullName?.trim() || user?.email || "Admin";
-    const avatarLetter = displayName.charAt(0).toUpperCase();
+    const displayName = fullName?.trim() || email?.trim() || user?.email || "Admin";
+    const headerAvatarUrl = avatarUrl || DEFAULT_AVATAR_URL;
 
     return (
         <>
@@ -64,13 +66,11 @@ export default function Navbar() {
                                         onClick={() => setMenuOpen((v) => !v)}
                                         className="flex items-center gap-3 text-gray-700 hover:text-primary-600 transition-colors focus:outline-none"
                                     >
-                                        {profile?.avatarUrl ? (
-                                            <img src={profile.avatarUrl} alt={displayName} className="w-10 h-10 rounded-full object-cover shrink-0 shadow-md" />
-                                        ) : (
-                                            <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-base shrink-0 shadow-md">
-                                                {avatarLetter}
-                                            </div>
-                                        )}
+                                        <img
+                                            src={headerAvatarUrl}
+                                            alt={displayName}
+                                            className="w-10 h-10 rounded-full object-cover shrink-0 shadow-md"
+                                        />
                                         <div className="flex flex-col leading-tight text-left">
                                             <span className="text-base font-semibold text-gray-800 max-w-[200px] truncate">{displayName}</span>
                                             <span className="text-xs font-bold text-primary-600 tracking-widest uppercase">Admin</span>

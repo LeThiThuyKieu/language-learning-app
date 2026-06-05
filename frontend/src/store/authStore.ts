@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authService } from "@/services/authService.ts";
+import { useProfileStore } from "@/store/profileStore";
 import { User } from "@/types";
 
 interface AuthState {
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
           authService.logout().catch(() => {});
         localStorage.removeItem("token");
+        useProfileStore.getState().clear();
         set({ user: null, token: null, isAuthenticated: false });
       },
     }),

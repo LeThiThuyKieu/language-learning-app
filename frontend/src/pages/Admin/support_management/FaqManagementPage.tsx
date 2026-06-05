@@ -5,6 +5,7 @@ import {
     ChevronLeft, ChevronRight, X, Save, ToggleLeft, ToggleRight,
 } from "lucide-react";
 import AdminStatCard from "@/components/admin/common/AdminStatCard";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 import apiClient from "@/config/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -236,6 +237,8 @@ export default function FaqManagementPage() {
     const [filterStatus, setFilterStatus] = useState<"all" | "ACTIVE" | "INACTIVE">("all");
     const [search, setSearch]       = useState("");
     const [page, setPage]           = useState(1);
+    const [faqToDelete, setFaqToDelete] = useState<FaqItem | null>(null);
+    const [isDeleting, setIsDeleting]   = useState(false);
 
     const loadFaqs = () => {
         setIsLoading(true);
@@ -256,6 +259,23 @@ export default function FaqManagementPage() {
         setModalFaq(undefined);
     };
 
+    const handleDeleteFaq = async () => {
+        if (!faqToDelete) return;
+        try {
+            setIsDeleting(true);
+            await apiClient.delete<ApiResponse<null>>(`/admin/faq/${faqToDelete.id}`);
+            setFaqs(prev => prev.filter(f => f.id !== faqToDelete.id));
+            if (viewFaq?.id === faqToDelete.id) setViewFaq(null);
+            if (modalFaq?.id === faqToDelete.id) setModalFaq(undefined);
+            toast.success("Đã xóa FAQ");
+            setFaqToDelete(null);
+        } catch {
+            toast.error("Không thể xóa FAQ");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const filtered = faqs.filter(f => {
         const matchStatus = filterStatus === "all" || f.status === filterStatus;
         const matchSearch = !search.trim() || f.question.toLowerCase().includes(search.toLowerCase());
@@ -263,7 +283,12 @@ export default function FaqManagementPage() {
     });
 
     const totalPages    = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    const paginated     = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const safePage      = Math.min(page, totalPages);
+
+    useEffect(() => {
+        setPage(p => Math.min(p, totalPages));
+    }, [totalPages]);
+    const paginated     = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
     const activeCount   = faqs.filter(f => f.status === "ACTIVE").length;
     const inactiveCount = faqs.filter(f => f.status === "INACTIVE").length;
 
@@ -336,8 +361,12 @@ export default function FaqManagementPage() {
                                             className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
                                             <Pencil className="w-4 h-4" />
                                         </button>
-                                        <button onClick={() => {/* TODO: delete */}} title="Xóa"
-                                            className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
+                                        <button
+                                            onClick={() => setFaqToDelete(faq)}
+                                            disabled={isDeleting}
+                                            title="Xóa"
+                                            className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500 disabled:opacity-40"
+                                        >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -357,20 +386,20 @@ export default function FaqManagementPage() {
 
                     {/* Pagination */}
                     <div className="flex items-center justify-between text-sm text-gray-500 pt-2">
-                        <span>Hiển thị {Math.min((page - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(page * PAGE_SIZE, filtered.length)} của {filtered.length} câu hỏi</span>
+                        <span>Hiển thị {filtered.length === 0 ? 0 : Math.min((safePage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(safePage * PAGE_SIZE, filtered.length)} của {filtered.length} câu hỏi</span>
                         <div className="flex items-center gap-1">
-                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}
                                 className="p-1.5 rounded-xl hover:bg-gray-100 disabled:opacity-30 transition">
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
                             {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                                 <button key={p} onClick={() => setPage(p)}
                                     className={["w-8 h-8 rounded-full text-xs font-semibold transition",
-                                        p === page ? "bg-primary-600 text-white shadow-sm" : "hover:bg-gray-100 text-gray-600"].join(" ")}>
+                                        p === safePage ? "bg-primary-600 text-white shadow-sm" : "hover:bg-gray-100 text-gray-600"].join(" ")}>
                                     {p}
                                 </button>
                             ))}
-                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
                                 className="p-1.5 rounded-xl hover:bg-gray-100 disabled:opacity-30 transition">
                                 <ChevronRight className="w-4 h-4" />
                             </button>
@@ -388,6 +417,17 @@ export default function FaqManagementPage() {
                     onSaved={handleSaved}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={faqToDelete !== null}
+                onClose={() => !isDeleting && setFaqToDelete(null)}
+                onConfirm={() => void handleDeleteFaq()}
+                message={
+                    faqToDelete
+                        ? `Bạn có chắc muốn xóa FAQ "${faqToDelete.question}"? Hành động này không thể hoàn tác.`
+                        : ""
+                }
+            />
         </div>
     );
 }
