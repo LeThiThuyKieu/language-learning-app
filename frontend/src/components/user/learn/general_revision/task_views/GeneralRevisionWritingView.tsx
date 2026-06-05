@@ -24,8 +24,9 @@ export default function GeneralRevisionWritingView({
   const completingRef = useRef(false);
 
   // Parse correct_words từ correctAnswer JSON string bên SQL
-  // Format: {"Kitchen":["kettle","toaster",...], "Living Room":[...], ...}
-  const correctMap: Record<string, string[]> = (() => {
+  // Format mới: {"Kitchen":[["dishwasher"],["refrigerator","fridge"],...], ...}
+  // Mỗi slot là 1 array các đáp án chấp nhận được
+  const correctMap: Record<string, string[][]> = (() => {
     try {
       return question?.correctAnswer ? JSON.parse(question.correctAnswer) : {};
     } catch {
@@ -40,13 +41,15 @@ export default function GeneralRevisionWritingView({
   const [checked, setChecked] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
 
-  // grading
+  // grading — đúng nếu user nhập khớp bất kỳ đáp án nào trong array
   const normalise = (s: string) => s.trim().toLowerCase();
 
   const results: boolean[][] = categories.map((cat, ci) => {
-    const correctWords = correctMap[cat.label] ?? [];
-    return correctWords.map((word, si) =>
-      checked ? normalise(answers[ci]?.[si] ?? "") === normalise(word) : false
+    const correctSlots: string[][] = correctMap[cat.label] ?? [];
+    return correctSlots.map((accepted, si) =>
+      checked
+        ? accepted.some((w) => normalise(answers[ci]?.[si] ?? "") === normalise(w))
+        : false
     );
   });
 
@@ -122,11 +125,11 @@ export default function GeneralRevisionWritingView({
                 <div className="px-3 py-3 flex flex-col gap-2">
                   {Array.from({ length: cat.slots }).map((_, si) => {
                     const val      = answers[ci]?.[si] ?? "";
-                    const correctWords = correctMap[cat.label] ?? [];
+                    const correctSlots: string[][] = correctMap[cat.label] ?? [];
+                    const accepted = correctSlots[si] ?? [];
                     const isRight  = checked && results[ci]?.[si] === true;
                     const isWrong  = checked && results[ci]?.[si] === false && val.trim() !== "";
                     const isEmpty  = checked && val.trim() === "";
-                    const correctW = correctWords[si] ?? "";
 
                     return (
                       <div key={si} className="flex flex-col gap-0.5">
@@ -154,10 +157,10 @@ export default function GeneralRevisionWritingView({
                             ].join(" ")}
                           />
                         </div>
-                        {/* Hiện đáp án đúng nếu sai */}
-                        {checked && (isWrong || isEmpty) && correctW && (
+                        {/* Hiện đáp án đúng nếu sai — show tất cả đáp án chấp nhận */}
+                        {checked && (isWrong || isEmpty) && accepted.length > 0 && (
                           <span className="text-[10px] text-red-500 font-semibold pl-5">
-                            → {correctW}
+                            → {accepted.join(" / ")}
                           </span>
                         )}
                       </div>
@@ -171,20 +174,41 @@ export default function GeneralRevisionWritingView({
           {/* Hình tham khảo — không có tiêu đề, ảnh lớn, đẩy xuống sát footer */}
           {refImages.length > 0 && (
             <div className="mt-auto rounded-2xl border border-gray-200 bg-white shadow-sm px-4 py-4">
-              <div className="grid grid-cols-5 gap-3">
-                {refImages.map((img, i) => (
-                  <div key={i} className="w-full aspect-square rounded-xl border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center">
+              {refImages.length === 1 ? (
+                // 1 hình: hiện to ở giữa
+                <div className="flex justify-center">
+                  <div className="w-48 h-48 md:w-56 md:h-56 rounded-2xl border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center">
                     <img
-                      src={img.url}
+                      src={refImages[0].url}
                       alt=""
-                      className="w-full h-full object-contain p-1.5"
+                      className="w-full h-full object-contain p-2"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                // Nhiều hình: grid 5 cột
+                <div className={`grid gap-3 ${
+                  refImages.length <= 4 ? "grid-cols-4"
+                  : refImages.length <= 6 ? "grid-cols-6"
+                  : "grid-cols-5"
+                }`}>
+                  {refImages.map((img, i) => (
+                    <div key={i} className="w-full aspect-square rounded-xl border border-gray-100 bg-gray-50 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={img.url}
+                        alt=""
+                        className="w-full h-full object-contain p-1.5"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
