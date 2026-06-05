@@ -19,9 +19,12 @@ interface AdminProfile {
     lastLogin: string | null;
 }
 
-function formatDate(iso: string | null | undefined) {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+function formatDate(dateStr: string | null | undefined) {
+    if (!dateStr) return "—";
+
+    const [day, month, year] = dateStr.split("-");
+
+    return `${day}/${month}/${year}`;
 }
 
 function formatLastLogin(iso: string | null | undefined) {
