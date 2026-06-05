@@ -7,6 +7,16 @@ export type SupportMessage = {
     createdAt: string;
 };
 
+export type SupportEmailLog = {
+    id: number;
+    ticketId: number;
+    toEmail: string;
+    subject: string;
+    status: "SUCCESS" | "FAILED";
+    errorMessage: string | null;
+    sentAt: string;
+};
+
 export type SupportThread = {
     id: number;
     userId?: number | null;

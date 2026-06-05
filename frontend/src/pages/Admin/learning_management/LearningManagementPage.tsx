@@ -1,6 +1,5 @@
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState, type ElementType } from "react";
-import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import {
     BookOpen,
@@ -71,6 +70,7 @@ export default function LearningManagementPage() {
     const [typeOptionsState, setTypeOptionsState] = useState<Array<string>>([]);
     const navigate = useNavigate();
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
     const [stats, setStats] = useState<{ vocab: number; listening: number; speaking: number; matching: number }>({
         vocab: 0, listening: 0, speaking: 0, matching: 0,
     });
@@ -81,11 +81,21 @@ export default function LearningManagementPage() {
         function handleClickOutside(event: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setOpenMenuId(null);
+                setMenuPosition(null);
             }
         }
 
+        function handleScroll() {
+            setOpenMenuId(null);
+            setMenuPosition(null);
+        }
+
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("scroll", handleScroll, true); // capture = true để bắt scroll ở mọi container
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("scroll", handleScroll, true);
+        };
     }, []);
 
     // navigation will open dedicated pages for view/edit/add
@@ -176,11 +186,6 @@ export default function LearningManagementPage() {
         <div className="space-y-6 p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                    <nav className="mb-2 text-sm text-slate-400">
-                        <Link to="/admin/learning" className="hover:text-slate-600">
-                            Learning
-                        </Link>
-                    </nav>
                     <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Quản lý câu hỏi</h1>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
                         Quản lý và cập nhật nội dung bài kiểm tra học thuật.
@@ -294,6 +299,23 @@ export default function LearningManagementPage() {
                             ))}
                         </select>
                     </label>
+
+                    {(searchText || levelFilter !== "all" || typeFilter !== "all") && (
+                        <div className="flex-shrink-0 self-end">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSearchText("");
+                                    setLevelFilter("all");
+                                    setTypeFilter("all");
+                                    setPage(0);
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-slate-500 transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600"
+                            >
+                              Reset
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -365,44 +387,32 @@ export default function LearningManagementPage() {
                                                 )}
                                             </td>
                                             <td className="px-5 py-4">
-                                                <div className="relative inline-flex" ref={openMenuId === question.id ? menuRef : undefined}>
+                                                <div className="inline-flex">
                                                     <button
                                                         type="button"
-                                                        onClick={() => setOpenMenuId((current) => (current === question.id ? null : question.id))}
+                                                        onClick={(e) => {
+                                                            if (openMenuId === question.id) {
+                                                                setOpenMenuId(null);
+                                                                setMenuPosition(null);
+                                                            } else {
+                                                                const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                                                                const menuHeight = 120; // approx height of dropdown
+                                                                const spaceBelow = window.innerHeight - rect.bottom;
+                                                                const top = spaceBelow < menuHeight
+                                                                    ? rect.top - menuHeight - 8
+                                                                    : rect.bottom + 8;
+                                                                setMenuPosition({
+                                                                    top,
+                                                                    left: rect.right - 176, // 176 = w-44
+                                                                });
+                                                                setOpenMenuId(question.id);
+                                                            }
+                                                        }}
                                                         className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-slate-500 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
                                                         aria-label="Mở menu hành động"
                                                     >
                                                         <MoreVertical className="h-4 w-4" />
                                                     </button>
-
-                                                    {openMenuId === question.id && (
-                                                        <div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border border-gray-100 bg-white p-1 shadow-xl">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => navigate(`/admin/learning/${question.id}`, { state: { question } })}
-                                                                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                                                            >
-                                                                <Eye className="h-4 w-4" />
-                                                                Xem
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => navigate(`/admin/learning/${question.id}/edit`, { state: { question } })}
-                                                                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                                                            >
-                                                                <PencilLine className="h-4 w-4" />
-                                                                Sửa
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setDeleteTarget(question)}
-                                                                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                                Xoá
-                                                            </button>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -442,6 +452,54 @@ export default function LearningManagementPage() {
             </div>
 
             {/* View/Edit/Add now use dedicated pages; modal removed */}
+
+            {/* Action dropdown portal */}
+            {openMenuId !== null && menuPosition && createPortal(
+                <div
+                    ref={menuRef}
+                    style={{ position: "fixed", top: menuPosition.top, left: menuPosition.left, zIndex: 9999 }}
+                    className="w-44 overflow-hidden rounded-2xl border border-gray-100 bg-white p-1 shadow-xl"
+                >
+                    <button
+                        type="button"
+                        onClick={() => {
+                            navigate(`/admin/learning/${openMenuId}`, { state: { question: questions.find(q => q.id === openMenuId) } });
+                            setOpenMenuId(null);
+                            setMenuPosition(null);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    >
+                        <Eye className="h-4 w-4" />
+                        Xem
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            navigate(`/admin/learning/${openMenuId}/edit`, { state: { question: questions.find(q => q.id === openMenuId) } });
+                            setOpenMenuId(null);
+                            setMenuPosition(null);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    >
+                        <PencilLine className="h-4 w-4" />
+                        Sửa
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const q = questions.find(q => q.id === openMenuId) ?? null;
+                            setDeleteTarget(q);
+                            setOpenMenuId(null);
+                            setMenuPosition(null);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                        Xoá
+                    </button>
+                </div>,
+                document.body,
+            )}
 
             {deleteTarget && createPortal(
                 <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">

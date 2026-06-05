@@ -11,9 +11,10 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { supportService } from "@/services/supportService.ts";
+import apiClient from "@/config/api";
 
 // --- TYPES ---
-type FAQItem = { category: string; question: string; answer: string[]; };
+type FAQItem = { id: number; question: string; answer: string[]; displayOrder: number; };
 type SupportTopic = "Bắt đầu học" | "Tài khoản" | "Bài học" | "Kỹ thuật" | "Khác";
 type SupportQuestion = { id: string; name: string; email: string; topic: SupportTopic; question: string; createdAt: string; status: string; };
 
@@ -25,159 +26,37 @@ interface SubmittedSupportPayload {
     content: string;
 }
 
-const FAQ_DATA: FAQItem[] = [
-    // ===== BẮT ĐẦU HỌC =====
-    {
-        category: "Bắt đầu học",
-        question: "Tôi nên bắt đầu từ đâu nếu mới học lại tiếng Anh?",
-        answer: [
-            "Hãy bắt đầu bằng bài kiểm tra trình độ và lộ trình cơ bản.",
-            "Sau đó học 15-20 phút mỗi ngày."
-        ]
-    },
-    {
-        category: "Bắt đầu học",
-        question: "Tôi có cần học mỗi ngày không?",
-        answer: [
-            "Không bắt buộc nhưng nên học mỗi ngày để duy trì thói quen.",
-            "Chỉ cần 10-20 phút mỗi ngày là đã hiệu quả."
-        ]
-    },
-    {
-        category: "Bắt đầu học",
-        question: "Học bao lâu thì có tiến bộ?",
-        answer: [
-            "Tùy vào sự kiên trì của bạn.",
-            "Nếu học đều mỗi ngày, bạn sẽ thấy tiến bộ sau vài tuần."
-        ]
-    },
-
-    // ===== TÀI KHOẢN =====
-    {
-        category: "Tài khoản",
-        question: "Tôi quên mật khẩu thì phải làm sao?",
-        answer: [
-            "Bạn hãy chọn 'Quên mật khẩu' ở màn hình đăng nhập.",
-            "Sau đó làm theo hướng dẫn để đặt lại mật khẩu."
-        ]
-    },
-    {
-        category: "Tài khoản",
-        question: "Tôi có thể đổi thông tin cá nhân không?",
-        answer: [
-            "Có, bạn có thể chỉnh sửa thông tin trong phần hồ sơ cá nhân.",
-            "Bao gồm tên, avatar và các thông tin khác."
-        ]
-    },
-    {
-        category: "Tài khoản",
-        question: "Tôi có thể đăng nhập trên nhiều thiết bị không?",
-        answer: [
-            "Có, bạn có thể đăng nhập trên cả điện thoại và máy tính.",
-            "Dữ liệu học tập sẽ được đồng bộ."
-        ]
-    },
-
-    // ===== BÀI HỌC =====
-    {
-        category: "Bài học",
-        question: "Tôi học sai nhiều có sao không?",
-        answer: [
-            "Không sao, sai là một phần của việc học.",
-            "Hệ thống sẽ giúp bạn ôn lại các câu sai."
-        ]
-    },
-    {
-        category: "Bài học",
-        question: "Tôi có thể học lại bài cũ không?",
-        answer: [
-            "Có, bạn có thể học lại bất kỳ bài nào đã hoàn thành.",
-            "Việc ôn lại giúp bạn nhớ lâu hơn."
-        ]
-    },
-    {
-        category: "Bài học",
-        question: "Làm sao để tăng level nhanh hơn?",
-        answer: [
-            "Hoàn thành bài học mỗi ngày và giữ streak.",
-            "Làm thêm bài luyện tập để nhận thêm XP."
-        ]
-    },
-
-    // ===== KỸ THUẬT =====
-    {
-        category: "Kỹ thuật",
-        question: "Nếu bài học không tải được thì tôi nên làm gì?",
-        answer: [
-            "Hãy tải lại trang hoặc kiểm tra kết nối mạng.",
-            "Nếu vẫn lỗi, hãy liên hệ hỗ trợ."
-        ]
-    },
-    {
-        category: "Kỹ thuật",
-        question: "Ứng dụng bị lag hoặc chậm thì sao?",
-        answer: [
-            "Hãy thử tải lại trang hoặc đóng các tab không cần thiết.",
-            "Kiểm tra lại kết nối Internet để đảm bảo ổn định."
-        ]
-    },
-    {
-        category: "Kỹ thuật",
-        question: "Tôi không nghe được audio?",
-        answer: [
-            "Hãy kiểm tra âm lượng thiết bị và trình duyệt.",
-            "Đảm bảo bạn đã cho phép website sử dụng âm thanh."
-        ]
-    },
-
-    // ===== KHÁC =====
-    {
-        category: "Khác",
-        question: "Tôi có thể góp ý hoặc báo lỗi không?",
-        answer: [
-            "Có, bạn có thể gửi góp ý qua form liên hệ.",
-            "Chúng tôi luôn sẵn sàng lắng nghe và cải thiện."
-        ]
-    },
-    {
-        category: "Khác",
-        question: "Ứng dụng có miễn phí không?",
-        answer: [
-            "Phiên bản cơ bản là miễn phí.",
-            "Một số tính năng nâng cao có thể yêu cầu nâng cấp."
-        ]
-    },
-    {
-        category: "Khác",
-        question: "Tôi có thể học offline không?",
-        answer: [
-            "Hiện tại cần kết nối Internet để học.",
-            "Chúng tôi sẽ cập nhật tính năng offline trong tương lai."
-        ]
-    }
-];
+type ApiResponse<T> = { success: boolean; message: string; data: T };
 
 const SUPPORT_TOPICS: SupportTopic[] = ["Bắt đầu học", "Tài khoản", "Bài học", "Kỹ thuật", "Khác"];
 const emptyForm = { name: "", email: "", topic: "Bắt đầu học" as SupportTopic, question: "" };
 
 export default function HelpPage() {
     const { user, isAuthenticated } = useAuthStore();
-    const [openIndex, setOpenIndex] = useState(0);
-    const [searchTerm, setSearchTerm] = useState(""); // Đã sử dụng ở input tìm kiếm bên dưới
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
     const [form, setForm] = useState(emptyForm);
     const [questions, setQuestions] = useState<SupportQuestion[]>([]);
     const [formError, setFormError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [faqs, setFaqs] = useState<FAQItem[]>([]);
+    const [faqLoading, setFaqLoading] = useState(true);
 
-    // --- FIX LỖI ANY & NAME ---
     const [showAdminPopup, setShowAdminPopup] = useState(false);
     const [submittedPayload, setSubmittedPayload] = useState<SubmittedSupportPayload | null>(null);
+
+    // Load FAQ từ API
+    useEffect(() => {
+        apiClient.get<ApiResponse<FAQItem[]>>("/public/faqs")
+            .then(res => setFaqs(res.data.data ?? []))
+            .catch(() => toast.error("Không thể tải câu hỏi thường gặp"))
+            .finally(() => setFaqLoading(false));
+    }, []);
 
     useEffect(() => {
         if (isAuthenticated && user?.email) {
             setForm((prev) => ({
                 ...prev,
-                // auth store chỉ có email, nên dùng phần trước @ làm tên gợi ý.
                 name: prev.name || user.email.split("@")[0] || "",
                 email: prev.email || user.email || ""
             }));
@@ -186,9 +65,9 @@ export default function HelpPage() {
 
     const filteredFaqs = useMemo(() => {
         const query = searchTerm.toLowerCase().trim();
-        if (!query) return FAQ_DATA;
-        return FAQ_DATA.filter(f => f.question.toLowerCase().includes(query));
-    }, [searchTerm]);
+        if (!query) return faqs;
+        return faqs.filter(f => f.question.toLowerCase().includes(query));
+    }, [searchTerm, faqs]);
 
     const submitQuestion = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -353,7 +232,7 @@ export default function HelpPage() {
                         Tìm câu trả lời nhanh hoặc gửi yêu cầu hỗ trợ tới admin.
                     </p>
 
-                    <div className="grid md:grid-cols-3 gap-4 mt-10 max-w-2xl mx-auto">
+                    <div className="grid grid-cols-2 gap-4 mt-10 max-w-sm mx-auto">
 
                         <div className="bg-white/15 rounded-3xl p-5 backdrop-blur-xl">
                             <p className="text-3xl font-black">24/7</p>
@@ -361,21 +240,13 @@ export default function HelpPage() {
                         </div>
 
                         <div className="bg-white/15 rounded-3xl p-5 backdrop-blur-xl">
-                            <p className="text-3xl font-black">100+</p>
-                            <span className="text-sm text-orange-100">FAQ</span>
-                        </div>
-
-                        <div className="bg-white/15 rounded-3xl p-5 backdrop-blur-xl">
                             <p className="text-3xl font-black">&lt;1h</p>
                             <span className="text-sm text-orange-100">Phản hồi</span>
                         </div>
-
                     </div>
-
                 </div>
 
             </header>
-
 
             <main className="mx-auto max-w-7xl px-4 -mt-10 relative z-10 pb-12 lg:px-8 grid gap-8 lg:grid-cols-2">
 
@@ -400,35 +271,39 @@ export default function HelpPage() {
                         </h2>
 
                         <div className="space-y-4">
-                            {filteredFaqs.map((item,index)=>(
-                                <div
-                                    key={index}
-                                    className="rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md transition"
-                                >
-                                    <button
-                                        onClick={()=>setOpenIndex(index)}
-                                        className="w-full px-5 py-5 font-bold flex justify-between items-center bg-gradient-to-r from-slate-50 to-orange-50"
+                            {faqLoading ? (
+                                <div className="text-center py-10 text-slate-400">Đang tải...</div>
+                            ) : filteredFaqs.length === 0 ? (
+                                <div className="text-center py-10 text-slate-400">Không tìm thấy câu hỏi phù hợp.</div>
+                            ) : (
+                                filteredFaqs.map((item, index) => (
+                                    <div
+                                        key={item.id}
+                                        className="rounded-2xl border border-slate-100 overflow-hidden hover:shadow-md transition"
                                     >
-                                        {item.question}
+                                        <button
+                                            onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                                            className="w-full px-5 py-5 font-bold flex justify-between items-center bg-gradient-to-r from-slate-50 to-orange-50"
+                                        >
+                                            {item.question}
 
-                                        <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
-                                            <ChevronDown
-                                                className={`h-5 w-5 transition ${openIndex===index ? 'rotate-180 text-orange-600':''}`}
-                                            />
-                                        </div>
+                                            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                                <ChevronDown
+                                                    className={`h-5 w-5 transition ${openIndex === index ? 'rotate-180 text-orange-600' : ''}`}
+                                                />
+                                            </div>
+                                        </button>
 
-                                    </button>
-
-                                    {openIndex===index && (
-                                        <div className="p-5 text-slate-600 leading-relaxed space-y-2">
-                                            {item.answer.map((a,i)=>(
-                                                <p key={i}>• {a}</p>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                </div>
-                            ))}
+                                        {openIndex === index && (
+                                            <div className="p-5 text-slate-600 leading-relaxed space-y-2">
+                                                {item.answer.map((a, i) => (
+                                                    <p key={i}>• {a}</p>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
 
                     </div>
