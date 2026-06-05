@@ -2,8 +2,10 @@ type Props = {
     open: boolean;
     onContinue: () => void;
     onExit: () => void;
-    // Mặc định: Tiếp tục học . Placement test dùng "Tiếp tục Test".
+    // Mặc định: "Tiếp tục học". Placement test dùng "Tiếp tục Test", Ôn tập dùng "Tiếp tục Ôn".
     continueButtonText?: string;
+    // Nội dung thông báo. Mặc định: nội dung bài học.
+    bodyText?: string;
 };
 
 export default function LessonExitModal({
@@ -11,6 +13,7 @@ export default function LessonExitModal({
     onContinue,
     onExit,
     continueButtonText = "Tiếp tục học",
+    bodyText = "Đợi chút, đừng đi mà! Bạn sẽ mất hết tiến trình của bài học này nếu thoát bây giờ.",
 }: Props) {
     if (!open) return null;
 
@@ -37,7 +40,7 @@ export default function LessonExitModal({
                     id="lesson-exit-title"
                     className="text-gray-800 font-bold text-lg leading-snug mb-6"
                 >
-                    Đợi chút, đừng đi mà! Bạn sẽ mất hết tiến trình của bài học này nếu thoát bây giờ.
+                    {bodyText}
                 </p>
                 <button
                     type="button"

@@ -1,10 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
-import GuestPrompt from "@/components/user/GuestPrompt";
+import { useAuthStore } from "@/store/authStore.ts";
+import GuestPrompt from "@/components/user/GuestPrompt.tsx";
 import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
 import LearnRightPanel from "@/components/user/learn/common/LearnRightPanel.tsx";
-import GeneralRevisionView from "@/components/user/learn/general_revision/GeneralRevisionView";
-import type { RevisionTask } from "@/components/user/learn/general_revision/GeneralRevisionView";
+import GeneralRevisionView from "@/components/user/learn/general_revision/GeneralRevisionView.tsx";
 
 export default function GeneralRevisionPage() {
   const navigate = useNavigate();
@@ -34,8 +33,9 @@ export default function GeneralRevisionPage() {
               {/* Content */}
               <div className="col-span-12 lg:col-span-8">
                 <GeneralRevisionView
-                  onStartTask={(_topicId: number, _task: RevisionTask) => {
-                    // TODO: navigate("/learn/general-revision/task", { state: { topicId, task } })
+                  onBack={() => navigate("/learn")}
+                  onStartTask={(topicId, task) => {
+                    navigate("/general-revision/task", { state: { topicId, task } });
                   }}
                 />
               </div>
@@ -44,7 +44,6 @@ export default function GeneralRevisionPage() {
               <LearnRightPanel onCreateProfile={() => navigate("/profile")} />
             </div>
           </main>
-
         </div>
       </div>
     </div>

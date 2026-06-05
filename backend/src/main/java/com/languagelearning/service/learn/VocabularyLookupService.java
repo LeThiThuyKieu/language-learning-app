@@ -1,4 +1,4 @@
-package com.languagelearning.service;
+package com.languagelearning.service.learn;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

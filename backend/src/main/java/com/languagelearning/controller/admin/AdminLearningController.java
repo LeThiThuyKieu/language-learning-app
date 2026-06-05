@@ -6,7 +6,7 @@ import com.languagelearning.entity.QuestionIndex;
 import com.languagelearning.repository.mysql.LevelRepository;
 import com.languagelearning.repository.mysql.QuestionIndexRepository;
 import com.languagelearning.repository.mongo.QuestionRepository;
-import com.languagelearning.service.SkillTreeQuestionService;
+import com.languagelearning.service.learn.SkillTreeQuestionService;
 import com.languagelearning.service.admin.AdminLearningService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
