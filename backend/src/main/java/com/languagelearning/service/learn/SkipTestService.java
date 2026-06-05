@@ -1,4 +1,4 @@
-package com.languagelearning.service;
+package com.languagelearning.service.learn;
 
 import com.languagelearning.dto.learning.SkipTestSubmitRequest;
 import com.languagelearning.entity.Level;
