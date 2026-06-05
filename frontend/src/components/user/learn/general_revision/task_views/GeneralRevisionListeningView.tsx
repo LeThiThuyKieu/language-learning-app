@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Volume2 } from "lucide-react";
 import type { RevisionQuestionDto } from "@/services/generalRevisionService";
 import LessonTopBar from "@/components/user/learn/LessonTopBar";
@@ -43,6 +43,17 @@ export default function GeneralRevisionListeningView({
       audioRef.current = null;
     }
     setIsPlaying(false);
+  }, []);
+
+  // Dừng audio khi component unmount (thoát trang / bấm X confirm)
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+        audioRef.current = null;
+      }
+    };
   }, []);
 
   function handlePlayAudio() {
