@@ -17,6 +17,7 @@ import PlacementTestManagementPage from "@/pages/Admin/PlacementTestManagementPa
 import EmailSupportPage from "@/pages/Admin/support_management/EmailSupportPage.tsx";
 import ChatSupportPage from "@/pages/Admin/support_management/ChatSupportPage.tsx";
 import ChatbotRulesPage from "@/pages/Admin/support_management/ChatbotRulesPage.tsx";
+import FaqManagementPage from "@/pages/Admin/support_management/FaqManagementPage.tsx";
 import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
 import LearningManagementPage from "@/pages/Admin/learning_management/LearningManagementPage.tsx";
@@ -24,6 +25,8 @@ import LearningQuestionDetailPage from "@/pages/Admin/learning_management/Learni
 // import LearningQuestionEditPage from "@/pages/Admin/LearningQuestionEditPage";
 import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
 import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
+import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
+import AdminSettingsPage from "@/pages/Admin/AdminSettingsPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/GeneralRevisionPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
@@ -152,6 +155,7 @@ function App() {
                         <Route path="support-management/email-support" element={<EmailSupportPage/>}/>
                         <Route path="support-management/chat-support" element={<ChatSupportPage/>}/>
                         <Route path="support-management/chatbot-rules" element={<ChatbotRulesPage/>}/>
+                        <Route path="support-management/faq" element={<FaqManagementPage/>}/>
                         <Route path="badges" element={<BadgesManagementPage/>} />
                         <Route path="feedback" element={<FeedbackPage/>} />
                         <Route path="learning" element={<LearningManagementPage/>} />
@@ -160,6 +164,8 @@ function App() {
                         <Route path="learning/:id/edit" element={<LearningQuestionDetailPage/>} />
                         <Route path="review-topics" element={<ReviewTopicsPage/>} />
                         <Route path="review-topics/:id" element={<ReviewTopicListPage/>} />
+                        <Route path="profile" element={<AdminProfilePage/>} />
+                        <Route path="settings" element={<AdminSettingsPage/>} />
                     </Route>
                 </Routes>
                 <SupportFloatingButton />

@@ -12,6 +12,7 @@ import {
     MessageCircle,
     Headphones,
     Bot,
+    HelpCircle,
     ChevronDown,
     LogOut,
     TrendingUp,
@@ -103,6 +104,7 @@ export default function Sidebar() {
                                         { path: "/admin/support-management/email-support",  icon: Mail,          label: "Email" },
                                         { path: "/admin/support-management/chat-support",   icon: MessageCircle, label: "Chat" },
                                         { path: "/admin/support-management/chatbot-rules",  icon: Bot,           label: "Chatbot Rules" },
+                                        { path: "/admin/support-management/faq",            icon: HelpCircle,    label: "FAQ" },
                                     ].map(({ path, icon: Icon, label }) => {
                                         const isActive = location.pathname === path || location.pathname.startsWith(path + "/");
                                         return (

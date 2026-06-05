@@ -1,5 +1,8 @@
 package com.languagelearning.service;
 
+import com.languagelearning.entity.SupportEmailLog;
+import com.languagelearning.repository.mysql.SupportEmailLogRepository;
+import com.languagelearning.repository.mysql.SupportTicketRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -10,12 +13,16 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final SupportEmailLogRepository supportEmailLogRepository;
+    private final SupportTicketRepository supportTicketRepository;
 
     @Value("${spring.mail.username}")
     private String fromAddress;
@@ -377,31 +384,56 @@ private String buildVerificationHtml(String token) {
 
     /**
      * Gửi email phản hồi support tới user/guest sau khi admin reply.
+     * Ghi log vào {@code support_email_log} sau mỗi lần gửi (SUCCESS hoặc FAILED).
      *
      * @param isFollowUp true nếu đây là lần reply thứ 2 trở đi
      */
     @Async
-    public void sendSupportReply(String toEmail, String toName, String userQuestion,
+    public void sendSupportReply(Integer ticketId, String toEmail, String toName, String userQuestion,
                                   String adminReply, String category, boolean isFollowUp) {
+        String subject = buildSupportReplySubject(category, isFollowUp);
+        LocalDateTime sentAt = LocalDateTime.now();
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(fromAddress, fromName);
             helper.setTo(toEmail);
-
-            String subject = isFollowUp
-                    ? "[LionLearn] Cập nhật mới cho yêu cầu hỗ trợ - " + category
-                    : "[LionLearn] Phản hồi yêu cầu hỗ trợ - " + category;
-
             helper.setSubject(subject);
             helper.setText(buildHtmlBody(toName, userQuestion, adminReply, category, isFollowUp), true);
 
             mailSender.send(message);
             log.info("Đã gửi email {} tới: {}", isFollowUp ? "follow-up" : "phản hồi", toEmail);
+            saveSupportEmailLog(ticketId, toEmail, subject, SupportEmailLog.SendStatus.SUCCESS, null, sentAt);
         } catch (MessagingException | java.io.UnsupportedEncodingException e) {
-            log.error("Gửi email thất bại tới {}: {}", toEmail, e.getMessage());
+            String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            log.error("Gửi email thất bại tới {}: {}", toEmail, errorMessage);
+            saveSupportEmailLog(ticketId, toEmail, subject, SupportEmailLog.SendStatus.FAILED, errorMessage, sentAt);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            log.error("Gửi email thất bại tới {}: {}", toEmail, errorMessage);
+            saveSupportEmailLog(ticketId, toEmail, subject, SupportEmailLog.SendStatus.FAILED, errorMessage, sentAt);
         }
+    }
+
+    private static String buildSupportReplySubject(String category, boolean isFollowUp) {
+        return isFollowUp
+                ? "[LionLearn] Cập nhật mới cho yêu cầu hỗ trợ - " + category
+                : "[LionLearn] Phản hồi yêu cầu hỗ trợ - " + category;
+    }
+
+    private void saveSupportEmailLog(Integer ticketId, String toEmail, String subject,
+                                     SupportEmailLog.SendStatus status, String errorMessage,
+                                     LocalDateTime sentAt) {
+        SupportEmailLog logEntry = new SupportEmailLog();
+        logEntry.setTicket(supportTicketRepository.getReferenceById(ticketId));
+        logEntry.setToEmail(toEmail);
+        logEntry.setSubject(subject);
+        logEntry.setStatus(status);
+        logEntry.setErrorMessage(errorMessage);
+        logEntry.setSentAt(sentAt);
+        supportEmailLogRepository.save(logEntry);
     }
 
     private String buildHtmlBody(String name, String userQuestion, String adminReply,

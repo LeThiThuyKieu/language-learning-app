@@ -1,4 +1,5 @@
 import apiClient from "@/config/api";
+import { useProfileStore } from "@/store/profileStore";
 
 interface ApiResponse<T> {
     success: boolean;
@@ -58,7 +59,9 @@ export const profileService = {
         const response = await apiClient.get<ApiResponse<UserProfileDetail>>(
             "/users/profile"
         );
-        return response.data.data;
+        const data = response.data.data;
+        useProfileStore.getState().syncFromProfile(data);
+        return data;
     },
 
     updateMyProfile: async (
@@ -68,7 +71,9 @@ export const profileService = {
             "/users/profile",
             payload
         );
-        return response.data.data;
+        const data = response.data.data;
+        useProfileStore.getState().syncFromProfile(data);
+        return data;
     },
 
     uploadAvatar: async (file: File): Promise<string> => {
