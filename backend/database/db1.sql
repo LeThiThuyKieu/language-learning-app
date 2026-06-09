@@ -51,6 +51,20 @@ CREATE TABLE IF NOT EXISTS `chatbot_rule` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table language_learning_app.faq
+CREATE TABLE IF NOT EXISTS `faq` (
+                                     `id` int(11) NOT NULL AUTO_INCREMENT,
+    `question` varchar(255) NOT NULL,
+    `answer` text NOT NULL,
+    `display_order` int(11) DEFAULT 0,
+    `status` enum('ACTIVE','INACTIVE') DEFAULT 'ACTIVE',
+    `created_at` datetime DEFAULT current_timestamp(),
+    `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table language_learning_app.feedback
 CREATE TABLE IF NOT EXISTS `feedback` (
                                           `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -82,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `general_revision_questions` (
     KEY `idx_grq_task` (`task_id`),
     CONSTRAINT `fk_grq_task` FOREIGN KEY (`task_id`) REFERENCES `general_revision_task` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_grq_topic` FOREIGN KEY (`topic_id`) REFERENCES `general_revision_topic` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Mapping câu hỏi ôn tập (Mongo <-> SQL) và lưu correct_answer';
+    ) ENGINE=InnoDB AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Mapping câu hỏi ôn tập (Mongo <-> SQL) và lưu correct_answer';
 
 -- Data exporting was unselected.
 

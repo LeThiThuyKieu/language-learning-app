@@ -27,6 +27,7 @@ export default function GeneralRevisionTaskPage() {
   const [error, setError]         = useState<string | null>(null);
   const [finished, setFinished]   = useState(false);
   const [accuracy, setAccuracy]   = useState(0);
+  const [knEarned, setKnEarned]   = useState(0);
 
   useEffect(() => {
     if (!task?.taskId) {
@@ -53,9 +54,26 @@ export default function GeneralRevisionTaskPage() {
     navigate("/general-revision");
   }
 
-  function handleComplete(correctCount: number) {
+  async function handleComplete(correctCount: number) {
     const total = questions.length || 1;
-    setAccuracy(Math.round((correctCount / total) * 100));
+    const acc   = Math.round((correctCount / total) * 100);
+    setAccuracy(acc);
+
+    // Gọi API submit — cộng KN, XP, streak
+    if (task?.taskId && topicId) {
+      try {
+        const result = await generalRevisionService.submitTask({
+          topicId,
+          taskId: task.taskId,
+          correctCount,
+          totalCount: total,
+        });
+        setKnEarned(result.knEarned);
+      } catch (e) {
+        console.error("Failed to submit revision task", e);
+      }
+    }
+
     setFinished(true);
   }
 
@@ -63,7 +81,7 @@ export default function GeneralRevisionTaskPage() {
   if (finished) {
     return (
       <LessonCompleteView
-        knGained={0}
+        knGained={knEarned}
         accuracy={accuracy}
         newBadges={[]}
         onContinue={() => navigate("/general-revision", { state: { topicId } })}

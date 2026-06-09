@@ -44,6 +44,20 @@ export interface RevisionQuestionDto {
   audioUrl?: string;
 }
 
+export interface SubmitRevisionTaskRequest {
+  topicId: number;
+  taskId: number;
+  correctCount: number;
+  totalCount: number;
+}
+
+export interface SubmitRevisionTaskResponse {
+  knEarned: number;
+  totalKn: number;
+  streakCount: number;
+  score: number;
+}
+
 // Service
 
 export const generalRevisionService = {
@@ -63,6 +77,18 @@ export const generalRevisionService = {
   getTaskQuestions: async (taskId: number): Promise<RevisionQuestionDto[]> => {
     const res = await apiClient.get<RevisionQuestionDto[]>(
       `/general-revision/tasks/${taskId}/questions`
+    );
+    return res.data;
+  },
+
+  /**
+   * Submit kết quả sau khi hoàn thành task — cộng KN, XP, streak.
+   * POST /api/general-revision/tasks/submit
+   */
+  submitTask: async (req: SubmitRevisionTaskRequest): Promise<SubmitRevisionTaskResponse> => {
+    const res = await apiClient.post<SubmitRevisionTaskResponse>(
+      "/general-revision/tasks/submit",
+      req
     );
     return res.data;
   },

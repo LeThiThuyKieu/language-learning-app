@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   BookOpen,
   ChevronDown,
@@ -78,9 +79,19 @@ function TaskRow({ task, onStart }: { task: RevisionTaskDto; onStart: () => void
       </span>
       <span className="flex-1 text-sm text-gray-600 min-w-0 truncate">{task.description}</span>
       {task.completed ? (
-        <span className="flex items-center gap-1 text-xs font-bold text-emerald-600 shrink-0">
-          <CheckCircle2 className="w-4 h-4" /> Hoàn thành
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="flex items-center gap-1 text-xs font-bold text-emerald-600">
+            <CheckCircle2 className="w-4 h-4" /> Hoàn thành
+          </span>
+          {/* Vẫn cho làm lại */}
+          <button
+            type="button"
+            onClick={onStart}
+            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-white transition active:scale-95 ${getTaskBtnColor(task.questionType)}`}
+          >
+            <PlayCircle className="w-3.5 h-3.5" /> Làm lại
+          </button>
+        </div>
       ) : (
         <button
           type="button"
@@ -169,13 +180,24 @@ export default function GeneralRevisionView({ onStartTask, onBack }: GeneralRevi
   const [error, setError]         = useState<string | null>(null);
   const [openTopicId, setOpenTopicId] = useState<number | null>(null);
 
+  const location = useLocation();
+
+  // Giữ lại topic đang mở khi navigate về (state.topicId từ task page)
+  const returnedTopicId = (location.state as { topicId?: number } | null)?.topicId;
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         setLoading(true);
         const data = await generalRevisionService.getTopics();
-        if (!cancelled) setTopics(data);
+        if (!cancelled) {
+          setTopics(data);
+          // Tự mở lại topic vừa làm khi navigate về
+          if (returnedTopicId) {
+            setOpenTopicId(returnedTopicId);
+          }
+        }
       } catch {
         if (!cancelled) setError("Không tải được danh sách chủ đề. Vui lòng thử lại.");
       } finally {
@@ -183,7 +205,7 @@ export default function GeneralRevisionView({ onStartTask, onBack }: GeneralRevi
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [location.key]); // reload mỗi lần navigate về
 
   const totalCompleted = topics.reduce((acc, t) => {
     const taskCount = t.tasks?.length ?? 4;
