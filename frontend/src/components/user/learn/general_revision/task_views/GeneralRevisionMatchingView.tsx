@@ -3,9 +3,8 @@ import { Sparkles } from "lucide-react";
 import type { RevisionQuestionDto } from "@/services/generalRevisionService";
 import LessonTopBar from "@/components/user/learn/LessonTopBar";
 import LessonExitModal from "@/components/user/learn/LessonExitModal";
-import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
 
-// ── helpers ──────────────────────────────────────────────────
+// helpers
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -21,7 +20,7 @@ function isImageUrl(s: string): boolean {
   return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(s.trim());
 }
 
-// ── sparkle ───────────────────────────────────────────────────
+// sparkle
 
 function CorrectPairSparkles() {
   const spots = [
@@ -46,7 +45,7 @@ function CorrectPairSparkles() {
   );
 }
 
-// ── cell renderers ────────────────────────────────────────────
+// cell renderers
 
 function TextCell({ text }: { text: string }) {
   return (
@@ -69,14 +68,14 @@ function ImageCell({ url }: { url: string }) {
   );
 }
 
-// ── main component ────────────────────────────────────────────
+// main component
 
 interface Props {
   taskDescription: string;
   /** Mảng 1 phần tử — MATCHING chỉ có 1 document */
   questions: RevisionQuestionDto[];
   onLeave: () => void;
-  onComplete: (correctCount: number) => void;
+  onComplete: (correctCount: number, totalCount?: number) => void;
 }
 
 type Pair = { id: string; left: string; right: string };
@@ -136,7 +135,8 @@ export default function GeneralRevisionMatchingView({
             window.setTimeout(() => {
               if (completingRef.current) return;
               completingRef.current = true;
-              onComplete(pairs.length);
+              // Truyền totalCount = pairs.length để TaskPage tính accuracy đúng
+              onComplete(pairs.length, pairs.length);
               setFinished(true);
             }, 400);
           }
@@ -159,14 +159,8 @@ export default function GeneralRevisionMatchingView({
   }
 
   if (finished) {
-    return (
-      <LessonCompleteView
-        knGained={0}
-        accuracy={100}
-        newBadges={[]}
-        onContinue={() => onComplete(pairs.length)}
-      />
-    );
+    // TaskPage handles the completion screen — return null to prevent double render
+    return null;
   }
 
   return (

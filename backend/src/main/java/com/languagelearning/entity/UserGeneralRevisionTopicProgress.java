@@ -39,17 +39,6 @@ public class UserGeneralRevisionTopicProgress {
     @Column(nullable = false)
     private TopicStatus status = TopicStatus.not_started;
 
-    /** Điểm lần gần nhất (0–100) */
-    @Column(name = "last_score")
-    private Integer lastScore;
-
-    /** Điểm cao nhất từ trước đến nay (0–100) */
-    @Column(name = "best_score")
-    private Integer bestScore;
-
-    @Column(name = "attempt_count", nullable = false)
-    private Integer attemptCount = 0;
-
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 

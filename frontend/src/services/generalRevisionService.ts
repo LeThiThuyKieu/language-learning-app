@@ -30,6 +30,8 @@ export interface RevisionQuestionDto {
   // VOCAB_IMAGE
   imageUrl?: string;
   correctAnswer?: string;
+  // WRITING dạng danh sách định nghĩa
+  questionText?: string;
   // MATCHING
   pairs?: { left: string; right: string }[];
   // SPEAKING / WRITING

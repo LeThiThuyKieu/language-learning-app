@@ -36,6 +36,10 @@ public class GeneralRevisionQuestion {
     @Field("order_index")
     private Integer orderIndex;
 
+    // WRITING dạng danh sách định nghĩa (question_text = định nghĩa bên trái)
+    @Field("question_text")
+    private String questionText;
+
     // LISTENING
     // (chỉ có image_url + metadata.audio_url, không có question_text)
 

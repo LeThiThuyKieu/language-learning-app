@@ -54,8 +54,8 @@ export default function GeneralRevisionTaskPage() {
     navigate("/general-revision");
   }
 
-  async function handleComplete(correctCount: number) {
-    const total = questions.length || 1;
+  async function handleComplete(correctCount: number, totalCount?: number) {
+    const total = totalCount ?? questions.length ?? 1;
     const acc   = Math.round((correctCount / total) * 100);
     setAccuracy(acc);
 

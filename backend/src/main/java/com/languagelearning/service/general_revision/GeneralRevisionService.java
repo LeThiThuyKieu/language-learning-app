@@ -154,6 +154,7 @@ public class GeneralRevisionService {
         if (mongoDoc != null) {
             dto.setOrderIndex(mongoDoc.getOrderIndex());
             dto.setImageUrl(mongoDoc.getImageUrl());
+            dto.setQuestionText(mongoDoc.getQuestionText());
             dto.setPairs(mongoDoc.getPairs());
             dto.setCategories(mongoDoc.getCategories());
             dto.setImages(mongoDoc.getImages());

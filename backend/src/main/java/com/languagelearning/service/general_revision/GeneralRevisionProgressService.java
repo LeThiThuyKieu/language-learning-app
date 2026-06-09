@@ -62,7 +62,7 @@ public class GeneralRevisionProgressService {
         taskAttemptRepository.save(attempt);
 
         // 2. Cập nhật topic progress
-        updateTopicProgress(user, req.getTopicId(), task.getId(), score);
+        updateTopicProgress(user, req.getTopicId(), task.getId());
 
         // 3. Ghi streak (tạo bản ghi ngày hôm nay nếu chưa có)
         recordStreak(user);
@@ -93,7 +93,7 @@ public class GeneralRevisionProgressService {
     }
 
     // private helpers
-    private void updateTopicProgress(User user, Integer topicId, Integer taskId, int score) {
+    private void updateTopicProgress(User user, Integer topicId, Integer taskId) {
         if (topicId == null) return;
 
         GeneralRevisionTopic topic = topicRepository.findById(topicId).orElse(null);
@@ -106,25 +106,13 @@ public class GeneralRevisionProgressService {
                     p.setUser(user);
                     p.setTopic(topic);
                     p.setCompletedTasks(0);
-                    p.setAttemptCount(0);
                     p.setStatus(UserGeneralRevisionTopicProgress.TopicStatus.not_started);
                     return p;
                 });
 
-        // Tăng attempt_count tổng
-        progress.setAttemptCount(progress.getAttemptCount() + 1);
-
-        // Cập nhật last_score và best_score
-        progress.setLastScore(score);
-        if (progress.getBestScore() == null || score > progress.getBestScore()) {
-            progress.setBestScore(score);
-        }
-
-        // Đếm số task distinct đã làm ít nhất 1 lần trong topic này
-        // Đơn giản: completed_tasks = MIN(attempt_count_per_task_distinct, TOTAL_TASKS_PER_TOPIC)
-        // Ta tăng completed_tasks lên chỉ khi đây là lần đầu làm task này
+        // Tăng completed_tasks lên chỉ khi đây là lần đầu làm task này
+        // (countByUserAndTaskId đã bao gồm lần vừa save → = 1 thì là lần đầu)
         int prevAttemptCount = taskAttemptRepository.countByUserAndTaskId(user, taskId);
-        // countByUserAndTaskId đã bao gồm lần vừa save → nếu = 1 thì đây là lần đầu
         if (prevAttemptCount == 1) {
             int current = progress.getCompletedTasks() == null ? 0 : progress.getCompletedTasks();
             progress.setCompletedTasks(Math.min(current + 1, TOTAL_TASKS_PER_TOPIC));
