@@ -164,6 +164,7 @@ export default function GeneralRevisionListeningView({
                   onKeyDown={(e) => { if (e.key === "Enter" && !checked) handleCheck(); }}
                   disabled={checked}
                   placeholder="Type the word you heard…"
+                  spellCheck={false}
                   style={{ width: 300 }}
                   className={[
                     "rounded-2xl border-2 px-4 py-3 text-center text-xl font-bold transition outline-none",

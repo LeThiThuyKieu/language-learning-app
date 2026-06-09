@@ -97,6 +97,7 @@ export default function GeneralRevisionVocabImageView({
                 onKeyDown={(e) => { if (e.key === "Enter" && !checked) handleCheck(); }}
                 disabled={checked}
                 placeholder="Type the word…"
+                spellCheck={false}
                 className={[
                   "w-full rounded-2xl border-2 px-5 py-4 text-center text-xl font-bold transition outline-none",
                   !checked
