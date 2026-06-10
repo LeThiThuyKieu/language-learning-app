@@ -72,16 +72,16 @@ export default function GeneralRevisionVocabImageView({
                 {taskDescription}
               </span>
             </div>
-            {/* Ảnh */}
-            <div className={`relative rounded-2xl overflow-hidden border-4 transition-all ${
-              !checked ? "border-gray-200"
-              : isCorrect ? "border-emerald-400"
-              : "border-red-400"
-            }`} style={{ width: 220, height: 180 }}>
+            {/* Ảnh — không khung, vừa kích thước, không vỡ */}
+            <div className="w-full max-w-sm">
               <img
                 src={current.imageUrl}
                 alt="vocabulary image"
-                className="w-full h-full object-contain bg-gray-50 p-2"
+                className={`w-full h-auto max-h-64 object-contain rounded-2xl transition-all ${
+                  !checked ? ""
+                  : isCorrect ? "ring-4 ring-emerald-400 rounded-2xl"
+                  : "ring-4 ring-red-400 rounded-2xl"
+                }`}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/icons/learn/hoc.svg";
                 }}
