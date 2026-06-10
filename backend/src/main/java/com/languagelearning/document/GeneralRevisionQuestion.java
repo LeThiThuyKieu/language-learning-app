@@ -40,6 +40,10 @@ public class GeneralRevisionQuestion {
     @Field("question_text")
     private String questionText;
 
+    // LISTENING dạng fill-in-the-blank (câu có ___ để điền)
+    @Field("sentence")
+    private String sentence;
+
     // LISTENING
     // (chỉ có image_url + metadata.audio_url, không có question_text)
 

@@ -32,6 +32,8 @@ export interface RevisionQuestionDto {
   correctAnswer?: string;
   // WRITING dạng danh sách định nghĩa
   questionText?: string;
+  // LISTENING dạng fill-in-the-blank
+  sentence?: string;
   // MATCHING
   pairs?: { left: string; right: string }[];
   // SPEAKING / WRITING
