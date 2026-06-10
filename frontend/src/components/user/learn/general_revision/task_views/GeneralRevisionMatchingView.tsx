@@ -57,11 +57,11 @@ function TextCell({ text }: { text: string }) {
 
 function ImageCell({ url }: { url: string }) {
   return (
-    <span className="relative z-[1] flex items-center justify-center w-full">
+    <span className="relative z-[1] flex items-center justify-center w-full py-1">
       <img
         src={url}
         alt=""
-        className="h-16 w-auto max-w-full object-contain rounded-lg"
+        className="h-20 w-auto max-w-full object-contain rounded-xl"
         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
       />
     </span>
@@ -206,9 +206,14 @@ export default function GeneralRevisionMatchingView({
                         tryResolve(next, selectedRightId);
                       }}
                       className={[
-                        "relative w-full flex items-center gap-4 rounded-2xl border-2 p-4 text-left shadow-sm",
+                        "relative w-full flex items-center gap-4 rounded-2xl p-4 text-left shadow-sm",
                         "transition-all duration-300 ease-out",
-                        "bg-white border-gray-200",
+                        // Chỉ có border khi là text, hoặc khi đang selected/wrong/matched
+                        !showAsImg || isSelected || isWrong || isJustMatched || isMatched
+                          ? "border-2" : "border-0",
+                        !isSelected && !isWrong && !isJustMatched && !isMatched
+                          ? showAsImg ? "bg-transparent" : "bg-white border-gray-200"
+                          : "",
                         !isMatched && !isJustMatched && !isWrong && !isSelected
                           ? "hover:border-gray-300 hover:bg-gray-50 active:translate-y-0.5" : "",
                         isSelected && !isWrong && !isJustMatched
@@ -258,9 +263,13 @@ export default function GeneralRevisionMatchingView({
                         tryResolve(selectedLeftId, next);
                       }}
                       className={[
-                        "relative w-full flex items-center justify-between gap-4 rounded-2xl border-2 p-4 text-left shadow-sm",
+                        "relative w-full flex items-center justify-between gap-4 rounded-2xl p-4 text-left shadow-sm",
                         "transition-all duration-300 ease-out",
-                        "bg-white border-gray-200",
+                        !showAsImg || isSelected || isWrong || isJustMatched || isMatched
+                          ? "border-2" : "border-0",
+                        !isSelected && !isWrong && !isJustMatched && !isMatched
+                          ? showAsImg ? "bg-transparent" : "bg-white border-gray-200"
+                          : "",
                         !isMatched && !isJustMatched && !isWrong && !isSelected
                           ? "hover:border-gray-300 hover:bg-gray-50 active:translate-y-0.5" : "",
                         isSelected && !isWrong && !isJustMatched
