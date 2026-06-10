@@ -28,6 +28,9 @@ public class RevisionQuestionDto {
     // WRITING dạng danh sách định nghĩa
     private String questionText;
 
+    // LISTENING dạng fill-in-the-blank
+    private String sentence;
+
     // MATCHING
     private List<Map<String, String>> pairs;
 
