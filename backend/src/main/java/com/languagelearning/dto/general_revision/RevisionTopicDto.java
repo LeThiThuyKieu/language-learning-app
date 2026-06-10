@@ -15,6 +15,6 @@ public class RevisionTopicDto {
     private String description;
     private Integer orderIndex;
     private List<RevisionTaskDto> tasks;
-    /** Số task đã completed (0 → tasks.size()) */
+    // Số task đã completed (0 → tasks.size())
     private Integer completedTasks = 0;
 }

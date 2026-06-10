@@ -3,9 +3,8 @@ import { Sparkles } from "lucide-react";
 import type { RevisionQuestionDto } from "@/services/generalRevisionService";
 import LessonTopBar from "@/components/user/learn/LessonTopBar";
 import LessonExitModal from "@/components/user/learn/LessonExitModal";
-import LessonCompleteView from "@/components/user/learn/LessonCompleteView";
 
-// ── helpers ──────────────────────────────────────────────────
+// helpers
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -21,7 +20,7 @@ function isImageUrl(s: string): boolean {
   return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(s.trim());
 }
 
-// ── sparkle ───────────────────────────────────────────────────
+// sparkle
 
 function CorrectPairSparkles() {
   const spots = [
@@ -46,7 +45,7 @@ function CorrectPairSparkles() {
   );
 }
 
-// ── cell renderers ────────────────────────────────────────────
+// cell renderers
 
 function TextCell({ text }: { text: string }) {
   return (
@@ -58,25 +57,25 @@ function TextCell({ text }: { text: string }) {
 
 function ImageCell({ url }: { url: string }) {
   return (
-    <span className="relative z-[1] flex items-center justify-center w-full">
+    <span className="relative z-[1] flex items-center justify-center w-full py-1">
       <img
         src={url}
         alt=""
-        className="h-16 w-auto max-w-full object-contain rounded-lg"
+        className="h-20 w-auto max-w-full object-contain rounded-xl"
         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
       />
     </span>
   );
 }
 
-// ── main component ────────────────────────────────────────────
+// main component
 
 interface Props {
   taskDescription: string;
   /** Mảng 1 phần tử — MATCHING chỉ có 1 document */
   questions: RevisionQuestionDto[];
   onLeave: () => void;
-  onComplete: (correctCount: number) => void;
+  onComplete: (correctCount: number, totalCount?: number) => void;
 }
 
 type Pair = { id: string; left: string; right: string };
@@ -136,7 +135,8 @@ export default function GeneralRevisionMatchingView({
             window.setTimeout(() => {
               if (completingRef.current) return;
               completingRef.current = true;
-              onComplete(pairs.length);
+              // Truyền totalCount = pairs.length để TaskPage tính accuracy đúng
+              onComplete(pairs.length, pairs.length);
               setFinished(true);
             }, 400);
           }
@@ -159,14 +159,8 @@ export default function GeneralRevisionMatchingView({
   }
 
   if (finished) {
-    return (
-      <LessonCompleteView
-        knGained={0}
-        accuracy={100}
-        newBadges={[]}
-        onContinue={() => onComplete(pairs.length)}
-      />
-    );
+    // TaskPage handles the completion screen — return null to prevent double render
+    return null;
   }
 
   return (
@@ -212,9 +206,14 @@ export default function GeneralRevisionMatchingView({
                         tryResolve(next, selectedRightId);
                       }}
                       className={[
-                        "relative w-full flex items-center gap-4 rounded-2xl border-2 p-4 text-left shadow-sm",
+                        "relative w-full flex items-center gap-4 rounded-2xl p-4 text-left shadow-sm",
                         "transition-all duration-300 ease-out",
-                        "bg-white border-gray-200",
+                        // Chỉ có border khi là text, hoặc khi đang selected/wrong/matched
+                        !showAsImg || isSelected || isWrong || isJustMatched || isMatched
+                          ? "border-2" : "border-0",
+                        !isSelected && !isWrong && !isJustMatched && !isMatched
+                          ? showAsImg ? "bg-transparent" : "bg-white border-gray-200"
+                          : "",
                         !isMatched && !isJustMatched && !isWrong && !isSelected
                           ? "hover:border-gray-300 hover:bg-gray-50 active:translate-y-0.5" : "",
                         isSelected && !isWrong && !isJustMatched
@@ -264,9 +263,13 @@ export default function GeneralRevisionMatchingView({
                         tryResolve(selectedLeftId, next);
                       }}
                       className={[
-                        "relative w-full flex items-center justify-between gap-4 rounded-2xl border-2 p-4 text-left shadow-sm",
+                        "relative w-full flex items-center justify-between gap-4 rounded-2xl p-4 text-left shadow-sm",
                         "transition-all duration-300 ease-out",
-                        "bg-white border-gray-200",
+                        !showAsImg || isSelected || isWrong || isJustMatched || isMatched
+                          ? "border-2" : "border-0",
+                        !isSelected && !isWrong && !isJustMatched && !isMatched
+                          ? showAsImg ? "bg-transparent" : "bg-white border-gray-200"
+                          : "",
                         !isMatched && !isJustMatched && !isWrong && !isSelected
                           ? "hover:border-gray-300 hover:bg-gray-50 active:translate-y-0.5" : "",
                         isSelected && !isWrong && !isJustMatched
