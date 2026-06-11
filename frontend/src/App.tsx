@@ -23,8 +23,8 @@ import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
 import LearningManagementPage from "@/pages/Admin/learning_management/LearningManagementPage.tsx";
 import LearningQuestionDetailPage from "@/pages/Admin/learning_management/LearningQuestionDetailPage.tsx";
-import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
-import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
+import TopicManagementPage from "@/pages/Admin/revision_management/TopicManagementPage.tsx";
+import TopicDetailPage from "@/pages/Admin/revision_management/TopicDetailPage.tsx";
 import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
@@ -166,8 +166,8 @@ function App() {
                         <Route path="learning/new" element={<LearningQuestionDetailPage/>} />
                         <Route path="learning/:id" element={<LearningQuestionDetailPage/>} />
                         <Route path="learning/:id/edit" element={<LearningQuestionDetailPage/>} />
-                        <Route path="review-topics" element={<ReviewTopicsPage/>} />
-                        <Route path="review-topics/:id" element={<ReviewTopicListPage/>} />
+                        <Route path="revision-management/topics" element={<TopicManagementPage/>} />
+                        <Route path="revision-management/topics/:id" element={<TopicDetailPage/>} />
                         <Route path="profile" element={<AdminProfilePage/>} />
                     </Route>
                 </Routes>

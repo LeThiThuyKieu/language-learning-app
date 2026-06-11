@@ -4,7 +4,6 @@ import {
     Eye, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, X, Save, Loader2
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type Topic = {
     id: number;
     title: string;
@@ -15,7 +14,6 @@ type Topic = {
     isActive: boolean;
 };
 
-// ─── Sample data (thay bằng API call sau) ─────────────────────────────────────
 const SAMPLE: Topic[] = [
     { id: 1,  title: "Health",      code: "HL-101", description: "Health & Wellness",      tasks: 5, questions: 120, isActive: true  },
     { id: 2,  title: "Education",   code: "ED-204", description: "School & Learning",      tasks: 4, questions: 90,  isActive: true  },
@@ -39,7 +37,6 @@ type FilterKey = "all" | "active" | "inactive";
 interface TopicForm { title: string; description: string; }
 const EMPTY_FORM: TopicForm = { title: "", description: "" };
 
-// ─── Modal ────────────────────────────────────────────────────────────────────
 function TopicModal({
     topic,
     onClose,
@@ -118,7 +115,6 @@ function TopicModal({
     );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function TopicManagementPage() {
     const navigate = useNavigate();
     const [topics, setTopics] = useState<Topic[]>(SAMPLE);
@@ -128,7 +124,6 @@ export default function TopicManagementPage() {
     // undefined=closed | null=create | Topic=edit
     const [modal, setModal]   = useState<Topic | null | undefined>(undefined);
 
-    // ── Filter + sort ────────────────────────────────────────────────────────
     const filtered = topics
         .filter(t => filter === "all" || (filter === "active" ? t.isActive : !t.isActive))
         .sort((a, b) => {
@@ -141,7 +136,6 @@ export default function TopicManagementPage() {
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-    // ── Handlers ─────────────────────────────────────────────────────────────
     const handleSave = (form: TopicForm) => {
         if (modal && modal.id) {
             // edit
@@ -241,7 +235,7 @@ export default function TopicManagementPage() {
                                 <td className="px-6 py-4">
                                     <div className="flex items-center justify-end gap-1">
                                         <button
-                                            onClick={() => navigate(`/admin/review-topics/${t.id}`)}
+                                            onClick={() => navigate(`/admin/revision-management/topics/${t.id}`)}
                                             title="Xem chi tiết"
                                             className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-primary-600">
                                             <Eye className="w-4 h-4" />
