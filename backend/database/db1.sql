@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS `general_revision_questions` (
     KEY `idx_grq_task` (`task_id`),
     CONSTRAINT `fk_grq_task` FOREIGN KEY (`task_id`) REFERENCES `general_revision_task` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_grq_topic` FOREIGN KEY (`topic_id`) REFERENCES `general_revision_topic` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Mapping câu hỏi ôn tập (Mongo <-> SQL) và lưu correct_answer';
+    ) ENGINE=InnoDB AUTO_INCREMENT=256 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Mapping câu hỏi ôn tập (Mongo <-> SQL) và lưu correct_answer';
 
 -- Data exporting was unselected.
 
@@ -340,15 +340,13 @@ CREATE TABLE IF NOT EXISTS `user_general_revision_task_attempt` (
     `correct_count` int(11) NOT NULL DEFAULT 0,
     `total_count` int(11) NOT NULL DEFAULT 0,
     `score` int(11) NOT NULL DEFAULT 0 COMMENT 'Điểm 0-100',
-    `elapsed_seconds` int(11) NOT NULL DEFAULT 0,
-    `passed` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 nếu score >= 70',
     `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
     PRIMARY KEY (`id`),
     KEY `idx_ugrta_user` (`user_id`),
     KEY `idx_ugrta_task` (`task_id`),
     CONSTRAINT `fk_ugrta_task` FOREIGN KEY (`task_id`) REFERENCES `general_revision_task` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ugrta_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử làm từng task ôn tập tổng hợp';
+    ) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử làm từng task ôn tập tổng hợp';
 
 -- Data exporting was unselected.
 
@@ -357,11 +355,8 @@ CREATE TABLE IF NOT EXISTS `user_general_revision_topic_progress` (
                                                                       `id` int(11) NOT NULL AUTO_INCREMENT,
     `user_id` int(11) NOT NULL,
     `topic_id` int(11) NOT NULL,
-    `completed_tasks` tinyint(4) NOT NULL DEFAULT 0,
+    `completed_tasks` int(11) NOT NULL,
     `status` enum('not_started','in_progress','completed') NOT NULL DEFAULT 'not_started',
-    `last_score` int(11) DEFAULT NULL COMMENT 'Điểm lần làm gần nhất (0-100)',
-    `best_score` int(11) DEFAULT NULL COMMENT 'Điểm cao nhất từ trước đến nay',
-    `attempt_count` int(11) NOT NULL DEFAULT 0,
     `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_ugrtp_user_topic` (`user_id`,`topic_id`),
@@ -369,7 +364,7 @@ CREATE TABLE IF NOT EXISTS `user_general_revision_topic_progress` (
     KEY `idx_ugrtp_topic` (`topic_id`),
     CONSTRAINT `fk_ugrtp_topic` FOREIGN KEY (`topic_id`) REFERENCES `general_revision_topic` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ugrtp_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tiến trình ôn tập tổng hợp của user theo từng chủ đề';
+    ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tiến trình ôn tập tổng hợp của user theo từng chủ đề';
 
 -- Data exporting was unselected.
 
@@ -559,7 +554,7 @@ CREATE TABLE IF NOT EXISTS `user_streak` (
     UNIQUE KEY `uk_user_streak_date` (`user_id`,`date`),
     KEY `user_id` (`user_id`),
     CONSTRAINT `streak_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
