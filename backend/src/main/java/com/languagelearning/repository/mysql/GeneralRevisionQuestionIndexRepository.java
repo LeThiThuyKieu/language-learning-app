@@ -37,4 +37,10 @@ public interface GeneralRevisionQuestionIndexRepository extends JpaRepository<Ge
      */
     @Query("SELECT COUNT(q) FROM GeneralRevisionQuestionIndex q WHERE q.taskId = :taskId")
     long countByTaskId(@Param("taskId") Integer taskId);
+
+    /**
+     * Đếm số câu hỏi theo topic
+     */
+    @Query("SELECT COUNT(q) FROM GeneralRevisionQuestionIndex q WHERE q.topicId = :topicId")
+    long countByTopicId(@Param("topicId") Integer topicId);
 }
