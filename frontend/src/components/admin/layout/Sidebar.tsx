@@ -73,8 +73,9 @@ export default function Sidebar() {
                     <nav className="space-y-1">
                         {navLink("/admin/dashboard",                 LayoutDashboard, "Dashboard")}
                         {navLink("/admin/user-management",           Users,           "User Management")}
-                        {navLink("/admin/learn-progress",            TrendingUp,      "Learn Progress")}
-                        {navLink("/admin/learning",                BookOpenText,    "Learning")}
+                        {navLink("/admin/learn-progress",               TrendingUp,      "Learn Progress")}
+                        {navLink("/admin/general-revision-progress", BookOpen,        "Revision Progress")}
+                        {navLink("/admin/learning",                  BookOpenText,    "Learning")}
 
                         {/* ── Support group ── */}
                         <div>

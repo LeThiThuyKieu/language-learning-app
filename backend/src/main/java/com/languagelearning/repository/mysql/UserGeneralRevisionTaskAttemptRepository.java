@@ -35,4 +35,31 @@ public interface UserGeneralRevisionTaskAttemptRepository
                         row -> (Long) row[1]
                 ));
     }
+
+    /**
+     * Tổng hợp lịch sử làm task của user theo từng task:
+     * [taskId, count, maxScore, lastAttemptAt]
+     */
+    @Query("SELECT a.task.id, COUNT(a), MAX(a.score), MAX(a.attemptedAt) " +
+           "FROM UserGeneralRevisionTaskAttempt a " +
+           "WHERE a.user = :user " +
+           "GROUP BY a.task.id")
+    List<Object[]> findAttemptSummaryRawByUser(@Param("user") User user);
+
+    /**
+     * Trả về tổng số lần attempt của user (dùng cho summary).
+     */
+    @Query("SELECT COUNT(a) FROM UserGeneralRevisionTaskAttempt a WHERE a.user = :user")
+    long countTotalAttemptsByUser(@Param("user") User user);
+
+    /**
+     * Lấy score của lần attempt gần nhất theo từng task.
+     * Trả về [taskId, score] của bản ghi có attemptedAt lớn nhất.
+     */
+    @Query("SELECT a.task.id, a.score FROM UserGeneralRevisionTaskAttempt a " +
+           "WHERE a.user = :user AND a.attemptedAt = (" +
+           "  SELECT MAX(a2.attemptedAt) FROM UserGeneralRevisionTaskAttempt a2 " +
+           "  WHERE a2.user = :user AND a2.task.id = a.task.id" +
+           ")")
+    List<Object[]> findLastScoreByUserGroupedByTask(@Param("user") User user);
 }
