@@ -12,6 +12,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
 import DashboardPage from "@/pages/Admin/DashboardPage.tsx";
 import LearnProgressPage from "@/pages/Admin/LearnProgressPage.tsx";
+import GeneralRevisionProgressPage from "@/pages/Admin/GeneralRevisionProgressPage.tsx";
 import UserManagementPage from "@/pages/Admin/UserManagementPage.tsx";
 import PlacementTestManagementPage from "@/pages/Admin/PlacementTestManagementPage.tsx";
 import EmailSupportPage from "@/pages/Admin/support_management/EmailSupportPage.tsx";
@@ -153,6 +154,7 @@ function App() {
                         <Route path="dashboard" element={<DashboardPage/>}/>
                         <Route path="user-management" element={<UserManagementPage/>}/>
                         <Route path="learn-progress" element={<LearnProgressPage/>}/>
+                        <Route path="general-revision-progress" element={<GeneralRevisionProgressPage/>}/>
                         <Route path="placement-test-management" element={<PlacementTestManagementPage/>}/>
                         <Route path="support-management/email-support" element={<EmailSupportPage/>}/>
                         <Route path="support-management/chat-support" element={<ChatSupportPage/>}/>
