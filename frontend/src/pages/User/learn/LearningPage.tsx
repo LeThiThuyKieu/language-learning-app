@@ -445,7 +445,7 @@ export default function LearningPage() {
                                 </div>
                             </div>
 
-                            <LearnRightPanel onCreateProfile={() => navigate("/profile")} />
+                            <LearnRightPanel onViewProfile={() => navigate("/profile")} />
                         </div>
                     </main>
                 </div>

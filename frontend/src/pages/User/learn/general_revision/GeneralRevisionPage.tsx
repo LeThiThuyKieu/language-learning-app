@@ -41,7 +41,7 @@ export default function GeneralRevisionPage() {
               </div>
 
               {/* Right panel */}
-              <LearnRightPanel onCreateProfile={() => navigate("/profile")} />
+              <LearnRightPanel onViewProfile={() => navigate("/profile")} />
             </div>
           </main>
         </div>
