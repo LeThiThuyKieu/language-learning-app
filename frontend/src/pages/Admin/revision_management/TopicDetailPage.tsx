@@ -154,6 +154,8 @@ export default function TopicDetailPage() {
     const [search, setSearch]           = useState("");
     const [page, setPage]               = useState(1);
     const [taskModal, setTaskModal]     = useState<AdminTaskDetail | null | undefined>(undefined);
+    const [orderDirty, setOrderDirty]   = useState(false);
+    const [savingOrder, setSavingOrder] = useState(false);
 
     const dragIndexRef  = useRef<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -189,6 +191,7 @@ export default function TopicDetailPage() {
             [next[a], next[b]] = [next[b], next[a]];
             return next.map((t, i) => ({ ...t, taskIndex: i + 1 }));
         });
+        setOrderDirty(true);
     };
     const moveUp   = (t: AdminTaskDetail) => { const i = tasks.findIndex(x => x.id === t.id); if (i > 0) swapTasks(i - 1, i); };
     const moveDown = (t: AdminTaskDetail) => { const i = tasks.findIndex(x => x.id === t.id); if (i < tasks.length - 1) swapTasks(i, i + 1); };
@@ -205,8 +208,23 @@ export default function TopicDetailPage() {
             next.splice(target, 0, moved);
             return next.map((t, i) => ({ ...t, taskIndex: i + 1 }));
         });
+        setOrderDirty(true);
         dragIndexRef.current = null;
         setDragOverIndex(null);
+    };
+
+    const handleSaveOrder = async () => {
+        if (!id) return;
+        setSavingOrder(true);
+        try {
+            await revisionApi.reorderTasks(parseInt(id), tasks.map(t => ({ id: t.id, orderIndex: t.taskIndex })));
+            toast.success("Đã lưu thứ tự");
+            setOrderDirty(false);
+        } catch {
+            toast.error("Không thể lưu thứ tự");
+        } finally {
+            setSavingOrder(false);
+        }
     };
 
     const handleDeleteTask = async (taskId: number) => {
@@ -291,6 +309,16 @@ export default function TopicDetailPage() {
                         <p className="text-xs text-gray-400">Tasks</p>
                         <p className="text-2xl font-extrabold text-slate-700">{tasks.length}</p>
                     </div>
+                    {orderDirty && (
+                        <button
+                            onClick={handleSaveOrder}
+                            disabled={savingOrder}
+                            className="flex items-center gap-2 rounded-xl border border-orange-300 bg-orange-50 px-4 py-2.5 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-100 disabled:opacity-60"
+                        >
+                            {savingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Lưu thứ tự
+                        </button>
+                    )}
                     <button
                         onClick={() => setTaskModal(null)}
                         className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
@@ -338,17 +366,16 @@ export default function TopicDetailPage() {
                                 <th className="px-5 py-4 text-center w-16">#</th>
                                 <th className="px-5 py-4 text-left">Task Name</th>
                                 <th className="px-5 py-4 text-left">Type</th>
-                                <th className="px-5 py-4 text-center">Questions</th>
                                 <th className="px-5 py-4 text-left">Description</th>
                                 <th className="px-5 py-4 text-center">Questions</th>
-                                <th className="px-5 py-4 text-center w-24">Order</th>
+                                <th className="px-5 py-4 text-center w-24">Position</th>
                                 <th className="px-5 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {paginated.length === 0 ? (
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-12 text-center text-gray-400 text-sm">
+                                    <td colSpan={8} className="px-6 py-12 text-center text-gray-400 text-sm">
                                         {search ? "Không tìm thấy task phù hợp." : "Topic này chưa có task nào."}
                                     </td>
                                 </tr>
@@ -379,11 +406,6 @@ export default function TopicDetailPage() {
                                         </td>
                                         <td className="px-5 py-4 font-semibold text-gray-900">{task.taskLabel}</td>
                                         <td className="px-5 py-4"><QuestionTypeBadge type={task.questionType} /></td>
-                                        <td className="px-5 py-4 text-center">
-                                            <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 rounded-full px-3 py-1 text-xs font-bold">
-                                                {Number(task.questionCount).toLocaleString()} Qs
-                                            </span>
-                                        </td>
                                         <td className="px-5 py-4 text-gray-500 max-w-xs truncate">{task.description}</td>
                                         <td className="px-5 py-4 text-center">
                                             <button

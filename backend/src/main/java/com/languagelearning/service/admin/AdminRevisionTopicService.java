@@ -148,6 +148,41 @@ public class AdminRevisionTopicService {
         topicRepository.delete(topic);
     }
 
+    /** Reorder topics: nhận danh sách {id, orderIndex} và lưu hàng loạt. */
+    @Transactional
+    public void reorderTopics(List<ReorderItemRequest> items) {
+        for (ReorderItemRequest item : items) {
+            topicRepository.findById(item.getId()).ifPresent(t -> {
+                t.setOrderIndex(item.getOrderIndex());
+                topicRepository.save(t);
+            });
+        }
+    }
+
+    /** Reorder tasks trong 1 topic: nhận danh sách {id, orderIndex}. */
+    @Transactional
+    public void reorderTasks(Integer topicId, List<ReorderItemRequest> items) {
+        for (ReorderItemRequest item : items) {
+            taskRepository.findById(item.getId()).ifPresent(t -> {
+                if (t.getTopic().getId().equals(topicId)) {
+                    t.setTaskIndex(item.getOrderIndex());
+                    taskRepository.save(t);
+                }
+            });
+        }
+    }
+
+    /** Reorder questions trong 1 task: cập nhật orderIndex trong MongoDB doc. */
+    @Transactional
+    public void reorderQuestions(Integer topicId, Integer taskId, List<ReorderMongoItemRequest> items) {
+        for (ReorderMongoItemRequest item : items) {
+            mongoQuestionRepository.findById(item.getMongoId()).ifPresent(doc -> {
+                doc.setOrderIndex(item.getOrderIndex());
+                mongoQuestionRepository.save(doc);
+            });
+        }
+    }
+
     // ── TASK ──────────────────────────────────────────────────────────────────
 
     /** Danh sách task của 1 topic (kèm số câu hỏi). */

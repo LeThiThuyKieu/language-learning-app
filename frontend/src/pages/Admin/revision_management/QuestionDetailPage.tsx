@@ -246,10 +246,20 @@ function MatchingSection({ form, setForm, mode }: { form: QuestionForm; setForm:
 }
 
 //  WRITING section 
-function WritingSection({ form, setForm, mode }: { form: QuestionForm; setForm: (f: QuestionForm) => void; mode: Mode }) {
+function WritingSection({ form, setForm, mode, isMultiQuestion }: {
+    form: QuestionForm;
+    setForm: (f: QuestionForm) => void;
+    mode: Mode;
+    isMultiQuestion?: boolean;
+}) {
     const isView     = mode === "view";
     const categories = form.categories;
     const images     = form.images;
+
+    // ── Multi-question layout handled separately via WritingMultiSection ──
+    if (isMultiQuestion) return null;
+
+    // ── Single-question layout: categories + images (giữ nguyên) ──
 
     const addCat    = () => setForm({ ...form, categories: [...categories, { label: "", slots: 4 }] });
     const removeCat = (i: number) => setForm({ ...form, categories: categories.filter((_, idx) => idx !== i) });
@@ -350,6 +360,102 @@ function WritingSection({ form, setForm, mode }: { form: QuestionForm; setForm: 
     );
 }
 
+// ── WRITING multi-question: hiển thị tất cả câu hỏi trên 1 trang (giống MATCHING) ──
+function WritingMultiSection({
+    questions,
+    task,
+    topicId,
+    taskId,
+    navigate,
+}: {
+    questions: AdminQuestion[];
+    task: AdminTaskDetail | null;
+    topicId: string;
+    taskId: string;
+    navigate: (path: string) => void;
+}) {
+    return (
+        <div className="space-y-6">
+            {/* Header: loại câu hỏi + nội dung câu hỏi */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-gray-400">Loại câu hỏi</p>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-600">
+                        <AlignLeft className="w-3.5 h-3.5" /> Writing
+                    </span>
+                </div>
+                <div>
+                    <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-gray-400">Số câu hỏi</p>
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 min-h-[40px]">
+                        {questions.length}
+                    </div>
+                </div>
+            </div>
+            {task?.description && (
+                <div>
+                    <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-gray-400">Nội dung câu hỏi</p>
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 min-h-[40px]">
+                        {task.description}
+                    </div>
+                </div>
+            )}
+
+            <hr className="border-gray-100" />
+
+            {/* Questions list */}
+            <div>
+                <div className="mb-2 flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                        Questions ({questions.length})
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/new`)}
+                        className="flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-700"
+                    >
+                        <Plus className="w-3.5 h-3.5" /> Thêm câu hỏi
+                    </button>
+                </div>
+                <div className="space-y-2">
+                    {questions.length === 0 && (
+                        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-center text-sm text-gray-400">
+                            Chưa có câu hỏi nào.
+                        </div>
+                    )}
+                    {questions.map((q, i) => (
+                        <div key={q.mongoId} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3 group hover:border-orange-200 transition">
+                            <span className="w-6 shrink-0 text-center text-xs font-bold text-gray-400">{i + 1}</span>
+                            {/* Question text (left) */}
+                            <div className="flex-1">
+                                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 min-h-[40px]">
+                                    {q.questionText || <span className="italic text-gray-400">Chưa có nội dung</span>}
+                                </div>
+                            </div>
+                            <span className="shrink-0 text-xs font-bold text-gray-300">→</span>
+                            {/* Correct answer (right) */}
+                            <div className="flex-1">
+                                {q.correctAnswer
+                                    ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 min-h-[40px]">{q.correctAnswer}</div>
+                                    : <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm min-h-[40px]"><span className="italic text-gray-400">Chưa có đáp án</span></div>
+                                }
+                            </div>
+                            {/* Edit action */}
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/${q.mongoId}/edit`)}
+                                title="Chỉnh sửa"
+                                className="shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition opacity-0 group-hover:opacity-100"
+                            >
+                                <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function QuestionDetailPage() {
     const { topicId, taskId, questionId } = useParams<{
         topicId: string; taskId: string; questionId?: string;
@@ -411,8 +517,11 @@ export default function QuestionDetailPage() {
                 toast.error("Vui lòng điền đầy đủ left và right"); return false;
             }
         }
-        if (form.questionType === "WRITING" && form.categories.length === 0) {
+        if (form.questionType === "WRITING" && siblingQuestions.length <= 1 && form.categories.length === 0) {
             toast.error("Vui lòng thêm ít nhất 1 category"); return false;
+        }
+        if (form.questionType === "WRITING" && siblingQuestions.length > 1 && !form.correctAnswer.trim()) {
+            toast.error("Vui lòng nhập đáp án đúng"); return false;
         }
         return true;
     }
@@ -462,6 +571,8 @@ export default function QuestionDetailPage() {
     const backPath = skipTaskDetail
         ? `/admin/revision-management/topics/${topicId}`
         : `/admin/revision-management/topics/${topicId}/tasks/${taskId}`;
+
+    const isMultiWriting = task?.questionType === "WRITING" && siblingQuestions.length > 1;
 
     const ActionButtons = () => (
         <>
@@ -541,7 +652,7 @@ export default function QuestionDetailPage() {
                 </div>
             </div>
 
-            {siblingQuestions.length > 1 && questionId && (
+            {siblingQuestions.length > 1 && questionId && !isMultiWriting && (
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Câu hỏi:</span>
                     {siblingQuestions.map(q => (
@@ -569,8 +680,30 @@ export default function QuestionDetailPage() {
                 </div>
             )}
 
-            {/* Form card */}
-            <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+            {/* Writing multi-question: tất cả câu trên 1 trang */}
+            {isMultiWriting && (
+                <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                        <h3 className="flex items-center gap-2 text-base font-extrabold text-gray-900">
+                            <span className="inline-block w-1 h-5 rounded-full bg-orange-500" />
+                            Thông tin câu hỏi
+                        </h3>
+                    </div>
+                    <div className="p-6">
+                        <WritingMultiSection
+                            questions={siblingQuestions}
+                            task={task}
+                            topicId={topicId!}
+                            taskId={taskId!}
+                            navigate={navigate}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Form card (ẩn khi writing multi) */}
+            {!isMultiWriting && (
+                <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                     <h3 className="flex items-center gap-2 text-base font-extrabold text-gray-900">
                         <span className="inline-block w-1 h-5 rounded-full bg-orange-500" />
@@ -614,7 +747,7 @@ export default function QuestionDetailPage() {
                     {form.questionType === "VOCAB_IMAGE" && <VocabImageSection form={form} setForm={setForm} mode={mode} />}
                     {form.questionType === "LISTENING"   && <ListeningSection  form={form} setForm={setForm} mode={mode} />}
                     {form.questionType === "MATCHING"    && <MatchingSection   form={form} setForm={setForm} mode={mode} />}
-                    {form.questionType === "WRITING"     && <WritingSection    form={form} setForm={setForm} mode={mode} />}
+                    {form.questionType === "WRITING"     && <WritingSection    form={form} setForm={setForm} mode={mode} isMultiQuestion={siblingQuestions.length > 1} />}
                 </div>
 
                 {/* Bottom actions */}
@@ -623,7 +756,8 @@ export default function QuestionDetailPage() {
                         <ActionButtons />
                     </div>
                 )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

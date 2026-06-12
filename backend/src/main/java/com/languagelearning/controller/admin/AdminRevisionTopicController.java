@@ -63,6 +63,14 @@ public class AdminRevisionTopicController {
         return ResponseEntity.ok(ApiResponse.success("Xóa topic thành công", null));
     }
 
+    /** PUT /api/admin/revision/topics/reorder — lưu thứ tự topics */
+    @PutMapping("/reorder")
+    public ResponseEntity<ApiResponse<Void>> reorderTopics(
+            @RequestBody List<ReorderItemRequest> items) {
+        adminRevisionTopicService.reorderTopics(items);
+        return ResponseEntity.ok(ApiResponse.success("Đã lưu thứ tự topic", null));
+    }
+
     // ══════════════════════════ TASK ════════════════════════════════════════
 
     /** GET /api/admin/revision/topics/{topicId}/tasks — danh sách tasks */
@@ -111,6 +119,15 @@ public class AdminRevisionTopicController {
             @PathVariable Integer taskId) {
         adminRevisionTopicService.deleteTask(topicId, taskId);
         return ResponseEntity.ok(ApiResponse.success("Xóa task thành công", null));
+    }
+
+    /** PUT /api/admin/revision/topics/{topicId}/tasks/reorder — lưu thứ tự tasks */
+    @PutMapping("/{topicId}/tasks/reorder")
+    public ResponseEntity<ApiResponse<Void>> reorderTasks(
+            @PathVariable Integer topicId,
+            @RequestBody List<ReorderItemRequest> items) {
+        adminRevisionTopicService.reorderTasks(topicId, items);
+        return ResponseEntity.ok(ApiResponse.success("Đã lưu thứ tự task", null));
     }
 
     // ══════════════════════════ QUESTION ════════════════════════════════════
@@ -166,5 +183,15 @@ public class AdminRevisionTopicController {
             @PathVariable String mongoId) {
         adminRevisionTopicService.deleteQuestion(topicId, taskId, mongoId);
         return ResponseEntity.ok(ApiResponse.success("Xóa câu hỏi thành công", null));
+    }
+
+    /** PUT /api/admin/revision/topics/{topicId}/tasks/{taskId}/questions/reorder — lưu thứ tự questions */
+    @PutMapping("/{topicId}/tasks/{taskId}/questions/reorder")
+    public ResponseEntity<ApiResponse<Void>> reorderQuestions(
+            @PathVariable Integer topicId,
+            @PathVariable Integer taskId,
+            @RequestBody List<ReorderMongoItemRequest> items) {
+        adminRevisionTopicService.reorderQuestions(topicId, taskId, items);
+        return ResponseEntity.ok(ApiResponse.success("Đã lưu thứ tự câu hỏi", null));
     }
 }
