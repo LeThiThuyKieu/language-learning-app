@@ -1,0 +1,40 @@
+<svg width="150" height="120" viewBox="0 0 150 120" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <linearGradient id="orangeGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FDBA74"></stop>
+      <stop offset="100%" stop-color="#EA580C"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- Chữ A -->
+  <g>
+    <!-- viền trắng -->
+    <path d="M25 96
+         C25 96 46 42 53 24
+         C55 18 60 15 65 15
+         C70 15 75 18 77 24
+         C84 42 105 96 105 96" fill="none" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"></path>
+
+    <!-- thân cam -->
+    <path d="M25 96
+         C25 96 46 42 53 24
+         C55 18 60 15 65 15
+         C70 15 75 18 77 24
+         C84 42 105 96 105 96" fill="none" stroke="url(#orangeGradient)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"></path>
+
+    <!-- tam giác cam nhạt -->
+    <polygon points="55,73 78,67 64,49" fill="#FDBA74"></polygon>
+  </g>
+
+  <!-- か -->
+  <text x="100" y="45" font-size="32" font-weight="900" font-family="Yu Gothic, Noto Sans JP, sans-serif" fill="#F97316" stroke="#FFFFFF" stroke-width="5" paint-order="stroke">
+    か
+  </text>
+
+  <!-- い -->
+  <text x="103" y="78" font-size="32" font-weight="900" font-family="Yu Gothic, Noto Sans JP, sans-serif" fill="#F97316" stroke="#FFFFFF" stroke-width="5" paint-order="stroke">
+    い
+  </text>
+
+</svg>

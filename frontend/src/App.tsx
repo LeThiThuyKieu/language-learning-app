@@ -26,6 +26,7 @@ import LearningQuestionDetailPage from "@/pages/Admin/learning_management/Learni
 import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
 import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
 import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
+import AlphabetPage from "@/pages/User/learn/AlphabetPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
 import GeneralRevisionTaskPage from "@/pages/User/learn/general_revision/GeneralRevisionTaskPage.tsx";
@@ -117,6 +118,7 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="alphabet" element={<AlphabetPage/>}/>
                         <Route path="general-revision" element={<GeneralRevisionPage/>}/>
                         <Route path="leaderboard" element={<LeaderboardPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
