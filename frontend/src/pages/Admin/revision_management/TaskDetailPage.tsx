@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { revisionApi, type AdminQuestion, type AdminTaskDetail } from "@/services/revisionService";
+import { getQuestionDetailPath, skipsTaskDetail } from "./revisionNavigation";
 
 type QuestionType = "VOCAB_IMAGE" | "LISTENING" | "MATCHING" | "WRITING";
 
@@ -25,6 +26,43 @@ function TypeBadge({ type }: { type: string }) {
         <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold ${meta.color}`}>
             {meta.icon}{meta.label}
         </span>
+    );
+}
+
+function ListeningAudioButton({ url }: { url: string }) {
+    const [playing, setPlaying] = useState(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    function toggle() {
+        if (!audioRef.current) {
+            audioRef.current = new Audio(url);
+            audioRef.current.onended = () => setPlaying(false);
+        }
+        if (playing) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+            setPlaying(false);
+        } else {
+            audioRef.current.play().catch(() => setPlaying(false));
+            setPlaying(true);
+        }
+    }
+
+    return (
+        <button
+            type="button"
+            onClick={toggle}
+            // title={playing ? "Dừng" : "Nghe audio"}
+            className={[
+                "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition self-start",
+                playing
+                    ? "border-sky-300 bg-sky-50 text-sky-600 hover:bg-sky-100"
+                    : "border-gray-200 bg-white text-gray-500 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-600",
+            ].join(" ")}
+        >
+            <Music className={["w-3.5 h-3.5", playing ? "animate-pulse" : ""].join(" ")} />
+            {/* {playing ? "Đang phát..." : "Nghe audio"} */}
+        </button>
     );
 }
 
@@ -57,6 +95,12 @@ export default function TaskDetailPage() {
     }, [topicId, taskId]);
 
     useEffect(() => { setPage(1); }, [search]);
+
+    useEffect(() => {
+        if (isLoading || !task || !topicId || !taskId) return;
+        if (!skipsTaskDetail(task.questionType)) return;
+        navigate(getQuestionDetailPath(topicId, taskId, questions), { replace: true });
+    }, [isLoading, task, questions, topicId, taskId, navigate]);
 
     const filtered   = questions.filter(q => {
         const s = search.trim().toLowerCase();
@@ -271,6 +315,125 @@ export default function TaskDetailPage() {
                                             </td>
                                             {/* Actions */}
                                             <td className="px-5 py-3">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button onClick={() => navigate(`${basePath}/questions/${q.mongoId}`)} title="Xem"
+                                                        className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-orange-600">
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => navigate(`${basePath}/questions/${q.mongoId}/edit`)} title="Chỉnh sửa"
+                                                        className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(q.mongoId)} title="Xóa"
+                                                        className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    ) : task?.questionType === "LISTENING" ? (
+                        /* ── LISTENING table ── */
+                        <table className="min-w-full divide-y divide-gray-100 text-sm">
+                            <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-500">
+                                <tr>
+                                    <th className="px-5 py-4 text-center w-16">#</th>
+                                    <th className="px-5 py-4 text-left">Preview</th>
+                                    <th className="px-5 py-4 text-left">Answer</th>
+                                    <th className="px-5 py-4 text-center w-28">Position</th>
+                                    <th className="px-5 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {paginated.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">
+                                            {search ? "Không tìm thấy câu hỏi phù hợp." : "Task này chưa có câu hỏi nào."}
+                                        </td>
+                                    </tr>
+                                ) : paginated.map(q => {
+                                    const globalIdx = questions.findIndex(x => x.mongoId === q.mongoId);
+                                    return (
+                                        <tr key={q.mongoId} className="transition hover:bg-orange-50/40">
+                                            {/* # order_index */}
+                                            <td className="px-5 py-3 text-center align-top pt-4">
+                                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-xs font-bold text-slate-500">
+                                                    {q.orderIndex}
+                                                </span>
+                                            </td>
+                                            {/* Preview: audio + ảnh + câu */}
+                                            <td className="px-5 py-3">
+                                                <div className="flex flex-col gap-2">
+                                                    {/* Audio button */}
+                                                    {q.audioUrl ? (
+                                                        <ListeningAudioButton url={q.audioUrl} />
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1 text-xs text-gray-400 italic self-start">
+                                                            <Music className="w-3.5 h-3.5" /> Chưa có audio
+                                                        </span>
+                                                    )}
+                                                    {/* Ảnh */}
+                                                    {q.imageUrl && (
+                                                        <div className="h-14 w-20 rounded-xl border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
+                                                            <img
+                                                                src={q.imageUrl}
+                                                                alt="listening"
+                                                                className="h-full w-full object-contain"
+                                                                onError={e => {
+                                                                    const el = e.target as HTMLImageElement;
+                                                                    el.style.display = "none";
+                                                                    const parent = el.parentElement;
+                                                                    if (parent) {
+                                                                        parent.innerHTML = '<span class="text-xs text-gray-300 italic">Lỗi ảnh</span>';
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {/* Câu (sentence) */}
+                                                    {q.sentence && (
+                                                        <p className="text-xs text-gray-600 max-w-xs leading-relaxed whitespace-pre-line">
+                                                            {q.sentence}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            {/* Answer */}
+                                            <td className="px-5 py-3 align-top pt-4">
+                                                {q.correctAnswer ? (
+                                                    <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-700">
+                                                        {q.correctAnswer}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-300 italic text-xs">—</span>
+                                                )}
+                                            </td>
+                                            {/* Position */}
+                                            <td className="px-5 py-3 align-top pt-3">
+                                                <div className="flex items-center justify-center gap-0.5">
+                                                    <button
+                                                        onClick={() => moveUp(q)}
+                                                        disabled={globalIdx === 0}
+                                                        title="Lên"
+                                                        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-20 transition text-gray-400 hover:text-gray-700"
+                                                    >
+                                                        <ChevronUp className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => moveDown(q)}
+                                                        disabled={globalIdx === questions.length - 1}
+                                                        title="Xuống"
+                                                        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-20 transition text-gray-400 hover:text-gray-700"
+                                                    >
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            {/* Actions */}
+                                            <td className="px-5 py-3 align-top pt-3">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <button onClick={() => navigate(`${basePath}/questions/${q.mongoId}`)} title="Xem"
                                                         className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-orange-600">

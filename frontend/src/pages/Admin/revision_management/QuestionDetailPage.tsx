@@ -8,11 +8,13 @@ import { toast } from "react-hot-toast";
 import {
     revisionApi,
     type AdminQuestion,
+    type AdminTaskDetail,
     type SaveQuestionRequest,
     type MatchingPair,
     type WritingCategory,
     type WritingImage,
 } from "@/services/revisionService";
+import { skipsTaskDetail, sortQuestions } from "./revisionNavigation";
 
 type QuestionType = "VOCAB_IMAGE" | "LISTENING" | "MATCHING" | "WRITING";
 type Mode = "view" | "edit" | "create";
@@ -361,8 +363,28 @@ export default function QuestionDetailPage() {
         : "view";
 
     const [form, setForm]       = useState<QuestionForm>(emptyForm());
+    const [task, setTask]       = useState<AdminTaskDetail | null>(null);
+    const [siblingQuestions, setSiblingQuestions] = useState<AdminQuestion[]>([]);
     const [isLoading, setIsLoading] = useState(mode !== "create");
     const [isSaving, setIsSaving]   = useState(false);
+
+    useEffect(() => {
+        if (!topicId || !taskId) return;
+        revisionApi.getTaskDetail(parseInt(topicId), parseInt(taskId))
+            .then(setTask)
+            .catch(() => {});
+    }, [topicId, taskId]);
+
+    useEffect(() => {
+        if (!topicId || !taskId || !task) return;
+        if (task.questionType.toUpperCase() !== "WRITING" || task.questionCount <= 1) {
+            setSiblingQuestions([]);
+            return;
+        }
+        revisionApi.getQuestions(parseInt(topicId), parseInt(taskId))
+            .then(qs => setSiblingQuestions(sortQuestions(qs)))
+            .catch(() => setSiblingQuestions([]));
+    }, [topicId, taskId, task]);
 
     useEffect(() => {
         if (mode === "create" || !questionId || !topicId || !taskId) {
@@ -436,7 +458,10 @@ export default function QuestionDetailPage() {
         );
     }
 
-    const backToTask = `/admin/revision-management/topics/${topicId}/tasks/${taskId}`;
+    const skipTaskDetail = task ? skipsTaskDetail(task.questionType) : false;
+    const backPath = skipTaskDetail
+        ? `/admin/revision-management/topics/${topicId}`
+        : `/admin/revision-management/topics/${topicId}/tasks/${taskId}`;
 
     const ActionButtons = () => (
         <>
@@ -452,7 +477,7 @@ export default function QuestionDetailPage() {
                     <button
                         onClick={() => mode === "edit" && questionId
                             ? navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/${questionId}`)
-                            : navigate(backToTask)}
+                            : navigate(backPath)}
                         className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100">
                         Huỷ
                     </button>
@@ -474,7 +499,11 @@ export default function QuestionDetailPage() {
                 <span>›</span>
                 <Link to={`/admin/revision-management/topics/${topicId}`} className="hover:text-gray-600 transition">Topic Detail</Link>
                 <span>›</span>
-                <Link to={backToTask} className="hover:text-gray-600 transition">Task Detail</Link>
+                {skipTaskDetail ? (
+                    <span className="text-gray-600">{task?.taskLabel ?? "Task"}</span>
+                ) : (
+                    <Link to={backPath} className="hover:text-gray-600 transition">Task Detail</Link>
+                )}
                 <span>›</span>
                 <span className="text-gray-600">
                     {mode === "create" ? "New Question" : mode === "edit" ? "Edit Question" : "View Question"}
@@ -484,7 +513,7 @@ export default function QuestionDetailPage() {
             {/* Header */}
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(backToTask)}
+                    <button onClick={() => navigate(backPath)}
                         className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-500">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -511,6 +540,34 @@ export default function QuestionDetailPage() {
                     <ActionButtons />
                 </div>
             </div>
+
+            {siblingQuestions.length > 1 && questionId && (
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Câu hỏi:</span>
+                    {siblingQuestions.map(q => (
+                        <button
+                            key={q.mongoId}
+                            type="button"
+                            onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/${q.mongoId}`)}
+                            className={[
+                                "rounded-xl border px-3 py-1.5 text-xs font-bold transition",
+                                q.mongoId === questionId
+                                    ? "border-orange-300 bg-orange-50 text-orange-600"
+                                    : "border-gray-200 bg-white text-gray-500 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600",
+                            ].join(" ")}
+                        >
+                            #{q.orderIndex}
+                        </button>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/new`)}
+                        className="rounded-xl border border-dashed border-gray-300 px-3 py-1.5 text-xs font-bold text-gray-400 transition hover:border-orange-300 hover:text-orange-600"
+                    >
+                        + Thêm
+                    </button>
+                </div>
+            )}
 
             {/* Form card */}
             <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">

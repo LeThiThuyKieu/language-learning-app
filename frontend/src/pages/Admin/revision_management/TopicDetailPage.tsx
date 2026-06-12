@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { revisionApi, type AdminTaskDetail, type SaveTaskRequest } from "@/services/revisionService";
+import { getQuestionDetailPath, skipsTaskDetail } from "./revisionNavigation";
 
 const PAGE_SIZE = 10;
 
@@ -219,6 +220,20 @@ export default function TopicDetailPage() {
         }
     };
 
+    const handleOpenTask = async (task: AdminTaskDetail) => {
+        if (!id) return;
+        if (!skipsTaskDetail(task.questionType)) {
+            navigate(`/admin/revision-management/topics/${id}/tasks/${task.id}`);
+            return;
+        }
+        try {
+            const questions = await revisionApi.getQuestions(parseInt(id), task.id);
+            navigate(getQuestionDetailPath(id, task.id, questions));
+        } catch {
+            toast.error("Không tải được danh sách câu hỏi");
+        }
+    };
+
     const handleTaskSaved = (saved: AdminTaskDetail) => {
         setTasks(prev => {
             const idx = prev.findIndex(t => t.id === saved.id);
@@ -372,7 +387,7 @@ export default function TopicDetailPage() {
                                         <td className="px-5 py-4 text-gray-500 max-w-xs truncate">{task.description}</td>
                                         <td className="px-5 py-4 text-center">
                                             <button
-                                                onClick={() => navigate(`/admin/revision-management/topics/${id}/tasks/${task.id}`)}
+                                                onClick={() => handleOpenTask(task)}
                                                 className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-500 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600 transition"
                                             >
                                                 <Eye className="w-3.5 h-3.5" /> Questions
