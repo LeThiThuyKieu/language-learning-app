@@ -5,7 +5,7 @@ import { profileService } from "@/services/profileService.ts";
 import LeaderboardCard from "@/components/user/common/LeaderboardCard.tsx";
 
 interface LearnRightPanelProps {
-  onCreateProfile: () => void;
+  onViewProfile: () => void;
 }
 
 function TopStats() {
@@ -75,63 +75,23 @@ function TopStats() {
   );
 }
 
-function DailyCard() {
-  const currentKn = 0;
-  const targetKn = 20;
-  const percent = (currentKn / targetKn) * 100;
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
-      <div className="flex items-center justify-between">
-        <div className="text-gray-900 font-extrabold text-basic">
-          Nhiệm vụ hằng ngày
-        </div>
-        <button className="text-primary-600 font-semibold text-sm uppercase tracking-wide">
-          Xem tất cả
-        </button>
-      </div>
-      <div className="mt-4 flex items-center gap-3">
-        <img
-          src="/icons/learn/lightning.svg"
-          alt=""
-          className="h-10 w-10 object-contain shrink-0"
-        />
-        <div className="flex-1">
-          <div className="text-gray-700 font-semibold text-sm mb-2">
-            Kiếm {targetKn} KN
-          </div>
-          <div className="relative w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-yellow-400 rounded-full"
-              style={{ width: `${percent}%` }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-gray-500">
-              {currentKn} / {targetKn}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProfileCard({ onCreateProfile }: { onCreateProfile: () => void }) {
+function ProfileCard({ onViewProfile }: { onViewProfile: () => void }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm min-h-[120px]">
       <div className="text-gray-900 font-extrabold text-basic mb-1.5">
-        Tạo hồ sơ lưu tiến trình của bạn!
+        Xem hồ sơ tiến trình của bạn
       </div>
       <button
-        onClick={onCreateProfile}
+        onClick={onViewProfile}
         className="mt-3 w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl transition"
       >
-        Tạo hồ sơ
+        Xem hồ sơ
       </button>
     </div>
   );
 }
 
-export default function LearnRightPanel({ onCreateProfile }: LearnRightPanelProps) {
+export default function LearnRightPanel({ onViewProfile }: LearnRightPanelProps) {
   return (
     <div className="col-span-12 lg:col-span-4">
       <div className="flex flex-col gap-3 lg:sticky lg:top-24">
@@ -143,8 +103,7 @@ export default function LearnRightPanel({ onCreateProfile }: LearnRightPanelProp
           period="WEEK"
           showViewMore
         />
-        <DailyCard />
-        <ProfileCard onCreateProfile={onCreateProfile} />
+        <ProfileCard onViewProfile={onViewProfile} />
       </div>
     </div>
   );
