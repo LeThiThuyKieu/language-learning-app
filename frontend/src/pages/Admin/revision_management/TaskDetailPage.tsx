@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
     ArrowLeft, ChevronLeft, ChevronRight, Loader2, GripVertical,
     ChevronUp, ChevronDown, Search, Plus, Eye, Pencil, Trash2,
-    ImageIcon, Music, Layers, AlignLeft,
+    ImageIcon, Music, Layers, AlignLeft, Save,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { revisionApi, type AdminQuestion, type AdminTaskDetail } from "@/services/revisionService";
@@ -75,6 +75,8 @@ export default function TaskDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch]       = useState("");
     const [page, setPage]           = useState(1);
+    const [orderDirty, setOrderDirty]   = useState(false);
+    const [savingOrder, setSavingOrder] = useState(false);
 
     const dragIndexRef = useRef<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -116,6 +118,7 @@ export default function TaskDetailPage() {
             [next[a], next[b]] = [next[b], next[a]];
             return next.map((q, i) => ({ ...q, orderIndex: i + 1 }));
         });
+        setOrderDirty(true);
     };
     const moveUp   = (q: AdminQuestion) => { const i = questions.findIndex(x => x.mongoId === q.mongoId); if (i > 0) swapQ(i - 1, i); };
     const moveDown = (q: AdminQuestion) => { const i = questions.findIndex(x => x.mongoId === q.mongoId); if (i < questions.length - 1) swapQ(i, i + 1); };
@@ -131,8 +134,27 @@ export default function TaskDetailPage() {
             next.splice(target, 0, moved);
             return next.map((q, i) => ({ ...q, orderIndex: i + 1 }));
         });
+        setOrderDirty(true);
         dragIndexRef.current = null;
         setDragOverIndex(null);
+    };
+
+    const handleSaveOrder = async () => {
+        if (!topicId || !taskId) return;
+        setSavingOrder(true);
+        try {
+            await revisionApi.reorderQuestions(
+                parseInt(topicId),
+                parseInt(taskId),
+                questions.map(q => ({ mongoId: q.mongoId, orderIndex: q.orderIndex ?? 0 }))
+            );
+            toast.success("Đã lưu thứ tự");
+            setOrderDirty(false);
+        } catch {
+            toast.error("Không thể lưu thứ tự");
+        } finally {
+            setSavingOrder(false);
+        }
     };
 
     const handleDelete = async (mongoId: string) => {
@@ -191,6 +213,16 @@ export default function TaskDetailPage() {
                         <p className="text-xs text-gray-400">Questions</p>
                         <p className="text-2xl font-extrabold text-orange-500">{questions.length}</p>
                     </div>
+                    {orderDirty && (
+                        <button
+                            onClick={handleSaveOrder}
+                            disabled={savingOrder}
+                            className="flex items-center gap-2 rounded-xl border border-orange-300 bg-orange-50 px-4 py-2.5 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-100 disabled:opacity-60"
+                        >
+                            {savingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Lưu thứ tự
+                        </button>
+                    )}
                     <button onClick={() => navigate(`${basePath}/questions/new`)}
                         className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600">
                         <Plus className="w-4 h-4" /> Add Question
@@ -434,6 +466,105 @@ export default function TaskDetailPage() {
                                             </td>
                                             {/* Actions */}
                                             <td className="px-5 py-3 align-top pt-3">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button onClick={() => navigate(`${basePath}/questions/${q.mongoId}`)} title="Xem"
+                                                        className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-orange-600">
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => navigate(`${basePath}/questions/${q.mongoId}/edit`)} title="Chỉnh sửa"
+                                                        className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(q.mongoId)} title="Xóa"
+                                                        className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    ) : task?.questionType === "WRITING" ? (
+                        /* ── WRITING table ── */
+                        <table className="min-w-full divide-y divide-gray-100 text-sm">
+                            <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-gray-500">
+                                <tr>
+                                    <th className="px-5 py-4 text-center w-16">#</th>
+                                    <th className="px-5 py-4 text-left w-1/2">Câu hỏi</th>
+                                    <th className="px-5 py-4 text-left w-1/2">Đáp án / Categories</th>
+                                    <th className="px-5 py-4 text-center w-28">Position</th>
+                                    <th className="px-5 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {paginated.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">
+                                            {search ? "Không tìm thấy câu hỏi phù hợp." : "Task này chưa có câu hỏi nào."}
+                                        </td>
+                                    </tr>
+                                ) : paginated.map(q => {
+                                    const globalIdx = questions.findIndex(x => x.mongoId === q.mongoId);
+                                    return (
+                                        <tr key={q.mongoId} className="transition hover:bg-orange-50/40 align-top">
+                                            {/* # order_index */}
+                                            <td className="px-5 py-4 text-center">
+                                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-xs font-bold text-slate-500">
+                                                    {q.orderIndex}
+                                                </span>
+                                            </td>
+                                            {/* Câu hỏi bên trái */}
+                                            <td className="px-5 py-4">
+                                                <div className="space-y-1.5">
+                                                    <TypeBadge type={q.questionType} />
+                                                    {q.questionText ? (
+                                                        <p className="text-sm text-gray-700 leading-relaxed">{q.questionText}</p>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400 italic">Chưa có nội dung</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            {/* Đáp án / Categories bên phải */}
+                                            <td className="px-5 py-4">
+                                                {q.categories && q.categories.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {q.categories.map((cat, ci) => (
+                                                            <span key={ci}
+                                                                className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                                                                {cat.label}
+                                                                <span className="rounded bg-amber-100 px-1 text-amber-500">{cat.slots}</span>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">—</span>
+                                                )}
+                                            </td>
+                                            {/* Position */}
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center justify-center gap-0.5">
+                                                    <button
+                                                        onClick={() => moveUp(q)}
+                                                        disabled={globalIdx === 0}
+                                                        title="Lên"
+                                                        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-20 transition text-gray-400 hover:text-gray-700"
+                                                    >
+                                                        <ChevronUp className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => moveDown(q)}
+                                                        disabled={globalIdx === questions.length - 1}
+                                                        title="Xuống"
+                                                        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-20 transition text-gray-400 hover:text-gray-700"
+                                                    >
+                                                        <ChevronDown className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            {/* Actions */}
+                                            <td className="px-5 py-4">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <button onClick={() => navigate(`${basePath}/questions/${q.mongoId}`)} title="Xem"
                                                         className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-orange-600">

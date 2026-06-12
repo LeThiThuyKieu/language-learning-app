@@ -133,6 +133,8 @@ export default function TopicManagementPage() {
     const [filter, setFilter]       = useState<FilterKey>("all");
     const [page, setPage]           = useState(1);
     const [modal, setModal]         = useState<Topic | null | undefined>(undefined);
+    const [orderDirty, setOrderDirty] = useState(false);
+    const [savingOrder, setSavingOrder] = useState(false);
 
     const dragIndexRef = useRef<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -165,6 +167,7 @@ export default function TopicManagementPage() {
             [next[a], next[b]] = [next[b], next[a]];
             return next.map((t, i) => ({ ...t, orderIndex: i + 1 }));
         });
+        setOrderDirty(true);
     };
     const moveUp   = (t: Topic) => { const i = topics.findIndex(x => x.id === t.id); if (i > 0) swapTopics(i - 1, i); };
     const moveDown = (t: Topic) => { const i = topics.findIndex(x => x.id === t.id); if (i < topics.length - 1) swapTopics(i, i + 1); };
@@ -181,8 +184,22 @@ export default function TopicManagementPage() {
             next.splice(target, 0, moved);
             return next.map((t, i) => ({ ...t, orderIndex: i + 1 }));
         });
+        setOrderDirty(true);
         dragIndexRef.current = null;
         setDragOverIndex(null);
+    };
+
+    const handleSaveOrder = async () => {
+        setSavingOrder(true);
+        try {
+            await revisionApi.reorderTopics(topics.map(t => ({ id: t.id, orderIndex: t.orderIndex })));
+            toast.success("Đã lưu thứ tự");
+            setOrderDirty(false);
+        } catch {
+            toast.error("Không thể lưu thứ tự");
+        } finally {
+            setSavingOrder(false);
+        }
     };
 
     const handleDelete = async (id: number) => {
@@ -225,12 +242,24 @@ export default function TopicManagementPage() {
                         Quản lý và sắp xếp các chủ đề ôn tập tổng hợp.
                     </p>
                 </div>
-                <button
-                    onClick={() => setModal(null)}
-                    className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600 shrink-0 self-start"
-                >
-                    <Plus className="w-4 h-4" /> Add New Topic
-                </button>
+                <div className="flex items-center gap-2 shrink-0 self-start">
+                    {orderDirty && (
+                        <button
+                            onClick={handleSaveOrder}
+                            disabled={savingOrder}
+                            className="flex items-center gap-2 rounded-xl border border-orange-300 bg-orange-50 px-4 py-2.5 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-100 disabled:opacity-60"
+                        >
+                            {savingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Lưu thứ tự
+                        </button>
+                    )}
+                    <button
+                        onClick={() => setModal(null)}
+                        className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
+                    >
+                        <Plus className="w-4 h-4" /> Add New Topic
+                    </button>
+                </div>
             </div>
 
             {/* Filter bar */}
@@ -291,7 +320,7 @@ export default function TopicManagementPage() {
                                     <th className="px-5 py-4 text-left">Description</th>
                                     <th className="px-5 py-4 text-center">Tasks</th>
                                     <th className="px-5 py-4 text-center">Questions</th>
-                                    <th className="px-5 py-4 text-center w-24">Order</th>
+                                    <th className="px-5 py-4 text-center w-24">Position</th>
                                     <th className="px-5 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>

@@ -140,4 +140,14 @@ export const revisionApi = {
 
     deleteQuestion: (topicId: number, taskId: number, mongoId: string) =>
         apiClient.delete(`${BASE}/${topicId}/tasks/${taskId}/questions/${mongoId}`),
+
+    // Reorder
+    reorderTopics: (items: { id: number; orderIndex: number }[]) =>
+        apiClient.put(`${BASE}/reorder`, items),
+
+    reorderTasks: (topicId: number, items: { id: number; orderIndex: number }[]) =>
+        apiClient.put(`${BASE}/${topicId}/tasks/reorder`, items),
+
+    reorderQuestions: (topicId: number, taskId: number, items: { mongoId: string; orderIndex: number }[]) =>
+        apiClient.put(`${BASE}/${topicId}/tasks/${taskId}/questions/reorder`, items),
 };
