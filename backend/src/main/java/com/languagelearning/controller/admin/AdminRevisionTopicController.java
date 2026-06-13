@@ -2,6 +2,9 @@ package com.languagelearning.controller.admin;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.admin.revision.*;
+import com.languagelearning.entity.GeneralRevisionTopic;
+import com.languagelearning.repository.mysql.GeneralRevisionTopicRepository;
+import com.languagelearning.service.QuestionMediaUploadService;
 import com.languagelearning.service.admin.AdminRevisionTopicService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,6 +23,8 @@ import java.util.List;
 public class AdminRevisionTopicController {
 
     private final AdminRevisionTopicService adminRevisionTopicService;
+    private final QuestionMediaUploadService questionMediaUploadService;
+    private final GeneralRevisionTopicRepository generalRevisionTopicRepository;
 
     // ══════════════════════════ TOPIC ═══════════════════════════════════════
 
@@ -193,5 +199,35 @@ public class AdminRevisionTopicController {
             @RequestBody List<ReorderMongoItemRequest> items) {
         adminRevisionTopicService.reorderQuestions(topicId, taskId, items);
         return ResponseEntity.ok(ApiResponse.success("Đã lưu thứ tự câu hỏi", null));
+    }
+
+    // ══════════════════════════ MEDIA UPLOAD ════════════════════════════════
+
+    /**
+     * POST /api/admin/revision/topics/{topicId}/upload/image
+     * Upload ảnh câu hỏi lên Cloudinary → img_file/question/{topicTitle}
+     */
+    @PostMapping("/{topicId}/upload/image")
+    public ResponseEntity<ApiResponse<String>> uploadQuestionImage(
+            @PathVariable Integer topicId,
+            @RequestParam("file") MultipartFile file) {
+        GeneralRevisionTopic topic = generalRevisionTopicRepository.findById(topicId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy topic: " + topicId));
+        String url = questionMediaUploadService.uploadQuestionImage(file, topic.getTitle());
+        return ResponseEntity.ok(ApiResponse.success("Upload ảnh thành công", url));
+    }
+
+    /**
+     * POST /api/admin/revision/topics/{topicId}/upload/audio
+     * Upload audio câu hỏi lên Cloudinary → audio_file/general_revision/{topicTitle}
+     */
+    @PostMapping("/{topicId}/upload/audio")
+    public ResponseEntity<ApiResponse<String>> uploadQuestionAudio(
+            @PathVariable Integer topicId,
+            @RequestParam("file") MultipartFile file) {
+        GeneralRevisionTopic topic = generalRevisionTopicRepository.findById(topicId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy topic: " + topicId));
+        String url = questionMediaUploadService.uploadQuestionAudio(file, topic.getTitle());
+        return ResponseEntity.ok(ApiResponse.success("Upload audio thành công", url));
     }
 }
