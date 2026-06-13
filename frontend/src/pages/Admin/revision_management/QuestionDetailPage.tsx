@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import {
     ArrowLeft, Loader2, Save, Plus, Trash2, Eye, Pencil,
-    Image as ImageIcon, Music, AlignLeft, Layers,
+    Image as ImageIcon, Music, AlignLeft, Layers, ChevronDown,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
@@ -246,6 +246,26 @@ function MatchingSection({ form, setForm, mode }: { form: QuestionForm; setForm:
 }
 
 //  WRITING section 
+// ── Helper: parse correctAnswer JSON ──
+function parseAnswerMap(raw: string): Record<string, string[][]> {
+    if (!raw) return {};
+    try {
+        const parsed = JSON.parse(raw);
+        return (typeof parsed === "object" && !Array.isArray(parsed)) ? parsed : {};
+    } catch { return {}; }
+}
+
+// ── Helper: build correctAnswer JSON from editable state ──
+// editableAnswers: { [catLabel]: string[][] }  (each inner array = variants for 1 slot)
+function buildAnswerJson(editableAnswers: Record<string, string[][]>): string {
+    const cleaned: Record<string, string[][]> = {};
+    for (const [cat, slots] of Object.entries(editableAnswers)) {
+        const validSlots = slots.map(variants => variants.map(v => v.trim()).filter(Boolean)).filter(s => s.length > 0);
+        if (validSlots.length > 0) cleaned[cat] = validSlots;
+    }
+    return JSON.stringify(cleaned);
+}
+
 function WritingSection({ form, setForm, mode, isMultiQuestion }: {
     form: QuestionForm;
     setForm: (f: QuestionForm) => void;
@@ -256,25 +276,128 @@ function WritingSection({ form, setForm, mode, isMultiQuestion }: {
     const categories = form.categories;
     const images     = form.images;
 
-    // ── Multi-question layout handled separately via WritingMultiSection ──
+    // Which category accordion is open
+    const [expandedCat, setExpandedCat] = useState<string | null>(null);
+
+    // Editable answer state (edit/create): { catLabel → string[][] }
+    const [editableAnswers, setEditableAnswers] = useState<Record<string, string[][]>>({});
+
+    // Sync editableAnswers ONLY ONCE when entering edit/create mode (not on every categories change)
+    const initDoneRef = useRef(false);
+    useEffect(() => {
+        if (isView) { initDoneRef.current = false; return; }
+        if (initDoneRef.current) return;
+        initDoneRef.current = true;
+        const parsed = parseAnswerMap(form.correctAnswer);
+        const synced: Record<string, string[][]> = {};
+        for (const cat of form.categories) {
+            if (!cat.label) continue;
+            const existing = parsed[cat.label];
+            synced[cat.label] = existing ?? Array.from({ length: cat.slots }, () => [""]);
+        }
+        setEditableAnswers(synced);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isView, form.correctAnswer]);
+
+    // Whenever editableAnswers changes, write back to form.correctAnswer
+    useEffect(() => {
+        if (isView || !initDoneRef.current) return;
+        setForm({ ...form, correctAnswer: buildAnswerJson(editableAnswers) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editableAnswers]);
+
+    // ── helpers for editing slots ──
+    const setSlotMain = (cat: string, slotIdx: number, val: string) => {
+        setEditableAnswers(prev => {
+            const slots = [...(prev[cat] ?? [])];
+            const variants = [...(slots[slotIdx] ?? [""])];
+            variants[0] = val;
+            slots[slotIdx] = variants;
+            return { ...prev, [cat]: slots };
+        });
+    };
+    const setSlotAlt = (cat: string, slotIdx: number, altIdx: number, val: string) => {
+        setEditableAnswers(prev => {
+            const slots = [...(prev[cat] ?? [])];
+            const variants = [...(slots[slotIdx] ?? [""])];
+            variants[altIdx + 1] = val;
+            slots[slotIdx] = variants;
+            return { ...prev, [cat]: slots };
+        });
+    };
+    const addSlotAlt = (cat: string, slotIdx: number) => {
+        setEditableAnswers(prev => {
+            const slots = [...(prev[cat] ?? [])];
+            slots[slotIdx] = [...(slots[slotIdx] ?? [""]), ""];
+            return { ...prev, [cat]: slots };
+        });
+    };
+    const removeSlotAlt = (cat: string, slotIdx: number, altIdx: number) => {
+        setEditableAnswers(prev => {
+            const slots = [...(prev[cat] ?? [])];
+            const variants = [...(slots[slotIdx] ?? [""])];
+            variants.splice(altIdx + 1, 1);
+            slots[slotIdx] = variants;
+            return { ...prev, [cat]: slots };
+        });
+    };
+    const addSlot = (cat: string, catIdx: number) => {
+        setEditableAnswers(prev => ({ ...prev, [cat]: [...(prev[cat] ?? []), [""]] }));
+        const newCats = categories.map((c, i) => i === catIdx ? { ...c, slots: c.slots + 1 } : c);
+        setForm({ ...form, categories: newCats });
+    };
+    const removeSlot = (cat: string, catIdx: number, slotIdx: number) => {
+        setEditableAnswers(prev => {
+            const slots = [...(prev[cat] ?? [])];
+            slots.splice(slotIdx, 1);
+            return { ...prev, [cat]: slots };
+        });
+        const newCats = categories.map((c, i) => i === catIdx ? { ...c, slots: Math.max(0, c.slots - 1) } : c);
+        setForm({ ...form, categories: newCats });
+    };
+
+    // ── Multi-question layout handled separately ──
     if (isMultiQuestion) return null;
 
-    // ── Single-question layout: categories + images (giữ nguyên) ──
-
-    const addCat    = () => setForm({ ...form, categories: [...categories, { label: "", slots: 4 }] });
-    const removeCat = (i: number) => setForm({ ...form, categories: categories.filter((_, idx) => idx !== i) });
-    const updateCat = (i: number, field: keyof WritingCategory, val: string | number) =>
-        setForm({ ...form, categories: categories.map((c, idx) => idx === i ? { ...c, [field]: val } : c) });
-
+    // ── Category management ──
+    const addCat = () => {
+        const newCat: WritingCategory = { label: "", slots: 4 };
+        setForm({ ...form, categories: [...categories, newCat] });
+        setEditableAnswers(prev => ({ ...prev, [""]: Array.from({ length: 4 }, () => [""]) }));
+    };
+    const removeCat = (i: number) => {
+        const removed = categories[i].label;
+        setForm({ ...form, categories: categories.filter((_, idx) => idx !== i) });
+        setEditableAnswers(prev => { const next = { ...prev }; delete next[removed]; return next; });
+    };
+    const updateCatLabel = (i: number, newLabel: string) => {
+        const oldLabel = categories[i].label;
+        const newCats  = categories.map((c, idx) => idx === i ? { ...c, label: newLabel } : c);
+        setForm({ ...form, categories: newCats });
+        // rename key in editableAnswers
+        setEditableAnswers(prev => {
+            const next: Record<string, string[][]> = {};
+            for (const [k, v] of Object.entries(prev)) {
+                next[k === oldLabel ? newLabel : k] = v;
+            }
+            return next;
+        });
+    };
+    // ── Image management ──
     const addImg    = () => setForm({ ...form, images: [...images, { url: "" }] });
     const removeImg = (i: number) => setForm({ ...form, images: images.filter((_, idx) => idx !== i) });
     const updateImg = (i: number, url: string) =>
         setForm({ ...form, images: images.map((img, idx) => idx === i ? { url } : img) });
 
+    // View mode: parsed answer map
+    const viewAnswerMap = isView ? parseAnswerMap(form.correctAnswer) : {};
+    const hasAnswers    = Object.keys(viewAnswerMap).length > 0;
+
     return (
-        <div className="space-y-5">
+        <div className="space-y-6">
+            {/* ── Categories ── */}
             <div>
-                <div className="mb-2 flex items-center justify-between">
+                <div className="mb-3 flex items-center justify-between">
                     <FieldLabel>Categories ({categories.length})</FieldLabel>
                     {!isView && (
                         <button type="button" onClick={addCat}
@@ -283,40 +406,179 @@ function WritingSection({ form, setForm, mode, isMultiQuestion }: {
                         </button>
                     )}
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-                    {categories.length === 0 && (
-                        <div className="col-span-full rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-center text-sm text-gray-400">
-                            Chưa có category.
-                        </div>
-                    )}
-                    {categories.map((cat, i) => (
-                        <div key={i} className="relative rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-                            {!isView && (
-                                <button type="button" onClick={() => removeCat(i)}
-                                    className="absolute right-2 top-2 p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition">
-                                    <Trash2 className="w-3 h-3" />
-                                </button>
-                            )}
-                            {isView ? (
-                                <>
-                                    <p className="text-sm font-bold text-gray-800">{cat.label}</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">{cat.slots} slots</p>
-                                </>
-                            ) : (
-                                <div className="space-y-2 pr-5">
-                                    <TextInput value={cat.label} onChange={v => updateCat(i, "label", v)} placeholder="Label" />
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400">Slots:</span>
-                                        <input type="number" min={1} value={cat.slots}
-                                            onChange={e => updateCat(i, "slots", parseInt(e.target.value) || 1)}
-                                            className="w-16 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs outline-none focus:border-orange-400" />
-                                    </div>
+
+                {categories.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-400">
+                        Chưa có category.
+                    </div>
+                )}
+
+                <div className="space-y-3">
+                    {categories.map((cat, ci) => {
+                        const isOpen = expandedCat === cat.label;
+                        // VIEW: answers from parsed JSON
+                        const viewSlots: string[][] = viewAnswerMap[cat.label] ?? [];
+                        // EDIT: answers from editable state
+                        const editSlots: string[][] = editableAnswers[cat.label] ?? [];
+
+                        return (
+                            <div key={ci} className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                                {/* ── Category header ── */}
+                                <div
+                                    className={[
+                                        "flex items-center gap-3 px-4 py-3 transition",
+                                        (isView && hasAnswers) || !isView
+                                            ? "cursor-pointer hover:bg-gray-50"
+                                            : "",
+                                    ].join(" ")}
+                                    onClick={() => setExpandedCat(prev => prev === cat.label ? null : cat.label)}
+                                >
+                                    {/* Chevron */}
+                                    <ChevronDown className={[
+                                        "w-4 h-4 shrink-0 transition-transform duration-200",
+                                        isOpen ? "rotate-180 text-orange-500" : "text-gray-400",
+                                    ].join(" ")} />
+
+                                    {/* Label + slots — editable in place */}
+                                    {isView ? (
+                                        <div className="flex-1 flex items-center gap-3">
+                                            <span className="text-sm font-bold text-gray-800">{cat.label || <span className="italic text-gray-400">Chưa đặt tên</span>}</span>
+                                            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                                                {cat.slots} slots
+                                            </span>
+                                            {isView && (
+                                                <span className="ml-auto text-xs text-gray-400">
+                                                    {viewSlots.length > 0 ? `${viewSlots.length} đáp án` : "Chưa có đáp án"}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                            <input
+                                                value={cat.label}
+                                                onChange={e => updateCatLabel(ci, e.target.value)}
+                                                placeholder="Tên category (vd: Kitchen)"
+                                                className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm font-semibold outline-none transition focus:border-orange-400 focus:bg-white"
+                                            />
+                                            <span className="shrink-0 rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-bold text-orange-600">
+                                                {cat.slots} slots
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Remove category button */}
+                                    {!isView && (
+                                        <button type="button"
+                                            onClick={e => { e.stopPropagation(); removeCat(ci); }}
+                                            className="shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition">
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    ))}
+
+                                {/* ── Expanded panel ── */}
+                                {isOpen && (
+                                    <div className="border-t border-gray-100 bg-gray-50/60 px-5 py-4 space-y-2">
+                                        {/* VIEW mode */}
+                                        {isView && (
+                                            viewSlots.length === 0 ? (
+                                                <p className="text-xs italic text-gray-400">Không có đáp án cho category này.</p>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {viewSlots.map((variants, si) => (
+                                                        <div key={si} className="flex flex-wrap items-center gap-1.5">
+                                                            <span className="w-5 h-5 shrink-0 flex items-center justify-center rounded-full bg-orange-100 text-orange-600 text-[10px] font-bold">
+                                                                {si + 1}
+                                                            </span>
+                                                            {variants.map((word, wi) => (
+                                                                <span key={wi} className={[
+                                                                    "rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                                                                    wi === 0
+                                                                        ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                                                                        : "border-gray-200 bg-white text-gray-500",
+                                                                ].join(" ")}>
+                                                                    {word}
+                                                                    {wi > 0 && <span className="ml-1 text-[10px] text-gray-300">(alt)</span>}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )
+                                        )}
+
+                                        {/* EDIT mode */}
+                                        {!isView && (
+                                            <div className="space-y-3">
+                                                {editSlots.map((variants, si) => (
+                                                    <div key={si} className="rounded-xl border border-gray-200 bg-white p-3 space-y-2">
+                                                        {/* Slot header */}
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                                                                Slot {si + 1}
+                                                            </span>
+                                                            <button type="button"
+                                                                onClick={() => removeSlot(cat.label, ci, si)}
+                                                                className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1 rounded transition">
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Main answer */}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="w-14 shrink-0 text-xs text-emerald-600 font-semibold">Đáp án</span>
+                                                            <input
+                                                                value={variants[0] ?? ""}
+                                                                onChange={e => setSlotMain(cat.label, si, e.target.value)}
+                                                                placeholder="vd: dishwasher"
+                                                                className="flex-1 rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-1.5 text-sm outline-none transition focus:border-emerald-400 focus:bg-white placeholder:text-gray-300"
+                                                            />
+                                                        </div>
+
+                                                        {/* Alt answers */}
+                                                        {variants.slice(1).map((alt, ai) => (
+                                                            <div key={ai} className="flex items-center gap-2">
+                                                                <span className="w-14 shrink-0 text-xs text-gray-400 font-semibold">Alt {ai + 1}</span>
+                                                                <input
+                                                                    value={alt}
+                                                                    onChange={e => setSlotAlt(cat.label, si, ai, e.target.value)}
+                                                                    placeholder="Từ đồng nghĩa / chấp nhận thêm"
+                                                                    className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm outline-none transition focus:border-orange-300 focus:bg-white placeholder:text-gray-300"
+                                                                />
+                                                                <button type="button"
+                                                                    onClick={() => removeSlotAlt(cat.label, si, ai)}
+                                                                    className="shrink-0 p-1 rounded text-gray-300 hover:text-red-400 transition">
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+
+                                                        {/* Add alt button */}
+                                                        <button type="button"
+                                                            onClick={() => addSlotAlt(cat.label, si)}
+                                                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition mt-1">
+                                                            <Plus className="w-3 h-3" /> Thêm từ chấp nhận
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                                {/* Add slot button */}
+                                                <button type="button"
+                                                    onClick={() => addSlot(cat.label, ci)}
+                                                    className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-orange-300 py-2 text-xs font-bold text-orange-500 hover:bg-orange-50 transition">
+                                                    <Plus className="w-3.5 h-3.5" /> Thêm slot
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
+
+            {/* ── Reference images ── */}
             <div>
                 <div className="mb-2 flex items-center justify-between">
                     <FieldLabel>Ảnh tham khảo ({images.length})</FieldLabel>
