@@ -754,12 +754,22 @@ export default function QuestionDetailPage() {
             .catch(() => setSiblingQuestions([]));
     }, [topicId, taskId, task]);
 
+    // Set questionType from task when task is loaded
+    useEffect(() => {
+        if (!task) return;
+        setForm(prev => ({
+            ...prev,
+            questionType: task.questionType.toUpperCase() as QuestionType,
+            // create mode: default orderIndex = last + 1
+            ...(mode === "create" ? { orderIndex: (task.questionCount ?? 0) + 1 } : {}),
+        }));
+    }, [task]);
+
     useEffect(() => {
         if (mode === "create" || !questionId || !topicId || !taskId) {
             setIsLoading(false);
             return;
-        }
-        setIsLoading(true);
+        }        setIsLoading(true);
         revisionApi.getQuestion(parseInt(topicId), parseInt(taskId), questionId)
             .then(q => setForm(fromApi(q)))
             .catch(() => toast.error("Không tải được câu hỏi"))
@@ -978,27 +988,40 @@ export default function QuestionDetailPage() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <FieldLabel>Loại câu hỏi</FieldLabel>
-                            {mode === "view" ? (
-                                <TypeBadge type={form.questionType} />
+                            {mode !== "view" ? (
+                                <div className="relative inline-flex group/qtype">
+                                    <TypeBadge type={form.questionType} />
+                                    <div className="pointer-events-none absolute bottom-full left-0 mb-2 z-20
+                                                    opacity-0 group-hover/qtype:opacity-100 transition-opacity duration-150
+                                                    whitespace-nowrap rounded-xl border border-gray-100 bg-white shadow-lg px-3 py-2 text-xs text-gray-500">
+                                        Loại câu hỏi được xác định theo task, không thể thay đổi
+                                        <div className="absolute top-full left-4 w-0 h-0
+                                                        border-l-4 border-r-4 border-t-4
+                                                        border-l-transparent border-r-transparent border-t-white" />
+                                    </div>
+                                </div>
                             ) : (
-                                <select value={form.questionType}
-                                    onChange={e => setForm({ ...form, questionType: e.target.value as QuestionType })}
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-semibold text-gray-700 outline-none transition focus:border-orange-400 focus:bg-white">
-                                    <option value="VOCAB_IMAGE">VOCAB_IMAGE</option>
-                                    <option value="LISTENING">LISTENING</option>
-                                    <option value="MATCHING">MATCHING</option>
-                                    <option value="WRITING">WRITING</option>
-                                </select>
+                                <TypeBadge type={form.questionType} />
                             )}
                         </div>
                         <div>
                             <FieldLabel>Order Index</FieldLabel>
-                            {mode === "view" ? (
-                                <ReadonlyBox>{form.orderIndex}</ReadonlyBox>
+                            {mode !== "view" ? (
+                                <div className="relative group/order">
+                                    <ReadonlyBox>{form.orderIndex}</ReadonlyBox>
+                                    <div className="pointer-events-none absolute bottom-full left-0 mb-2 z-20
+                                                    opacity-0 group-hover/order:opacity-100 transition-opacity duration-150
+                                                    whitespace-nowrap rounded-xl border border-gray-100 bg-white shadow-lg px-3 py-2 text-xs text-gray-500">
+                                        {mode === "create"
+                                            ? "Tự động gán = cuối danh sách hiện tại"
+                                            : "Thứ tự hiển thị của câu hỏi trong task"}
+                                        <div className="absolute top-full left-4 w-0 h-0
+                                                        border-l-4 border-r-4 border-t-4
+                                                        border-l-transparent border-r-transparent border-t-white" />
+                                    </div>
+                                </div>
                             ) : (
-                                <input type="number" min={1} value={form.orderIndex}
-                                    onChange={e => setForm({ ...form, orderIndex: parseInt(e.target.value) || 1 })}
-                                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm outline-none transition focus:border-orange-400 focus:bg-white" />
+                                <ReadonlyBox>{form.orderIndex}</ReadonlyBox>
                             )}
                         </div>
                     </div>

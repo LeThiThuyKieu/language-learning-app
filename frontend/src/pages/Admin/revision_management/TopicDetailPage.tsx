@@ -7,6 +7,7 @@ import {
 import { toast } from "react-hot-toast";
 import { revisionApi, type AdminTaskDetail, type SaveTaskRequest } from "@/services/revisionService";
 import { getQuestionDetailPath, skipsTaskDetail } from "./revisionNavigation";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 const PAGE_SIZE = 10;
 
@@ -154,6 +155,7 @@ export default function TopicDetailPage() {
     const [search, setSearch]           = useState("");
     const [page, setPage]               = useState(1);
     const [taskModal, setTaskModal]     = useState<AdminTaskDetail | null | undefined>(undefined);
+    const [deleteTarget, setDeleteTarget] = useState<AdminTaskDetail | null>(null);
     const [orderDirty, setOrderDirty]   = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
 
@@ -228,7 +230,6 @@ export default function TopicDetailPage() {
     };
 
     const handleDeleteTask = async (taskId: number) => {
-        if (!confirm("Xóa task này? Tất cả câu hỏi trong task sẽ bị xóa.")) return;
         try {
             await revisionApi.deleteTask(parseInt(id!), taskId);
             toast.success("Đã xóa task");
@@ -433,7 +434,7 @@ export default function TopicDetailPage() {
                                                     className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => handleDeleteTask(task.id)} title="Xóa"
+                                                <button onClick={() => setDeleteTarget(task)} title="Xóa"
                                                     className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -480,6 +481,13 @@ export default function TopicDetailPage() {
                     onSaved={handleTaskSaved}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={deleteTarget !== null}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={() => { if (deleteTarget) handleDeleteTask(deleteTarget.id); setDeleteTarget(null); }}
+                message={`Xóa task "${deleteTarget?.taskLabel}"? Tất cả câu hỏi trong task sẽ bị xóa vĩnh viễn.`}
+            />
         </div>
     );
 }

@@ -8,6 +8,7 @@ import {
 import { toast } from "react-hot-toast";
 import { revisionApi, type AdminQuestion, type AdminTaskDetail } from "@/services/revisionService";
 import { getQuestionDetailPath, skipsTaskDetail } from "./revisionNavigation";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 type QuestionType = "VOCAB_IMAGE" | "LISTENING" | "MATCHING" | "WRITING";
 
@@ -25,6 +26,14 @@ function TypeBadge({ type }: { type: string }) {
     return (
         <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold ${meta.color}`}>
             {meta.icon}{meta.label}
+        </span>
+    );
+}
+
+function OrderCell({ q }: { q: AdminQuestion }) {
+    return (
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-xs font-bold text-slate-500">
+            {q.orderIndex}
         </span>
     );
 }
@@ -77,6 +86,7 @@ export default function TaskDetailPage() {
     const [page, setPage]           = useState(1);
     const [orderDirty, setOrderDirty]   = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<AdminQuestion | null>(null);
 
     const dragIndexRef = useRef<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -158,7 +168,6 @@ export default function TaskDetailPage() {
     };
 
     const handleDelete = async (mongoId: string) => {
-        if (!confirm("Xóa câu hỏi này?")) return;
         try {
             await revisionApi.deleteQuestion(parseInt(topicId!), parseInt(taskId!), mongoId);
             toast.success("Đã xóa câu hỏi");
@@ -179,6 +188,7 @@ export default function TaskDetailPage() {
     const basePath = `/admin/revision-management/topics/${topicId}/tasks/${taskId}`;
 
     return (
+        <>
         <div className="space-y-6 p-6">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-sm text-gray-400">
@@ -285,11 +295,7 @@ export default function TaskDetailPage() {
                                     return (
                                         <tr key={q.mongoId} className="transition hover:bg-orange-50/40">
                                             {/* # order_index */}
-                                            <td className="px-5 py-3 text-center">
-                                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-xs font-bold text-slate-500">
-                                                    {q.orderIndex}
-                                                </span>
-                                            </td>
+                                            <td className="px-5 py-3 text-center"><OrderCell q={q} /></td>
                                             {/* Preview ảnh */}
                                             <td className="px-5 py-3">
                                                 {q.imageUrl ? (
@@ -356,7 +362,7 @@ export default function TaskDetailPage() {
                                                         className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleDelete(q.mongoId)} title="Xóa"
+                                                    <button onClick={() => setDeleteTarget(q)} title="Xóa"
                                                         className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -391,11 +397,7 @@ export default function TaskDetailPage() {
                                     return (
                                         <tr key={q.mongoId} className="transition hover:bg-orange-50/40">
                                             {/* # order_index */}
-                                            <td className="px-5 py-3 text-center align-top pt-4">
-                                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-xs font-bold text-slate-500">
-                                                    {q.orderIndex}
-                                                </span>
-                                            </td>
+                                            <td className="px-5 py-3 text-center align-top pt-4"><OrderCell q={q} /></td>
                                             {/* Preview: audio + ảnh + câu */}
                                             <td className="px-5 py-3">
                                                 <div className="flex flex-col gap-2">
@@ -475,7 +477,7 @@ export default function TaskDetailPage() {
                                                         className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleDelete(q.mongoId)} title="Xóa"
+                                                    <button onClick={() => setDeleteTarget(q)} title="Xóa"
                                                         className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -510,11 +512,7 @@ export default function TaskDetailPage() {
                                     return (
                                         <tr key={q.mongoId} className="transition hover:bg-orange-50/40 align-top">
                                             {/* # order_index */}
-                                            <td className="px-5 py-4 text-center">
-                                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-xs font-bold text-slate-500">
-                                                    {q.orderIndex}
-                                                </span>
-                                            </td>
+                                            <td className="px-5 py-4 text-center"><OrderCell q={q} /></td>
                                             {/* Câu hỏi bên trái */}
                                             <td className="px-5 py-4">
                                                 <div className="space-y-1.5">
@@ -574,7 +572,7 @@ export default function TaskDetailPage() {
                                                         className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleDelete(q.mongoId)} title="Xóa"
+                                                    <button onClick={() => setDeleteTarget(q)} title="Xóa"
                                                         className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -666,7 +664,7 @@ export default function TaskDetailPage() {
                                                         className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleDelete(q.mongoId)} title="Xóa"
+                                                    <button onClick={() => setDeleteTarget(q)} title="Xóa"
                                                         className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -705,5 +703,16 @@ export default function TaskDetailPage() {
                 </div>
             </div>
         </div>
+
+        <ConfirmModal
+            isOpen={deleteTarget !== null}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => {
+                if (deleteTarget) handleDelete(deleteTarget.mongoId);
+                setDeleteTarget(null);
+            }}
+            message={`Xóa câu hỏi #${deleteTarget?.orderIndex ?? ""}? Hành động này không thể hoàn tác.`}
+        />
+        </>
     );
 }

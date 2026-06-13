@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { revisionApi, type AdminTopicListItem, type SaveTopicRequest } from "@/services/revisionService";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 type Topic = AdminTopicListItem;
 type FilterKey = "all" | "active" | "inactive";
@@ -133,6 +134,7 @@ export default function TopicManagementPage() {
     const [filter, setFilter]       = useState<FilterKey>("all");
     const [page, setPage]           = useState(1);
     const [modal, setModal]         = useState<Topic | null | undefined>(undefined);
+    const [deleteTarget, setDeleteTarget] = useState<Topic | null>(null);
     const [orderDirty, setOrderDirty] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
 
@@ -203,7 +205,6 @@ export default function TopicManagementPage() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm("Xóa topic này? Tất cả tasks và câu hỏi sẽ bị xóa.")) return;
         try {
             await revisionApi.deleteTopic(id);
             toast.success("Đã xóa topic");
@@ -392,11 +393,10 @@ export default function TopicManagementPage() {
                                                         className="p-1.5 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-blue-600">
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleDelete(t.id)} title="Xóa"
+                                                    <button onClick={() => setDeleteTarget(t)} title="Xóa"
                                                         className="p-1.5 rounded-xl hover:bg-red-50 transition text-gray-400 hover:text-red-500">
                                                         <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
+                                                    </button>                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -438,6 +438,13 @@ export default function TopicManagementPage() {
             {modal !== undefined && (
                 <TopicModal topic={modal} onClose={() => setModal(undefined)} onSaved={handleSaved} />
             )}
+
+            <ConfirmModal
+                isOpen={deleteTarget !== null}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={() => { if (deleteTarget) handleDelete(deleteTarget.id); setDeleteTarget(null); }}
+                message={`Xóa topic "${deleteTarget?.title}"? Tất cả tasks và câu hỏi sẽ bị xóa vĩnh viễn.`}
+            />
         </div>
     );
 }
