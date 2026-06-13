@@ -150,4 +150,21 @@ export const revisionApi = {
 
     reorderQuestions: (topicId: number, taskId: number, items: { mongoId: string; orderIndex: number }[]) =>
         apiClient.put(`${BASE}/${topicId}/tasks/${taskId}/questions/reorder`, items),
+
+    // Media upload
+    uploadQuestionImage: (topicId: number, file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return apiClient.post<ApiResponse<string>>(`${BASE}/${topicId}/upload/image`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        }).then(r => r.data.data);
+    },
+
+    uploadQuestionAudio: (topicId: number, file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return apiClient.post<ApiResponse<string>>(`${BASE}/${topicId}/upload/audio`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        }).then(r => r.data.data);
+    },
 };

@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import {
     ArrowLeft, Loader2, Save, Plus, Trash2, Eye, Pencil,
     Image as ImageIcon, Music, AlignLeft, Layers, ChevronDown,
+    Upload, Link as LinkIcon, X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
@@ -101,8 +102,139 @@ function TextInput({ value, onChange, placeholder, className }: {
     );
 }
 
+// ── MediaUploadInput: cho phép nhập URL hoặc upload file ──
+type MediaType = "image" | "audio";
+
+function MediaUploadInput({
+    value,
+    onChange,
+    topicId,
+    mediaType,
+    placeholder,
+}: {
+    value: string;
+    onChange: (url: string) => void;
+    topicId: string | undefined;
+    mediaType: MediaType;
+    placeholder?: string;
+}) {
+    const [mode, setMode] = useState<"url" | "upload">("url");
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const acceptAttr = mediaType === "image"
+        ? "image/jpeg,image/png,image/webp,image/gif"
+        : "audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,.mp3,.wav,.ogg,.aac,.m4a";
+
+    async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file || !topicId) return;
+        setUploading(true);
+        try {
+            const url = mediaType === "image"
+                ? await revisionApi.uploadQuestionImage(parseInt(topicId), file)
+                : await revisionApi.uploadQuestionAudio(parseInt(topicId), file);
+            onChange(url);
+            toast.success("Upload thành công");
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(msg ?? "Upload thất bại");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    }
+
+    return (
+        <div className="space-y-2">
+            {/* Tab toggle */}
+            <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1 w-fit">
+                <button
+                    type="button"
+                    onClick={() => setMode("url")}
+                    className={[
+                        "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition",
+                        mode === "url"
+                            ? "bg-white text-orange-600 shadow-sm"
+                            : "text-gray-400 hover:text-gray-600",
+                    ].join(" ")}
+                >
+                    <LinkIcon className="w-3 h-3" /> Nhập URL
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setMode("upload")}
+                    className={[
+                        "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition",
+                        mode === "upload"
+                            ? "bg-white text-orange-600 shadow-sm"
+                            : "text-gray-400 hover:text-gray-600",
+                    ].join(" ")}
+                >
+                    <Upload className="w-3 h-3" /> Upload file
+                </button>
+            </div>
+
+            {/* URL input */}
+            {mode === "url" && (
+                <TextInput
+                    value={value}
+                    onChange={onChange}
+                    placeholder={placeholder ?? "https://..."}
+                />
+            )}
+
+            {/* Upload area */}
+            {mode === "upload" && (
+                <div className="space-y-2">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept={acceptAttr}
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
+                    <div
+                        className={[
+                            "flex items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-4 text-sm transition cursor-pointer",
+                            uploading
+                                ? "border-orange-200 bg-orange-50 text-orange-400"
+                                : "border-gray-200 bg-gray-50 text-gray-400 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-500",
+                        ].join(" ")}
+                        onClick={() => !uploading && fileInputRef.current?.click()}
+                    >
+                        {uploading ? (
+                            <><Loader2 className="w-4 h-4 animate-spin" /> Đang upload...</>
+                        ) : (
+                            <><Upload className="w-4 h-4" />
+                                {mediaType === "image"
+                                    ? "Chọn ảnh (JPG, PNG, WEBP, GIF — tối đa 5MB)"
+                                    : "Chọn audio (MP3, WAV, OGG, AAC — tối đa 10MB)"}
+                            </>
+                        )}
+                    </div>
+                    {/* Show current URL after upload */}
+                    {value && (
+                        <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                            <span className="flex-1 truncate text-xs text-gray-500">{value}</span>
+                            <button
+                                type="button"
+                                onClick={() => onChange("")}
+                                className="shrink-0 p-1 rounded text-gray-300 hover:text-red-400 transition"
+                                title="Xoá"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 //  VOCAB_IMAGE section 
-function VocabImageSection({ form, setForm, mode }: { form: QuestionForm; setForm: (f: QuestionForm) => void; mode: Mode }) {
+function VocabImageSection({ form, setForm, mode, topicId }: { form: QuestionForm; setForm: (f: QuestionForm) => void; mode: Mode; topicId?: string }) {
     const isView = mode === "view";
     return (
         <div className="space-y-4">
@@ -110,7 +242,13 @@ function VocabImageSection({ form, setForm, mode }: { form: QuestionForm; setFor
                 <FieldLabel>Image URL</FieldLabel>
                 {isView
                     ? <ReadonlyBox>{form.imageUrl || <span className="italic text-gray-400">Chưa có ảnh</span>}</ReadonlyBox>
-                    : <TextInput value={form.imageUrl} onChange={v => setForm({ ...form, imageUrl: v })} placeholder="https://..." />
+                    : <MediaUploadInput
+                        value={form.imageUrl}
+                        onChange={v => setForm({ ...form, imageUrl: v })}
+                        topicId={topicId}
+                        mediaType="image"
+                        placeholder="https://..."
+                    />
                 }
             </div>
             {form.imageUrl && (
@@ -133,7 +271,7 @@ function VocabImageSection({ form, setForm, mode }: { form: QuestionForm; setFor
 }
 
 //  LISTENING section
-function ListeningSection({ form, setForm, mode }: { form: QuestionForm; setForm: (f: QuestionForm) => void; mode: Mode }) {
+function ListeningSection({ form, setForm, mode, topicId }: { form: QuestionForm; setForm: (f: QuestionForm) => void; mode: Mode; topicId?: string }) {
     const isView = mode === "view";
     return (
         <div className="space-y-4">
@@ -141,7 +279,13 @@ function ListeningSection({ form, setForm, mode }: { form: QuestionForm; setForm
                 <FieldLabel>Image URL</FieldLabel>
                 {isView
                     ? <ReadonlyBox>{form.imageUrl || <span className="italic text-gray-400">Chưa có ảnh</span>}</ReadonlyBox>
-                    : <TextInput value={form.imageUrl} onChange={v => setForm({ ...form, imageUrl: v })} placeholder="https://..." />
+                    : <MediaUploadInput
+                        value={form.imageUrl}
+                        onChange={v => setForm({ ...form, imageUrl: v })}
+                        topicId={topicId}
+                        mediaType="image"
+                        placeholder="https://..."
+                    />
                 }
             </div>
             {form.imageUrl && (
@@ -160,7 +304,16 @@ function ListeningSection({ form, setForm, mode }: { form: QuestionForm; setForm
                         {form.audioUrl && <audio controls className="w-full" src={form.audioUrl} />}
                     </div>
                 ) : (
-                    <TextInput value={form.audioUrl} onChange={v => setForm({ ...form, audioUrl: v })} placeholder="https://....mp3" />
+                    <div className="space-y-2">
+                        <MediaUploadInput
+                            value={form.audioUrl}
+                            onChange={v => setForm({ ...form, audioUrl: v })}
+                            topicId={topicId}
+                            mediaType="audio"
+                            placeholder="https://....mp3"
+                        />
+                        {form.audioUrl && <audio controls className="w-full" src={form.audioUrl} />}
+                    </div>
                 )}
             </div>
             <div>
@@ -266,11 +419,12 @@ function buildAnswerJson(editableAnswers: Record<string, string[][]>): string {
     return JSON.stringify(cleaned);
 }
 
-function WritingSection({ form, setForm, mode, isMultiQuestion }: {
+function WritingSection({ form, setForm, mode, isMultiQuestion, topicId }: {
     form: QuestionForm;
     setForm: (f: QuestionForm) => void;
     mode: Mode;
     isMultiQuestion?: boolean;
+    topicId?: string;
 }) {
     const isView     = mode === "view";
     const categories = form.categories;
@@ -598,10 +752,18 @@ function WritingSection({ form, setForm, mode, isMultiQuestion }: {
                     {images.map((img, i) => (
                         <div key={i} className="space-y-2">
                             {!isView && (
-                                <div className="flex items-center gap-2">
-                                    <TextInput value={img.url} onChange={v => updateImg(i, v)} placeholder="https://..." className="flex-1" />
+                                <div className="flex items-start gap-2">
+                                    <div className="flex-1">
+                                        <MediaUploadInput
+                                            value={img.url}
+                                            onChange={v => updateImg(i, v)}
+                                            topicId={topicId}
+                                            mediaType="image"
+                                            placeholder="https://..."
+                                        />
+                                    </div>
                                     <button type="button" onClick={() => removeImg(i)}
-                                        className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
+                                        className="shrink-0 mt-2 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
                                         <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
@@ -1029,10 +1191,10 @@ export default function QuestionDetailPage() {
                     <hr className="border-gray-100" />
 
                     {/* Type-specific */}
-                    {form.questionType === "VOCAB_IMAGE" && <VocabImageSection form={form} setForm={setForm} mode={mode} />}
-                    {form.questionType === "LISTENING"   && <ListeningSection  form={form} setForm={setForm} mode={mode} />}
+                    {form.questionType === "VOCAB_IMAGE" && <VocabImageSection form={form} setForm={setForm} mode={mode} topicId={topicId} />}
+                    {form.questionType === "LISTENING"   && <ListeningSection  form={form} setForm={setForm} mode={mode} topicId={topicId} />}
                     {form.questionType === "MATCHING"    && <MatchingSection   form={form} setForm={setForm} mode={mode} />}
-                    {form.questionType === "WRITING"     && <WritingSection    form={form} setForm={setForm} mode={mode} isMultiQuestion={siblingQuestions.length > 1} />}
+                    {form.questionType === "WRITING"     && <WritingSection    form={form} setForm={setForm} mode={mode} isMultiQuestion={siblingQuestions.length > 1} topicId={topicId} />}
                 </div>
 
                 {/* Bottom actions */}
