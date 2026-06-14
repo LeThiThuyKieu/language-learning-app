@@ -38,6 +38,7 @@ public class PhoneticService {
                 a.getType().name(),
                 a.getExampleWord(),
                 a.getAudioUrl(),
+                a.getWordAudioUrl(),
                 a.getDisplayOrder()
         )).collect(Collectors.toList());
     }

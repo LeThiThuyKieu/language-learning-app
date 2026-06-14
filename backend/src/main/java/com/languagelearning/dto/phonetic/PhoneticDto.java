@@ -15,5 +15,6 @@ public class PhoneticDto {
     private String type;
     private String exampleWord;
     private String audioUrl;
+    private String wordAudioUrl;
     private Integer displayOrder;
 }
