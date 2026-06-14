@@ -146,7 +146,7 @@ export default function PhoneticPage() {
             isAllLevelsCompleted={false}
             showGeneralRevision={false}
             onToggleGeneralRevision={() => navigate("/general-revision")}
-            activeItem="alphabet"
+            activeItem="phonetic"
             onNavigate={(path) => navigate(path)}
             onLogout={() => {
               logout();
