@@ -23,8 +23,10 @@ import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
 import LearningManagementPage from "@/pages/Admin/learning_management/LearningManagementPage.tsx";
 import LearningQuestionDetailPage from "@/pages/Admin/learning_management/LearningQuestionDetailPage.tsx";
-import ReviewTopicsPage from "@/pages/Admin/review_management/ReviewTopicsPage.tsx";
-import ReviewTopicListPage from "@/pages/Admin/review_management/ReviewTopicListPage.tsx";
+import TopicManagementPage from "@/pages/Admin/revision_management/TopicManagementPage.tsx";
+import TopicDetailPage from "@/pages/Admin/revision_management/TopicDetailPage.tsx";
+import QuestionDetailPage from "@/pages/Admin/revision_management/QuestionDetailPage.tsx";
+import TaskDetailPage from "@/pages/Admin/revision_management/TaskDetailPage.tsx";
 import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
 import PhoneticPage from "@/pages/User/learn/PhoneticPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
@@ -168,8 +170,12 @@ function App() {
                         <Route path="learning/new" element={<LearningQuestionDetailPage/>} />
                         <Route path="learning/:id" element={<LearningQuestionDetailPage/>} />
                         <Route path="learning/:id/edit" element={<LearningQuestionDetailPage/>} />
-                        <Route path="review-topics" element={<ReviewTopicsPage/>} />
-                        <Route path="review-topics/:id" element={<ReviewTopicListPage/>} />
+                        <Route path="revision-management/topics" element={<TopicManagementPage/>} />
+                        <Route path="revision-management/topics/:id" element={<TopicDetailPage/>} />
+                        <Route path="revision-management/topics/:topicId/tasks/:taskId" element={<TaskDetailPage/>} />
+                        <Route path="revision-management/topics/:topicId/tasks/:taskId/questions/new" element={<QuestionDetailPage/>} />
+                        <Route path="revision-management/topics/:topicId/tasks/:taskId/questions/:questionId" element={<QuestionDetailPage/>} />
+                        <Route path="revision-management/topics/:topicId/tasks/:taskId/questions/:questionId/edit" element={<QuestionDetailPage/>} />
                         <Route path="profile" element={<AdminProfilePage/>} />
                     </Route>
                 </Routes>
