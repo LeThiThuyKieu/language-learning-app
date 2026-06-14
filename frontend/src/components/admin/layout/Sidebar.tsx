@@ -30,7 +30,7 @@ export default function Sidebar() {
 
     const isSupportActive  = location.pathname.startsWith("/admin/support-management");
     const isLearningActive = location.pathname.startsWith("/admin/learning") || location.pathname.startsWith("/admin/learn-progress");
-    const isRevisionActive = location.pathname.startsWith("/admin/general-revision-progress") || location.pathname.startsWith("/admin/review-topics");
+    const isRevisionActive = location.pathname.startsWith("/admin/general-revision-progress") || location.pathname.startsWith("/admin/review-topics") || location.pathname.startsWith("/admin/revision-management");
 
     const [supportOpen,      setSupportOpen]      = useState(isSupportActive);
     const [learningOpen,     setLearningOpen]     = useState(isLearningActive);
@@ -109,7 +109,8 @@ export default function Sidebar() {
                             {groupBtn("Revision", RotateCcw, isRevisionActive, revisionOpen, () => setRevisionOpen(v => !v))}
                             {revisionOpen && (
                                 <div className="mt-1 ml-4 pl-3 border-l-2 border-orange-100 space-y-1">
-                                    {subLink("/admin/general-revision-progress", BookOpen, "Progress")}
+                                    {subLink("/admin/general-revision-progress",        BookOpen,  "Progress")}
+                                    {subLink("/admin/revision-management/topics",       BookMarked, "Topics")}
                                 </div>
                             )}
                         </div>

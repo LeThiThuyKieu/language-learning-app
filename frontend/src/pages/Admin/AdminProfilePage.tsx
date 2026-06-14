@@ -5,7 +5,8 @@ import {
 } from "lucide-react";
 import { profileService } from "@/services/profileService";
 import { authService } from "@/services/authService";
-import { DEFAULT_AVATAR_URL, AVATAR_OPTIONS } from "@/constants/avatarOptions";
+import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
+import AvatarSelection from "@/components/user/profile/AvatarSelection";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 
@@ -19,9 +20,10 @@ interface AdminProfile {
     lastLogin: string | null;
 }
 
-function formatDate(iso: string | null | undefined) {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+function formatDate(dateStr: string | null | undefined) {
+    if (!dateStr) return "—";
+    const [day, month, year] = dateStr.split("-");
+    return `${day}/${month}/${year}`;
 }
 
 function formatLastLogin(iso: string | null | undefined) {
@@ -44,7 +46,6 @@ export default function AdminProfilePage() {
 
     // Avatar picker modal
     const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-    const [savingAvatar, setSavingAvatar] = useState(false);
 
     // Password modal
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -79,7 +80,6 @@ export default function AdminProfilePage() {
     const avatarUrl = profile?.avatarUrl || DEFAULT_AVATAR_URL;
     const displayName = profile?.fullName?.trim() || profile?.email || "Admin";
 
-
     const handleSaveName = async () => {
         const trimmed = nameDraft.trim();
         if (!trimmed) { toast.error("Tên không được để trống"); return; }
@@ -96,8 +96,8 @@ export default function AdminProfilePage() {
         }
     };
 
-    const handleSelectAvatar = async (url: string) => {
-        setSavingAvatar(true);
+    // Called by AvatarSelection when user picks a preset or uploads a custom image
+    const handleAvatarSelected = async (url: string) => {
         try {
             const updated = await profileService.updateMyProfile({ avatarUrl: url });
             setProfile((prev) => prev ? { ...prev, avatarUrl: updated.avatarUrl } : prev);
@@ -105,8 +105,6 @@ export default function AdminProfilePage() {
             toast.success("Đã cập nhật ảnh đại diện");
         } catch {
             toast.error("Cập nhật ảnh đại diện thất bại");
-        } finally {
-            setSavingAvatar(false);
         }
     };
 
@@ -149,7 +147,7 @@ export default function AdminProfilePage() {
 
     return (
         <div className="space-y-6 p-6" style={{ zoom: 1.1 }}>
-            {/* Breadcrumb + title */}
+            {/* Title */}
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Hồ sơ cá nhân</h1>
             </div>
@@ -157,7 +155,6 @@ export default function AdminProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* ── Left column ── */}
                 <div className="lg:col-span-2 space-y-4">
-                    {/* Main info card */}
                     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6">
                         <div className="flex gap-10" style={{ zoom: 1.1 }}>
                             {/* Avatar */}
@@ -165,9 +162,8 @@ export default function AdminProfilePage() {
                                 <img
                                     src={avatarUrl}
                                     alt={displayName}
-                                    className="w-100 h-100 rounded-full object-cover border-1 border-orange-50 shadow"
+                                    className="w-24 h-24 rounded-full object-cover border border-orange-50 shadow"
                                 />
-                                {/* Camera overlay — hiện khi hover */}
                                 <button
                                     type="button"
                                     onClick={() => setShowAvatarPicker(true)}
@@ -224,9 +220,7 @@ export default function AdminProfilePage() {
                                 {/* Email */}
                                 <div>
                                     <p className="text-xs text-slate-400 mb-0.5">Email</p>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm font-semibold text-slate-800">{profile?.email}</span>
-                                    </div>
+                                    <span className="text-sm font-semibold text-slate-800">{profile?.email}</span>
                                 </div>
                             </div>
                         </div>
@@ -253,7 +247,6 @@ export default function AdminProfilePage() {
 
                 {/* ── Right column ── */}
                 <div className="space-y-4">
-                    {/* Password card */}
                     <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5">
                         <div className="flex items-center gap-2 mb-4">
                             <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
@@ -362,41 +355,41 @@ export default function AdminProfilePage() {
                 </div>
             </div>
 
-            {/* ── Avatar picker modal ── */}
+            {/* ── Avatar picker modal — dùng AvatarSelection y chang user ── */}
             {showAvatarPicker && (
-                <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-                    <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-extrabold text-slate-900">Chọn ảnh đại diện</h3>
-                            <button onClick={() => setShowAvatarPicker(false)}
-                                className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
-                                <X className="w-4 h-4 text-gray-500" />
+                <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center sm:p-4">
+                    <div className="
+                        fixed inset-0
+                        w-screen h-[100dvh]
+                        bg-white
+                        flex flex-col
+                        sm:relative sm:inset-auto sm:w-full
+                        sm:max-w-2xl sm:h-auto
+                        sm:rounded-3xl
+                        sm:shadow-2xl sm:max-h-[92dvh]
+                        overflow-y-auto
+                    ">
+                        {/* Header */}
+                        <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+                            <h3 className="font-bold text-lg">Chọn ảnh đại diện</h3>
+                            <button
+                                onClick={() => setShowAvatarPicker(false)}
+                                className="p-2 text-2xl"
+                            >
+                                ✕
                             </button>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            {AVATAR_OPTIONS.map((url) => (
-                                <button key={url} type="button"
-                                    onClick={() => void handleSelectAvatar(url)}
-                                    disabled={savingAvatar}
-                                    className={`relative rounded-2xl border-2 p-1 transition hover:border-orange-400 disabled:opacity-50 ${
-                                        avatarUrl === url ? "border-orange-500 bg-orange-50" : "border-gray-100"
-                                    }`}
-                                >
-                                    <img src={url} alt="avatar" className="w-full aspect-square object-contain rounded-xl" />
-                                    {avatarUrl === url && (
-                                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center">
-                                            <Check className="w-3 h-3 text-white" />
-                                        </div>
-                                    )}
-                                </button>
-                            ))}
+
+                        {/* Content */}
+                        <div className="p-4 sm:p-6">
+                            <AvatarSelection
+                                onSelect={(url) => void handleAvatarSelected(url)}
+                                currentValue={avatarUrl}
+                            />
                         </div>
-                        {savingAvatar && <p className="mt-3 text-center text-sm text-orange-500 font-semibold">Đang lưu...</p>}
                     </div>
                 </div>
             )}
-
-            {/* ── Password modal ── */}
         </div>
     );
 }

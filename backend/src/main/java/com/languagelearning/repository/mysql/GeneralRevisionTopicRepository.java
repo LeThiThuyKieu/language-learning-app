@@ -10,7 +10,12 @@ import java.util.List;
 @Repository
 public interface GeneralRevisionTopicRepository extends JpaRepository<GeneralRevisionTopic, Integer> {
 
-    /** Lấy tất cả topic đang active, kèm tasks, sắp xếp theo order_index */
+    /**
+     * Lấy tất cả topic đang active, kèm tasks, sắp xếp theo order_index */
     @Query("SELECT DISTINCT t FROM GeneralRevisionTopic t LEFT JOIN FETCH t.tasks WHERE t.isActive = true ORDER BY t.orderIndex ASC")
     List<GeneralRevisionTopic> findAllActiveWithTasks();
+
+    /** Lấy tất cả topic (kể cả inactive), kèm tasks — dùng cho admin */
+    @Query("SELECT DISTINCT t FROM GeneralRevisionTopic t LEFT JOIN FETCH t.tasks ORDER BY t.orderIndex ASC")
+    List<GeneralRevisionTopic> findAllWithTasks();
 }
