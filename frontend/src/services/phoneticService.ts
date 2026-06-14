@@ -6,6 +6,7 @@ export interface PhoneticItem {
   type: "VOWEL" | "CONSONANT";
   exampleWord: string;
   audioUrl: string | null;
+  wordAudioUrl: string | null;
   displayOrder: number;
 }
 

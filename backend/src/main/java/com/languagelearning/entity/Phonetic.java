@@ -29,9 +29,13 @@ public class Phonetic {
     @Column(name = "example_word", nullable = false, length = 50)
     private String exampleWord;
 
-    // URL audio phát âm
+    // URL audio phát âm ký hiệu IPA
     @Column(name = "audio_url", length = 255)
     private String audioUrl;
+
+    // URL audio phát âm từ ví dụ
+    @Column(name = "word_audio_url", length = 255)
+    private String wordAudioUrl;
 
     // Thứ tự hiển thị trong nhóm
     @Column(name = "display_order", nullable = false)

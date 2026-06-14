@@ -117,6 +117,7 @@ export default function PhoneticPage() {
       audioRef.current.pause();
       audioRef.current = null;
     }
+    window.speechSynthesis?.cancel();
 
     // Bấm lại cùng card → dừng
     if (playingId === item.id) {
@@ -124,14 +125,55 @@ export default function PhoneticPage() {
       return;
     }
 
-    if (!item.audioUrl) return;
-
     setPlayingId(item.id);
-    const audio = new Audio(item.audioUrl);
-    audioRef.current = audio;
-    audio.play().catch(() => setPlayingId(null));
-    audio.onended = () => setPlayingId(null);
-    audio.onerror = () => setPlayingId(null);
+
+    /**
+     * Phát audio từ URL, trả về Promise resolve khi kết thúc/lỗi.
+     * Nếu url null → dùng Web Speech API.
+     */
+    function playAudio(url: string | null, fallbackText: string): Promise<void> {
+      return new Promise((resolve) => {
+        if (url) {
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          audio.onended = () => resolve();
+          audio.onerror = () => {
+            // fallback
+            if ("speechSynthesis" in window) {
+              window.speechSynthesis.cancel();
+              const utter = new SpeechSynthesisUtterance(fallbackText);
+              utter.lang = "en-US";
+              utter.rate = 0.8;
+              utter.onend = () => resolve();
+              window.speechSynthesis.speak(utter);
+            } else {
+              resolve();
+            }
+          };
+          audio.play().catch(() => audio.onerror?.(new Event("error")));
+        } else {
+          if ("speechSynthesis" in window) {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(fallbackText);
+            utter.lang = "en-US";
+            utter.rate = 0.8;
+            utter.onend = () => resolve();
+            window.speechSynthesis.speak(utter);
+          } else {
+            setTimeout(resolve, 600);
+          }
+        }
+      });
+    }
+
+    // Phát liên tiếp: âm IPA → từ ví dụ
+    (async () => {
+      await playAudio(item.audioUrl, item.symbol);
+      // Khoảng nghỉ nhỏ giữa 2 audio
+      await new Promise((r) => setTimeout(r, 250));
+      await playAudio(item.wordAudioUrl, item.exampleWord);
+      setPlayingId(null);
+    })();
   }
 
   if (!isAuthenticated) return <GuestPrompt />;
