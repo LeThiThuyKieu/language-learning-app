@@ -11,7 +11,7 @@ interface LearnSidebarProps {
   onNavigate: (path: string) => void;
   onLogout: () => void;
   /** Item đang active trong sidebar. Mặc định là "learn" */
-  activeItem?: "learn" | "leaderboard" | "phonetic" | "revision";
+  activeItem?: "learn" | "leaderboard" | "phonetic" | "revision" | "grammar";
 }
 
 function SidebarItem({
@@ -182,6 +182,21 @@ export default function LearnSidebar({
                   src="/icons/learn/phonetic.svg"
                   alt=""
                   className="h-8 w-8 shrink-0 object-contain"
+                />
+              }
+            />
+            <SidebarItem
+              label="Ngữ pháp"
+              active={activeItem === "grammar"}
+              onClick={() => onNavigate("/grammar")}
+              icon={
+                <img
+                  src="/icons/learn/grammar.svg"
+                  alt=""
+                  className="h-8 w-8 shrink-0 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
                 />
               }
             />

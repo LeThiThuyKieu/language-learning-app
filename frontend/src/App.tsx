@@ -29,6 +29,7 @@ import QuestionDetailPage from "@/pages/Admin/revision_management/QuestionDetail
 import TaskDetailPage from "@/pages/Admin/revision_management/TaskDetailPage.tsx";
 import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
 import PhoneticPage from "@/pages/User/learn/PhoneticPage.tsx";
+import GrammarPage from "@/pages/User/learn/GrammarPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
 import GeneralRevisionTaskPage from "@/pages/User/learn/general_revision/GeneralRevisionTaskPage.tsx";
@@ -120,6 +121,7 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="grammar" element={<GrammarPage/>}/>
                         <Route path="phonetic" element={<PhoneticPage/>}/>
                         <Route path="general-revision" element={<GeneralRevisionPage/>}/>
                         <Route path="leaderboard" element={<LeaderboardPage/>}/>
