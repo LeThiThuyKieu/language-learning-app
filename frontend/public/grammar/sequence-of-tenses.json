@@ -1,0 +1,131 @@
+[
+  {
+    "id": 1,
+    "slug": "sequence-of-tenses",
+    "title": "Sự phối hợp thì (The sequence of tenses)",
+    "description": "Dùng để diễn tả sự phối hợp về thì giữa mệnh đề chính (main clause) và một hoặc nhiều mệnh đề phụ (subordinate clause) trong câu.",
+    "sections": [
+      {
+        "id": "rules",
+        "title": "1. Các quy tắc phối hợp thì",
+        "items": [
+          {
+            "title": "Liên từ WHEN - Diễn tả hành động xảy ra nối tiếp nhau",
+            "description": "Hành động này xảy ra nối tiếp ngay sau hành động khác.",
+            "examples": [
+              { "en": "When students heard the bell, they stood up and left.", "vi": "Khi học sinh nghe thấy tiếng chuông, họ đứng dậy và ra về." },
+              { "en": "When I see him, I will give him your regards.", "vi": "Khi tôi gặp anh ấy, tôi sẽ chuyển cho anh ấy lời hỏi thăm của cậu." }
+            ]
+          },
+          {
+            "title": "Liên từ WHEN - Diễn tả hành động đang xảy ra thì có hành động khác xen vào",
+            "description": "Một hành động kéo dài đang diễn ra thì một hành động ngắn hơn cắt ngang.",
+            "examples": [
+              { "en": "When she was having a bath, she saw a mouse.", "vi": "Khi cô ấy đang tắm, cô ấy nhìn thấy một con chuột." },
+              { "en": "When you come tomorrow, they will be playing tennis.", "vi": "Khi bạn đến vào ngày mai, thì họ sẽ đang chơi tennis rồi." }
+            ]
+          },
+          {
+            "title": "Liên từ WHEN - Diễn tả hành động xảy ra xong rồi mới tới hành động khác",
+            "description": "Một hành động đã hoàn thành trước khi hành động kia bắt đầu.",
+            "examples": [
+              { "en": "Last night, when we arrived at the theater, they had sold out all the tickets.", "vi": "Tối hôm qua, khi chúng tôi đến nhà hát, họ đã bán hết vé rồi." },
+              { "en": "When you come back, I will have typed this email.", "vi": "Khi bạn quay lại, tôi sẽ đánh máy xong bức thư điện tử này." }
+            ]
+          },
+          {
+            "title": "Cấu trúc với BY + TIME",
+            "description": "Sự phối hợp thì dựa trên mốc thời gian bắt đầu bằng từ BY.",
+            "examples": [
+              { "en": "I had worked for the company for 30 years by the end of last month.", "vi": "Tôi đã làm việc cho công ty được 30 năm tính đến cuối tháng trước." },
+              { "en": "I will have worked for the company for 30 years by the end of next month.", "vi": "Tôi sẽ làm việc cho công ty được 30 năm tính đến cuối tháng sau." }
+            ]
+          },
+          {
+            "title": "Cấu trúc với AT + GIỜ / AT THIS TIME",
+            "description": "Nhấn mạnh tính chính xác tại một thời điểm cụ thể.",
+            "examples": [
+              { "en": "At 3 p.m yesterday, we were learning English at school.", "vi": "Vào lúc 3 giờ chiều ngày hôm qua, chúng tôi đang học tiếng Anh ở trường." },
+              { "en": "At 3 p.m tomorrow, we will be learning English at school.", "vi": "Vào lúc 3 giờ chiều ngày mai, chúng tôi sẽ đang học tiếng Anh ở trường." }
+            ]
+          },
+          {
+            "title": "Cấu trúc phối hợp với SINCE",
+            "description": "Hành động ở mệnh đề chính kéo dài từ quá khứ chỉ mốc thời gian sau since.",
+            "examples": [
+              { "en": "I haven't seen my old friends since we left school.", "vi": "Tôi đã không gặp lại những người bạn cũ kể từ khi chúng tôi ra trường." }
+            ]
+          },
+          {
+            "title": "Cấu trúc với UNTIL / AS SOON AS",
+            "description": "Diễn tả hành động kéo dài cho đến khi hoặc ngay khi một hành động khác diễn ra.",
+            "examples": [
+              { "en": "I will wait until you come back.", "vi": "Tôi sẽ đợi cho đến khi em quay trở lại." },
+              { "en": "I will call you as soon as I have finished my work.", "vi": "Anh sẽ gọi cho em ngay khi anh xong việc." },
+              { "en": "Wait here until I come back.", "vi": "Đợi ở đây cho đến khi mình quay lại nha!" },
+              { "en": "Don't leave the room until I come back.", "vi": "Đừng rời khỏi phòng cho đến khi mình quay lại nhé!" }
+            ]
+          },
+          {
+            "title": "Cấu trúc với BY THE TIME",
+            "description": "Diễn tả một hành động đã hoàn tất tính tới một thời điểm cụ thể ở mệnh đề phụ.",
+            "examples": [
+              { "en": "By the time you went to the cinema, the film had already started.", "vi": "Vào lúc bạn đến rạp chiếu phim, bộ phim đã bắt đầu." },
+              { "en": "By the time you return, we will have bought a new house.", "vi": "Vào lúc bạn quay trở về, chúng tôi sẽ đã mua được một ngôi nhà mới rồi." }
+            ]
+          },
+          {
+            "title": "Phân biệt Tương lai đơn (WILL) và Tương lai gần (BE GOING TO)",
+            "description": "So sánh cách quyết định, lên kế hoạch hoặc đưa ra dự đoán.",
+            "examples": [
+              { "en": "George phoned while you were out. OK. I'll phone him back.", "vi": "George đã gọi điện thoại lúc cậu ra ngoài đấy. Được rồi. Tớ sẽ gọi lại cho anh ấy." },
+              { "en": "I think he will get the job.", "vi": "Tớ nghĩ anh ấy sẽ nhận được công việc đó." },
+              { "en": "I bought some paint. I am going to paint my house.", "vi": "Tôi đã mua một ít sơn. Tôi định sẽ sơn lại nhà của mình." },
+              { "en": "The sky is very cloudy. It is going to rain.", "vi": "Bầu trời có rất nhiều mây đen. Trời sắp mưa rồi." }
+            ]
+          },
+          {
+            "title": "Cấu trúc với THE FIRST / LAST TIME",
+            "description": "Sự phối hợp thì dựa trên số lần hoặc lần cuối cùng trải nghiệm một việc.",
+            "examples": [
+              { "en": "This is the first time I have ever met such a handsome boy.", "vi": "Đây là lần đầu tiên tôi gặp một anh chàng đẹp trai đến thế." },
+              { "en": "This is the last time I talked with you about that matter.", "vi": "Đây là lần cuối cùng tôi nói với bạn về vấn đề này." }
+            ]
+          },
+          {
+            "title": "Sự phối hợp thì trong câu so sánh hơn nhất",
+            "description": "Mệnh đề phụ thuộc bổ nghĩa cho danh từ có tính từ so sánh hơn nhất.",
+            "examples": [
+              { "en": "This is the most embarrassing experience I have ever had.", "vi": "Đây là trải nghiệm bối rối nhất mà tôi từng có." },
+              { "en": "This was the most embarrassing experience I had ever had.", "vi": "Đó đã là trải nghiệm bối rối nhất mà tôi từng có." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức phối hợp",
+        "positive": [
+          { "type": "WHEN (Quá khứ nối tiếp)", "formula": "WHEN + S + V(quá khứ đơn), S + V(quá khứ đơn)" },
+          { "type": "WHEN (Tương lai nối tiếp)", "formula": "WHEN + S + V(hiện tại đơn), S + V(tương lai đơn)" },
+          { "type": "WHEN (Quá khứ xen vào)", "formula": "WHEN + S + V(quá khứ tiếp diễn), S + V(quá khứ đơn)" },
+          { "type": "WHEN (Tương lai xen vào)", "formula": "WHEN + S + V(hiện tại đơn), S + V(tương lai tiếp diễn)" },
+          { "type": "WHEN (Quá khứ trước sau)", "formula": "WHEN + S + V(quá khứ đơn), S + V(quá khứ hoàn thành)" },
+          { "type": "WHEN (Tương lai trước sau)", "formula": "WHEN + S + V(hiện tại đơn), S + V(tương lai hoàn thành)" },
+          { "type": "BY + Quá khứ", "formula": "S + V(quá khứ hoàn thành)" },
+          { "type": "BY + Tương lai", "formula": "S + V(tương lai hoàn thành)" },
+          { "type": "AT + Quá khứ", "formula": "S + V(quá khứ tiếp diễn)" },
+          { "type": "AT + Tương lai", "formula": "S + V(tương lai tiếp diễn)" },
+          { "type": "SINCE", "formula": "S + V(hiện tại hoàn thành) + since + S + V(quá khứ đơn)" },
+          { "type": "UNTIL / AS SOON AS", "formula": "S + V(tương lai đơn) / Câu mệnh lệnh + UNTIL/AS SOON AS + S + V(hiện tại đơn / hiện tại hoàn thành)" },
+          { "type": "BY THE TIME (Quá khứ)", "formula": "BY THE TIME + S + V(quá khứ đơn), S + V(quá khứ hoàn thành)" },
+          { "type": "BY THE TIME (Hiện tại)", "formula": "BY THE TIME + S + V(hiện tại đơn), S + V(tương lai hoàn thành)" },
+          { "type": "THE FIRST TIME", "formula": "THIS/IT IS THE FIRST/SECOND... TIME + S + V(hiện tại hoàn thành)" },
+          { "type": "THE LAST TIME", "formula": "THIS/IT IS THE LAST TIME + S + V(quá khứ đơn)" },
+          { "type": "So sánh nhất (Hiện tại)", "formula": "S + V(hiện tại đơn) + so sánh nhất + S + V(hiện tại hoàn thành)" },
+          { "type": "So sánh nhất (Quá khứ)", "formula": "S + V(quá khứ đơn) + so sánh nhất + S + V(quá khứ hoàn thành)" }
+        ]
+      }
+    ]
+  }
+]

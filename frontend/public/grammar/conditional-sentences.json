@@ -1,0 +1,108 @@
+[
+  {
+    "id": 1,
+    "slug": "conditional-sentences",
+    "title": "Câu điều kiện (Conditional Sentences)",
+    "description": "Dạng câu dùng để diễn tả một giả thiết về một sự việc, hành động có thể xảy ra hoặc không thể xảy ra ở hiện tại, tương lai hoặc quá khứ.",
+    "sections": [
+      {
+        "id": "concept",
+        "title": "Câu điều kiện là gì?",
+        "items": [
+          {
+            "description": "Câu điều kiện thường gồm có hai phần (hai mệnh đề): Mệnh đề chỉ điều kiện (hay mệnh đề IF) là mệnh đề phụ; Mệnh đề chỉ kết quả là mệnh đề chính. Hai mệnh đề này có thể thay đổi vị trí cho nhau. Nếu mệnh đề IF đứng trước thì giữa hai mệnh đề phải có dấu phẩy, ngược lại nếu mệnh đề chính đứng trước thì không cần dấu phẩy.",
+            "examples": [
+              { "en": "If it rains, I will stay at home.", "vi": "Nếu trời mưa, tôi sẽ ở nhà." },
+              { "en": "I will stay at home if it rains.", "vi": "Tôi sẽ ở nhà nếu trời mưa." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "basic-types",
+        "title": "Các loại câu điều kiện cơ bản",
+        "items": [
+          {
+            "rule": "Câu điều kiện loại 0 (Type 0): Diễn tả một sự thật hiển nhiên, một quy luật tự nhiên hoặc một thói quen.",
+            "formula": "If + S + V(s/es), S + V(s/es)",
+            "example": { "en": "If you heat ice, it melts.", "vi": "Nếu bạn đun nóng đá, nó sẽ tan chảy." }
+          },
+          {
+            "rule": "Câu điều kiện loại 1 (Type 1): Diễn tả điều kiện có thể xảy ra ở hiện tại hoặc tương lai.",
+            "formula": "If + S + V(s/es), S + will/can/may + V-inf",
+            "example": { "en": "If I have enough money, I will buy that car.", "vi": "Nếu tôi có đủ tiền, tôi sẽ mua chiếc xe đó." }
+          },
+          {
+            "rule": "Câu điều kiện loại 2 (Type 2): Diễn tả điều kiện không có thật ở hiện tại hoặc tương lai (giả thiết trái ngược với thực tế hiện tại). Lưu ý: Động từ to be chia là 'were' cho tất cả các ngôi.",
+            "formula": "If + S + V2/ed / Were, S + would/could/should + V-inf",
+            "example": { "en": "If I were you, I would accept their invitation.", "vi": "Nếu tôi là bạn, tôi sẽ nhận lời mời của họ." }
+          },
+          {
+            "rule": "Câu điều kiện loại 3 (Type 3): Diễn tả điều kiện không có thật trong quá khứ (giả thiết trái ngược với thực tế trong quá khứ).",
+            "formula": "If + S + had + V3/ed, S + would/could/should + have + V3/ed",
+            "example": { "en": "If she had studied harder, she would have passed the exam.", "vi": "Nếu cô ấy học hành chăm chỉ hơn, cô ấy đã đỗ kỳ thi rồi." }
+          }
+        ]
+      },
+      {
+        "id": "mixed-conditionals",
+        "title": "Câu điều kiện hỗn hợp (Mixed Conditionals)",
+        "description": "Dạng câu kết hợp giữa các loại câu điều kiện nhằm diễn tả mối quan hệ giả thiết - kết quả chéo thời gian.",
+        "items": [
+          {
+            "rule": "Hỗn hợp loại 1: Giả thiết trái ngược với quá khứ (If loại 3), nhưng kết quả trái ngược với hiện tại (Main loại 2). Dấu hiệu thường có các trạng từ: now, at present, today...",
+            "formula": "If + S + had + V3/ed, S + would/could + V-inf (+ now)",
+            "example": { "en": "If I had won the lottery yesterday, I would be rich now.", "vi": "Nếu hôm qua tôi trúng số thì bây giờ tôi đã giàu rồi." }
+          },
+          {
+            "rule": "Hỗn hợp loại 2: Giả thiết trái ngược với một sự thật ở hiện tại (If loại 2), nhưng kết quả lại trái ngược với quá khứ (Main loại 3).",
+            "formula": "If + S + V2/ed / Were, S + would/could + have + V3/ed",
+            "example": { "en": "If I weren't afraid of spiders, I would have picked it up.", "vi": "Nếu tôi không sợ nhện thì tôi đã nhặt nó lên rồi." }
+          }
+        ]
+      },
+      {
+        "id": "inversion",
+        "title": "Đảo ngữ của câu điều kiện (Inversion in Conditional Sentences)",
+        "items": [
+          {
+            "rule": "Đảo ngữ loại 1: Thay 'If' bằng 'Should'. Nếu câu có động từ thường thì mượn 'Should' và đưa động từ về nguyên thể.",
+            "formula": "Should + S + V-inf, S + will/can + V-inf",
+            "example": { "en": "Should you see him, tell him to call me. (If you see him...)", "vi": "Nếu bạn có gặp anh ấy, bảo anh ấy gọi cho tôi nhé." }
+          },
+          {
+            "rule": "Đảo ngữ loại 2: Đưa 'Were' lên đầu câu thay 'If'. Nếu có động từ thường thì dùng cấu trúc 'Were + S + to + V-inf'.",
+            "formulas": [
+              "Were + S + (danh từ/tính từ), S + would + V-inf",
+              "Were + S + to + V-inf, S + would + V-inf"
+            ],
+            "examples": [
+              { "en": "Were I a bird, I would fly.", "vi": "Nếu tôi là một chú chim, tôi sẽ bay." },
+              { "en": "Were I to learn English, I would go to London.", "vi": "Nếu tôi học tiếng Anh, tôi sẽ đi Luân Đôn." }
+            ]
+          },
+          {
+            "rule": "Đảo ngữ loại 3: Đưa trợ động từ 'Had' lên đầu câu thay cho 'If'.",
+            "formula": "Had + S + V3/ed, S + would have + V3/ed",
+            "example": { "en": "Had we known the truth, we wouldn't have blamed him.", "vi": "Nếu chúng tôi biết sự thật, chúng tôi đã không trách móc anh ấy." }
+          }
+        ]
+      },
+      {
+        "id": "special-structures",
+        "title": "Một số cấu trúc khác tương đương với IF",
+        "items": [
+          { "rule": "Unless = If ... not (Trừ khi, nếu không)", "example": { "en": "Unless you hurry, you will be late. (= If you don't hurry...)", "vi": "Trừ khi bạn khẩn trương lên, nếu không bạn sẽ bị muộn." } },
+          { "rule": "Provided (that) / Providing (that) / As long as / So long as (Với điều kiện là, miễn là)", "example": { "en": "You can borrow my car provided that you drive carefully.", "vi": "Bạn có thể mượn xe của tôi với điều kiện là bạn phải lái xe cẩn thận." } },
+          { "rule": "In case (Trong trường hợp, phòng khi) - Diễn tả việc làm để chuẩn bị cho một tình huống có thể xảy ra.", "example": { "en": "Take an umbrella in case it rains.", "vi": "Hãy mang theo ô phòng khi trời mưa." } },
+          { "rule": "But for / Without + N/V-ing (Nếu không vì, nếu không có) - Thường dùng thay cho mệnh đề IF loại 2 hoặc loại 3.", "examples": [
+            { "en": "But for your help, I couldn't finish this project. (Loại 2)", "vi": "Nếu không vì sự giúp đỡ của bạn, tôi không thể hoàn thành dự án này." },
+            { "en": "Without your financial support, I wouldn't have succeeded. (Loại 3)", "vi": "Nếu không có sự hỗ trợ tài chính của bạn, tôi đã không thể thành công." }
+          ] },
+          { "rule": "Otherwise (Nếu không thì) - Dùng để nối hai mệnh đề, mệnh đề sau kí thác một hậu quả trái với giả định trước.", "example": { "en": "You must study hard; otherwise, you will fail the exam.", "vi": "Bạn phải học hành chăm chỉ; nếu không thì bạn sẽ trượt kỳ thi." } },
+          { "rule": "Suppose / Supposing (that) (Giả sử như)", "example": { "en": "Supposing that you lost your job, what would you do?", "vi": "Giả sử như bạn mất việc, bạn sẽ làm gì?" } }
+        ]
+      }
+    ]
+  }
+]

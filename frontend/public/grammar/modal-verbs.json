@@ -1,0 +1,123 @@
+[
+  {
+    "id": 1,
+    "slug": "modal-verbs",
+    "title": "Động từ khuyết thiếu (Modal Verbs)",
+    "description": "Động từ khuyết thiếu là động từ không chỉ hành động mà giúp bổ nghĩa cho động từ chính. Chúng dùng chung cho tất cả các ngôi, không chia theo thì và động từ theo sau luôn giữ nguyên thể.",
+    "sections": [
+      {
+        "id": "rules",
+        "title": "1. Cách dùng các Động từ khuyết thiếu cơ bản",
+        "items": [
+          {
+            "title": "CAN / COULD - Diễn tả khả năng",
+            "description": "Can diễn tả khả năng ở hiện tại hoặc tương lai; Could diễn tả khả năng chung trong quá khứ. Cả hai đều dùng được trong câu hỏi đề nghị, xin phép, yêu cầu.",
+            "examples": [
+              { "en": "I can swim.", "vi": "Tôi có thể bơi." },
+              { "en": "It can rain.", "vi": "Trời có thể mưa." },
+              { "en": "My brother could speak English when he was five.", "vi": "Anh trai tôi đã có thể nói tiếng Anh khi anh ấy 5 tuổi." },
+              { "en": "Could you please wait a moment?", "vi": "Bạn có thể đợi một lát được không?" }
+            ]
+          },
+          {
+            "title": "MUST / MUSTN'T - Sự bắt buộc và cấm đoán",
+            "description": "Must diễn đạt sự cần thiết, bắt buộc ở hiện tại hoặc tương lai, hoặc đưa ra suy luận chắc chắn. Mustn't chỉ sự cấm đoán.",
+            "examples": [
+              { "en": "You must get up early in the morning.", "vi": "Bạn phải dậy sớm vào buổi sáng." },
+              { "en": "You must be tired after working hard.", "vi": "Bạn chắc chắn sẽ mệt sau khi làm việc chăm chỉ." },
+              { "en": "You mustn't smoke here.", "vi": "Bạn không được hút thuốc ở đây." }
+            ]
+          },
+          {
+            "title": "HAVE TO - Sự cần thiết do khách quan",
+            "description": "Diễn tả hành động bắt buộc phải làm do yếu tố khách quan như luật lệ, nội quy, quy định.",
+            "examples": [
+              { "en": "I have to wear helmets when driving a motorbike.", "vi": "Tôi phải đội mũ bảo hiểm khi đi xe máy." }
+            ]
+          },
+          {
+            "title": "MAY / MIGHT - Sự khả thi hoặc xin phép",
+            "description": "Diễn tả điều gì có thể xảy ra ở hiện tại hoặc quá khứ nhưng không chắc chắn. Dùng để xin phép một cách trang trọng.",
+            "examples": [
+              { "en": "It may be a bomb.", "vi": "Nó có thể là một quả bom." },
+              { "en": "She might not be in his house.", "vi": "Cô ấy có lẽ không ở nhà anh ta nữa." },
+              { "en": "May I turn on the TV?", "vi": "Tôi có thể bật TV lên được không?" }
+            ]
+          },
+          {
+            "title": "WILL / WOULD - Dự đoán và câu đề nghị",
+            "description": "Will dùng để dự đoán tương lai hoặc đưa ra quyết định tại thời điểm nói. Will/Would dùng trong câu đề nghị, lời mời.",
+            "examples": [
+              { "en": "Tomorrow will be sunny.", "vi": "Ngày mai trời sẽ nắng." },
+              { "en": "Did you buy sugar? Oh, sorry. I'll go now.", "vi": "Bạn có mua đường không? Ồ, xin lỗi. Giờ mình sẽ đi mua." },
+              { "en": "Would you like a cake?", "vi": "Bạn có muốn ăn bánh ngọt không?" }
+            ]
+          },
+          {
+            "title": "SHALL / SHOULD / OUGHT TO - Lời khuyên và bổn phận",
+            "description": "Shall dùng để xin ý kiến/lời khuyên (với ngôi I, We). Should dùng đưa ra lời khuyên, ý kiến hoặc suy đoán. Ought to chỉ sự bắt buộc mạnh hơn Should nhưng nhẹ hơn Must.",
+            "examples": [
+              { "en": "Where shall we eat tonight?", "vi": "Tối nay chúng ta ăn ở đâu?" },
+              { "en": "You should send this report by 8th September.", "vi": "Bạn nên gửi báo cáo này trước ngày 8 tháng Chín." },
+              { "en": "You ought not to eat candy at night.", "vi": "Bạn không nên ăn kẹo vào buổi tối." }
+            ]
+          },
+          {
+            "title": "Phân biệt CAN và BE ABLE TO trong quá khứ",
+            "description": "Could dùng cho khả năng chung chung trong quá khứ. Was/Were able to dùng khi xoay xở thực hiện được một hành động cụ thể trong một hoàn cảnh nhất định.",
+            "examples": [
+              { "en": "In spite of his broken leg, he was able to get out of the burning house.", "vi": "Mặc dù gãy chân, anh ấy vẫn có thể thoát ra khỏi ngôi nhà đang cháy." }
+            ]
+          },
+          {
+            "title": "NEED - Động từ thường và Động từ khuyết thiếu",
+            "description": "Khi là động từ khuyết thiếu, NEED chỉ dùng ở thể phủ định (needn't) và nghi vấn, động từ theo sau dạng nguyên thể không 'to'. Khi là động từ thường, cần mượn trợ động từ và đi với 'to-V'.",
+            "examples": [
+              { "en": "She needs to see you.", "vi": "Cô ấy cần gặp bạn. (Động từ thường)" },
+              { "en": "You needn't go yet, need you?", "vi": "Bạn không cần phải đi đúng không? (Động từ khuyết thiếu)" },
+              { "en": "Your shoes need cleaning / to be cleaned.", "vi": "Giày của bạn cần được giặt. (Cấu trúc bị động)" }
+            ]
+          },
+          {
+            "title": "DARE - Dám, cả gan",
+            "description": "Có thể đóng vai trò là động từ khuyết thiếu hoặc động từ thường. Thành ngữ 'I dare say' nghĩa là 'có thể, có lẽ'.",
+            "examples": [
+              { "en": "Dare he go and speak to her?", "vi": "Anh ta dám đến và nói với cô ấy sao? (Động từ khuyết thiếu)" },
+              { "en": "He doesn't dare to answer my letter.", "vi": "Anh ta không dám trả lời thư của tôi. (Động từ thường)" }
+            ]
+          },
+          {
+            "title": "Thể hoàn thành với động từ khuyết thiếu (Modal Perfect)",
+            "description": "Cấu trúc 'Modal Verb + have + Vp2' dùng để đưa ra các suy đoán hoặc nuối tiếc về một sự việc trong quá khứ.",
+            "examples": [
+              { "en": "The grass is wet. It must have rained last night.", "vi": "Cỏ ướt. Chắc là tối qua có mưa. (Suy đoán logic quá khứ)" },
+              { "en": "He should have told the truth about what he saw.", "vi": "Anh ấy lẽ ra đã phải nói thật những gì mà anh ấy đã trông thấy. (Việc lẽ ra nên làm nhưng không làm)" },
+              { "en": "It can't have been Mary's sister because she doesn't have a sister.", "vi": "Người đó không thể là chị gái Mary được, vì cô ấy làm gì có chị gái. (Phủ định chắc chắn dựa trên căn cứ)" },
+              { "en": "We needn't have put up the tent.", "vi": "Chúng ta lẽ ra không cần thiết phải dựng lều. (Việc làm không cần thiết nhưng đã làm)" },
+              { "en": "She might have been ill. I'm not sure.", "vi": "Cô ấy có thể đã bị ốm. Tôi không chắc. (Sự việc có thể đã xảy ra nhưng không chắc)" },
+              { "en": "He could have gotten the ticket for the concert last night.", "vi": "Lẽ ra anh ấy đã có thể có được tấm vé đi xem hoà nhạc tối qua. (Việc có lẽ đã xảy ra nhưng thực tế là không)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức cấu trúc cốt lõi",
+        "positive": [
+          { "type": "Thể hiện tại / tương lai chung", "formula": "S + Modal Verb (can/must/should/may...) + V(bare)" },
+          { "type": "Thể phủ định chung", "formula": "S + Modal Verb + NOT + V(bare)" },
+          { "type": "Need (Động từ thường)", "formula": "S + need(s/ed) + to + V(bare) | S + don't/doesn't/didn't + need + to + V(bare)" },
+          { "type": "Need (Bị động với vật)", "formula": "S(vật) + need + V-ing / to be + Vp2" },
+          { "type": "Need (Động từ khuyết thiếu)", "formula": "S + needn't + V(bare) | Need + S + V(bare)?" },
+          { "type": "Lời khuyên với Should", "formula": "I think you should + V(bare) | I don't think you should + V(bare)" },
+          { "type": "Must have Vp2", "formula": "S + must + have + Vp2" },
+          { "type": "Should have Vp2", "formula": "S + should + have + Vp2" },
+          { "type": "Can't have Vp2", "formula": "S + can't + have + Vp2" },
+          { "type": "Needn't have Vp2", "formula": "S + needn't + have + Vp2" },
+          { "type": "May / Might have Vp2", "formula": "S + may/might + have + Vp2" },
+          { "type": "Could have Vp2", "formula": "S + could + have + Vp2" }
+        ]
+      }
+    ]
+  }
+]

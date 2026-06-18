@@ -1,0 +1,76 @@
+[
+  {
+    "id": 1,
+    "slug": "passive-voices",
+    "title": "Câu bị động (Passive Voices)",
+    "description": "Câu bị động là loại câu được sử dụng khi chúng ta muốn nhấn mạnh vào bản thân một hành động, chủ thể thực hiện hành động hay tác nhân gây ra hành động dù là ai hay vật gì đó không quá quan trọng.",
+    "sections": [
+      {
+        "id": "conditions",
+        "title": "Điều kiện và định nghĩa liên quan",
+        "description": "Điều kiện để có thể biến đổi một câu từ chủ động sang câu bị động là động từ trong câu chủ động phải là ngoại động từ (Transitive Verb).",
+        "items": [
+          {
+            "type": "Ngoại động từ (Transitive Verb)",
+            "description": "Diễn tả hành động tác động trực tiếp lên người hoặc vật, nó luôn được theo sau bởi một tân ngữ. Nếu thiếu tân ngữ, câu sẽ không hoàn chỉnh.",
+            "words": ["He bought a bunch of flowers. (Anh ta mua một bó hoa hồng.)"]
+          },
+          {
+            "type": "Nội động từ (Intransitive Verb)",
+            "description": "Diễn tả hành động dừng lại với người nói hay người thực hiện nó. Nội động từ không cần có tân ngữ trực tiếp đi kèm theo. Nếu có tân ngữ thì phải có giới từ đi trước; tân ngữ này được gọi là tân ngữ của giới từ (prepositional object), không phải là tân ngữ trực tiếp.",
+            "words": ["He has just left. (Anh ta vừa đi rồi.)"]
+          }
+        ]
+      },
+      {
+        "id": "transformation-rules",
+        "title": "Quy trình và quy tắc chuyển đổi",
+        "description": "Các bước cơ bản để chuyển đổi từ câu chủ động sang câu bị động.",
+        "formulas": [
+          "Bước 1: Xác định tân ngữ trong câu chủ động (tân ngữ đứng sau động từ chính của câu).",
+          "Bước 2: Lấy tân ngữ của câu chủ động xuống làm chủ ngữ của câu bị động.",
+          "Bước 3: Động từ ở câu bị động chia giống thì với động từ ở câu chủ động, theo công thức (BE + VP2).",
+          "Bước 4: Đặt 'by' trước chủ ngữ của câu chủ động rồi đặt chúng xuống cuối câu bị động hoặc trước trạng từ thời gian."
+        ],
+        "transformation_rules": [
+          "Nếu chủ ngữ trong câu chủ động là: people, everyone, someone, anyone, no one, thì được bỏ đi trong câu bị động.",
+          "Nếu chủ ngữ trong câu chủ động là: I, you, we, they, he, she thì có thể bỏ đi trong câu bị động nếu ta không muốn đề cập tới chủ thể gây ra hành động.",
+          "Nếu chủ ngữ của câu chủ động là người hoặc vật trực tiếp gây ra hành động thì dùng 'by', nhưng gián tiếp gây ra hành động thì dùng 'with'.",
+          "Các trạng từ chỉ cách thức thường được đặt trước động từ ở dạng phân từ hai (Vp2) trong câu bị động."
+        ]
+      },
+      {
+        "id": "special-structures",
+        "title": "Cấu trúc bị động của các dạng đặc biệt",
+        "description": "Các công thức biến đổi cấu trúc nâng cao trong câu bị động.",
+        "formulas": [
+          "Bị động với động từ chỉ quan điểm (think, say, believe...): S1 + V1 + THAT + S2 + V2 + ... -> IT + V1(bị động) + THAT + S2 + V2 + ... -> S2 + V1(bị động) + TO + V2(bare)/HAVE + VP2",
+          "Bị động chỉ giác quan (Dạng 1): S + V + O + V(bare) -> S + be + Vp2 + to + V(bare)",
+          "Bị động chỉ giác quan (Dạng 2): S + V + O + V-ing -> S + be + Vp2 + V-ing",
+          "Bị động của MAKE: S + MAKE + O + V(bare) -> S + BE + MADE + TO + V(bare)",
+          "Bị động của LET: S + LET + O + V(bare) -> S + BE + ALLOWED/PERMITTED + TO + V(bare)",
+          "Bị động TO V (S != O2): S + V + O1 + TO + V + O2 -> S + V + O2 + TOBE + VP2 + BY + O1",
+          "Bị động V-ING (S = O2): S + V + O1 + V-ing + O2 -> S + V + BEING + VP2 + BY + O1",
+          "Thể nhờ bảo: S + HAVE + SB + V(bare) / S + GET + SB + TO V(bare) -> S + HAVE/GET + ST + VP2",
+          "Câu mệnh lệnh: V/DON'T + V + O -> S + SHOULD/MUST + (NOT) + BE + VP2 hoặc LET/DON'T LET + O + BE + VP2",
+          "Bị động của NEED: Sb + need + to V -> St + need + V-ing = St + need + to be + Vp2"
+        ]
+      },
+      {
+        "id": "tense-formulas",
+        "title": "Công thức bị động theo các thì",
+        "table_data": [
+          { "conjunction": "Present simple tense", "usage": "Chủ động: S + V(n/đ)/V(s/es)", "example": "Bị động: S + am/is/are + Vp2" },
+          { "conjunction": "Past simple tense", "usage": "Chủ động: S + Ved/V(cột 2)", "example": "Bị động: S + was/were + Vp2" },
+          { "conjunction": "Present continuous tense", "usage": "Chủ động: S + am/is/are + V-ing", "example": "Bị động: S + am/is/are + being + Vp2" },
+          { "conjunction": "Past continuous tense", "usage": "Chủ động: S + was/were + V-ing", "example": "Bị động: S + was/were + being + Vp2" },
+          { "conjunction": "Present perfect tense", "usage": "Chủ động: S + have/has + Vp2", "example": "Bị động: S + have/has + been + Vp2" },
+          { "conjunction": "Past perfect tense", "usage": "Chủ động: S + had + Vp2", "example": "Bị động: S + had + been + Vp2" },
+          { "conjunction": "Simple future tense", "usage": "Chủ động: S + Will + V(bare)", "example": "Bị động: S + will + be + Vp2" },
+          { "conjunction": "Near future tense", "usage": "Chủ động: S + am/is/are + going to + V(bare)", "example": "Bị động: S + am/is/are + going to + be + Vp2" },
+          { "conjunction": "Modal verbs", "usage": "Chủ động: S + modal verbs + V(bare)", "example": "Bị động: S + modal verbs + be + Vp2" }
+        ]
+      }
+    ]
+  }
+]

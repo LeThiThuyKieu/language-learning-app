@@ -1,0 +1,84 @@
+[
+  {
+    "id": 1,
+    "slug": "relative-clauses",
+    "title": "Mệnh đề quan hệ - Relative Clauses",
+    "description": "Mệnh đề quan hệ là mệnh đề phụ được nối với mệnh đề chính bởi các đại từ hoặc trạng từ quan hệ. Nó đóng vai trò bổ sung ý nghĩa cho danh từ/đại từ đứng trước, giống như chức năng của một tính từ[cite: 1].",
+    "sections": [
+      {
+        "id": "relative_pronouns",
+        "title": "Các loại đại từ quan hệ",
+        "description": "Đại từ quan hệ được dùng để thay thế cho danh từ[cite: 1].",
+        "items": [
+          {
+            "order": 1,
+            "type": "Who",
+            "meaning": "Chỉ người, làm chủ ngữ hoặc tân ngữ. Theo sau là chủ ngữ hoặc động từ[cite: 1]."
+          },
+          {
+            "order": 2,
+            "type": "Whom",
+            "meaning": "Chỉ người, chỉ làm tân ngữ. Theo sau bắt buộc là chủ ngữ[cite: 1]."
+          },
+          {
+            "order": 3,
+            "type": "Which",
+            "meaning": "Chỉ vật, sự việc, làm chủ ngữ hoặc tân ngữ[cite: 1]."
+          },
+          {
+            "order": 4,
+            "type": "That",
+            "meaning": "Chỉ người và vật. Dùng trong mệnh đề quan hệ xác định. Không dùng sau dấu phẩy hoặc sau giới từ[cite: 1]."
+          },
+          {
+            "order": 5,
+            "type": "Whose",
+            "meaning": "Chỉ sở hữu, đứng sau danh từ chỉ người hoặc vật, luôn đi kèm với một danh từ[cite: 1]."
+          }
+        ]
+      },
+      {
+        "id": "relative_adverbs",
+        "title": "Các trạng từ quan hệ",
+        "items": [
+          {
+            "order": 1,
+            "type": "When",
+            "meaning": "Chỉ thời gian, thay cho on/at/in + which[cite: 1]."
+          },
+          {
+            "order": 2,
+            "type": "Where",
+            "meaning": "Chỉ nơi chốn, thay cho at/on/in + which[cite: 1]."
+          },
+          {
+            "order": 3,
+            "type": "Why",
+            "meaning": "Chỉ lí do, thường đứng sau 'the reason', thay cho 'for which'[cite: 1]."
+          }
+        ]
+      },
+      {
+        "id": "types_of_clauses",
+        "title": "Các loại mệnh đề quan hệ",
+        "items": [
+          {
+            "order": 1,
+            "type": "Mệnh đề quan hệ xác định",
+            "meaning": "Là bộ phận quan trọng của câu, không thể bỏ được[cite: 1]."
+          },
+          {
+            "order": 2,
+            "type": "Mệnh đề quan hệ không xác định",
+            "meaning": "Phần giải thích thêm, thường ngăn cách bằng dấu phẩy. Không dùng 'that'[cite: 1]."
+          },
+          {
+            "order": 3,
+            "type": "Mệnh đề quan hệ nối tiếp",
+            "meaning": "Giải thích cho cả câu, dùng 'which', đứng ở cuối câu[cite: 1]."
+          }
+        ]
+      }
+    ]
+  }
+]
