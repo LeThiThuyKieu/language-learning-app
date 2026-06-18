@@ -1,9 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
-import GrammarTopicList from "@/components/user/learn/grammar/GrammarTopicList";
 import LearnSidebar from "@/components/user/learn/common/LearnSidebar";
-import LearnRightPanel from "@/components/user/learn/common/LearnRightPanel";
 
 export default function GrammarPage() {
   const navigate = useNavigate();
@@ -30,15 +28,10 @@ export default function GrammarPage() {
             }}
           />
 
-          {/* Nội dung giữa */}
-          <main className="col-span-12 md:col-span-6 lg:col-span-6">
-            <GrammarTopicList onSelectTopic={() => {}} />
+          {/* Nội dung giữa — render child routes */}
+          <main className="col-span-12 md:col-span-9 lg:col-span-9">
+            <Outlet />
           </main>
-
-          {/* Right Panel */}
-          <div className="col-span-12 md:col-span-3 lg:col-span-3">
-            <LearnRightPanel onViewProfile={() => navigate("/profile")} />
-          </div>
         </div>
       </div>
     </div>

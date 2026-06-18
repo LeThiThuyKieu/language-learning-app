@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { grammarService, type GrammarTopic } from "@/services/grammarService";
-import GrammarDetail from "./GrammarDetail";
-import { Loader2, ChevronDown } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface GrammarTopicListProps {
   onSelectTopic: (topic: GrammarTopic) => void;
-  selectedTopicId?: number;
 }
 
-export default function GrammarTopicList({
-  onSelectTopic,
-  selectedTopicId,
-}: GrammarTopicListProps) {
+export default function GrammarTopicList({ onSelectTopic }: GrammarTopicListProps) {
   const [topics, setTopics] = useState<GrammarTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTopic, setSelectedTopic] = useState<GrammarTopic | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadTopics = async () => {
@@ -61,47 +57,23 @@ export default function GrammarTopicList({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {topics.map((topic) => (
-        <div key={topic.id}>
-          <button
-            onClick={() => {
-              setSelectedTopic(selectedTopic?.id === topic.id ? null : topic);
-              onSelectTopic(selectedTopic?.id === topic.id ? null : topic);
-            }}
-            className={`w-full rounded-xl border-2 p-4 text-left transition ${
-              selectedTopic?.id === topic.id
-                ? "border-primary-300 bg-white"
-                : "border-gray-200 bg-white hover:border-gray-300"
-            }`}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <h3
-                className={`font-semibold ${
-                  selectedTopic?.id === topic.id
-                    ? "text-primary-700"
-                    : "text-gray-700"
-                }`}
-              >
-                {topic.name}
-              </h3>
-              <ChevronDown
-                className={`h-5 w-5 shrink-0 transition-transform ${
-                  selectedTopic?.id === topic.id
-                    ? "rotate-180 text-primary-500"
-                    : "text-gray-400"
-                }`}
-              />
-            </div>
-          </button>
-
-          {/* Inline Detail Dropdown */}
-          {selectedTopic?.id === topic.id && (
-            <div className="mt-2 rounded-lg border border-primary-200 bg-white p-6">
-              <GrammarDetail topic={selectedTopic} />
-            </div>
-          )}
-        </div>
+        <button
+          key={topic.id}
+          type="button"
+          onClick={() => navigate(`/grammar/${encodeURIComponent(topic.slug.trim())}`)}
+          className="w-full rounded-2xl border border-gray-200 bg-white p-5 text-left transition hover:border-primary-300 hover:bg-primary-50"
+        >
+          <div className="flex flex-col gap-2">
+            <span className="text-lg font-semibold text-gray-900">
+              {topic.slug?.trim().replace(/-/g, " ")} - {topic.name}
+            </span>
+            {topic.jsonUrl && (
+              <span className="text-sm text-gray-500">JSON: {topic.jsonUrl}</span>
+            )}
+          </div>
+        </button>
       ))}
     </div>
   );

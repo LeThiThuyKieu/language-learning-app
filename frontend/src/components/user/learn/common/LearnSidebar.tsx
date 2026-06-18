@@ -191,7 +191,7 @@ export default function LearnSidebar({
               onClick={() => onNavigate("/grammar")}
               icon={
                 <img
-                  src="/icons/learn/grammar.svg"
+                  src="/icons/learn/grammar.png"
                   alt=""
                   className="h-8 w-8 shrink-0 object-contain"
                   onError={(e) => {
