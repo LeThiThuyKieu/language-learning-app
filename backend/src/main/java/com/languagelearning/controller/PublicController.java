@@ -2,10 +2,12 @@ package com.languagelearning.controller;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.faq.FaqDto;
+import com.languagelearning.dto.grammar.GrammarTopicDto;
 import com.languagelearning.dto.support.SupportCategoryDto;
 import com.languagelearning.dto.support.SupportCreateTicketRequest;
 import com.languagelearning.dto.support.SupportTicketDetailDto;
 import com.languagelearning.service.FaqService;
+import com.languagelearning.service.GrammarTopicService;
 import com.languagelearning.service.support.SupportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class PublicController {
 
     private final SupportService supportService;
     private final FaqService faqService;
+    private final GrammarTopicService grammarTopicService;
 
     @GetMapping("/health")
     public ResponseEntity<ApiResponse<Map<String, Object>>> healthCheck() {
@@ -57,6 +60,13 @@ public class PublicController {
     public ResponseEntity<ApiResponse<List<FaqDto>>> getFaqs() {
         List<FaqDto> data = faqService.getActiveFaqs();
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách FAQ thành công", data));
+    }
+
+    // Lấy danh sách grammar topics (public, không cần đăng nhập).
+    @GetMapping("/grammar-topics")
+    public ResponseEntity<ApiResponse<List<GrammarTopicDto>>> getGrammarTopics() {
+        List<GrammarTopicDto> data = grammarTopicService.getAllGrammarTopics();
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách grammar topics thành công", data));
     }
 }
 

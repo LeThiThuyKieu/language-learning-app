@@ -1,0 +1,238 @@
+[
+  {
+    "id": 1,
+    "slug": "comparison",
+    "title": "So sánh (Comparison)",
+    "description": "Cung cấp các cấu trúc so sánh trong tiếng Anh bao gồm so sánh ngang bằng, so sánh hơn, so sánh nhất, so sánh kép và các cấu trúc đặc biệt khác.",
+    "sections": [
+      {
+        "id": "equality",
+        "title": "So sánh ngang bằng (Equality)",
+        "description": "Dùng để miêu tả hai đối tượng giống nhau hoặc bằng nhau về một hoặc nhiều thuộc tính nào đó.",
+        "subsections": [
+          {
+            "title": "1. Với tính từ và trạng từ",
+            "items": [
+              {
+                "form": "Thể khẳng định",
+                "formula": "S + V + as + adj/adv + as + .....",
+                "examples": [
+                  { "en": "She is as tall as Huong.", "vi": "Cô ấy cao bằng Hương." },
+                  { "en": "She learns as well as her sister does.", "vi": "Cô ấy học tốt như chị gái mình." }
+                ]
+              },
+              {
+                "form": "Thể phủ định",
+                "formula": "S + V + not + as/so + adj/adv + as + ....",
+                "examples": [
+                  { "en": "This exercise is not as/so difficult as I think (it is).", "vi": "Bài tập này không khó như tôi nghĩ." },
+                  { "en": "He doesn't study as/so hard as I do/me.", "vi": "Anh ấy không học hành chăm chỉ bằng tôi." }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "2. Với danh từ",
+            "items": [
+              {
+                "form": "Với danh từ số nhiều",
+                "formula": "S + V + as many/few + N(số nhiều) + as + .....",
+                "examples": [
+                  { "en": "I have as many exercises as my brother does.", "vi": "Tôi có nhiều bài tập như anh trai tôi." },
+                  { "en": "We have as few problems to solve as yesterday.", "vi": "Hôm nay chúng tôi có vài vấn đề phải xử lí như ngày hôm qua." }
+                ]
+              },
+              {
+                "form": "Với danh từ không đếm được",
+                "formula": "S + V + as much/little + N(không đếm được) + as + ....",
+                "examples": [
+                  { "en": "I don't have as much money as you do.", "vi": "Tôi không có nhiều tiền như bạn." },
+                  { "en": "My brother has as little time to play football as I do.", "vi": "Anh trai tôi có ít thời gian chơi bóng đá như tôi." }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "comparative",
+        "title": "So sánh hơn (Comparative)",
+        "description": "So sánh đối tượng này hơn đối tượng kia về một hoặc nhiều thuộc tính nào đó.",
+        "subsections": [
+          {
+            "title": "1. Tính từ/trạng từ ngắn và tính từ/trạng từ dài",
+            "items": [
+              {
+                "type": "Tính từ/trạng từ ngắn",
+                "definition": "Là những tính từ/trạng từ có một âm tiết (ví dụ: Big, small, hot, cold, thin, fat) hoặc có hai âm tiết tận cùng là một trong năm đuôi: -y (happy, easy, early, heavy, lazy), -er (clever), -le (single, simple), -ow (narrow), -et (quiet).",
+                "note": "Những tính từ/trạng từ hai âm tiết tận cùng là đuôi -y chỉ được coi là tính từ/trạng từ ngắn khi bản thân nó có đuôi -y. Ví dụ: lovely là tính từ dài (love + ly), quickly là trạng từ dài (quick + ly)."
+              },
+              {
+                "type": "Tính từ/trạng từ dài",
+                "definition": "Là những tính từ/trạng từ có từ hai âm tiết trở lên nhưng không phải một trong năm đuôi kể trên (ví dụ: Beautiful, handsome, intelligent, hard-working)."
+              }
+            ]
+          },
+          {
+            "title": "2. So sánh hơn với tính từ/trạng từ ngắn và dài",
+            "items": [
+              {
+                "type": "Với tính từ và trạng từ ngắn",
+                "formula": "S + V + adj/adv + er + than + ...",
+                "notes": [
+                  "Tính từ hai âm tiết kết thúc bằng 'y' thì bỏ 'y' thêm 'ier' trong so sánh hơn và 'iest' trong so sánh hơn nhất (Ví dụ: Easy -> easier -> easiest).",
+                  "Tính từ ngắn kết thúc bằng một phụ âm mà trước nó là một nguyên âm thì ta gấp đôi phụ âm rồi thêm '-er' trong so sánh hơn và '-est' trong so sánh hơn nhất (Ví dụ: Big -> bigger -> biggest)."
+                ],
+                "examples": [
+                  { "en": "She looks happier than (she did) yesterday.", "vi": "Hôm nay cô ấy trông tươi tỉnh hơn hôm qua." },
+                  { "en": "He learns harder than his elder brother does.", "vi": "Anh ấy học hành chăm chỉ hơn anh trai của anh ấy." }
+                ]
+              },
+              {
+                "type": "Với tính từ và trạng từ dài",
+                "formula": "S + V + more + adj/adv + than + ...",
+                "examples": [
+                  { "en": "She is more beautiful than her sister.", "vi": "Cô ấy xinh hơn chị gái cô ấy." },
+                  { "en": "Huong dances more beautifully than other competitors.", "vi": "Hương nhảy đẹp hơn những người dự thi khác." }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "3. So sánh hơn với danh từ",
+            "formula": "S + V + more + N + than + ...",
+            "examples": [
+              { "en": "She has more money than me.", "vi": "Cô ấy có nhiều tiền hơn tôi." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "superlative",
+        "title": "So sánh nhất (Superlative)",
+        "description": "So sánh một cái gì đó là hơn tất cả những cái khác (ít nhất từ ba đối tượng so sánh trở lên).",
+        "items": [
+          {
+            "type": "Với tính từ và trạng từ ngắn",
+            "formula": "S + V + the + adj/adv + est + (N) + ...",
+            "examples": [
+              { "en": "He is the tallest (student) in my class.", "vi": "Anh ấy là người cao nhất trong lớp tôi." },
+              { "en": "My mother gets up the earliest in my family.", "vi": "Mẹ tôi dạy sớm nhất nhà." }
+            ]
+          },
+          {
+            "type": "Với tính từ và trạng từ dài",
+            "formula": "S + V + the + most + adj/adv + (N) + ...",
+            "examples": [
+              { "en": "My mother is the most beautiful (woman) in the world.", "vi": "Mẹ tôi là người đẹp nhất thế gian này." },
+              { "en": "Mary sings the most beautifully in the group.", "vi": "Mary hát hay nhất nhóm." }
+            ]
+          },
+          {
+            "type": "Với danh từ",
+            "formula": "S + V + the + most + N + ...",
+            "examples": [
+              { "en": "He is a billionaire. He has the most money.", "vi": "Anh ấy là tỉ phú. Anh ấy có nhiều tiền nhất." }
+            ]
+          }
+        ],
+        "irregular_rules": [
+          { "word": "good/well", "meaning": "tốt, giỏi", "comparative": "better", "superlative": "the best" },
+          { "word": "bad", "meaning": "tệ, tồi, dốt", "comparative": "worse", "superlative": "the worst" },
+          { "word": "much/many", "meaning": "nhiều", "comparative": "more", "superlative": "the most" },
+          { "word": "little", "meaning": "ít", "comparative": "less", "superlative": "least" },
+          { "word": "far", "meaning": "xa", "comparative": "farther/further", "superlative": "the farthest/ furthest" },
+          { "word": "old", "meaning": "già, cũ", "comparative": "older/ elder", "superlative": "the oldest/ eldest" }
+        ]
+      },
+      {
+        "id": "double-comparative",
+        "title": "So sánh kép (Double comparative)",
+        "subsections": [
+          {
+            "title": "1. So sánh luỹ tiến (càng ngày càng)",
+            "items": [
+              {
+                "type": "Với tính từ ngắn",
+                "formula": "Adj + er + and + adj + er",
+                "examples": [
+                  { "en": "The summer is coming. It gets hotter and hotter.", "vi": "Mùa hè đang đến. Trời càng ngày càng nóng." }
+                ]
+              },
+              {
+                "type": "Với tính từ dài",
+                "formula": "more/less and more/less + adj",
+                "examples": [
+                  { "en": "She is more and more attractive.", "vi": "Cô ấy càng ngày càng hấp dẫn." },
+                  { "en": "The environment is less and less pure.", "vi": "Môi trường ngày càng ít trong lành." }
+                ]
+              },
+              {
+                "type": "Với danh từ",
+                "formula": "more and more + N",
+                "examples": [
+                  { "en": "There are more and more people moving to big cities to look for jobs.", "vi": "Ngày càng có nhiều người đến những thành phố lớn để kiếm việc làm." }
+                ]
+              }
+            ]
+          },
+          {
+            "title": "2. So sánh đồng tiến (càng... càng)",
+            "formula": "the + (so sánh hơn) comparative adj/ adv + S + V, the + (so sánh hơn) comparative adj / adv + S + V",
+            "notes": [
+              "Trong câu so sánh kép, nếu túc từ là một danh từ thì ta đặt danh từ ấy ngay sau tính từ so sánh. Ví dụ: The more English vocabulary we know, the better we speak."
+            ],
+            "examples": [
+              { "en": "The older he gets, the weaker he is.", "vi": "Ông ấy càng già càng yếu." },
+              { "en": "The more difficult the exercise is, the more interesting it is.", "vi": "Bài tập càng khó thì càng thú vị." },
+              { "en": "The more I know him, the less I like him.", "vi": "Tôi càng biết nhiều về anh ấy thì tôi càng ít thích anh ấy." }
+            ]
+          },
+          {
+            "title": "Lưu ý đặc biệt về các tính từ tuyệt đối",
+            "description": "Một số tính từ/trạng từ không dùng ở dạng so sánh vì bản thân chúng đã mang tính tuyệt đối: Complete (hoàn toàn), favorite (yêu thích), ideal (lí tưởng), unique (duy nhất), excellent (xuất sắc), full (đầy), empty (rỗng), perfect (hoàn hảo), right (đúng), really (thật sự), extreme (cực độ, tột bậc), supreme (thượng hạng), absolute (tuyệt đối), ..."
+          }
+        ]
+      },
+      {
+        "id": "other-structures",
+        "title": "Một số công thức khác",
+        "items": [
+          {
+            "title": "1. So sánh gấp nhiều lần (multiple numbers comparison)",
+            "formula": "S + V + multiple numbers* + as + much/many/adj/adv + (N) + as + N/pronoun",
+            "note": "*Là những số như half/twice/3, 4, 5... times; Phân số; Phần trăm. Phải xác định rõ danh từ đếm được hay không đếm được để dùng much hoặc many.",
+            "examples": [
+              { "en": "She types twice as fast as I do.", "vi": "Cô ấy đánh máy nhanh gấp hai lần tôi đánh máy." },
+              { "en": "In many countries in the world with the same job, women only get 40-50% as much as salary as men.", "vi": "Ở nhiều quốc gia, phụ nữ chỉ nhận được lương bằng với 40 - 50% lương của người đàn ông khi họ có cùng một công việc." },
+              { "en": "This encyclopedia costs twice as much as the other one.", "vi": "Bộ sách bách khoa toàn thư này mắc gấp đôi bộ còn lại." },
+              { "en": "At the clambake last week, Fred ate three times as many oysters as Barney.", "vi": "Trong buổi tiệc tuần trước, Fred ăn hàu nhiều gấp 3 lần Barney." }
+            ]
+          },
+          {
+            "title": "2. Từ chỉ số lượng dùng trước tính từ so sánh hơn để nhấn mạnh",
+            "formula": "S + V + much/a lot/far/a little/ a bit... + so sánh hơn + than + ...",
+            "examples": [
+              { "en": "She is much more hard-working than me.", "vi": "Cô ấy chăm hơn tôi nhiều." }
+            ]
+          },
+          {
+            "title": "3. Cấu trúc bắt đầu bằng 'Of the two'",
+            "formula": "Of the two + N (số nhiều), S + V + the + so sánh hơn",
+            "examples": [
+              { "en": "Of the two sisters, Mary is the prettier.", "vi": "Trong số hai chị em gái, Mary xinh hơn." }
+            ]
+          },
+          {
+            "title": "4. Thay thế danh từ để tránh lặp lại",
+            "description": "Người ta dùng 'that' thay cho danh từ số ít và 'those' thay cho danh từ số nhiều trong cấu trúc so sánh.",
+            "examples": [
+              { "en": "The population of China is much larger than that of any countries in the world.", "vi": "Dân số của Trung Quốc lớn hơn nhiều so với dân số của bất cứ quốc gia nào trên thế giới." },
+              { "en": "The prices of Japanese cars are higher than those of Chinese ones.", "vi": "Giá ô tô Nhật cao hơn giá ô tô Trung Quốc." }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,81 @@
+[
+  {
+    "id": 1,
+    "slug": "reported-speech",
+    "title": "Câu tường thuật - Reported speech",
+    "description": "Câu tường thuật là câu dùng để thuật lại lời nói của người khác theo ý của người thuật nhưng ý nghĩa không thay đổi.",
+    "sections": [
+      {
+        "id": "rules",
+        "title": "Quy tắc chuyển đổi chung",
+        "description": "Khi chuyển từ câu trực tiếp sang câu tường thuật, ta cần thực hiện các thay đổi về ngôi, thì của động từ và từ chỉ thời gian, nơi chốn.",
+        "items": [
+          {
+            "order": 1,
+            "type": "Thay đổi về ngôi (Đại từ)",
+            "meaning": "Đổi ngôi thứ nhất phù hợp với chủ ngữ mệnh đề chính; ngôi thứ hai phù hợp với tân ngữ mệnh đề chính; ngôi thứ ba giữ nguyên.",
+            "examples": ["I -> he/she", "we -> they", "you -> I/he/she/they/we"]
+          },
+          {
+            "order": 2,
+            "type": "Lùi thì của động từ",
+            "meaning": "Khi động từ giới thiệu ở quá khứ (said, told), động từ trong câu trực tiếp phải lùi một thì về quá khứ.",
+            "examples": ["Am/is/are -> was/were", "V1/V-es-ed -> V2/V-ed", "Will/can/may -> would/could/might"]
+          },
+          {
+            "order": 3,
+            "type": "Thay đổi từ chỉ thời gian, nơi chốn",
+            "meaning": "Các từ chỉ khoảng cách gần chuyển sang khoảng cách xa.",
+            "examples": ["here -> there", "this -> that", "now -> then", "today -> that day", "yesterday -> the day before"]
+          }
+        ]
+      },
+      {
+        "id": "reported_types",
+        "title": "Các loại câu tường thuật thường gặp",
+        "description": "Cấu trúc chuyển đổi cụ thể áp dụng cho từng kiểu câu: tường thuật, câu hỏi và câu mệnh lệnh/yêu cầu.",
+        "items": [
+          {
+            "order": 1,
+            "type": "Câu trần thuật (Statements)",
+            "meaning": "Sử dụng động từ giới thiệu said hoặc told để thuật lại một lời khẳng định/phủ định.",
+            "examples": [
+              "S + said + (that) + S + V(lùi thì)",
+              "S + told + O + (that) + S + V(lùi thì)"
+            ]
+          },
+          {
+            "order": 2,
+            "type": "Câu hỏi Yes/No (Yes/No questions)",
+            "meaning": "Sử dụng động từ giới thiệu asked/wanted to know và mượn liên từ if hoặc whether.",
+            "examples": [
+              "S + asked + (O) + if/whether + S + V(lùi thì)"
+            ]
+          },
+          {
+            "order": 3,
+            "type": "Câu hỏi có từ để hỏi (Wh-questions)",
+            "meaning": "Giữ nguyên từ để hỏi (what, where, when, why, how) và đổi trật tự câu hỏi thành câu trần thuật.",
+            "examples": [
+              "S + asked + (O) + Wh-word + S + V(lùi thì)"
+            ]
+          },
+          {
+            "order": 4,
+            "type": "Câu mệnh lệnh, yêu cầu (Imperatives)",
+            "meaning": "Sử dụng cấu trúc to-infinitive kết hợp với các động từ như told, asked, ordered, begged.",
+            "examples": [
+              "S + told/asked + O + to + V(bare)",
+              "S + told/asked + O + not + to + V(bare)"
+            ]
+          }
+        ],
+        "general_examples": [
+          { "en": "He said, 'I am a student.' -> He said that he was a student.", "vi": "Anh ấy nói anh ấy là một học sinh." },
+          { "en": "She asked, 'Do you like English?' -> She asked me if I liked English.", "vi": "Cô ấy hỏi tôi xem tôi có thích tiếng Anh không." },
+          { "en": "The teacher said, 'Don't talk in class.' -> The teacher asked us not to talk in class.", "vi": "Giáo viên yêu cầu chúng tôi không nói chuyện trong lớp." }
+        ]
+      }
+    ]
+  }
+]

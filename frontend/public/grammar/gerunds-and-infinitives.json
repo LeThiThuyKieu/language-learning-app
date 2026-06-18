@@ -1,0 +1,250 @@
+[
+  {
+    "id": 1,
+    "slug": "gerund-and-infinitive",
+    "title": "Chuyên đề 9: Danh động từ (Gerund) và Động từ nguyên mẫu (Infinitive verb)",
+    "description": "Danh động từ là những từ có cấu trúc như một động từ nhưng chức năng làm danh từ (V-ing). Động từ nguyên mẫu gồm dạng có 'to' (To-infinitive) và không 'to' (Bare-infinitive).",
+    "sections": [
+      {
+        "id": "gerund-functions",
+        "title": "1. Chức năng của Danh động từ (Gerund)",
+        "items": [
+          {
+            "title": "Làm chủ ngữ",
+            "description": "Nếu danh động từ làm chủ ngữ thì động từ trong câu luôn chia theo ngôi thứ ba số ít.",
+            "examples": [
+              { "en": "Walking in the rain gives me a pleasure.", "vi": "Đi bộ dưới mưa cho tôi cảm giác dễ chịu." }
+            ]
+          },
+          {
+            "title": "Làm tân ngữ trực tiếp sau một số động từ",
+            "description": "Đi sau các động từ như: admit, appreciate, avoid, delay, deny, hate/detest, enjoy, imagine, involve, keep, mention, mind, miss, postpone, practice, recall, resent, resist, risk, suggest, finish, consider...",
+            "examples": [
+              { "en": "Would you mind turning the radio down?", "vi": "Phiền bạn vặn nhỏ đài được không?" }
+            ]
+          },
+          {
+            "title": "Làm tân ngữ của giới từ",
+            "description": "Xuất hiện trong các cấu trúc: Adjective + preposition + gerund; Verb + preposition + gerund; Noun + preposition + gerund.",
+            "examples": [
+              { "en": "Mary is crazy about playing tennis.", "vi": "Mary rất thích chơi tennis." },
+              { "en": "There's no interest in writing letters.", "vi": "Viết thư chẳng có gì thú vị cả." },
+              { "en": "Sue dreams of being a pop star.", "vi": "Sue mơ trở thành ngôi sao nhạc Pop." }
+            ]
+          },
+          {
+            "title": "Dùng sau các cụm từ cố định",
+            "description": "be busy doing st (bận làm gì), can't/couldn't help doing st (không thể nhịn được), can't stand/bear/face doing st (không thể chịu được), it's no good/use doing st = there's no point in doing st (không đáng làm gì), it's (not) worth doing st ((không) đáng làm gì), feel like.",
+            "examples": [
+              { "en": "She is busy cooking the meal.", "vi": "Cô ấy đang bận nấu ăn." },
+              { "en": "She couldn't help laughing.", "vi": "Cô ấy không nhịn được cười." }
+            ]
+          },
+          {
+            "title": "Làm bổ ngữ",
+            "description": "Đóng vai trò làm bổ ngữ cho chủ ngữ trong câu.",
+            "examples": [
+              { "en": "My habit is sleeping whenever I'm sad.", "vi": "Thói quen của tôi là ngủ bất cứ khi nào có chuyện buồn." }
+            ]
+          },
+          {
+            "title": "Làm ngữ đồng vị",
+            "description": "Đứng kế bên danh từ chính để giải thích rõ nghĩa hơn.",
+            "examples": [
+              { "en": "My hobby, playing table tennis, makes me feel happy.", "vi": "Sở thích của tôi, chơi bóng bàn, làm cho tôi thấy vui vẻ." }
+            ]
+          },
+          {
+            "title": "Làm danh từ ghép",
+            "description": "Cấu tạo theo dạng: gerund + noun hoặc noun + gerund.",
+            "examples": [
+              { "en": "cooking-oil, sleeping-pill", "vi": "dầu ăn, thuốc ngủ (gerund + noun)" },
+              { "en": "child-rearing, child-bearing", "vi": "nuôi dạy con, việc sinh con (noun + gerund)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gerund-vs-participle",
+        "title": "2. Phân biệt Danh động từ (Gerund) và Hiện tại phân từ (Present Participle)",
+        "items": [
+          {
+            "title": "Bản chất khác biệt",
+            "description": "Mặc dù đều có dạng V-ing, nhưng Gerund đóng vai trò như một danh từ (noun), còn Present Participle đóng vai trò như một tính từ (adjective) hoặc dùng để biến đổi mệnh đề.",
+            "examples": []
+          },
+          {
+            "title": "Chức năng của Hiện tại phân từ",
+            "description": "a. Dùng trong các thì tiếp diễn (be + V-ing).\nb. Dùng như tính từ miêu tả vật (mang nghĩa chủ động).\nc. Thay cho mệnh đề độc lập (2 hành động cùng chủ từ xảy ra đồng thời hoặc kế tiếp).\nd. Thay cho mệnh đề quan hệ chủ động.\ne. Thay cho mệnh đề trạng ngữ chỉ thời gian hoặc lí do (cùng chủ từ).\nf. Đi sau các cấu trúc: S + sit/stand/lie/come/run + cụm nơi chốn + V-ing.\ng. Cấu trúc: There + be + Noun + V-ing.\nh. Sau động từ tri giác (see, hear, smell...) hoặc catch, find, spend, waste.",
+            "examples": [
+              { "en": "Washing his car, he sang happily.", "vi": "Trong lúc rửa xe, anh ấy đã hát rất vui vẻ. (Hành động đồng thời)" },
+              { "en": "The girl lending me this book is my best friend.", "vi": "Cô gái cho tôi mượn cuốn sách này là bạn thân của tôi. (Rút gọn mệnh đề quan hệ)" },
+              { "en": "I saw your children playing on the street.", "vi": "Tôi thấy lũ trẻ đang chơi trên phố. (Sau động từ tri giác)" }
+            ]
+          },
+          {
+            "title": "Danh động từ hoàn thành (Perfect Gerund) và Phân từ hoàn thành (Perfect Participle)",
+            "description": "Cấu trúc: Having + Vp2.\n- Perfect Gerund: Dùng thay cho hình thức hiện tại của danh động từ khi đề cập đến một hành động đã xảy ra trong quá khứ.\n- Perfect Participle: Dùng rút ngắn mệnh đề khi hành động trong mệnh đề đó xảy ra trước hành động kia, hoặc rút ngắn mệnh đề trạng ngữ chỉ thời gian.",
+            "examples": [
+              { "en": "He was accused of having stolen their money.", "vi": "Anh ta bị buộc tội đã lấy cắp tiền của họ. (Perfect Gerund)" },
+              { "en": "Having finished all his homework, he went to bed.", "vi": "Sau khi làm xong toàn bộ bài tập, anh ấy đi ngủ. (Perfect Participle)" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "to-infinitive",
+        "title": "3. Động từ nguyên mẫu có TO (To-Infinitive)",
+        "items": [
+          {
+            "title": "Chức năng làm Chủ ngữ và Tân ngữ",
+            "description": "- Làm chủ ngữ câu.\n- Làm tân ngữ trực tiếp sau các động từ: afford, agree, arrange, appear, ask, attempt, care, choose, claim, decide, demand, deserve, expect, fail, happen, hesitate, hope, intend, learn, manage, neglect, offer, plan, prepare, pretend, promise, propose, refuse, seem, swear, tend, threaten, vow, wait, want, wish, would like, yearn, urge...\n- Dùng sau các cụm từ: make up one's mind, take care, make sure, take the trouble.\n- Dùng sau nghi vấn từ (what, how, where...) trong lời nói gián tiếp (ngoại trừ why).",
+            "examples": [
+              { "en": "To master a foreign language is necessary.", "vi": "Thông thạo một ngoại ngữ là cần thiết." },
+              { "en": "We decided to have a baby.", "vi": "Chúng tôi quyết định có con." },
+              { "en": "I do not know what to do.", "vi": "Tôi không biết phải làm gì." }
+            ]
+          },
+          {
+            "title": "Dùng sau tính từ và làm Bổ ngữ",
+            "description": "- Đi sau tính từ chỉ cảm xúc, phản ứng: able, delighted, proud, glad, ashamed, afraid, eager, surprised, anxious, pleased, annoyed, happy, ready, curious...\n- Làm bổ ngữ cho chủ ngữ hoặc bổ ngữ cho tân ngữ sau cấu trúc: Động từ + Tân ngữ (advise, allow, permit, ask, force, get, invite, order, persuade, remind, tell, warn, want...).",
+            "examples": [
+              { "en": "I'm curious to know what he said.", "vi": "Tôi tò mò muốn biết anh ấy đã nói gì." },
+              { "en": "My mother wants me to become a doctor.", "vi": "Mẹ tôi muốn tôi trở thành bác sĩ." }
+            ]
+          },
+          {
+            "title": "Các cấu trúc đặc biệt chứa To-Infinitive",
+            "description": "a. It takes/took + O + thời gian + to-inf (Mất bao lâu để làm gì).\nb. Chỉ mục đích: so as to / in order to / to-inf.\nc. Bổ ngữ cho danh từ/đại từ: S + V + Noun/pronoun + to-inf.\nd. It + be + adj + to-inf (Thật... để làm gì).\ne. S + V + too + adj/adv + (for sb) + to-inf (Quá... cho ai để làm gì).\nf. S + V + adj/adv + enough + (for sb) + to-inf (Đủ... cho ai để làm gì).\ng. S + find + it + adj + to-inf.",
+            "examples": [
+              { "en": "It takes me 30 minutes to go to school every day.", "vi": "Mỗi ngày tôi mất 30 phút để tới trường." },
+              { "en": "The exercise is too difficult for me to do.", "vi": "Bài tập đó quá khó để tôi giải." },
+              { "en": "She isn't old enough to go to school.", "vi": "Con bé chưa đủ tuổi để đến trường." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bare-infinitive",
+        "title": "4. Động từ nguyên mẫu không TO (Bare-Infinitive)",
+        "items": [
+          {
+            "title": "Các trường hợp áp dụng",
+            "description": "1. Sau các trợ động từ tình thái (modal verbs: must, can, should...).\n2. Sau các động từ: let, make, help, see, hear, feel, watch, notice + tân ngữ. (Lưu ý: Nếu chuyển sang câu bị động, các động từ này bắt buộc phải dùng To-Infinitive theo sau).\n3. Sau các cụm động từ: had better, would rather, had sooner và sau why / why not.",
+            "examples": [
+              { "en": "The boss made us work so hard.", "vi": "Ông chủ bắt chúng tôi làm việc rất vất vả." },
+              { "en": "We were made to work so hard by the boss.", "vi": "Chúng tôi bị bắt phải làm việc rất vất vả bởi ông chủ. (Dạng bị động)" },
+              { "en": "I would rather stay at home.", "vi": "Tôi thích ở nhà hơn." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "special-cases",
+        "title": "5. Nhóm động từ đi kèm cả Gerund và Infinitive (Thay đổi ý nghĩa)",
+        "items": [
+          {
+            "title": "Động từ tri giác (see, hear, feel...)",
+            "description": "+ O + bare-inf: Chứng kiến sự hoàn tất của hành động.\n+ O + V-ing: Chứng kiến sự tiếp diễn của hành động.",
+            "examples": [
+              { "en": "Mary heard the boy cough.", "vi": "Mary nghe thấy thằng bé ho (nghe thấy toàn bộ cái ho)." },
+              { "en": "They saw the thief breaking into the house.", "vi": "Họ thấy tên trộm đang bẻ khóa đột nhập vào nhà (hành động đang diễn ra)." }
+            ]
+          },
+          {
+            "title": "advise, recommend, allow, permit, encourage, require",
+            "description": "Có túc từ: + object + to-infinitive.\nKhông có túc từ: + V-ing luôn.",
+            "examples": [
+              { "en": "They do not permit us to smoke here.", "vi": "Họ không cho phép chúng tôi hút thuốc ở đây." },
+              { "en": "They do not permit smoking here.", "vi": "Họ không cho phép hút thuốc ở đây." }
+            ]
+          },
+          {
+            "title": "forget / remember",
+            "description": "+ to-inf: Nhớ/quên việc phải làm ở tương lai.\n+ V-ing: Nhớ/quên việc đã xảy ra, đã làm trong quá khứ.",
+            "examples": [
+              { "en": "Remember to call Peter.", "vi": "Nhớ gọi điện cho Peter đấy nhé." },
+              { "en": "I remember calling him yesterday.", "vi": "Tôi nhớ là đã gọi cho anh ấy ngày hôm qua rồi." }
+            ]
+          },
+          {
+            "title": "stop",
+            "description": "+ to-inf: Dừng việc này lại để chuyển sang làm việc khác.\n+ V-ing: Từ bỏ, dừng hẳn không làm hành động đó nữa.",
+            "examples": [
+              { "en": "He stopped to go home early.", "vi": "Anh ấy nghỉ tay dứt việc để về nhà sớm." },
+              { "en": "He stopped working because he was tired.", "vi": "Anh ấy thôi không làm việc nữa vì mệt." }
+            ]
+          },
+          {
+            "title": "try",
+            "description": "+ to-inf: Cố gắng, nỗ lực hết sức.\n+ V-ing: Thử làm điều gì đó xem kết quả ra sao (thử nghiệm).",
+            "examples": [
+              { "en": "He always tries to learn better.", "vi": "Anh ấy luôn cố gắng học tốt hơn." },
+              { "en": "Sam tried opening the lock with a paperclip.", "vi": "Sam thử mở cái ổ khóa bằng một chiếc kẹp giấy." }
+            ]
+          },
+          {
+            "title": "regret",
+            "description": "+ to-inf: Lấy làm tiếc khi sắp phải thông báo tin không vui (chưa làm).\n+ V-ing: Hối tiếc vì một hành động đã làm trong quá khứ.",
+            "examples": [
+              { "en": "I regret to inform you that your application has been turned down.", "vi": "Tôi rất lấy làm tiếc phải thông báo rằng đơn xin việc của bạn đã bị từ chối." },
+              { "en": "I regret telling him the truth.", "vi": "Tôi hối hận vì đã nói cho anh ta biết sự thật." }
+            ]
+          },
+          {
+            "title": "mean",
+            "description": "+ to-inf: Chỉ dự định, có ý định làm gì.\n+ V-ing: Chỉ sự liên quan hoặc có kết quả là, có nghĩa là.",
+            "examples": [
+              { "en": "I meant to go earlier.", "vi": "Tôi đã định đi sớm hơn." },
+              { "en": "This new order will mean working overtime.", "vi": "Mệnh lệnh mới này đồng nghĩa với việc phải làm thêm giờ." }
+            ]
+          },
+          {
+            "title": "need",
+            "description": "+ to-inf: Mang nghĩa chủ động (Ai cần làm gì).\n+ V-ing hoặc to be Vp2: Mang nghĩa bị động (Cái gì cần được làm).",
+            "examples": [
+              { "en": "You need to do everything with care.", "vi": "Bạn cần làm mọi việc thật cẩn thận." },
+              { "en": "Everything needs doing / to be done with care.", "vi": "Mọi việc cần được làm thật cẩn thận." }
+            ]
+          },
+          {
+            "title": "go on",
+            "description": "+ to-inf: Thay đổi hành động, chuyển sang làm một việc mới.\n+ V-ing: Tiếp tục duy trì hành động đang làm liên tục.",
+            "examples": [
+              { "en": "She stopped talking about that and went on to describe her other problems.", "vi": "Cô ấy ngừng nói về việc đó và chuyển sang mô tả những vấn đề khác." },
+              { "en": "She went on talking about her illness until we all went to sleep.", "vi": "Cô ấy cứ nói liên tục về căn bệnh của mình cho đến khi tất cả chúng tôi đi ngủ." }
+            ]
+          },
+          {
+            "title": "Các trường hợp giữ nguyên nghĩa và nhóm Help",
+            "description": "- Begin, start, like, love, hate, continue... đi kèm to-inf hay V-ing đều được, không có sự khác biệt nghĩa.\n- Sau động từ 'help + tân ngữ' có thể dùng động từ nguyên mẫu có 'to' hoặc không 'to' đều đúng.",
+            "examples": [
+              { "en": "I began to learn / learning English three years ago.", "vi": "Tôi bắt đầu học tiếng Anh cách đây 3 năm." },
+              { "en": "He helped us (to) repair the car.", "vi": "Anh ấy đã giúp chúng tôi sửa xe ô tô." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "6. Công thức cấu trúc cốt lõi",
+        "positive": [
+          { "type": "Gerund làm Chủ ngữ", "formula": "V-ing + V(chia số ít) + O" },
+          { "type": "Gerund làm Tân ngữ động từ", "formula": "S + V (avoid/admit/enjoy/...) + V-ing" },
+          { "type": "Gerund làm Tân ngữ giới từ", "formula": "S + V/Adj/Noun + Preposition + V-ing" },
+          { "type": "Perfect Gerund", "formula": "S + V + Preposition + HAVING + Vp2" },
+          { "type": "Perfect Participle (Rút gọn mệnh đề trước)", "formula": "HAVING + Vp2, S + V-quá-khứ" },
+          { "type": "To-Infinitive làm Tân ngữ trực tiếp", "formula": "S + V (decide/plan/hope/...) + TO + V(nguyên thể)" },
+          { "type": "To-Infinitive đi sau Tính từ", "formula": "S + be + Adj (glad/proud/surprised/...) + TO + V(nguyên thể)" },
+          { "type": "To-Infinitive làm Bổ ngữ tân ngữ", "formula": "S + V (want/ask/remind/...) + O + TO + V(nguyên thể)" },
+          { "type": "Cấu trúc thời gian với To-inf", "formula": "It + takes/took + O + thời gian + TO + V(nguyên thể)" },
+          { "type": "Cấu trúc Quá tải (too)", "formula": "S + V + too + adj/adv + (for sb) + TO + V(nguyên thể)" },
+          { "type": "Cấu trúc Đầy đủ (enough)", "formula": "S + V + adj/adv + enough + (for sb) + TO + V(nguyên thể)" },
+          { "type": "Bare-Infinitive sau động từ khiến dụng", "formula": "S + let/make/help + O + V(nguyên thể không to)" },
+          { "type": "Bị động của động từ khiến dụng", "formula": "S(vật/người) + be + made/seen/heard + TO + V(nguyên thể)" },
+          { "type": "Bare-Infinitive sau cụm từ khuyên bảo", "formula": "S + had better / would rather / had sooner + V(nguyên thể không to)" }
+        ]
+      }
+    ]
+  }
+]

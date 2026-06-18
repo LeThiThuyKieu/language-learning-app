@@ -34,6 +34,9 @@ import ExamTestListPage from "@/pages/User/exam/ExamTestListPage.tsx";
 import ExamListeningPage from "@/pages/User/exam/ExamListeningPage.tsx";
 import ExamReadingWritingPage from "@/pages/User/exam/ExamReadingWritingPage.tsx";
 import ExamSpeakingPage from "@/pages/User/exam/ExamSpeakingPage.tsx";
+import GrammarPage from "@/pages/User/learn/grammar/GrammarPage.tsx";
+import GrammarTopicListPage from "@/pages/User/learn/grammar/GrammarTopicListPage.tsx";
+import GrammarTopicDetailPage from "@/pages/User/learn/grammar/GrammarTopicDetailPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
 import GeneralRevisionTaskPage from "@/pages/User/learn/general_revision/GeneralRevisionTaskPage.tsx";
@@ -125,6 +128,10 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="grammar" element={<GrammarPage/>}>
+                            <Route index element={<GrammarTopicListPage/>} />
+                            <Route path=":slug" element={<GrammarTopicDetailPage/>} />
+                        </Route>
                         <Route path="phonetic" element={<PhoneticPage/>}/>
                         <Route path="exam" element={<ExamPage/>}/>
                         <Route path="exam/:level" element={<ExamTestListPage/>}/>

@@ -1,0 +1,112 @@
+[
+  {
+    "id": 1,
+    "slug": "tag-questions",
+    "title": "Câu hỏi đuôi (Tag questions)",
+    "description": "Dạng câu hỏi ngắn ở cuối câu trần thuật, dùng để xác minh thông tin hoặc khuyến khích sự hồi đáp từ người nghe.",
+    "sections": [
+      {
+        "id": "concept",
+        "title": "Câu hỏi đuôi là gì?",
+        "items": [
+          {
+            "description": "Câu hỏi đuôi (tag question) là dạng câu hỏi rất hay được sử dụng trong tiếng Anh, đặc biệt là tiếng Anh giao tiếp. Câu hỏi đuôi là câu hỏi ngắn ở cuối câu trần thuật. Câu hỏi này được dùng khi người nói muốn xác minh thông tin là đúng hay không hoặc khi khuyến khích một sự hồi đáp từ phía người nghe.",
+            "examples": [
+              { "en": "She is learning English now, isn't she?", "vi": "Cô ấy đang học tiếng Anh bây giờ phải không?" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "1. Nguyên tắc chung & Cấu tạo",
+        "positive": [
+          { "type": "Trước dấu phẩy là câu khẳng định", "formula": "S + V..., trợ động từ phủ định + S?", "note": "Câu hỏi đuôi phải ở thể phủ định (viết tắt)." }
+        ],
+        "negative": [
+          { "type": "Trước dấu phẩy là câu phủ định", "formula": "S + không/chưa..., trợ động từ khẳng định + S?", "note": "Câu hỏi đuôi phải ở thể khẳng định." }
+        ],
+        "general_composition": {
+          "description": "Câu hỏi đuôi gồm một trợ động từ hoặc to be hoặc động từ khuyết thiếu tương ứng với thì được dùng trong câu nói trước dấu phẩy, có NOT hoặc không có NOT và một đại từ nhân xưng tương ứng với chủ ngữ của câu nói trước dấu phẩy.",
+          "examples": [
+            { "en": "You haven't finished the work, have you?", "vi": "Bạn chưa xong việc phải không?" },
+            { "en": "You have finished the work, haven't you?", "vi": "Bạn xong việc rồi phải không?" },
+            { "en": "She is beautiful, isn't she?", "vi": "Cô ấy xinh phải không?" },
+            { "en": "He has closed the window, hasn't he?", "vi": "Anh ấy đã đóng cửa phải không?" },
+            { "en": "Your mother was born in Hanoi, wasn't she?", "vi": "Mẹ bạn sinh ra ở Hà Nội phải không?" },
+            { "en": "He loves you, doesn't he?", "vi": "Anh ấy thích cậu phải không?" }
+          ]
+        }
+      },
+      {
+        "id": "intonation",
+        "title": "Ngữ điệu trong câu hỏi đuôi",
+        "items": [
+          {
+            "title": "Lên giọng",
+            "description": "Ta lên giọng với câu hỏi đuôi khi ta không chắc chắn về thông tin trong câu trần thuật nhằm mục đích xác minh thông tin.",
+            "examples": [
+              { "en": "He is our new teacher of English, isn't he?", "vi": "Người đó là giáo viên tiếng Anh mới của chúng ta phải không?" }
+            ]
+          },
+          {
+            "title": "Xuống giọng",
+            "description": "Ta xuống giọng với câu hỏi đuôi khi ta chắc chắn về thông tin của câu trần thuật, và ta đang khuyến khích người nghe hồi đáp lại.",
+            "examples": [
+              { "en": "This is your bag, isn't it?", "vi": "Đấy là túi của bạn phải không?" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "special-rules",
+        "title": "Một số trường hợp cần lưu ý",
+        "items": [
+          { "rule": "Câu hỏi đuôi của 'I am' là 'aren't I'", "example": { "en": "I am very bad, aren't I?", "vi": "Mình tệ lắm phải không?" } },
+          { "rule": "'Let' trong câu rủ (let's) dùng 'shall we?'", "example": { "en": "Let's go out for a drink, shall we?", "vi": "Chúng mình sẽ đi uống nước phải không?" } },
+          { "rule": "'Let' trong câu xin phép (let us/let me) dùng 'will you?'", "example": { "en": "Let us use the telephone, will you?", "vi": "Mình sử dụng điện thoại được chứ?" } },
+          { "rule": "'Let' trong câu đề nghị giúp người khác (let me) dùng 'may I?'", "example": { "en": "Let me help you do it, may I?", "vi": "Hãy để mình giúp bạn làm nó được không?" } },
+          { "rule": "Chủ ngữ là 'Everyone/Everybody, Someone/Somebody, Anyone/Anybody, No one/Nobody...' câu hỏi đuôi là 'they'", "example": { "en": "Everybody has come, haven't they?", "vi": "Mọi người đến đủ rồi phải không?" } },
+          { "rule": "Chủ ngữ là 'nothing, everything, something, anything' thì câu hỏi đuôi dùng 'it'", "example": { "en": "Everything is fine, isn't it?", "vi": "Mọi thứ tốt đẹp phải không?" } },
+          { "rule": "Trong câu có các trạng từ phủ định/bán phủ định (never, seldom, hardly, scarcely, little...) thì phần hỏi đuôi ở dạng khẳng định", "example": { "en": "Our boss never comes late, does he?", "vi": "Sếp của chúng mình không bao giờ đi muộn phải không?" } },
+          { "rule": "Khi có 'had better' ('d better), mượn trợ động từ 'had' để lập câu hỏi đuôi", "example": { "en": "He'd better apologize, hadn't he?", "vi": "Tốt hơn hết là anh ấy nên xin lỗi phải không?" } },
+          { "rule": "Khi có 'would rather' ('d rather), mượn trợ động từ 'would' để lập câu hỏi đuôi", "example": { "en": "She'd rather go to the doctor, wouldn't she?", "vi": "Cô ấy nên đến gặp bác sĩ, đúng không?" } },
+          { "rule": "Câu đầu có 'It seems that + mệnh đề' thì lấy mệnh đề sau làm câu hỏi đuôi", "example": { "en": "It seems that you are right, aren't you?", "vi": "Có vẻ như là cậu đúng phải không?" } },
+          { "rule": "Chủ từ là mệnh đề danh từ, dùng 'it' trong câu hỏi đuôi", "examples": [
+            { "en": "What she has just said is unreasonable, isn't it?", "vi": "Điều cô ấy vừa mới nói là phi lí phải không?" },
+            { "en": "Why he killed himself seems a secret, doesn't it?", "vi": "Tại sao anh ấy lại tự sát dường như là một bí mật phải không?" }
+          ] },
+          { "rule": "Sau câu mệnh lệnh cách (Do.../Don't do v.v...), câu hỏi đuôi thường là 'will you?'", "examples": [
+            { "en": "Open the door, will you?", "vi": "Bạn mở cửa ra được không?" },
+            { "en": "Don't be late, will you?", "vi": "Bạn đừng đến muộn được không?" }
+          ] },
+          { "rule": "Câu đầu là 'I wish', dùng 'may' trong câu hỏi đuôi", "example": { "en": "I wish to study English, may I?", "vi": "Tôi muốn học tiếng Anh, có được không?" } },
+          { "rule": "Chủ từ là 'one', dùng 'you' hoặc 'one' trong câu hỏi đuôi", "example": { "en": "When one is sad, she doesn't want to do anything, do you/does one?", "vi": "Khi người ta buồn, người ta không muốn làm gì cả phải vậy không?" } },
+          { "rule": "Câu đầu có 'must': Nếu chỉ sự cần thiết dùng 'needn't'; chỉ sự cấm đoán dùng 'must'; chỉ sự dự đoán ở hiện tại dựa vào động từ theo sau must; chỉ sự dự đoán ở quá khứ (must + have + Vp2) dùng 'have/has' căn cứ theo chủ ngữ", "examples": [
+            { "en": "They must study hard, needn't they?", "vi": "Họ phải học hành chăm chỉ phải vậy không?" },
+            { "en": "You mustn't come late, must you?", "vi": "Bạn không được đến muộn, nhớ chưa?" },
+            { "en": "He must be a very intelligent student, isn't he?", "vi": "Anh ta ắt hẳn là một học sinh rất thông minh, phải không?" },
+            { "en": "You must have stolen my bike, haven't you?", "vi": "Bạn chắc hẳn là đã lấy cắp xe của tôi, phải không?" },
+            { "en": "She must have been tired after a long journey, hasn't she?", "vi": "Cô ấy hẳn là đã rất mệt sau một chuyến đi dài phải không?" }
+          ] },
+          { "rule": "Câu cảm thán, lấy danh từ đổi thành đại từ tương ứng cùng với dùng is, am, are", "examples": [
+            { "en": "What a beautiful dress, isn't it?", "vi": "Cái váy ấy đẹp quá phải không?" },
+            { "en": "How intelligent the children are, aren't you?", "vi": "Bọn trẻ thông minh quá phải không?" }
+          ] },
+          { "rule": "Câu đầu có 'I + think/believe/suppose...' + mệnh đề phụ: lấy mệnh đề phụ làm hỏi đuôi (nếu mệnh đề chính có 'not' vẫn tính như ở mệnh đề phụ). Nếu chủ từ không phải là 'I' thì dùng mệnh đề chính đầu làm câu hỏi đuôi.", "examples": [
+            { "en": "I think he will come here, won't he?", "vi": "Tôi nghĩ là anh ấy sẽ đến phải vậy không?" },
+            { "en": "I don't believe Mary can do it, can she?", "vi": "Tôi tin Mary không làm chuyện đó, đúng không?" },
+            { "en": "She thinks he will come, doesn't she?", "vi": "Cô ấy nghĩ anh ấy sẽ đến, đúng không?" },
+            { "en": "It seems that you are right, aren't you?", "vi": "Hình như bạn đã đúng, phải vậy không?" }
+          ] },
+          { "rule": "Câu có cấu trúc 'neither... nor' thì câu hỏi đuôi sẽ chia ở số nhiều", "example": { "en": "Neither you nor I are children, are we?", "vi": "Cả em và tôi đều không phải là trẻ con phải vậy không?" } },
+          { "rule": "Câu có 'ought to' thì sử dụng phần đuôi là 'shouldn't'", "example": { "en": "You ought to take a short rest, shouldn't you?", "vi": "" } },
+          { "rule": "Nếu 'need' là động từ thường thì mượn trợ động từ; nếu 'need' là động từ khuyết thiếu thì dùng luôn 'need'", "examples": [
+            { "en": "She needs to water the flowers in the morning, doesn't she?", "vi": "Cô ấy cần phải tưới hoa vào buổi sáng phải không?" },
+            { "en": "She needn't do it, need you?", "vi": "Cô ấy không cần nó, đúng không?" }
+          ] }
+        ]
+      }
+    ]
+  }
+]

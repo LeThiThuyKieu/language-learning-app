@@ -1,0 +1,70 @@
+[
+  {
+    "id": 1,
+    "slug": "the-orders-of-the-adjectives",
+    "title": "Trật tự của tính từ - The orders of the adjectives",
+    "description": "Quy tắc sắp xếp thứ tự các tính từ đứng trước danh từ khi có nhiều tính từ cùng bổ nghĩa.",
+    "sections": [
+      {
+        "id": "rule",
+        "title": "Quy tắc chung",
+        "description": "Trong một cụm danh từ, nếu các tính từ cùng loại thì ta phân cách chúng bằng dấu phẩy, còn nếu khác loại thì ta xếp chúng cạnh nhau.",
+        "formula_mnemonic": "OSASCOMP",
+        "items": [
+          {
+            "order": 1,
+            "type": "Opinion",
+            "meaning": "Từ nhận xét, quan điểm",
+            "examples": ["useful", "beautiful", "interesting", "lovely", "delicious", "handsome", "glorious", "luxurious"]
+          },
+          {
+            "order": 2,
+            "type": "Size",
+            "meaning": "Kích cỡ",
+            "examples": ["big", "small", "large", "huge", "tiny"]
+          },
+          {
+            "order": 3,
+            "type": "Shape",
+            "meaning": "Hình dáng",
+            "examples": ["long", "short", "round", "triangle", "cubic", "heart-shaped", "flat", "square"]
+          },
+          {
+            "order": 4,
+            "type": "Age",
+            "meaning": "Tuổi thọ, tuổi tác",
+            "examples": ["old", "young", "new", "brand-new", "ancient", "modern"]
+          },
+          {
+            "order": 5,
+            "type": "Color",
+            "meaning": "Màu sắc",
+            "examples": ["black", "red", "white", "blue", "yellow", "cream", "violet", "purple", "navy blue", "magenta", "brick red", "emerald", "jet black"]
+          },
+          {
+            "order": 6,
+            "type": "Origin",
+            "meaning": "Nguồn gốc",
+            "examples": ["Vietnamese", "English", "Indian", "Thai", "German", "American"]
+          },
+          {
+            "order": 7,
+            "type": "Material",
+            "meaning": "Chất liệu",
+            "examples": ["silk", "gold", "silver", "wooden", "metal", "plastic", "leather", "glass", "concrete", "ivory"]
+          },
+          {
+            "order": 8,
+            "type": "Purpose",
+            "meaning": "Mục đích",
+            "examples": ["sitting", "sleeping", "wedding", "waiting"]
+          }
+        ],
+        "general_examples": [
+          { "en": "A beautiful old Indian lamp.", "vi": "Một chiếc đèn Ấn Độ cổ tuyệt đẹp." },
+          { "en": "A luxurious big new red Japanese car.", "vi": "Một chiếc ô tô Nhật Bản to mới màu đỏ sang trọng." }
+        ]
+      }
+    ]
+  }
+]
