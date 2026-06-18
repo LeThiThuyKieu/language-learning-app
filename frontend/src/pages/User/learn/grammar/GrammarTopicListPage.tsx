@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { grammarService, type GrammarTopic } from "@/services/grammarService";
+import { grammarService, type GrammarTopic } from "@/services/grammarService.ts";
 import { useEffect, useState } from "react";
 import { BookOpen, ChevronRight, Loader2 } from "lucide-react";
 
@@ -11,7 +11,7 @@ function slugToTitle(slug: string): string {
     .join(" ");
 }
 
-function TopicCard({ topic, index }: { topic: GrammarTopic; index: number }) {
+function TopicCard({ topic }: { topic: GrammarTopic; index: number }) {
   const navigate = useNavigate();
   const enName = slugToTitle(topic.slug.trim());
 

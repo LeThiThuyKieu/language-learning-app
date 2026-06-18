@@ -29,9 +29,9 @@ import QuestionDetailPage from "@/pages/Admin/revision_management/QuestionDetail
 import TaskDetailPage from "@/pages/Admin/revision_management/TaskDetailPage.tsx";
 import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
 import PhoneticPage from "@/pages/User/learn/PhoneticPage.tsx";
-import GrammarPage from "@/pages/User/learn/GrammarPage.tsx";
-import GrammarTopicListPage from "@/pages/User/learn/GrammarTopicListPage.tsx";
-import GrammarTopicDetailPage from "@/pages/User/learn/GrammarTopicDetailPage.tsx";
+import GrammarPage from "@/pages/User/learn/grammar/GrammarPage.tsx";
+import GrammarTopicListPage from "@/pages/User/learn/grammar/GrammarTopicListPage.tsx";
+import GrammarTopicDetailPage from "@/pages/User/learn/grammar/GrammarTopicDetailPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
 import GeneralRevisionTaskPage from "@/pages/User/learn/general_revision/GeneralRevisionTaskPage.tsx";

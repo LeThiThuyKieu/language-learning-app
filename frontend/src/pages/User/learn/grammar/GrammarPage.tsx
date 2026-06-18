@@ -1,7 +1,7 @@
 import { useNavigate, Outlet } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
-import GuestPrompt from "@/components/user/GuestPrompt";
-import LearnSidebar from "@/components/user/learn/common/LearnSidebar";
+import { useAuthStore } from "@/store/authStore.ts";
+import GuestPrompt from "@/components/user/GuestPrompt.tsx";
+import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
 
 export default function GrammarPage() {
   const navigate = useNavigate();
