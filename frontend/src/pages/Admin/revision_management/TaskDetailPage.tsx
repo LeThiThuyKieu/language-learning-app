@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
     ArrowLeft, ChevronLeft, ChevronRight, Loader2, GripVertical,
     ChevronUp, ChevronDown, Search, Plus, Eye, Pencil, Trash2,
-    ImageIcon, Music, Layers, AlignLeft, Save,
+    ImageIcon, Music, Layers, AlignLeft, Save, Upload, Download,
+    FileSpreadsheet, X, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { revisionApi, type AdminQuestion, type AdminTaskDetail } from "@/services/revisionService";
@@ -87,6 +88,13 @@ export default function TaskDetailPage() {
     const [orderDirty, setOrderDirty]   = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<AdminQuestion | null>(null);
+
+    // Import state
+    const [showImportModal, setShowImportModal]   = useState(false);
+    const [importFile, setImportFile]             = useState<File | null>(null);
+    const [importing, setImporting]               = useState(false);
+    const [importResult, setImportResult]         = useState<{ imported: number; errors: string[] } | null>(null);
+    const importFileRef = useRef<HTMLInputElement>(null);
 
     const dragIndexRef = useRef<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -177,6 +185,37 @@ export default function TaskDetailPage() {
         }
     };
 
+    const handleImport = async () => {
+        if (!importFile || !topicId || !taskId) return;
+        setImporting(true);
+        setImportResult(null);
+        try {
+            const res = await revisionApi.importQuestions(parseInt(topicId), parseInt(taskId), importFile);
+            setImportResult(res.data);
+            if (res.data.imported > 0) {
+                toast.success(`Import thành công ${res.data.imported} câu hỏi`);
+                // Reload questions list
+                const qData = await revisionApi.getQuestions(parseInt(topicId), parseInt(taskId));
+                setQuestions((qData ?? []).slice().sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+            }
+            if (res.data.errors.length > 0 && res.data.imported === 0) {
+                toast.error("Import thất bại, kiểm tra danh sách lỗi");
+            }
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(msg ?? "Import thất bại");
+        } finally {
+            setImporting(false);
+        }
+    };
+
+    const handleCloseImportModal = () => {
+        setShowImportModal(false);
+        setImportFile(null);
+        setImportResult(null);
+        if (importFileRef.current) importFileRef.current.value = "";
+    };
+
     if (isLoading) {
         return (
             <div className="flex justify-center py-24">
@@ -236,6 +275,12 @@ export default function TaskDetailPage() {
                     <button onClick={() => navigate(`${basePath}/questions/new`)}
                         className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600">
                         <Plus className="w-4 h-4" /> Add Question
+                    </button>
+                    <button
+                        onClick={() => { setImportResult(null); setShowImportModal(true); }}
+                        className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+                    >
+                        <Upload className="w-4 h-4" /> Import Excel
                     </button>
                 </div>
             </div>
@@ -713,6 +758,146 @@ export default function TaskDetailPage() {
             }}
             message={`Xóa câu hỏi #${deleteTarget?.orderIndex ?? ""}? Hành động này không thể hoàn tác.`}
         />
+
+        {/* ── Import Modal ── */}
+        {showImportModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-100">
+                                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-extrabold text-gray-900">Import Questions</h2>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                    Task type: <span className="font-bold text-orange-500">{task?.questionType}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <button onClick={handleCloseImportModal}
+                            className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-400">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="px-6 py-5 space-y-4">
+                        {/* Template download */}
+                        <div className="flex items-center justify-between rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                                <FileSpreadsheet className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm text-gray-600">Tải file template mẫu</span>
+                            </div>
+                            <a
+                                href="/general_revision/import_revision_questions_template.xlsx"
+                                download
+                                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-600 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                                <Download className="w-3.5 h-3.5" /> Download
+                            </a>
+                        </div>
+
+                        {/* Info note */}
+                        <div className="rounded-xl bg-orange-50 border border-orange-100 px-4 py-3 text-xs text-orange-700 leading-relaxed">
+                            <strong>Lưu ý:</strong> Chỉ sheet <code className="bg-orange-100 px-1 rounded font-mono">{task?.questionType === "WRITING" ? "WRITING_1 / WRITING_2" : task?.questionType}</code> trong file Excel sẽ được import. Xóa dòng 2 (dòng mô tả) trước khi upload.
+                        </div>
+
+                        {/* File picker */}
+                        <div>
+                            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-gray-400">Chọn file Excel (.xlsx)</p>
+                            <input
+                                ref={importFileRef}
+                                type="file"
+                                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                className="hidden"
+                                onChange={e => {
+                                    const f = e.target.files?.[0] ?? null;
+                                    setImportFile(f);
+                                    setImportResult(null);
+                                }}
+                            />
+                            <div
+                                onClick={() => !importing && importFileRef.current?.click()}
+                                className={[
+                                    "flex cursor-pointer items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed px-5 py-5 text-sm transition",
+                                    importing
+                                        ? "border-emerald-200 bg-emerald-50 text-emerald-400"
+                                        : importFile
+                                        ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                                        : "border-gray-200 bg-gray-50 text-gray-400 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600",
+                                ].join(" ")}
+                            >
+                                {importing ? (
+                                    <><Loader2 className="w-5 h-5 animate-spin" /> Đang import...</>
+                                ) : importFile ? (
+                                    <><FileSpreadsheet className="w-5 h-5" />
+                                        <span className="font-semibold truncate max-w-xs">{importFile.name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={e => { e.stopPropagation(); setImportFile(null); if (importFileRef.current) importFileRef.current.value = ""; }}
+                                            className="ml-auto shrink-0 p-1 rounded text-emerald-400 hover:text-red-500 transition"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <><Upload className="w-5 h-5" /> Kéo thả hoặc nhấn để chọn file .xlsx</>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Result */}
+                        {importResult && (
+                            <div className="space-y-2">
+                                {importResult.imported > 0 && (
+                                    <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                        <span className="text-sm font-bold text-emerald-700">
+                                            Import thành công {importResult.imported} câu hỏi
+                                        </span>
+                                    </div>
+                                )}
+                                {importResult.errors.length > 0 && (
+                                    <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 space-y-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                                            <span className="text-xs font-bold text-red-600">{importResult.errors.length} lỗi:</span>
+                                        </div>
+                                        <ul className="ml-6 space-y-0.5 max-h-32 overflow-y-auto">
+                                            {importResult.errors.map((e, i) => (
+                                                <li key={i} className="text-xs text-red-500 list-disc">{e}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
+                        <button onClick={handleCloseImportModal}
+                            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-100">
+                            {importResult?.imported ? "Đóng" : "Hủy"}
+                        </button>
+                        {!importResult?.imported && (
+                            <button
+                                onClick={handleImport}
+                                disabled={!importFile || importing}
+                                className="flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {importing
+                                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang import...</>
+                                    : <><Upload className="w-4 h-4" /> Import</>
+                                }
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+        
         </>
     );
 }
