@@ -11,7 +11,7 @@ interface LearnSidebarProps {
   onNavigate: (path: string) => void;
   onLogout: () => void;
   /** Item đang active trong sidebar. Mặc định là "learn" */
-  activeItem?: "learn" | "leaderboard" | "phonetic" | "revision" | "grammar";
+  activeItem?: "learn" | "leaderboard" | "phonetic" | "revision" | "exam" | "grammar";
 }
 
 function SidebarItem({
@@ -209,6 +209,22 @@ export default function LearnSidebar({
                   onToggleGeneralRevision();
                 }
               }}
+            />
+            {/* Thi */}
+            <SidebarItem
+              label="Thi"
+              active={activeItem === "exam"}
+              onClick={() => onNavigate("/exam")}
+              icon={
+                <img
+                  src="/icons/learn/exam.svg"
+                  alt=""
+                  className="h-8 w-8 shrink-0 object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              }
             />
             <div className="relative w-full pt-0.5">
               <button

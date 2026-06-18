@@ -29,6 +29,11 @@ import QuestionDetailPage from "@/pages/Admin/revision_management/QuestionDetail
 import TaskDetailPage from "@/pages/Admin/revision_management/TaskDetailPage.tsx";
 import AdminProfilePage from "@/pages/Admin/AdminProfilePage.tsx";
 import PhoneticPage from "@/pages/User/learn/PhoneticPage.tsx";
+import ExamPage from "@/pages/User/exam/ExamPage.tsx";
+import ExamTestListPage from "@/pages/User/exam/ExamTestListPage.tsx";
+import ExamListeningPage from "@/pages/User/exam/ExamListeningPage.tsx";
+import ExamReadingWritingPage from "@/pages/User/exam/ExamReadingWritingPage.tsx";
+import ExamSpeakingPage from "@/pages/User/exam/ExamSpeakingPage.tsx";
 import GrammarPage from "@/pages/User/learn/grammar/GrammarPage.tsx";
 import GrammarTopicListPage from "@/pages/User/learn/grammar/GrammarTopicListPage.tsx";
 import GrammarTopicDetailPage from "@/pages/User/learn/grammar/GrammarTopicDetailPage.tsx";
@@ -128,6 +133,8 @@ function App() {
                             <Route path=":slug" element={<GrammarTopicDetailPage/>} />
                         </Route>
                         <Route path="phonetic" element={<PhoneticPage/>}/>
+                        <Route path="exam" element={<ExamPage/>}/>
+                        <Route path="exam/:level" element={<ExamTestListPage/>}/>
                         <Route path="general-revision" element={<GeneralRevisionPage/>}/>
                         <Route path="leaderboard" element={<LeaderboardPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
@@ -145,6 +152,11 @@ function App() {
 
                     {/* Ôn tập tổng hợp full màn hình: không Header/Footer layout trang chủ */}
                     <Route path="/general-revision/task" element={<GeneralRevisionTaskPage/>}/>
+
+                    {/* Thi full màn hình */}
+                    <Route path="/exam/:level/:testId/listening" element={<ExamListeningPage/>}/>
+                    <Route path="/exam/:level/:testId/reading-writing" element={<ExamReadingWritingPage/>}/>
+                    <Route path="/exam/:level/:testId/speaking" element={<ExamSpeakingPage/>}/>
 
                     {/* Trang Welcome */}
                     <Route path="/welcome"
