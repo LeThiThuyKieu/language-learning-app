@@ -1,0 +1,139 @@
+[
+  {
+    "id": 1,
+    "slug": "articles",
+    "title": "Mạo từ (Articles)",
+    "description": "Từ dùng trước danh từ và cho biết danh từ ấy nói đến một đối tượng xác định hay không xác định.",
+    "sections": [
+      {
+        "id": "concept",
+        "title": "Mạo từ là gì?",
+        "items": [
+          {
+            "description": "Mạo từ (article) là từ dùng trước danh từ và cho biết danh từ ấy nói đến một đối tượng xác định hay không xác định. Trong tiếng Anh, mạo từ được chia làm hai loại: mạo từ xác định (definite article) \"the\" và mạo từ không xác định (indefinite article) gồm \"a, an\".",
+            "examples": []
+          }
+        ]
+      },
+      {
+        "id": "indefinite-articles",
+        "title": "Cách sử dụng mạo từ không xác định (indefinite article)",
+        "items": [
+          {
+            "rule": "1. Dùng trước những danh từ số ít đếm được, khi nó được nhắc tới lần đầu tiên. Trong đó: + a dùng trước những danh từ bắt đầu bằng một phụ âm; + an dùng trước những danh từ bắt đầu bằng một nguyên âm.",
+            "example": { "en": "I often eat an apple or a banana every day.", "vi": "Tôi thường ăn một quả táo hoặc một quả chuối mỗi ngày." }
+          },
+          {
+            "rule": "2. Dùng trước những danh từ khi nó mang nghĩa là “một”",
+            "example": { "en": "My new house is near a bus stop, so I usually go to school by bus.", "vi": "Nhà mới của tôi gần một trạm xe bus, vì vậy tôi thường đi học bằng xe bus." }
+          },
+          {
+            "rule": "3. Dùng trước những danh từ chỉ nghề nghiệp",
+            "example": { "en": "There are three people in my family. My mother is a teacher, my father works as an engineer and I am a student.", "vi": "Gia đình tôi gồm có ba người. Mẹ tôi là giáo viên, bố tôi là kĩ sư và tôi là học sinh." }
+          },
+          {
+            "rule": "4. Dùng trong các cụm từ chỉ số lượng",
+            "examples": [
+              { "en": "a little sugar, a little water, a little money", "vi": "một ít đường, một ít nước, một ít tiền (dùng trước danh từ không đếm được)" },
+              { "en": "a few days, a few places, a few students", "vi": "một vài ngày, một vài địa điểm, một vài học sinh (dùng trước danh từ đếm được)" },
+              { "en": "a lot of time, a lot of exercises", "vi": "nhiều thời gian, nhiều bài tập (dùng cho cả danh từ đếm được và không đếm được)" },
+              { "en": "thanks a lot", "vi": "cảm ơn nhiều" },
+              { "en": "a couple of shoes", "vi": "một đôi giày" },
+              { "en": "a dozen of eggs", "vi": "một tá trứng" },
+              { "en": "a quarter of an hour", "vi": "một phần tư giờ/ 15 phút" },
+              { "en": "A great deal of money is spent on advertising.", "vi": "Rất nhiều tiền đã được chi vào quảng cáo. (dùng trước danh từ không đếm được)" },
+              { "en": "There are a large number of people waiting for the last bus.", "vi": "Có rất nhiều người đang đợi chuyến xe buýt cuối cùng. (a large number of = a wide variety of = a great many of: dùng trước danh từ đếm được)" },
+              { "en": "a piece of cake", "vi": "một miếng bánh" },
+              { "en": "a cup of tea, a glass of beer", "vi": "một tách trà, một cốc bia" },
+              { "en": "a bunch of flowers, a bunch of bananas", "vi": "một bó hoa, một nải chuối" }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "exceptions-a-an",
+        "title": "Một số trường hợp ngoại lệ trong cách sử dụng a/an",
+        "description": "Theo quy tắc: a dùng trước phụ âm, an dùng trước nguyên âm. Nhưng các trường hợp sau đây dựa theo cách phát âm thực tế:",
+        "items": [
+          { "rule": "Dùng 'a' trước danh từ bắt đầu bằng nguyên âm nhưng phát âm như phụ âm /j/ hoặc /w/", "examples": [
+            { "en": "a uniform", "vi": "một bộ đồng phục" },
+            { "en": "a university", "vi": "một trường đại học" },
+            { "en": "a one-eyed man", "vi": "một người đàn ông mắt chột" },
+            { "en": "a one-way road", "vi": "đường một chiều" },
+            { "en": "a useful way", "vi": "một cách hữu ích" },
+            { "en": "a union", "vi": "một liên minh, một đồng minh" },
+            { "en": "a European", "vi": "một người châu Âu" },
+            { "en": "a unit", "vi": "một đơn vị" }
+          ]},
+          { "rule": "Dùng 'an' trước danh từ bắt đầu bằng âm câm (h không phát âm) hoặc chữ cái viết tắt phát âm bằng một nguyên âm", "examples": [
+            { "en": "an hour", "vi": "một giờ" },
+            { "en": "an honest man", "vi": "một người đàn ông thật thà" },
+            { "en": "an SOS", "vi": "một tín hiệu cấp cứu" },
+            { "en": "an M.A", "vi": "một cử nhân" },
+            { "en": "an honorable man", "vi": "một người đáng kính" }
+          ]}
+        ]
+      },
+      {
+        "id": "definite-article",
+        "title": "Cách sử dụng mạo từ xác định (definite article)",
+        "items": [
+          { "rule": "1. Dùng trước những danh từ khi được nhắc tới từ lần thứ hai trở đi", "example": { "en": "I have a dog and a cat. The cat is more intelligent than the dog.", "vi": "Tôi có một con chó và một con mèo. Con mèo thì thông minh hơn con chó." } },
+          { "rule": "2. Dùng trước những danh từ khi chúng được xác định bằng một mệnh đề/mệnh đề quan hệ ở phía sau", "example": { "en": "Do you know the woman who is standing over there?", "vi": "Bạn có biết người phụ nữ đang đứng ở đằng kia không?" } },
+          { "rule": "3. Dùng trước những danh từ là duy nhất, độc nhất", "example": { "en": "The Sun, the Moon, the Earth, the world, the universe, the capital, the king, the president, the headmaster, the monitor", "vi": "Mặt Trời, Mặt Trăng, Trái Đất, thế giới, vũ trụ, thủ đô, vua, tổng thống, hiệu trưởng, lớp trưởng" } },
+          { "rule": "4. Dùng trước số thứ tự, 'last', 'only'", "example": { "en": "The first, the second, the third... the last, the only", "vi": "Thứ nhất, thứ hai, thứ ba... cuối cùng, duy nhất" } },
+          { "rule": "5. Dùng trước tính từ để tạo thành danh từ chỉ người ở dạng số nhiều", "example": { "en": "The old, the young, the sick, the rich, the poor, the disabled, the unemployed, the dead, the injured. (Eg: The unemployed are the people who don't have any jobs.)", "vi": "Người già, người trẻ, người ốm, người giàu, người nghèo, người khuyết tật, người thất nghiệp, người chết, người bị thương." } },
+          { "rule": "6. Dùng trước tên của ba quốc gia đặc biệt", "example": { "en": "The United States of America (the USA)/ The United States (the US), The United Kingdom (the UK), The Philippines", "vi": "Hợp Chủng Quốc Hoa Kì, Vương Quốc Anh, Nước Phi-líp-pin" } },
+          { "rule": "7. Dùng trước tên của các loại nhạc cụ đứng sau động từ 'play'", "example": { "en": "My mother bought me a piano because I like playing the piano.", "vi": "Mẹ tôi mua cho tôi một chiếc đàn piano bởi vì tôi thích chơi đàn piano." } },
+          { "rule": "8. Dùng trước tên của các địa điểm công cộng", "example": { "en": "The cinema, the zoo, the park, the station, the post office, the airport, the bus stop, the theatre, the library...", "vi": "Rạp chiếu phim, sở thú, công viên, nhà ga, bưu điện, sân bay, trạm xe bus, nhà hát, thư viện..." } },
+          { "rule": "9. Dùng trước danh từ chỉ tên riêng ở dạng số nhiều để chỉ cả gia đình", "example": { "en": "The Smiths are having dinner now.", "vi": "Gia đình nhà Smith bây giờ đang ăn tối." } },
+          { "rule": "10. Dùng trước tính từ so sánh hơn nhất và so sánh kép", "examples": [
+            { "en": "My mother is the most beautiful woman in the world.", "vi": "Mẹ tôi là người đẹp nhất thế gian này. (So sánh hơn nhất)" },
+            { "en": "The more I know him, the more I like him.", "vi": "Tôi càng biết nhiều về anh ấy, tôi lại càng thích anh ấy. (So sánh kép)" }
+          ] },
+          { "rule": "11. Dùng trước tên của sông, suối, biển, đại dương, sa mạc, dãy núi...", "example": { "en": "The Mississippi river, The Fairy Stream, The Black Sea, The Atlantic Ocean, The Pacific Ocean, The Sahara, The Himalayas", "vi": "Sông Mississippi, Suối Tiên, Biển Đen, Đại Tây Dương, Thái Bình Dương, sa mạc Sahara, dãy núi Himalayas" } },
+          { "rule": "12. Dùng trước những danh từ mà cả người nói và người nghe đều biết rõ về nó", "example": { "en": "My father is reading newspapers in the sitting room.", "vi": "Bố tôi đang đọc báo ở trong phòng khách." } },
+          { "rule": "13. Dùng trước các buổi trong ngày", "example": { "en": "In the morning, in the afternoon, in the evening", "vi": "Buổi sáng, buổi trưa/chiều, buổi tối" } },
+          { "rule": "14. Dùng trước tên của các tờ báo", "example": { "en": "The New York Times", "vi": "Tờ báo New York Times" } },
+          { "rule": "15. Dùng trước tên của các tổ chức", "example": { "en": "The UN (The United Nations), The WHO (The World Health Organization), The Red Cross", "vi": "Tổ chức Liên Hợp Quốc, Tổ chức Y tế Thế giới, Hội Chữ thập Đỏ" } },
+          { "rule": "16. Dùng cấu trúc 'The + danh từ số ít' để tượng trưng cho một nhóm động vật, loài hoặc đồ vật", "examples": [
+            { "en": "The whale is in danger of becoming extinct.", "vi": "Cá voi đang trong nguy cơ tuyệt chủng." },
+            { "en": "The fast food has made life easier for housewives.", "vi": "Thức ăn nhanh đã làm cho các bà nội trợ có cuộc sống dễ dàng hơn." }
+          ] },
+          { "rule": "17. Dùng trước danh từ chỉ phương hướng", "example": { "en": "The Sun rises in the east and sets in the west.", "vi": "Mặt Trời mọc ở đằng đông và lặn ở đằng tây." } },
+          { "rule": "18. Dùng đứng trước cấu trúc: Danh từ + of + Danh từ", "example": { "en": "I saw an accident this morning. A car crashed into a tree. The driver of the car wasn't hurt but the car was badly damaged.", "vi": "Sáng nay tôi nhìn thấy một vụ tai nạn. Một chiếc ô tô đâm vào một cái cây. Người lái xe của chiếc ô tô không bị thương nhưng chiếc ô tô thì hư hỏng nặng." } },
+          { "rule": "19. Dùng trong một số cụm từ cố định", "example": { "en": "In the middle of st, At the end of st, At the top of st, At the age of...", "vi": "ở giữa của cái gì, cuối của cái gì, ở đỉnh của cái gì, ở độ tuổi bao nhiêu" } },
+          { "rule": "20. Dùng trước hospital/church/school/prison khi đi đến đó không đúng với mục đích chính (như đi học, đi lễ, chữa bệnh, đi tù) mà đi với mục đích khác", "examples": [
+            { "en": "Yesterday my mother went to the school to meet the headmaster. (So với: I go to school by bus every day.)", "vi": "Ngày hôm qua, mẹ tôi đến trường để gặp hiệu trưởng. (Mẹ đến trường để gặp mặt, không phải đi học nên dùng 'the school')" },
+            { "en": "Last night we went to the hospital to ask after Lan's mother. (So với: The injured were taken to hospital.)", "vi": "Tối qua, chúng tôi đã vào viện để thăm mẹ của Lan. (Đến thăm chứ không phải điều trị bệnh nên dùng 'the hospital')" },
+            { "en": "I am going to the prison to see my cousin.", "vi": "Tôi sẽ đi đến trại giam để gặp anh em họ của tôi. (Đến thăm chứ không phải đi tù nên dùng 'the prison')" },
+            { "en": "My sister goes to church every Sunday.", "vi": "Chủ nhật hàng tuần, chị gái tôi đều đi lễ. (Đến để đi lễ đúng mục đích chính nên KHÔNG dùng mạo từ)" }
+          ] }
+        ]
+      },
+      {
+        "id": "zero-article",
+        "title": "Không sử dụng mạo từ (Zero article)",
+        "description": "Không sử dụng mạo từ trong các trường hợp sau đây:",
+        "items": [
+          { "rule": "1. Trước tên của các môn học", "example": { "en": "To me, English is much more interesting than any other subjects.", "vi": "Với tôi, Tiếng Anh thú vị hơn nhiều so với các môn học khác." } },
+          { "rule": "2. Trước tên của các môn thể thao", "example": { "en": "The boys are playing football in the park.", "vi": "Những cậu bé đang chơi bóng ở trong công viên." } },
+          { "rule": "3. Trước danh từ số nhiều không xác định", "example": { "en": "I don't like cats.", "vi": "Tôi không thích mèo." } },
+          { "rule": "4. Trước danh từ không đếm được", "example": { "en": "I often drink milk in the morning.", "vi": "Tôi thường uống sữa vào buổi sáng." } },
+          { "rule": "5. Trước tên của các phương tiện giao thông đứng sau giới từ 'by'", "example": { "en": "Although my father has a car, he often goes to work by bus.", "vi": "Mặc dù bố tôi có ô tô nhưng ông ấy vẫn thường đi làm bằng xe buýt." } },
+          { "rule": "6. Trước danh từ chỉ màu sắc", "example": { "en": "Red is not my favorite color.", "vi": "Màu đỏ không phải là màu tôi thích." } },
+          { "rule": "7. Sau tính từ sở hữu hoặc sau danh từ ở sở hữu cách", "example": { "en": "My friend (không dùng: my the friend), The girl's mother", "vi": "Bạn của tôi, mẹ của cô gái" } },
+          { "rule": "8. Trước tên của các bữa ăn", "example": { "en": "My mother always gets up early to make sure that we have had breakfast before going to school.", "vi": "Mẹ tôi luôn dậy sớm để đảm bảo rằng chúng tôi đã ăn sáng trước khi tới trường." } },
+          { "rule": "9. Trước thứ, ngày, tháng, năm, mùa (nếu không xác định cụ thể)", "example": { "en": "I have the habit of sleeping late on Sunday. / I don't like summer but I loved the summer in 2000 when I met him for the first time.", "vi": "Tôi có thói quen ngủ muộn vào Chủ nhật. / Tôi không thích mùa hè nói chung, nhưng tôi thích mùa hè năm 2000 (đã xác định) mà tôi gặp anh ấy." } },
+          { "rule": "10. Trước tên quốc gia thông thường, tên châu lục, tên núi, tên hồ, tên đường", "examples": [
+            { "en": "China is the country which has the largest population in the world.", "vi": "Trung Quốc là quốc gia có dân số đông nhất thế giới." },
+            { "en": "I wish to travel around Europe for a month.", "vi": "Tôi ước được đi vòng quanh châu Âu trong một tháng." },
+            { "en": "Known as the highest mountain in Vietnam, Fansipan mountain is also glorified as the roof of Indochina...", "vi": "Được biết đến như là đỉnh núi cao nhất ở Việt Nam, núi Fansipan cũng được mệnh danh là nóc nhà của Đông Dương..." },
+            { "en": "We are walking on the Downing Street.", "vi": "Chúng tôi đang đi dạo trên phố Downing." }
+          ] },
+          { "rule": "11. Trước danh từ trừu tượng", "example": { "en": "Two things you can't buy with money are love and health.", "vi": "Có hai thứ bạn không thể mua được bằng tiền là tình yêu và sức khoẻ." } }
+        ]
+      }
+    ]
+  }
+]

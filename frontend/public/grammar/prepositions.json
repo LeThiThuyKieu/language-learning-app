@@ -1,0 +1,63 @@
+[
+  {
+    "id": 1,
+    "slug": "prepositions",
+    "title": "Giới từ - Prepositions",
+    "description": "Giới từ là từ loại dùng để chỉ mối quan hệ về thời gian, vị trí hoặc sự chuyển động giữa các thành phần trong câu.",
+    "sections": [
+      {
+        "id": "position",
+        "title": "Vị trí của giới từ",
+        "items": [
+          {
+            "order": 1,
+            "type": "Trước danh từ",
+            "meaning": "Dùng để chỉ thời gian hoặc nơi chốn."
+          },
+          {
+            "order": 2,
+            "type": "Sau động từ",
+            "meaning": "Kết hợp với động từ để tạo thành cụm động từ."
+          },
+          {
+            "order": 3,
+            "type": "Sau tính từ",
+            "meaning": "Dùng để bổ nghĩa cho tính từ."
+          }
+        ]
+      },
+      {
+        "id": "types",
+        "title": "Các loại giới từ thông dụng",
+        "items": [
+          {
+            "order": 1,
+            "type": "Thời gian (On, In, At)",
+            "meaning": "On (thứ, ngày); In (tháng, năm, mùa, buổi); At (giờ, mốc thời gian cụ thể)."
+          },
+          {
+            "order": 2,
+            "type": "Vị trí (In, At, On)",
+            "meaning": "In (khu vực, quốc gia); At (địa điểm cụ thể); On (bề mặt, tầng nhà)."
+          },
+          {
+            "order": 3,
+            "type": "Chuyển động",
+            "meaning": "Across (băng qua), Into (vào trong), Towards (về hướng), Through (xuyên qua), v.v.."
+          }
+        ]
+      },
+      {
+        "id": "collocations",
+        "title": "Tính từ + Giới từ",
+        "items": [
+          {
+            "order": 1,
+            "type": "Các cấu trúc phổ biến",
+            "meaning": "Một số cụm từ kết hợp: Interested in, Afraid of, Famous for, Good at, Responsible to/for."
+          }
+        ]
+      }
+    ]
+  }
+]

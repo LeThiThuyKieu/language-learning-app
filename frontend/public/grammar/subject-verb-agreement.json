@@ -1,0 +1,139 @@
+[
+  {
+    "id": 1,
+    "slug": "subject-verb-agreement",
+    "title": "Sự hoà hợp giữa chủ ngữ và động từ (Subject and Verb Agreements)",
+    "description": "Quy tắc chung: Chủ ngữ là danh từ số ít hoặc danh từ không đếm được đi cùng động từ số ít và chủ ngữ số nhiều đi cùng động từ số nhiều. Tuy nhiên, đôi khi động từ còn hoà hợp tuỳ theo ý tưởng diễn đạt hoặc danh từ/đại từ đứng trước.",
+    "sections": [
+      {
+        "id": "rules",
+        "title": "1. Các quy tắc hoà hợp giữa chủ ngữ và động từ",
+        "items": [
+          {
+            "title": "Quy tắc 1: Hai danh từ nối nhau bằng từ 'and'",
+            "description": "Thông thường động từ chia số nhiều. Ngoại trừ trường hợp cùng chỉ một người/món ăn hoặc phép cộng thì dùng số ít.",
+            "examples": [
+              { "en": "My sister and I like listening to classical music.", "vi": "Chị gái tôi và tôi thích nghe nhạc cổ điển." },
+              { "en": "The professor and secretary is on business.", "vi": "Ông giáo sư kiêm thư kí đang đi công tác. (Là một người)" },
+              { "en": "Two and three is five.", "vi": "Hai cộng ba bằng năm." }
+            ]
+          },
+          {
+            "title": "Quy tắc 2: Cấu trúc với 'Each, Every, Many a...'",
+            "description": "Động từ theo sau luôn chia ở ngôi số ít.",
+            "examples": [
+              { "en": "Each person is allowed 20kg luggage.", "vi": "Mỗi người được phép mang 20kg hành lý." },
+              { "en": "Every student is told about the changes of the timetable.", "vi": "Mỗi học sinh đều được thông báo về sự thay đổi của thời khóa biểu." }
+            ]
+          },
+          {
+            "title": "Quy tắc 3 & 4: Chủ ngữ là To-infinitive, V-ing hoặc Mệnh đề danh từ",
+            "description": "Động từ theo sau luôn chia ở số ít.",
+            "examples": [
+              { "en": "Jogging every day is good for your health.", "vi": "Chạy bộ mỗi ngày rất tốt cho sức khỏe của bạn." },
+              { "en": "What you have said is not true.", "vi": "Những gì bạn vừa nói là không đúng." }
+            ]
+          },
+          {
+            "title": "Quy tắc 5 & 6: Tựa đề hoặc Danh từ tận cùng bằng 's' nhưng mang nghĩa số ít",
+            "description": "Áp dụng với tên phim/sách, môn học (Physics, Mathematics), môn thể thao (Athletics, Billiards), căn bệnh (Measles, Mumps) hoặc cụm đo lường, khoảng cách, thời gian, tiền bạc.",
+            "examples": [
+              { "en": "\"Tom and Jerry\" is my son's favorite cartoon.", "vi": "\"Tom và Jerry\" là bộ phim hoạt hình yêu thích của con trai tôi." },
+              { "en": "Ten dollars is too expensive for this book.", "vi": "Mười đô la là quá đắt cho cuốn sách này." }
+            ]
+          },
+          {
+            "title": "Quy tắc 7 & 8: Danh từ không kết thúc bằng 's' nhưng dùng số nhiều, hoặc cấu trúc 'The + adj'",
+            "description": "Các từ tập hợp như people, cattle, police... hoặc cụm 'The + tính từ' chỉ một tập hợp người sẽ chia động từ số nhiều.",
+            "examples": [
+              { "en": "The police want to interview Fred about a robbery.", "vi": "Cảnh sát muốn thẩm vấn Fred về một vụ cướp." },
+              { "en": "The blind are the people who can't see anything.", "vi": "Người mù là những người không thể nhìn thấy gì." }
+            ]
+          },
+          {
+            "title": "Quy tắc 9: Cấu trúc 'either... or, neither... nor, not only... but also'",
+            "description": "Động từ sẽ được chia theo chủ ngữ nằm gần nó nhất.",
+            "examples": [
+              { "en": "Neither she nor her children were inherited from the will.", "vi": "Cả bà ấy lẫn các con đều không được thừa kế từ di chúc." },
+              { "en": "Not only she but also her friends are going to the cinema.", "vi": "Không chỉ cô ấy mà cả bạn bè cô ấy cũng đang đi xem phim." }
+            ]
+          },
+          {
+            "title": "Quy tắc 10: Cấu trúc nối bằng 'as well as, with, together with, along with, accompanied by'",
+            "description": "Động từ được chia theo danh từ/chủ ngữ ở phía trước.",
+            "examples": [
+              { "en": "She as well as I is going to university this year.", "vi": "Cô ấy cũng như tôi sẽ học đại học năm nay. (Chia theo 'She')" }
+            ]
+          },
+          {
+            "title": "Quy tắc 11: Hai danh từ nối nhau bằng từ 'of'",
+            "description": "Thông thường chia theo danh từ phía trước. Nhưng nếu danh từ trước là các từ chỉ số lượng (none, some, all, most, majority, phân số, phần trăm...) thì chia theo danh từ phía sau.",
+            "examples": [
+              { "en": "The study of how living things work is called philosophy.", "vi": "Việc nghiên cứu cách thức hoạt động của các sinh vật được gọi là triết học. (Chia theo 'study')" },
+              { "en": "Some of the students are late for class.", "vi": "Một số học sinh bị trễ học. (Chia theo 'students')" }
+            ]
+          },
+          {
+            "title": "Quy tắc 12: Phân biệt cấu trúc 'A number of' và 'The number of'",
+            "description": "'A number of + N số nhiều' đi với V số nhiều (nghĩa là nhiều). 'The number of + N số nhiều' đi với V số ít (nghĩa là số lượng của...).",
+            "examples": [
+              { "en": "A number of students are going to the class picnic.", "vi": "Nhiều học sinh sẽ đi dã ngoại cùng lớp." },
+              { "en": "The number of days in a week is seven.", "vi": "Số ngày trong một tuần là bảy." }
+            ]
+          },
+          {
+            "title": "Quy tắc 13: Danh từ chỉ tập hợp (family, staff, team, group, crowd...)",
+            "description": "Nếu chỉ hành động của từng thành viên thì dùng V số nhiều; nếu chỉ tính chất của tập thể như một đơn vị đồng nhất thì dùng V số ít.",
+            "examples": [
+              { "en": "The family are having breakfast.", "vi": "Gia đình đang ăn sáng. (Từng thành viên đang ăn)" },
+              { "en": "The family is very conservative.", "vi": "Gia đình này rất bảo thủ. (Tính chất của một tập thể)" }
+            ]
+          },
+          {
+            "title": "Quy tắc 14: Cấu trúc với 'There is / There are'",
+            "description": "Động từ chia theo danh từ ngay sát phía sau nó.",
+            "examples": [
+              { "en": "There is a book and two pens on the table.", "vi": "Có một quyển sách và hai chiếc bút ở trên bàn. (Chia theo 'a book')" }
+            ]
+          },
+          {
+            "title": "Quy tắc 17: Những danh từ luôn ở dạng số nhiều (pants, trousers, scissors, pliers...)",
+            "description": "Thông thường chia động từ số nhiều. Nhưng nếu có cụm 'A pair of...' đứng trước làm chủ ngữ thì phải chia động từ số ít.",
+            "examples": [
+              { "en": "The scissors are very sharp.", "vi": "Cái kéo này rất sắc." },
+              { "en": "A pair of scissors was left on the table.", "vi": "Một chiếc kéo đã bị bỏ lại trên bàn." }
+            ]
+          },
+          {
+            "title": "Quy tắc 18 & 19: Đại từ bất định hoặc Chủ ngữ có 'No'",
+            "description": "Đại từ bất định (everyone, everything, nobody...) đi với V số ít. Với 'No', nếu sau nó là N số ít thì V số ít, nếu sau nó là N số nhiều thì V số nhiều.",
+            "examples": [
+              { "en": "Everything seems perfect.", "vi": "Mọi thứ dường như hoàn hảo." },
+              { "en": "No lessons were given to us this morning.", "vi": "Không có bài học nào được giao cho chúng tôi sáng nay." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức phối hợp cốt lõi",
+        "positive": [
+          { "type": "N1 and N2 (Khác thể)", "formula": "N1 + and + N2 + V(số nhiều)" },
+          { "type": "N1 and N2 (Đồng thể/Món ăn/Phép cộng)", "formula": "N1 + and + N2 + V(số ít)" },
+          { "type": "Each / Every / Many a", "formula": "Each/Every/Many a + N(số ít) + V(số ít)" },
+          { "type": "V-ing / To-V / Mệnh đề danh từ", "formula": "V-ing / To-V / Clause + V(số ít)" },
+          { "type": "Either... or / Neither... nor", "formula": "Either/Neither + N1 + or/nor + N2 + V(chia theo N2)" },
+          { "type": "N nối bằng cụm giới từ (as well as, along with...)", "formula": "N1 + as well as/together with... + N2 + V(chia theo N1)" },
+          { "type": "N1 of N2 (Thông thường)", "formula": "N1 + of + N2 + V(chia theo N1)" },
+          { "type": "Từ chỉ số lượng + of + N2", "formula": "Some/All/Most/Phân số... + of + N2 + V(chia theo N2)" },
+          { "type": "A number of", "formula": "A number of + N(số nhiều) + V(số nhiều)" },
+          { "type": "The number of", "formula": "The number of + N(số nhiều) + V(số ít)" },
+          { "type": "There + be", "formula": "There + be(chia theo N liền sau) + N" },
+          { "type": "A pair of + Danh từ số nhiều", "formula": "A pair of + N(số nhiều) + V(số ít)" },
+          { "type": "Đại từ bất định", "formula": "Indefinite Pronoun + V(số ít)" },
+          { "type": "No + Danh từ", "formula": "No + N(số ít/nhiều) + V(chia theo N đó)" }
+        ]
+      }
+    ]
+  }
+]

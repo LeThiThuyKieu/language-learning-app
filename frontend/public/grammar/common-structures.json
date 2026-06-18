@@ -1,0 +1,73 @@
+[
+  {
+    "id": 1,
+    "slug": "common-structures",
+    "title": "Một số cấu trúc thông dụng - Common Structures",
+    "description": "Tổng hợp các cấu trúc ngữ pháp thường gặp, bao gồm các cấu trúc nhờ vả, câu ước, các cụm từ cố định và cách sử dụng các dạng V-ing/To-V[cite: 2].",
+    "sections": [
+      {
+        "id": "verb_patterns",
+        "title": "Các dạng cấu trúc động từ",
+        "items": [
+          {
+            "order": 1,
+            "type": "Cấu trúc nhờ vả",
+            "meaning": "Have sb + V (bare) / get sb to + V (bare) (Nhờ ai làm gì); Have/get st + Vp2 (Có cái gì được làm bởi ai)[cite: 2]."
+          },
+          {
+            "order": 2,
+            "type": "Cấu trúc với 'Need'",
+            "meaning": "Sb + need + to V (Ai đó cần làm gì); St + need + V-ing / St + need + to be + Vp2 (Cái gì cần được làm)[cite: 2]."
+          },
+          {
+            "order": 3,
+            "type": "Cấu trúc với 'Remember'",
+            "meaning": "Remember + to V (Nhớ để làm gì - tương lai); Remember + V-ing (Nhớ đã làm gì - quá khứ)[cite: 2]."
+          }
+        ]
+      },
+      {
+        "id": "fixed_phrases",
+        "title": "Các cụm từ và cấu trúc cố định",
+        "items": [
+          {
+            "order": 1,
+            "type": "Cấu trúc nhấn mạnh",
+            "meaning": "It was not until + time/clause + that + S + V (quá khứ đơn): Phải mãi cho tới tận khi... thì...[cite: 2]."
+          },
+          {
+            "order": 2,
+            "type": "Cấu trúc với 'Out of'",
+            "meaning": "Các cụm như 'Out of breath' (hết hơi), 'Out of date' (hết hạn), 'Out of work' (thất nghiệp), 'Out of stock' (hết hàng)...[cite: 2]."
+          },
+          {
+            "order": 3,
+            "type": "Đồng tình (So/Neither)",
+            "meaning": "So + trợ động từ + S (đồng tình khẳng định); Neither + trợ động từ + S (đồng tình phủ định)[cite: 2]."
+          }
+        ]
+      },
+      {
+        "id": "wish_structures",
+        "title": "Cấu trúc câu ước",
+        "items": [
+          {
+            "order": 1,
+            "type": "Ước tương lai",
+            "meaning": "S + wish + S + would + V[cite: 2]."
+          },
+          {
+            "order": 2,
+            "type": "Ước hiện tại",
+            "meaning": "S + wish + S + V (quá khứ đơn)[cite: 2]."
+          },
+          {
+            "order": 3,
+            "type": "Ước quá khứ",
+            "meaning": "S + wish + S + V (quá khứ hoàn thành)[cite: 2]."
+          }
+        ]
+      }
+    ]
+  }
+]

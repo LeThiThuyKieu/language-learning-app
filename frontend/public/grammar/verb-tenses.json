@@ -1,0 +1,687 @@
+[
+  {
+    "id": 1,
+    "slug": "verb-tenses",
+    "title": "Thì hiện tại đơn (The present simple tense)",
+    "description": "Dùng để diễn tả hành động thường xuyên, thói quen, sự thật hiển nhiên và thời gian biểu.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Diễn tả hành động thường xuyên",
+            "description": "Dùng để diễn tả những hành động thường xuyên xảy ra, lặp đi lặp lại nhiều lần ở hiện tại.",
+            "examples": [
+              { "en": "I go to school by bus every day.", "vi": "Hằng ngày tôi đến trường bằng xe buýt." },
+              { "en": "She always has milk for breakfast.", "vi": "Cô ấy luôn uống sữa vào buổi sáng." }
+            ]
+          },
+          {
+            "title": "Diễn tả thói quen",
+            "description": "Dùng để nói về thói quen của người hoặc vật.",
+            "examples": [
+              { "en": "My sister often sleeps late at night and gets up late in the next morning.", "vi": "Chị gái tôi thường thức khuya và ngủ dậy muộn vào sáng hôm sau." }
+            ]
+          },
+          {
+            "title": "Diễn tả chân lý, sự thật hiển nhiên",
+            "examples": [
+              { "en": "The Earth moves around the Sun.", "vi": "Trái Đất quay quanh Mặt Trời." },
+              { "en": "Mother's mother is grandmother.", "vi": "Mẹ của mẹ là bà." }
+            ]
+          },
+          {
+            "title": "Thời gian biểu, lịch trình",
+            "description": "Dùng để nói về thời gian biểu, chương trình hoặc kế hoạch đã được cố định theo thời gian biểu.",
+            "examples": [
+              { "en": "The plane takes off at 3 p.m this afternoon.", "vi": "Chiếc máy bay cất cánh lúc 3 giờ chiều nay." },
+              { "en": "The train leaves at 8 a.m tomorrow.", "vi": "Tàu khởi hành lúc 8 giờ sáng mai." }
+            ]
+          },
+          {
+            "title": "Diễn tả nghề nghiệp",
+            "examples": [
+              { "en": "My mother is a doctor in a big hospital.", "vi": "Mẹ tôi là bác sĩ trong một bệnh viện lớn." },
+              { "en": "My brothers work as mechanics.", "vi": "Các anh trai tôi đều làm thợ sửa chữa." }
+            ]
+          },
+          {
+            "title": "Diễn tả nguồn gốc, xuất xứ",
+            "examples": [
+              { "en": "I come from Thai Nguyen city.", "vi": "Tôi đến từ thành phố Thái Nguyên." }
+            ]
+          },
+          {
+            "title": "Đưa ra nhận xét, bình phẩm",
+            "examples": [
+              { "en": "She is not only beautiful but also intelligent.", "vi": "Cô ấy không những xinh đẹp mà còn thông minh nữa." }
+            ]
+          },
+          {
+            "title": "Diễn tả sở thích",
+            "examples": [
+              { "en": "I love walking in the rain because it gives me a pleasure.", "vi": "Tôi thích đi bộ dưới trời mưa vì nó cho tôi sự dễ chịu." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "type": "Động từ thường (V)", "formula": "S + V(nguyên dạng/s/es)", "note": "V (nguyên dạng) với chủ ngữ I/số nhiều; V(s/es) với chủ ngữ số ít (He/she/it)" },
+          { "type": "Động từ to be", "formula": "S + am/is/are", "note": "Am: I; Is: chủ ngữ số ít; Are: chủ ngữ số nhiều" }
+        ],
+        "negative": [
+          { "type": "Động từ thường", "formula": "S + do/does + not + V (nguyên dạng)", "note": "do not = don't; does not = doesn't" },
+          { "type": "Động từ to be", "formula": "S + am/is/are + not" }
+        ],
+        "question": [
+          { "type": "Động từ thường", "formula": "Do/Does + S + V (nguyên dạng)?" },
+          { "type": "Động từ to be", "formula": "Am/Is/Are + S + ... ?" }
+        ],
+        "examples": [
+          { "en": "My father watches news at 7 p.m every day.", "vi": "Bố tôi xem thời sự lúc 7 giờ tối mỗi ngày." },
+          { "en": "We love watching football matches on TV.", "vi": "Chúng tôi thích xem những trận bóng trên TV." },
+          { "en": "They are good at English and Maths.", "vi": "Họ rất giỏi tiếng Anh và Toán." }
+        ]
+      },
+      {
+        "id": "rules",
+        "title": "3. Quy tắc chia động từ",
+        "items": [
+          "Thêm -s với chủ ngữ số ít.",
+          "Động từ tận cùng là ss, ch, sh, x, o... thì thêm -es.",
+          "Động từ tận cùng là -y: Nếu trước -y là một nguyên âm thì chỉ thêm -s (Ví dụ: plays).",
+          "Động từ tận cùng là -y: Nếu trước -y là một phụ âm thì đổi 'y' thành 'ies' (Ví dụ: cries).",
+          "Với động từ 'have': Chủ ngữ số nhiều/I giữ nguyên là 'have'; Chủ ngữ số ít đổi thành 'has'."
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "4. Dấu hiệu nhận biết",
+        "keywords": [
+          "always", "usually", "often", "frequently", "sometimes", "seldom", "rarely", "hardly", "never", "generally", "regularly",
+          "every day", "every week", "every month", "every year",
+          "once a day", "twice a week", "three times a month"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "slug": "present-continuous",
+    "title": "Thì hiện tại tiếp diễn (The present continuous tense)",
+    "description": "Dùng để diễn tả hành động đang xảy ra tại thời điểm nói hoặc một kế hoạch sắp xảy ra.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Diễn tả hành động đang xảy ra",
+            "description": "Dùng để diễn tả những hành động đang xảy ra tại thời điểm nói.",
+            "examples": [
+              { "en": "They are learning English at the moment.", "vi": "Hiện tại họ đang học tiếng Anh." }
+            ]
+          },
+          {
+            "title": "Diễn đạt một hành động sắp xảy ra trong tương lai gần",
+            "description": "Thường diễn tả một kế hoạch đã lên lịch sẵn.",
+            "examples": [
+              { "en": "We are having a big birthday party next weekend.", "vi": "Chúng tôi sẽ có một bữa tiệc sinh nhật lớn vào cuối tuần tới." }
+            ]
+          },
+          {
+            "title": "Hành động lặp đi lặp lại gây bực mình",
+            "description": "Hành động thường xuyên lặp đi lặp lại gây sự bực mình hay khó chịu cho người nói. Cách dùng này được dùng với trạng từ 'always, continually'.",
+            "examples": [
+              { "en": "'You are always coming late,' said the teacher.", "vi": "Giáo viên nói: 'Em lúc nào cũng đi muộn'." }
+            ]
+          },
+          {
+            "title": "Diễn tả sự thay đổi của thói quen",
+            "examples": [
+              { "en": "I often have bread for breakfast but today I am having cakes and milk.", "vi": "Bữa sáng tôi thường dùng bánh mì nhưng hôm nay tôi lại ăn bánh ngọt và sữa." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "type": "Tất cả động từ", "formula": "S + am/is/are + V-ing" }
+        ],
+        "negative": [
+          { "type": "Tất cả động từ", "formula": "S + am/is/are + not + V-ing" }
+        ],
+        "question": [
+          { "type": "Tất cả động từ", "formula": "Am/Is/Are + S + V-ing?" }
+        ],
+        "examples": [
+          { "en": "I am playing football with my friends.", "vi": "Tôi đang chơi bóng đá với bạn của tôi." }
+        ]
+      },
+      {
+        "id": "rules",
+        "title": "3. Quy tắc thêm đuôi -ing",
+        "items": [
+          "Động từ tận cùng là một chữ 'e' thì bỏ 'e' trước khi thêm -ing (Ví dụ: come -> coming, write -> writing, live -> living).",
+          "Động từ tận cùng là hai chữ 'e' thì giữ nguyên 'ee' rồi thêm -ing (Ví dụ: see -> seeing).",
+          "Động từ có một âm tiết, tận cùng là một phụ âm, trước là một nguyên âm thì gấp đôi phụ âm cuối trước khi thêm -ing (Ví dụ: getting, putting, stopping).",
+          "Động từ có hai âm tiết: Nếu trọng âm rơi vào âm tiết thứ nhất thì chỉ thêm -ing (Ví dụ: opening, listening, answering). Nếu trọng âm rơi vào âm tiết thứ hai thì gấp đôi phụ âm cuối (Ví dụ: beginning, preferring, permitting).",
+          "Động từ tận cùng là 'ie' thì đổi 'ie' thành 'y' rồi thêm -ing (Ví dụ: lie -> lying, die -> dying)."
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "4. Dấu hiệu nhận biết",
+        "keywords": [
+          "now", "right now", "at the moment", "at present", "at + giờ cụ thể ở hiện tại (at 12 o'clock)"
+        ],
+        "verbs_context": [
+          "Look!", "Listen!", "Keep silent!"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "slug": "present-perfect",
+    "title": "Thì hiện tại hoàn thành (The present perfect tense)",
+    "description": "Diễn tả hành động xảy ra trong quá khứ kéo dài đến hiện tại, hoặc để lại kết quả ở hiện tại.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Hành động kéo dài từ quá khứ đến hiện tại",
+            "description": "Diễn tả hành động xảy ra trong quá khứ, kéo dài tới hiện tại và vẫn còn có khả năng sẽ tiếp diễn trong tương lai.",
+            "examples": [
+              { "en": "I have learned English for 10 years.", "vi": "Tôi đã học tiếng Anh được 10 năm." }
+            ]
+          },
+          {
+            "title": "Hành động xảy ra không rõ thời gian",
+            "description": "Diễn tả hành động xảy ra trong quá khứ nhưng không rõ thời gian cụ thể.",
+            "examples": [
+              { "en": "Someone has stolen my car.", "vi": "Có ai đó đã lấy trộm ô tô của tôi." }
+            ]
+          },
+          {
+            "title": "Hành động lặp lại nhiều lần",
+            "description": "Diễn tả hành động lặp đi lặp lại nhiều lần trong quá khứ.",
+            "examples": [
+              { "en": "She has seen this film several times.", "vi": "Cô ấy đã xem bộ phim này vài lần rồi." }
+            ]
+          },
+          {
+            "title": "Hành động để lại dấu hiệu/hậu quả ở hiện tại",
+            "examples": [
+              { "en": "The children are dirty. Where have they been?", "vi": "Bọn trẻ rất bẩn. Chúng đã ở đâu thế?" },
+              { "en": "The baby is crying. Have you made fun of him?", "vi": "Em bé đang khóc. Có phải cậu đã trêu chọc nó không?" }
+            ]
+          },
+          {
+            "title": "Diễn tả kinh nghiệm, trải nghiệm",
+            "examples": [
+              { "en": "This is the first time I have ever eaten that kind of food.", "vi": "Đây là lần đầu tiên tôi ăn loại thức ăn đó." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + have/has + V(p2)" }
+        ],
+        "negative": [
+          { "formula": "S + have/has + not + V(p2)" }
+        ],
+        "question": [
+          { "formula": "Have/Has + S + V(p2)?" }
+        ],
+        "examples": [
+          { "en": "My mother has worked as a teacher of English for 10 years.", "vi": "Mẹ tôi đã làm giáo viên tiếng Anh được 10 năm." }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "just (vừa mới)", "recently (gần đây)", "lately (gần đây)", "so far (gần đây)", "already (rồi)", "before (trước đây)",
+          "ever (đã từng)", "never (chưa từng)", "for + quãng thời gian", "since + mốc thời gian", "yet (chưa)",
+          "until now", "up to now", "up to the present"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "slug": "present-perfect-continuous",
+    "title": "Thì hiện tại hoàn thành tiếp diễn (The present perfect continuous tense)",
+    "description": "Nhấn mạnh tính liên tục của hành động bắt đầu từ quá khứ và kéo dài đến hiện tại.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Nhấn mạnh tính liên tục của hành động",
+            "description": "Hành động bắt đầu ở quá khứ và còn đang tiếp tục ở hiện tại.",
+            "examples": [
+              { "en": "My sister has been working here since 2010.", "vi": "Chị gái tôi đã làm việc ở đây từ năm 2010." }
+            ]
+          },
+          {
+            "title": "Quan tâm đến kết quả ở hiện tại",
+            "description": "Hành động đã kết thúc trong quá khứ, nhưng chúng ta quan tâm tới kết quả của nó tới hiện tại.",
+            "examples": [
+              { "en": "I am very tired now because I have been working hard for 12 hours.", "vi": "Bây giờ tôi rất mệt vì tôi đã làm việc vất vả trong 12 tiếng đồng hồ." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + have/has + been + V-ing" }
+        ],
+        "negative": [
+          { "formula": "S + have/has + not + been + V-ing" }
+        ],
+        "question": [
+          { "formula": "Have/Has + S + been + V-ing?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "Since + mốc thời gian (Ví dụ: since the early morning)",
+          "For + khoảng thời gian (Ví dụ: for 3 hours)",
+          "All + thời gian (all the morning, all the afternoon, all day...)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "slug": "simple-past",
+    "title": "Thì quá khứ đơn (The simple past tense)",
+    "description": "Diễn tả hành động đã xảy ra và chấm dứt hoàn toàn trong quá khứ.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Hành động đã chấm dứt trong quá khứ",
+            "description": "Diễn tả hành động đã xảy ra và đã chấm dứt trong quá khứ, không còn liên quan tới hiện tại.",
+            "examples": [
+              { "en": "We bought the house in 2000.", "vi": "Chúng tôi mua ngôi nhà đó năm 2000." }
+            ]
+          },
+          {
+            "title": "Các hành động xảy ra liên tiếp trong quá khứ",
+            "examples": [
+              { "en": "She turned on her computer, read the message on Facebook and answered it.", "vi": "Cô ấy bật máy tính, đọc tin nhắn trong Facebook rồi trả lời nó." }
+            ]
+          },
+          {
+            "title": "Diễn tả hồi ức, kỉ niệm",
+            "examples": [
+              { "en": "When I was small, I used to go fishing in the afternoon.", "vi": "Hồi còn nhỏ, tôi thường đi câu cá vào buổi chiều." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rules",
+        "title": "2. Quy tắc thêm đuôi -ed",
+        "items": [
+          "Nếu động từ tận cùng là -e thì chỉ việc thêm -d (Ví dụ: type -> typed, love -> loved, like -> liked)."
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "yesterday (hôm qua)",
+          "last night", "last week", "last month", "last year",
+          "ago (two hours ago, two weeks ago...)",
+          "in + một mốc thời gian trong quá khứ (in 1998, in 2000...)",
+          "when (khi - trong câu kể)"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "slug": "past-continuous",
+    "title": "Thì quá khứ tiếp diễn (The past continuous tense)",
+    "description": "Diễn tả hành động đang xảy ra tại một thời điểm cụ thể trong quá khứ.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Hành động đang diễn ra tại một thời điểm cụ thể trong quá khứ",
+            "examples": [
+              { "en": "I was watching TV at 8 p.m. yesterday.", "vi": "Tôi đang xem TV vào lúc 8 giờ tối ngày hôm qua." }
+            ]
+          },
+          {
+            "title": "Hành động đang xảy ra thì có hành động khác xen vào",
+            "description": "Hành động đang diễn ra chia thì Quá khứ tiếp diễn, hành động xen vào chia thì Quá khứ đơn.",
+            "examples": [
+              { "en": "When I came, she was cooking dinner.", "vi": "Khi tôi đến, cô ấy đang nấu bữa tối." }
+            ]
+          },
+          {
+            "title": "Hai hành động xảy ra đồng thời trong quá khứ",
+            "examples": [
+              { "en": "While my mother was reading books, my father was watching news.", "vi": "Trong khi mẹ tôi đang đọc sách thì bố tôi đang xem thời sự." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + was/were + V-ing" }
+        ],
+        "negative": [
+          { "formula": "S + was/were + not + V-ing" }
+        ],
+        "question": [
+          { "formula": "Was/Were + S + V-ing?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "at + giờ cụ thể + thời gian quá khứ (at 9 p.m. yesterday)",
+          "at that time",
+          "when / while / as"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "slug": "past-perfect",
+    "title": "Thì quá khứ hoàn thành (The past perfect tense)",
+    "description": "Diễn tả một hành động xảy ra trước một hành động khác hoặc trước một thời điểm trong quá khứ.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Hành động xảy ra trước một hành động khác trong quá khứ",
+            "description": "Hành động xảy ra trước chia Quá khứ hoàn thành, hành động xảy ra sau chia Quá khứ đơn.",
+            "examples": [
+              { "en": "The train had left before we arrived at the station.", "vi": "Tàu đã rời đi trước khi chúng tôi đến ga." }
+            ]
+          },
+          {
+            "title": "Hành động xảy ra trước một thời điểm cụ thể trong quá khứ",
+            "examples": [
+              { "en": "She had finished her homework by 9 p.m. last night.", "vi": "Cô ấy đã hoàn thành bài tập về nhà trước 9 giờ tối qua." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + had + V(p2)" }
+        ],
+        "negative": [
+          { "formula": "S + had + not + V(p2)" }
+        ],
+        "question": [
+          { "formula": "Had + S + V(p2)?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "before", "after", "by the time", "as soon as", "until then", "by + mốc thời gian quá khứ"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "slug": "past-perfect-continuous",
+    "title": "Thì quá khứ hoàn thành tiếp diễn (The past perfect continuous tense)",
+    "description": "Nhấn mạnh tính liên tục của một hành động xảy ra trước một hành động khác trong quá khứ.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Nhấn mạnh tính kéo dài liên tục của hành động",
+            "description": "Diễn tả hành động bắt đầu và diễn ra liên tục trước một thời điểm hoặc một hành động khác trong quá khứ.",
+            "examples": [
+              { "en": "They had been broken down for two hours before the mechanic arrived.", "vi": "Họ đã bị hỏng xe suốt hai tiếng đồng hồ trước khi thợ sửa xe đến." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + had + been + V-ing" }
+        ],
+        "negative": [
+          { "formula": "S + had + not + been + V-ing" }
+        ],
+        "question": [
+          { "formula": "Had + S + been + V-ing?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "before", "after", "until then", "by the time", "for + quãng thời gian", "since + mốc thời gian"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "slug": "simple-future",
+    "title": "Thì tương lai đơn (The simple future tense)",
+    "description": "Diễn tả hành động sẽ xảy ra trong tương lai hoặc quyết định ngay tại thời điểm nói.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Quyết định ngay tại thời điểm nói",
+            "examples": [
+              { "en": "I will buy this dress. It is so beautiful.", "vi": "Tôi sẽ mua chiếc váy này. Nó đẹp quá." }
+            ]
+          },
+          {
+            "title": "Đưa ra lời dự đoán không có căn cứ xác thực",
+            "examples": [
+              { "en": "I think it will rain tonight.", "vi": "Tôi nghĩ đêm nay trời sẽ mưa." }
+            ]
+          },
+          {
+            "title": "Lời hứa, lời đe dọa hoặc lời đề nghị",
+            "examples": [
+              { "en": "I will help you with your project.", "vi": "Tôi sẽ giúp bạn làm dự án." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + will/shall + V (nguyên dạng)", "note": "Shall dùng với chủ ngữ I và We" }
+        ],
+        "negative": [
+          { "formula": "S + will/shall + not + V (nguyên dạng)", "note": "will not = won't; shall not = shan't" }
+        ],
+        "question": [
+          { "formula": "Will/Shall + S + V (nguyên dạng)?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "tomorrow (ngày mai)",
+          "next week", "next month", "next year",
+          "in + khoảng thời gian tương lai (in 2 days)",
+          "thường đi kèm động từ: think, believe, suppose, hope..."
+        ]
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "slug": "future-continuous",
+    "title": "Thì tương lai tiếp diễn (The future continuous tense)",
+    "description": "Diễn tả một hành động đang diễn ra tại một thời điểm cụ thể trong tương lai.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Hành động đang diễn ra tại một thời điểm xác định ở tương lai",
+            "examples": [
+              { "en": "At 10 a.m. tomorrow, I will be taking an exam.", "vi": "Vào lúc 10 giờ sáng mai, tôi đang làm bài thi rồi." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + will + be + V-ing" }
+        ],
+        "negative": [
+          { "formula": "S + will + not + be + V-ing" }
+        ],
+        "question": [
+          { "formula": "Will + S + be + V-ing?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "at + giờ cụ thể + thời gian trong tương lai (at 8 a.m. tomorrow)",
+          "at this time tomorrow"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "slug": "future-perfect",
+    "title": "Thì tương lai hoàn thành (The future perfect tense)",
+    "description": "Diễn tả hành động sẽ hoàn thành trước một thời điểm hoặc một hành động khác trong tương lai.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Hành động hoàn thành trước một thời điểm/hành động khác ở tương lai",
+            "examples": [
+              { "en": "I will have finished my report by tomorrow evening.", "vi": "Tôi sẽ hoàn thành bài báo cáo của mình trước tối mai." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + will + have + V(p2)" }
+        ],
+        "negative": [
+          { "formula": "S + will + not + have + V(p2)" }
+        ],
+        "question": [
+          { "formula": "Will + S + have + V(p2)?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "by + mốc thời gian tương lai (by next Monday)",
+          "by the time + mệnh đề hiện tại đơn",
+          "before + thời gian tương lai"
+        ]
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "slug": "future-perfect-continuous",
+    "title": "Thì tương lai hoàn thành tiếp diễn (The future perfect continuous tense)",
+    "description": "Nhấn mạnh tính liên tục của hành động kéo dài đến một thời điểm trong tương lai.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Cách dùng",
+        "items": [
+          {
+            "title": "Nhấn mạnh tính liên tục của một hành động tính đến một thời điểm ở tương lai",
+            "examples": [
+              { "en": "By next month, I will have been working in this company for 5 years.", "vi": "Tính đến tháng sau, tôi sẽ làm việc ở công ty này liên tục được 5 năm." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức",
+        "positive": [
+          { "formula": "S + will + have + been + V-ing" }
+        ],
+        "negative": [
+          { "formula": "S + will + not + have + been + V-ing" }
+        ],
+        "question": [
+          { "formula": "Will + S + have + been + V-ing?" }
+        ]
+      },
+      {
+        "id": "signals",
+        "title": "3. Dấu hiệu nhận biết",
+        "keywords": [
+          "by the time",
+          "by + mốc thời gian trong tương lai",
+          "kết hợp cùng cụm từ chỉ khoảng thời gian: for + khoảng thời gian"
+        ]
+      }
+    ]
+  }
+]

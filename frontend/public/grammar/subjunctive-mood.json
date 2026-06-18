@@ -1,0 +1,78 @@
+[
+  {
+    "id": 1,
+    "slug": "subjunctive-mood",
+    "title": "Thức giả định (Subjunctive Mood)",
+    "description": "Thức giả định (hay còn gọi là câu giả định) được dùng để diễn tả những mong muốn, giả định, yêu cầu, đề nghị hoặc các tình huống không có thật ở hiện tại, quá khứ hoặc tương lai.",
+    "sections": [
+      {
+        "id": "usage",
+        "title": "1. Các trường hợp dùng thức giả định",
+        "items": [
+          {
+            "title": "Dùng sau một số động từ chỉ ý muốn, yêu cầu, đề nghị",
+            "description": "Trong cấu trúc S1 + V1 + THAT + S2 + V2, động từ V2 ở mệnh đề sau 'that' luôn ở dạng nguyên thể không 'to' (V_bare) cho tất cả các ngôi. Nếu ở thể phủ định thì thêm 'not' trước V_bare. Nếu ở thể bị động thì có dạng 'be + Vp2'. Các động từ thường gặp bao gồm: advise, demand, desire, insist, propose, recommend, request, require, suggest, urge, command, decree, move, order, stipulate.",
+            "examples": [
+              { "en": "The doctor recommended that he stop smoking.", "vi": "Bác sĩ khuyên rằng anh ấy nên bỏ thuốc lá." },
+              { "en": "She insisted that everyone be on time.", "vi": "Cô ấy khăng khăng yêu cầu mọi người phải đúng giờ." },
+              { "en": "The teacher suggested that Tom not turn on the TV.", "vi": "Giáo viên khuyên Tom không nên bật tivi." },
+              { "en": "They demanded that the rules be changed.", "vi": "Họ yêu cầu các quy định phải được thay đổi." }
+            ]
+          },
+          {
+            "title": "Dùng sau một số tính từ mang tính chất quan trọng, khẩn thiết",
+            "description": "Trong cấu trúc It + be + adj + THAT + S + V, động từ theo sau luôn ở dạng nguyên thể không 'to' (V_bare). Các tính từ thường gặp bao gồm: important, necessary, essential, crucial, mandatory, urgent, vital, advisable, best, imperative, recommended, suggested, obligatory, proposed.",
+            "examples": [
+              { "en": "It is essential that she find a job soon.", "vi": "Điều cốt lõi là cô ấy phải tìm được việc làm sớm." },
+              { "en": "It is necessary that he be informed of the changes.", "vi": "Cần thiết là anh ấy phải được thông báo về những thay đổi." },
+              { "en": "It is important that they not make a noise.", "vi": "Điều quan trọng là họ không được làm ồn." }
+            ]
+          },
+          {
+            "title": "Cấu trúc giả định với 'Would rather'",
+            "description": "Khi diễn tả mong muốn ai đó làm gì, cấu trúc trái ngược với hiện tại hoặc tương lai dùng thì Quá khứ đơn (động từ be dùng were cho tất cả các ngôi). Cấu trúc trái ngược với quá khứ dùng thì Quá khứ hoàn thành.",
+            "examples": [
+              { "en": "I would rather you didn't smoke here.", "vi": "Tôi muốn bạn không hút thuốc ở đây." },
+              { "en": "I would rather he had come to my party yesterday.", "vi": "Tôi ước gì hôm qua anh ấy đã đến dự bữa tiệc của tôi." },
+              { "en": "I would rather she were here with me now.", "vi": "Tôi ước gì bây giờ cô ấy đang ở đây với tôi." }
+            ]
+          },
+          {
+            "title": "Cấu trúc giả định với 'It's time'",
+            "description": "Diễn tả thời điểm đã đến lúc phải làm gì (thường mang sắc thái nhắc nhở, khiển trách nhẹ vì hành động chưa được thực hiện).",
+            "examples": [
+              { "en": "It's high time you went to bed.", "vi": "Đã đến lúc con phải đi ngủ rồi đấy." },
+              { "en": "It is time for us to leave.", "vi": "Đã đến lúc chúng ta phải đi rồi." }
+            ]
+          },
+          {
+            "title": "Cấu trúc giả định với 'As if / As though'",
+            "description": "Diễn tả một điều gì đó như thể là đã diễn ra, nhưng thực tế không có thật. Trái ngược với hiện tại dùng Quá khứ đơn (be đổi thành were cho mọi ngôi). Trái ngược với quá khứ dùng Quá khứ hoàn thành.",
+            "examples": [
+              { "en": "He talks as if he knew everything.", "vi": "Anh ta nói chuyện như thể anh ta biết mọi thứ vậy." },
+              { "en": "She looked as though she had seen a ghost.", "vi": "Cô ấy trông như thể cô ấy vừa nhìn thấy ma vậy." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "structure",
+        "title": "2. Công thức cấu trúc cốt lõi",
+        "positive": [
+          { "type": "Giả định với Động từ (Chủ động)", "formula": "S1 + V(advise/suggest/demand/...) + THAT + S2 + V(nguyên dạng)" },
+          { "type": "Giả định với Động từ (Phủ định)", "formula": "S1 + V(advise/suggest/demand/...) + THAT + S2 + NOT + V(nguyên dạng)" },
+          { "type": "Giả định với Động từ (Bị động)", "formula": "S1 + V(advise/suggest/demand/...) + THAT + S2 + BE + Vp2" },
+          { "type": "Giả định với Tính từ (Chủ động)", "formula": "It + be + adj(important/necessary/...) + THAT + S + V(nguyên dạng)" },
+          { "type": "Giả định với Tính từ (Phủ định)", "formula": "It + be + adj(important/necessary/...) + THAT + S + NOT + V(nguyên dạng)" },
+          { "type": "Giả định với Tính từ (Bị động)", "formula": "It + be + adj(important/necessary/...) + THAT + S + BE + Vp2" },
+          { "type": "Would rather (Trái với hiện tại)", "formula": "S1 + would rather + S2 + V(quá khứ đơn) [be -> were]" },
+          { "type": "Would rather (Trái với quá khứ)", "formula": "S1 + would rather + S2 + had + Vp2" },
+          { "type": "It's time (Giả định)", "formula": "It's (high/about) time + S + V(quá khứ đơn)" },
+          { "type": "It's time (Thông thường)", "formula": "It's time + for O + to-V" },
+          { "type": "As if / As though (Trái với hiện tại)", "formula": "S1 + V(hiện tại) + as if / as though + S2 + V(quá khứ đơn) [be -> were]" },
+          { "type": "As if / As though (Trái với quá khứ)", "formula": "S1 + V(quá khứ) + as if / as though + S2 + had + Vp2" }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,51 @@
+[
+  {
+    "id": 22,
+    "slug": "inversion",
+    "title": "Đảo ngữ - Inversion",
+    "description": "Hiện tượng đảo ngược trật tự thông thường của chủ ngữ và động từ/trợ động từ trong câu nhằm mục đích nhấn mạnh.",
+    "sections": [
+      {
+        "id": "rules",
+        "title": "Quy tắc chung",
+        "description": "Trong câu đảo ngữ, trợ động từ (hoặc động từ khuyết thiếu/động từ tobe) được đưa lên trước chủ ngữ. Cấu trúc: [Từ/Cụm từ nhấn mạnh] + [Trợ động từ] + S + V.",
+        "items": [
+          {
+            "order": 1,
+            "type": "Đảo ngữ với trạng từ phủ định",
+            "meaning": "Đứng đầu câu là các trạng từ bán phủ định hoặc phủ định hoàn toàn.",
+            "examples": ["Never", "Hardly", "Scarcely", "Seldom", "Rarely", "Little"]
+          },
+          {
+            "order": 2,
+            "type": "Đảo ngữ với cụm từ có 'Only'",
+            "meaning": "Đảo ngữ ở mệnh đề chính khi các cụm từ chứa 'Only' đứng đầu câu.",
+            "examples": ["Only after", "Only when", "Only by", "Only if", "Only then", "Not only"]
+          },
+          {
+            "order": 3,
+            "type": "Đảo ngữ với 'No'",
+            "meaning": "Các cụm từ phủ định bắt đầu bằng 'No'.",
+            "examples": ["At no time", "In no way", "On no account", "No sooner ... than"]
+          },
+          {
+            "order": 4,
+            "type": "Đảo ngữ với 'So' và 'Such'",
+            "meaning": "Dùng để nhấn mạnh tính chất hoặc mức độ của sự việc.",
+            "examples": ["So + Adj/Adv + Trợ động từ + S + that...", "Such + be + N + that..."]
+          }
+        ],
+        "general_examples": [
+          { 
+            "en": "Never have I seen such a beautiful place.", 
+            "vi": "Chưa bao giờ tôi nhìn thấy một nơi đẹp như thế này." 
+          },
+          { 
+            "en": "No sooner had he arrived than it started to rain.", 
+            "vi": "Anh ấy vừa mới đến nơi thì trời bắt đầu đổ mưa." 
+          }
+        ]
+      }
+    ]
+  }
+]

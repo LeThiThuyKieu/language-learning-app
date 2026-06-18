@@ -1,0 +1,163 @@
+[
+  {
+    "id": 1,
+    "slug": "conjunctions",
+    "title": "Liên từ (Conjunctions)",
+    "description": "Liên từ là từ vựng sử dụng để liên kết hai từ, cụm từ, mệnh đề hoặc câu lại với nhau.",
+    "sections": [
+      {
+        "id": "classification",
+        "title": "Định nghĩa và phân loại liên từ",
+        "items": [
+          {
+            "type": "Liên từ kết hợp (coordinating conjunctions)",
+            "description": "Dùng loại liên từ này để nối các từ loại hoặc cụm từ/ nhóm từ cùng một loại, hoặc những mệnh đề ngang hàng nhau (tính từ với tính từ, danh từ với danh từ...).",
+            "words": ["for", "and", "nor", "but", "or", "yet", "so"]
+          },
+          {
+            "type": "Liên từ tương quan (correlative conjunctions)",
+            "description": "Thường được sử dụng theo cặp để liên kết các cụm từ hoặc mệnh đề có chức năng tương đương nhau về mặt ngữ pháp.",
+            "words": [
+              "both... and... (vừa... vừa...)",
+              "not only... but also... (không những... mà còn...)",
+              "either... or (hoặc... hoặc...)",
+              "neither... nor (không... cũng không...)",
+              "whether... or (dù... hay...)",
+              "as/so... as (như là, bằng/ không bằng, không như)",
+              "no sooner... than... / hardly... when / scarcely... when / barely... when (vừa mới... thì...)",
+              "so/such... that (đến mức... đến nỗi)"
+            ]
+          },
+          {
+            "type": "Liên từ phụ thuộc (subordinating conjunctions)",
+            "description": "Nối kết các nhóm từ, cụm từ hoặc mệnh đề có chức năng khác nhau, nối mệnh đề phụ với mệnh đề chính trong câu.",
+            "words": ["after", "as/when", "as soon as", "before", "just as", "once", "since", "until/till", "while", "because/now that/since/as/seeing that", "so", "therefore/thus/hence/consequently", "so that/in order that", "for fear that/lest", "although/even though/though", "however/nevertheless/nonetheless", "whereas/on the contrary/in contrast/on the other hand", "in other words", "as long as/so long as/providing that/provided that", "or else/otherwise", "in the event that/in case", "suppose/supposing that", "if", "unless", "even if", "as if/as though"]
+          }
+        ]
+      },
+      {
+        "id": "usage-although-despite",
+        "title": "Cách sử dụng của ALTHOUGH / EVEN THOUGH / THOUGH",
+        "description": "Có nghĩa là 'mặc dù... nhưng', dùng để biểu thị hai hành động trái ngược nhau. Lưu ý không dùng 'but' ở mệnh đề sau.",
+        "formulas": [
+          "ALTHOUGH/EVEN THOUGH/THOUGH + CLAUSE (S+V), CLAUSE (S+V)",
+          "IN SPITE OF/DESPITE + CỤM DANH TỪ/V-ING, CLAUSE (S+V)",
+          "IN SPITE OF/DESPITE + THE FACT THAT + CLAUSE, CLAUSE"
+        ],
+        "transformation_rules": [
+          "Nếu hai mệnh đề đồng chủ ngữ, sau in spite of/despite dùng V-ing.",
+          "Nếu hai mệnh đề không đồng chủ ngữ, sau in spite of/despite dùng cụm danh từ: a/an/the/my... + (adv) + (adj) + N."
+        ],
+        "examples": [
+          { "en": "Although the weather was awful, we decided to go camping.", "vi": "Mặc dù thời tiết xấu, chúng tôi vẫn quyết định đi cắm trại." },
+          { "en": "In spite of the awful weather, we decided to go camping.", "vi": "Mặc dù thời tiết xấu, chúng tôi vẫn quyết định đi cắm trại." },
+          { "en": "Although he got up early, he was late for the first train.", "vi": "Mặc dù anh ấy dậy sớm, anh ấy vẫn muộn chuyến tàu đầu tiên." },
+          { "en": "In spite of getting up early, he was late for the first train.", "vi": "Mặc dù dậy sớm, anh ấy vẫn muộn chuyến tàu đầu tiên." }
+        ]
+      },
+      {
+        "id": "usage-because",
+        "title": "Cách sử dụng của BECAUSE",
+        "description": "Có nghĩa là 'bởi vì', diễn tả mối quan hệ nguyên nhân, kết quả.",
+        "formulas": [
+          "BECAUSE/FOR/AS/SINCE/IN THAT/NOW THAT/SEEING THAT + CLAUSE, CLAUSE",
+          "BECAUSE OF/OWING TO/DUE TO/ON ACCOUNT OF/AS A RESULT OF + CỤM DANH TỪ/V-ING, CLAUSE"
+        ],
+        "transformation_note": "Nếu chủ ngữ hai mệnh đề không giống nhau và gặp khó khăn khi đưa về cụm danh từ, có thể chèn thêm 'the fact that' vào sau because of.",
+        "examples": [
+          { "en": "Because the road was icy, many accidents happened.", "vi": "Bởi vì đường trơn nên nhiều tai nạn đã xảy ra." },
+          { "en": "Because of the icy road, many accidents happened.", "vi": "Bởi vì đường trơn nên nhiều tai nạn đã xảy ra." },
+          { "en": "Because she was angry, she lost her temper and hurt his feeling.", "vi": "Bởi vì tức giận, cô ấy đã mất bình tĩnh và làm tổn thương anh ấy." },
+          { "en": "Because of being angry, she lost her temper and hurt his feeling.", "vi": "Bởi vì tức giận, cô ấy đã mất bình tĩnh và làm tổn thương anh ấy." }
+        ]
+      },
+      {
+        "id": "usage-so-such-that",
+        "title": "Cách sử dụng của SO... THAT / SUCH... THAT",
+        "description": "Có nghĩa là '... đến mức..., đến nỗi...', diễn tả mối quan hệ nhân quả.",
+        "formulas": [
+          "S + V + SO + ADJ/ADV + THAT + CLAUSE",
+          "S + V + SO + ADJ + A/AN + N + THAT + CLAUSE",
+          "S + V + SUCH + (A/AN) + N + THAT + CLAUSE",
+          "S + V + SO + MANY/MUCH + N + THAT + CLAUSE",
+          "S + V + SUCH + A LOT OF + N + THAT + CLAUSE"
+        ],
+        "notes": [
+          "Nếu danh từ trong mệnh đề 'such... that' là danh từ số nhiều hoặc danh từ không đếm được thì không sử dụng 'a/an' sau 'such... that'."
+        ],
+        "examples": [
+          { "en": "She is so beautiful that many boys run after her.", "vi": "Cô ấy xinh đến nỗi mà rất nhiều chàng trai theo đuổi cô ấy." },
+          { "en": "She is such a beautiful girl that many boys run after her.", "vi": "Cô ấy là một cô gái xinh đẹp đến nỗi mà rất nhiều chàng trai theo đuổi cô ấy." },
+          { "en": "I have so much homework that I can't go out with you tonight.", "vi": "Tôi có nhiều bài tập về nhà đến mức mà tôi không thể đi chơi với bạn tối nay." },
+          { "en": "I have such a lot of homework that I can't go out with you tonight.", "vi": "Tôi có nhiều bài tập về nhà đến mức mà tôi không thể đi chơi với bạn tối nay." }
+        ]
+      },
+      {
+        "id": "usage-paired-conjunctions",
+        "title": "Cách sử dụng của EITHER... OR / NEITHER... NOR / NOT ONLY... BUT ALSO / BOTH... AND",
+        "items": [
+          {
+            "structure": "EITHER... OR",
+            "meaning": "hoặc... hoặc / không... không",
+            "note": "Diễn tả sự lựa chọn khi đi với câu khẳng định; diễn tả sự phủ định kép khi đi với câu phủ định. Động từ chia theo chủ ngữ gần động từ nhất.",
+            "example": { "en": "You can come either today or tomorrow.", "vi": "Bạn có thể đến vào hôm nay hay mai đều được." }
+          },
+          {
+            "structure": "NEITHER... NOR",
+            "meaning": "không... cũng không",
+            "note": "Diễn tả sự phủ định kép, chỉ đi với câu khẳng định. Động từ chia theo chủ ngữ gần động từ nhất.",
+            "example": { "en": "Neither she nor her children were at home yesterday.", "vi": "Cả cô ấy và lũ trẻ đều không ở nhà ngày hôm qua." }
+          },
+          {
+            "structure": "NOT ONLY... BUT ALSO",
+            "meaning": "không những... mà còn",
+            "note": "Có thể viết dưới dạng 'NOT ONLY... BUT... AS WELL', diễn tả sự lựa chọn kép.",
+            "example": { "en": "She is not only beautiful but also intelligent.", "vi": "Cô ấy không những xinh đẹp mà còn thông minh." }
+          },
+          {
+            "structure": "BOTH... AND",
+            "meaning": "cả... và / vừa... vừa",
+            "formula": "BOTH + S1 + AND + S2 + V (số nhiều) = S1 + TOGETHER WITH/ALONG WITH/AS WELL AS/ACCOMPANIED BY + S2 + V (chia theo S1)",
+            "example": { "en": "Both my sister and my brother like playing chess.", "vi": "Cả chị gái và em trai tôi đều thích chơi cờ." }
+          }
+        ]
+      },
+      {
+        "id": "other-conjunctions",
+        "title": "Cách sử dụng của các liên từ khác",
+        "table_data": [
+          { "conjunction": "AND", "usage": "Thêm, bổ sung thông tin (và)", "example": "She is rich and famous. (Cô ấy giàu có và nổi tiếng.)" },
+          { "conjunction": "NOR", "usage": "Bổ sung thêm một ý phủ định vào một ý phủ định được nêu trước đó (cũng không)", "example": "I don't want to call him nor intend to apologize to him. (Tôi không muốn gọi cho anh ấy cũng không có ý định xin lỗi anh ta.)" },
+          { "conjunction": "BUT", "usage": "Diễn tả sự đối lập, ngược nghĩa (nhưng, nhưng mà)", "example": "She is beautiful but arrogant. (Cô ấy xinh đẹp nhưng kiêu ngạo.)" },
+          { "conjunction": "OR / OR ELSE / OTHERWISE", "usage": "Nêu thêm sự lựa chọn (hoặc là, hay là)", "example": "Hurry up or else you will miss the last bus. (Nhanh lên hoặc là bạn sẽ nhỡ chuyến xe buýt cuối cùng.)" },
+          { "conjunction": "YET", "usage": "Đưa ra một ý ngược lại so với ý trước đó (vậy mà, thế mà)", "example": "They are ugly and expensive, yet people buy them. (Chúng xấu và đắt, vậy mà mọi người vẫn mua.)" },
+          { "conjunction": "SO / THEREFORE / THUS / HENCE / CONSEQUENTLY / AS A RESULT", "usage": "Nêu kết quả của hành động (vì vậy, do đó, do vậy)", "example": "He was ill, so he didn't go to school yesterday. (Anh ấy bị ốm nên hôm qua anh ấy không tới trường.)" },
+          { "conjunction": "RATHER THAN", "usage": "Diễn tả lựa chọn (hơn là)", "example": "I think you should choose to become a teacher rather than a doctor. (Tôi nghĩ bạn nên chọn trở thành giáo viên hơn là bác sĩ.)" },
+          { "conjunction": "WHETHER... OR", "usage": "Diễn tả sự thay thế (hay là... hoặc không)", "example": "I don't know whether he will come or not. (Tôi không biết là anh ấy sẽ đến hay không.)" },
+          { "conjunction": "AS... AS / SO... AS", "usage": "So sánh ngang/không ngang bằng (bằng/không... bằng)", "example": "She isn't as/so tall as me. (Cô ấy không cao bằng tôi.)" },
+          { "conjunction": "BARELY... WHEN / HARDLY... WHEN / SCARCELY... WHEN / NO SOONER... THAN", "usage": "Diễn tả quan hệ thời gian (ngay khi... thì, vừa mới... thì)", "example": "Hardly had he gone to bed when the telephone rang. (Ngay khi anh ấy đi ngủ thì điện thoại kêu.)" },
+          { "conjunction": "AFTER", "usage": "Diễn tả hành động xảy ra sau một hành động khác (sau khi)", "example": "After he had finished his work, he went out for a drink. (Sau khi anh ấy xong việc, anh ấy ra ngoài uống nước.)" },
+          { "conjunction": "BEFORE", "usage": "Diễn tả hành động xảy ra trước một hành động khác (trước khi)", "example": "He had finished his work before he went out for a drink. (Anh ấy đã xong việc trước khi anh ấy ra ngoài uống nước.)" },
+          { "conjunction": "AS SOON AS", "usage": "Chỉ một hành động xảy ra liền ngay sau một hành động khác (ngay khi)", "example": "As soon as she went home, she had a bath. (Ngay khi cô ấy về nhà, cô ấy đi tắm.)" },
+          { "conjunction": "JUST AS", "usage": "Diễn tả hai hành động xảy ra gần như cùng thời điểm (ngay khi, vừa lúc)", "example": "He left the meeting just as we arrived. (Anh ta rời khỏi cuộc họp vừa lúc chúng tôi tới đó.)" },
+          { "conjunction": "ONCE", "usage": "Nói về một thời điểm mà ở đó một hành động đã xảy ra hoặc sẽ xảy ra (một khi)", "example": "Once you have well-prepared for it, you will certainly be successful. (Khi bạn đã chuẩn bị kĩ càng cho nó, thì bạn chắc chắn sẽ thành công.)" },
+          { "conjunction": "UNTIL / TILL", "usage": "Chỉ hành động xảy ra/không xảy ra cho tới một thời điểm nào đó (cho tới khi)", "example": "I will wait for you until it's possible. (Anh sẽ đợi em đến chừng nào có thể.)" },
+          { "conjunction": "IN OTHER WORDS", "usage": "Để giải thích rõ nghĩa hơn (nói cách khác)", "example": "He was economical with the truth - in other words, he lied. (Anh ấy tiết kiệm sự thật hay nói cách khác là anh ấy nói dối.)" },
+          { "conjunction": "WHEN", "usage": "Liên kết hai hành động có mối quan hệ về thời gian (khi)", "example": "When she came, I was cooking dinner. (Khi cô ấy tới, tôi đang nấu bữa tối.)" },
+          { "conjunction": "WHILE / MEANWHILE", "usage": "Chỉ các hành động diễn ra cùng một lúc (trong khi)", "example": "While I was doing my homework, my mother was cleaning the floor. (Khi tôi đang làm bài tập về nhà thì mẹ tôi đang lau nhà.)" },
+          { "conjunction": "SO THAT / IN ORDER THAT", "usage": "Nêu mục đích hoặc kết quả của hành động có dự tính (để mà)", "example": "I'm trying my best to study English well so that I can find a better job. (Tôi đang cố gắng hết sức học tiếng Anh để tôi có thể tìm được một công việc tốt hơn.)" },
+          { "conjunction": "FOR FEAR THAT / LEST", "usage": "Chỉ mục đích phủ định (vì e rằng, sợ rằng)", "example": "He wore dark glasses lest he could be recognized. (Anh ta đeo kính râm vì sợ rằng mình có thể bị nhận ra.)" },
+          { "conjunction": "WHEREAS / ON THE CONTRARY / IN CONTRAST / ON THE OTHER HAND", "usage": "Diễn tả sự ngược nghĩa giữa hai mệnh đề (trong khi, trái lại)", "example": "He loves foreign holidays whereas his wife prefers to stay at home. (Anh ấy thích đi du lịch nước ngoài, trái lại vợ anh ấy thì chỉ thích ở nhà.)" },
+          { "conjunction": "AS/SO LONG AS / PROVIDING (THAT) / PROVIDED (THAT)", "usage": "Diễn tả điều kiện (với điều kiện là, miễn là)", "example": "You can use my bike providing that you promise to give it back tomorrow. (Bạn có thể sử dụng xe đạp của tôi với điều kiện bạn hứa trả lại nó vào ngày mai)." },
+          { "conjunction": "IN THE EVENT THAT / IN CASE", "usage": "Diễn tả giả định về một hành động có thể xảy ra trong tương lai (trong trường hợp, phòng khi)", "example": "Take an umbrella in case it rains. (Mang theo ô phòng khi trời mưa.)" },
+          { "conjunction": "SUPPOSE / SUPPOSING (THAT)", "usage": "Dùng để thay thế cho 'if' trong mệnh đề phụ (giả sử)", "example": "Supposing he hates you, what will you do? (Giả sử anh ấy ghét bạn, bạn sẽ làm gì?)" },
+          { "conjunction": "AS IF / AS THOUGH", "usage": "Dùng trong giả định (như thể là)", "example": "He looked frightened as if he had seen a ghost. (Anh ấy trông hoảng sợ như thể anh ấy đã nhìn thấy ma.)" },
+          { "conjunction": "BESIDES / MOREOVER / FURTHERMORE / IN ADDITION", "usage": "Dùng để bổ sung thêm ý/thông tin (Ngoài ra/hơn nữa/thêm vào đó)", "example": "I can't go now, I'm too busy. Besides, my passport is out of date. (Tôi không thể đi bây giờ; tôi bận lắm. Ngoài ra, hộ chiếu của tôi đã hết hạn rồi.)" },
+          { "conjunction": "FOR EXAMPLE / FOR INSTANCE", "usage": "Ví dụ, chẳng hạn như", "example": "The art museum, for instance, has an excellent collection of modern paintings. (Chẳng hạn như viện bảo tàng nghệ thuật có một bộ sưu tập xuất sắc các bức tranh hiện đại.)" },
+          { "conjunction": "INDEED / IN FACT", "usage": "Được dùng để nhấn mạnh/xác nhận thông tin trước đó (thực sự, quả thật)", "example": "I am happy, indeed proud, to be a member of your team. (Tôi rất vui, thực sự là rất tự hào được là một thành viên trong đội của bạn.)" },
+          { "conjunction": "INSTEAD", "usage": "Thay vì, thay vào", "example": "We didn't go on holiday. We stayed at home, instead. (Chúng tôi đã không đi du lịch. Thay vào đó, chúng tôi ở nhà.)" }
+        ]
+      }
+    ]
+  }
+]
