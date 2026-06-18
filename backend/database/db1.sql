@@ -566,28 +566,6 @@ CREATE TABLE grammar_topics (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Clear old data and insert sample grammar topics
-DELETE FROM grammar_topics;
-INSERT INTO grammar_topics (slug, name, display_order, json_url) VALUES
-('verb-tenses', 'Thì động từ', 1, '/grammar/verb-tenses.json'),
-('sequence-of-tenses', 'Sự phối hợp thì', 2, '/grammar/sequence-of-tenses.json'),
-('subject-verb-agreement', 'Sự hoà hợp giữa chủ ngữ và động từ', 3, '/grammar/subject-verb-agreement.json'),
-('modal-verbs', 'Động từ khuyết thiếu', 4, '/grammar/modal-verbs.json'),
-('subjunctive-mood', 'Thức giả định', 5, '/grammar/subjunctive-mood.json'),
-('gerunds-and-infinitives', 'Danh động từ và Động từ nguyên thể', 6, '/grammar/gerunds-and-infinitives.json'),
-('tag-questions', 'Câu hỏi đuôi', 7, '/grammar/tag-questions.json'),
-('comparison', 'So sánh', 8, '/grammar/comparison.json'),
-('adjective-order', 'Trật tự của tính từ', 9, '/grammar/adjective-order.json'),
-('articles', 'Mạo từ', 10, '/grammar/articles.json'),
-('prepositions', 'Giới từ', 11, '/grammar/prepositions.json'),
-('conjunctions', 'Liên từ', 12, '/grammar/conjunctions.json'),
-('passive-voice', 'Câu bị động', 13, '/grammar/passive-voice.json'),
-('conditional-sentences', 'Câu điều kiện', 14, '/grammar/conditional-sentences.json'),
-('reported-speech', 'Câu tường thuật', 15, '/grammar/reported-speech.json'),
-('inversions', 'Đảo ngữ', 16, '/grammar/inversions.json'),
-('relative-clauses', 'Mệnh đề quan hệ', 17, '/grammar/relative-clauses.json'),
-('common-structures', 'Một số cấu trúc thông dụng', 18, '/grammar/common-structures.json');
-
 -- Data exporting was unselected.
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
