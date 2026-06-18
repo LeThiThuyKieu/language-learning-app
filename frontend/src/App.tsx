@@ -32,6 +32,8 @@ import PhoneticPage from "@/pages/User/learn/PhoneticPage.tsx";
 import ExamPage from "@/pages/User/exam/ExamPage.tsx";
 import ExamTestListPage from "@/pages/User/exam/ExamTestListPage.tsx";
 import ExamListeningPage from "@/pages/User/exam/ExamListeningPage.tsx";
+import ExamReadingWritingPage from "@/pages/User/exam/ExamReadingWritingPage.tsx";
+import ExamSpeakingPage from "@/pages/User/exam/ExamSpeakingPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
 import GeneralRevisionTaskPage from "@/pages/User/learn/general_revision/GeneralRevisionTaskPage.tsx";
@@ -146,6 +148,8 @@ function App() {
 
                     {/* Thi full màn hình */}
                     <Route path="/exam/:level/:testId/listening" element={<ExamListeningPage/>}/>
+                    <Route path="/exam/:level/:testId/reading-writing" element={<ExamReadingWritingPage/>}/>
+                    <Route path="/exam/:level/:testId/speaking" element={<ExamSpeakingPage/>}/>
 
                     {/* Trang Welcome */}
                     <Route path="/welcome"

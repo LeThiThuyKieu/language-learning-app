@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import GuestPrompt from "@/components/user/GuestPrompt";
 import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
@@ -11,35 +12,34 @@ function LevelCard({ level, onClick }: { level: ExamLevel; onClick: () => void }
       type="button"
       onClick={onClick}
       className={`
-        group relative w-full text-left rounded-2xl border-2 p-5
-        transition-all hover:shadow-md active:scale-[0.98]
+        group relative w-full text-left rounded-2xl border-2 p-5 overflow-hidden
+        transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]
         ${level.color} ${level.borderColor}
       `}
     >
+      {/* Vòng trang trí góc phải trên */}
+      <div className={`absolute -top-6 -right-6 h-24 w-24 rounded-full opacity-20 ${level.badgeColor}`} />
+
       {/* Badge cấp độ */}
-      <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${level.badgeColor} mb-3`}>
-        <span className={`text-2xl font-black ${level.textColor}`}>{level.id}</span>
+      <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${level.badgeColor} mb-4 shadow-sm`}>
+        <span className={`text-xl font-black ${level.textColor}`}>{level.id}</span>
       </div>
 
-      {/* Tên + mô tả */}
-      <div className="mb-3">
-        <h3 className={`text-lg font-extrabold ${level.textColor}`}>{level.label}</h3>
-        <p className="text-sm text-gray-500 mt-0.5 leading-snug">{level.description}</p>
-      </div>
+      {/* Mô tả */}
+      <p className="text-sm text-gray-500 leading-snug mb-4">{level.description}</p>
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <span className={`text-xs font-bold ${level.textColor} opacity-70`}>
+        <div className={`flex items-center gap-1.5 text-xs font-bold ${level.textColor} opacity-80`}>
+          {/* Icon document */}
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
           {level.testCount} bài thi
-        </span>
-        <svg
-          className={`h-5 w-5 ${level.textColor} transition-transform group-hover:translate-x-1`}
-          fill="none" stroke="currentColor" strokeWidth="2.5"
-          strokeLinecap="round" strokeLinejoin="round"
-          viewBox="0 0 24 24"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
+        </div>
+        <div className={`flex items-center justify-center h-7 w-7 rounded-full ${level.badgeColor} transition-transform group-hover:translate-x-1`}>
+          <ChevronRight className={`h-4 w-4 ${level.textColor}`} />
+        </div>
       </div>
     </button>
   );

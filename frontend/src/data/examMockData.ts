@@ -361,3 +361,307 @@ export const A2_TEST1_LISTENING: ListeningPart[] = [
     ],
   },
 ];
+
+// Reading & Writing types
+
+export type RWQuestionType =
+  | "MULTIPLE_CHOICE"   // chọn A/B/C
+  | "MATCHING"          // nối câu
+  | "FILL_IN"           // điền vào chỗ trống (text input)
+  | "SHORT_WRITE";      // viết ngắn (textarea)
+
+export interface RWPassage {
+  /** Văn bản / thông báo / biển hiệu hiển thị phía trên câu hỏi (có thể null nếu không có) */
+  text: string | null;
+  /** Style hiển thị passage: "notice" = khung viền đen, "normal" = văn bản thường */
+  style?: "notice" | "normal";
+}
+
+export interface RWOption {
+  id: string;   // "A", "B", "C"
+  text: string;
+}
+
+export interface RWQuestion {
+  id: number;
+  type: RWQuestionType;
+  passage: RWPassage | null;
+  text: string;           // câu hỏi hoặc câu dẫn
+  options: RWOption[];    // chỉ dùng cho MULTIPLE_CHOICE
+  correctAnswer?: string; // dùng client-side để show đáp án (sẽ bỏ khi có API)
+}
+
+export interface RWPart {
+  partNumber: number;
+  title: string;
+  instruction: string;
+  questions: RWQuestion[];
+}
+
+// Mockup Reading & Writing — A2 Test 1
+export const A2_TEST1_READING_WRITING: RWPart[] = [
+  {
+    partNumber: 1,
+    title: "Part 1",
+    instruction: "For each question, choose the correct answer.",
+    questions: [
+      {
+        id: 1,
+        type: "MULTIPLE_CHOICE",
+        passage: {
+          text: "For Sale\nWomen's bicycle (small)\n11 years old - needs new tyres\nPhone Debbie - 0794587454",
+          style: "notice",
+        },
+        text: "What does the notice say about the bicycle?",
+        options: [
+          { id: "A", text: "The bicycle that's for sale was built for a child." },
+          { id: "B", text: "Some parts of the bicycle must be changed." },
+          { id: "C", text: "Debbie is selling the bike because she's too big for it now." },
+        ],
+      },
+      {
+        id: 2,
+        type: "MULTIPLE_CHOICE",
+        passage: {
+          text: "COMMUNITY CENTRE\nClosed on Monday mornings for staff training.\nAll other classes continue as normal.",
+          style: "notice",
+        },
+        text: "What is the notice about?",
+        options: [
+          { id: "A", text: "The centre is open every day." },
+          { id: "B", text: "Classes are cancelled on Monday mornings." },
+          { id: "C", text: "Staff training takes place every week." },
+        ],
+      },
+      {
+        id: 3,
+        type: "MULTIPLE_CHOICE",
+        passage: {
+          text: "To: All students\nPlease return library books by Friday.\nFines will be charged after this date.",
+          style: "notice",
+        },
+        text: "What must students do?",
+        options: [
+          { id: "A", text: "Pay money to use the library." },
+          { id: "B", text: "Bring books back before the weekend." },
+          { id: "C", text: "Ask permission before borrowing books." },
+        ],
+      },
+      {
+        id: 4,
+        type: "MULTIPLE_CHOICE",
+        passage: {
+          text: "POOL NOTICE\nNo diving in the shallow end.\nChildren under 12 must be with an adult.",
+          style: "notice",
+        },
+        text: "What does this notice say?",
+        options: [
+          { id: "A", text: "Young children cannot swim alone." },
+          { id: "B", text: "Swimming is not allowed here." },
+          { id: "C", text: "Diving is allowed in the deep end only." },
+        ],
+      },
+      {
+        id: 5,
+        type: "MULTIPLE_CHOICE",
+        passage: {
+          text: "Fresh bread — baked today!\nBuy 2 loaves and get 1 FREE\nOffer ends Saturday",
+          style: "notice",
+        },
+        text: "What is the special offer?",
+        options: [
+          { id: "A", text: "You get a discount if you buy one loaf." },
+          { id: "B", text: "You pay for two loaves and receive three." },
+          { id: "C", text: "The bread is free on Saturday." },
+        ],
+      },
+    ],
+  },
+  {
+    partNumber: 2,
+    title: "Part 2",
+    instruction: "For each question, choose the correct answer.",
+    questions: [
+      {
+        id: 6,
+        type: "MULTIPLE_CHOICE",
+        passage: null,
+        text: "Jake wants to learn to cook. He enjoys outdoor activities and has free time in the evenings. Which class is best for Jake?",
+        options: [
+          { id: "A", text: "Monday afternoon baking class" },
+          { id: "B", text: "Tuesday evening Italian cooking class" },
+          { id: "C", text: "Saturday morning yoga class" },
+        ],
+      },
+      {
+        id: 7,
+        type: "MULTIPLE_CHOICE",
+        passage: null,
+        text: "Maria needs a class for her 8-year-old daughter who loves drawing. The class must be on a weekend.",
+        options: [
+          { id: "A", text: "Children's art class – Saturday 10am" },
+          { id: "B", text: "Adult drawing class – Tuesday 7pm" },
+          { id: "C", text: "Photography for beginners – Sunday 2pm" },
+        ],
+      },
+    ],
+  },
+  {
+    partNumber: 3,
+    title: "Part 3",
+    instruction: "For each question, choose the correct answer.",
+    questions: [
+      {
+        id: 8,
+        type: "MULTIPLE_CHOICE",
+        passage: {
+          text: "Anna loves sport and goes running three times a week. Last month she started swimming lessons because she wants to compete in triathlons next year. She finds swimming the most difficult part but is improving quickly.",
+          style: "normal",
+        },
+        text: "Why did Anna start swimming lessons?",
+        options: [
+          { id: "A", text: "Because her doctor told her to." },
+          { id: "B", text: "Because she wants to take part in a race." },
+          { id: "C", text: "Because she enjoys swimming more than running." },
+        ],
+      },
+      {
+        id: 9,
+        type: "MULTIPLE_CHOICE",
+        passage: null,
+        text: "What does Anna find hardest?",
+        options: [
+          { id: "A", text: "Running" },
+          { id: "B", text: "Cycling" },
+          { id: "C", text: "Swimming" },
+        ],
+      },
+      {
+        id: 10,
+        type: "MULTIPLE_CHOICE",
+        passage: null,
+        text: "How often does Anna go running?",
+        options: [
+          { id: "A", text: "Once a week" },
+          { id: "B", text: "Twice a week" },
+          { id: "C", text: "Three times a week" },
+        ],
+      },
+    ],
+  },
+  {
+    partNumber: 4,
+    title: "Part 4",
+    instruction: "For each question, choose the correct answer.",
+    questions: [
+      {
+        id: 11,
+        type: "MULTIPLE_CHOICE",
+        passage: {
+          text: "My name is Tom. I grew up in a small town but moved to the city for university. I found it hard at first because everything was so busy and loud. Now I love it — there are so many things to do, from concerts to museums. The only thing I miss is the quiet countryside.",
+          style: "normal",
+        },
+        text: "What does Tom like most about living in the city?",
+        options: [
+          { id: "A", text: "It is quiet and peaceful." },
+          { id: "B", text: "There are lots of activities." },
+          { id: "C", text: "It reminds him of the countryside." },
+        ],
+      },
+      {
+        id: 12,
+        type: "MULTIPLE_CHOICE",
+        passage: null,
+        text: "How did Tom feel when he first moved to the city?",
+        options: [
+          { id: "A", text: "Excited and happy" },
+          { id: "B", text: "Bored and lonely" },
+          { id: "C", text: "Uncomfortable and overwhelmed" },
+        ],
+      },
+    ],
+  },
+  {
+    partNumber: 5,
+    title: "Part 5",
+    instruction: "For each question, write the correct word. Use ONE word only.",
+    questions: [
+      { id: 13, type: "FILL_IN", passage: null, text: "I enjoy ___ football with my friends at the weekend.", options: [] },
+      { id: 14, type: "FILL_IN", passage: null, text: "She has lived in London ___ five years.", options: [] },
+      { id: 15, type: "FILL_IN", passage: null, text: "Can you help me ___ this box? It's very heavy.", options: [] },
+      { id: 16, type: "FILL_IN", passage: null, text: "He didn't study, ___ he failed the exam.", options: [] },
+      { id: 17, type: "FILL_IN", passage: null, text: "What time ___ you usually wake up?", options: [] },
+    ],
+  },
+  {
+    partNumber: 6,
+    title: "Part 6",
+    instruction: "Write an email. Write 25–35 words. You must include information about all three bullet points.",
+    questions: [
+      {
+        id: 18,
+        type: "SHORT_WRITE",
+        passage: {
+          text: "Your English friend Sam has invited you to his birthday party next Saturday. Write an email to Sam:\n• Say you are happy to come\n• Suggest what time you will arrive\n• Ask what you should bring",
+          style: "notice",
+        },
+        text: "Write your email here:",
+        options: [],
+      },
+    ],
+  },
+];
+
+// Speaking types
+
+export interface SpeakingTask {
+  id: number;
+  partNumber: number;
+  partTitle: string;
+  instruction: string;       // hướng dẫn chung của part
+  prompt: string;            // câu hỏi / chủ đề cụ thể
+  prepTimeSec: number;       // thời gian chuẩn bị (giây), 0 nếu không có
+  speakTimeSec: number;      // thời gian nói tối đa (giây)
+  imageUrl?: string | null;  // ảnh minh họa (Part 2 thường có)
+}
+
+// Mockup Speaking — A2 Test 1
+export const A2_TEST1_SPEAKING: SpeakingTask[] = [
+  {
+    id: 1,
+    partNumber: 1,
+    partTitle: "Part 1 — Introduction",
+    instruction: "The examiner will ask you some questions about yourself.",
+    prompt: "What is your name? Where are you from? Do you work or study?",
+    prepTimeSec: 0,
+    speakTimeSec: 60,
+  },
+  {
+    id: 2,
+    partNumber: 1,
+    partTitle: "Part 1 — Everyday topics",
+    instruction: "Answer the examiner's questions about familiar topics.",
+    prompt: "Tell me about your hobbies. What do you enjoy doing in your free time?",
+    prepTimeSec: 0,
+    speakTimeSec: 60,
+  },
+  {
+    id: 3,
+    partNumber: 2,
+    partTitle: "Part 2 — Topic discussion",
+    instruction: "Look at the picture and describe what you see. Then answer the questions.",
+    prompt: "What are the people doing in this picture? Where do you think they are? Do you enjoy this activity?",
+    prepTimeSec: 30,
+    speakTimeSec: 90,
+    imageUrl: "https://placehold.co/500x300/e8f4e8/2d6a2d?text=People+at+a+market",
+  },
+  {
+    id: 4,
+    partNumber: 3,
+    partTitle: "Part 3 — Extended discussion",
+    instruction: "Discuss the topic with the examiner.",
+    prompt: "Let's talk about shopping. Do you prefer shopping online or in stores? Why?",
+    prepTimeSec: 0,
+    speakTimeSec: 120,
+  },
+];

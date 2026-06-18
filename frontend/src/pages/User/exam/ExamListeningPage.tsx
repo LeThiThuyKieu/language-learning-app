@@ -500,8 +500,7 @@ export default function ExamListeningPage() {
                   type="button"
                   onClick={() => {
                     setShowSubmitModal(false);
-                    // TODO: xử lý nộp bài thật sự
-                    navigate(-1);
+                    navigate(`/exam/${_level}/${_testId}/reading-writing`);
                   }}
                   className="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-extrabold text-white transition shadow-md"
                 >
