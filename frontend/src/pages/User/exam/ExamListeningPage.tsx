@@ -5,242 +5,309 @@ import {
   type ListeningPart,
   type ListeningQuestion,
 } from "@/data/examMockData";
-import { Play, Pause, Clock, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Play, Pause, Volume2, ChevronLeft, ChevronRight, Check, Headphones, X } from "lucide-react";
+import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 
-// Thời gian: 30 phút = 1800 giây
 const TOTAL_SECONDS = 30 * 60;
+const MOCK_AUDIO_URL = null;
 
-// Mock audio (thay bằng URL thật sau)
-const MOCK_AUDIO_URL = null; // null → không có audio thật, chỉ giả lập
-
-// Helpers
 function formatTime(sec: number) {
-  const m = Math.floor(sec / 60).toString().padStart(2, "0");
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60).toString().padStart(2, "0");
   const s = (sec % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
+  return h > 0 ? `${h}:${m}:${s}` : `0:${m}:${s}`;
 }
 
-// Overlay Play trước khi bắt đầu
+// Overlay Play
 function AudioStartOverlay({ onPlay }: { onPlay: () => void }) {
   return (
-    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 rounded-xl">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white mb-4">
-        <svg viewBox="0 0 24 24" className="h-10 w-10 text-white" fill="currentColor">
-          <path d="M12 3C9.79 3 8 4.34 8 6v5c0 1.66 1.79 3 4 3s4-1.34 4-3V6c0-1.66-1.79-3-4-3zm-6 9c0 3.31 2.69 6 6 6s6-2.69 6-6h-2c0 2.21-1.79 4-4 4s-4-1.79-4-4H6z"/>
-        </svg>
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#5a5a5a]/90">
+      <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-white">
+        <Headphones className="h-12 w-12 text-white" strokeWidth={1.5} />
       </div>
-      <p className="text-white text-sm font-semibold text-center max-w-xs px-4 leading-relaxed mb-1">
-        You will be listening to an audio clip during this test.
+      <p className="max-w-lg text-center text-lg font-bold text-white leading-snug px-8 mb-3">
+        You will be listening to an audio clip during this test. You will not be permitted to pause or rewind the audio while answering the questions.
       </p>
-      <p className="text-white/70 text-xs text-center mb-6">
-        You will not be permitted to pause or rewind the audio while answering the questions.
-      </p>
-      <p className="text-white text-sm font-semibold mb-4">To continue, click Play.</p>
+      <p className="text-base font-semibold text-white mb-6">To continue, click Play.</p>
       <button
         type="button"
         onClick={onPlay}
-        className="flex items-center gap-2 rounded-full bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white font-bold px-8 py-3 transition shadow-lg"
+        className="flex items-center gap-3 rounded-full bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white font-bold px-12 py-3.5 text-base transition shadow-xl"
       >
-        <Play className="h-5 w-5" />
+        <Play className="h-5 w-5 fill-white" />
         Play
       </button>
     </div>
   );
 }
 
-// Header: đồng hồ + phần hiện tại
+// Header
 function ExamHeader({
   timeLeft,
   isPlaying,
   audioStarted,
+  timeHidden,
   onToggleAudio,
+  onToggleTime,
+  onExit,
 }: {
   timeLeft: number;
   isPlaying: boolean;
   audioStarted: boolean;
+  timeHidden: boolean;
   onToggleAudio: () => void;
+  onToggleTime: () => void;
+  onExit: () => void;
 }) {
-  const pct = (timeLeft / TOTAL_SECONDS) * 100;
-  const urgent = timeLeft < 300; // < 5 phút
+  const urgent = timeLeft < 300;
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 shadow-sm">
-      {/* Tên bài thi */}
-      <span className="text-sm font-extrabold text-gray-700 uppercase tracking-wide">
-        Listening
-      </span>
-
-      {/* Thanh tiến trình thời gian */}
-      <div className="flex items-center gap-2 flex-1 mx-6">
-        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${urgent ? "bg-red-500" : "bg-primary-500"}`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        <div className={`flex items-center gap-1 text-sm font-extrabold ${urgent ? "text-red-600" : "text-gray-700"}`}>
-          <Clock className="h-4 w-4" />
-          {formatTime(timeLeft)}
-        </div>
-      </div>
-
-      {/* Nút play/pause audio */}
-      {audioStarted && (
+    <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-gray-200 shadow-sm">
+      {/* Trái: X + audio */}
+      <div className="flex items-center gap-3">
+        {/* Nút X thoát */}
         <button
           type="button"
-          onClick={onToggleAudio}
-          className="flex items-center gap-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 px-3 py-1.5 text-xs font-bold transition"
+          onClick={onExit}
+          className="flex items-center justify-center h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition"
+          title="Thoát bài thi"
         >
-          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          {isPlaying ? "Pause" : "Resume"}
+          <X className="h-5 w-5" strokeWidth={2.5} />
         </button>
-      )}
+
+        {/* Audio status */}
+        {audioStarted ? (
+          <button
+            type="button"
+            onClick={onToggleAudio}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition border-2 ${
+              isPlaying
+                ? "border-primary-400 bg-primary-50 text-primary-600"
+                : "border-gray-300 bg-gray-50 text-gray-500"
+            }`}
+          >
+            {isPlaying
+              ? <><Volume2 className="h-4 w-4" />Audio đang phát</>
+              : <><Pause className="h-4 w-4" />Tạm dừng</>
+            }
+          </button>
+        ) : null}
+      </div>
+
+      {/* Phải: Time left + Hide/Show */}
+      <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-extrabold text-white ${
+          urgent ? "bg-red-700" : "bg-red-500"
+        }`}>
+          {timeHidden ? "Time left" : `Time left ${formatTime(timeLeft)}`}
+        </div>
+        <button
+          type="button"
+          onClick={onToggleTime}
+          className="rounded-lg border-2 border-blue-400 px-4 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 transition bg-white"
+        >
+          {timeHidden ? "Show" : "Hide"}
+        </button>
+      </div>
     </div>
   );
 }
 
-// Part navigation bar (bottom)
+// Part navigation bar
 function PartNavBar({
   parts,
   answers,
+  bookmarks,
   activePartIdx,
   activeQIdx,
   onGoToPart,
+  onGoToQuestion,
+  onSubmit,
 }: {
   parts: ListeningPart[];
   answers: Record<number, string>;
+  bookmarks: Set<number>;
   activePartIdx: number;
   activeQIdx: number;
-  onGoToPart: (idx: number) => void;
+  onGoToPart: (partIdx: number) => void;
+  onGoToQuestion: (partIdx: number, qIdx: number) => void;
+  onSubmit: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-2 text-xs overflow-x-auto gap-2">
-      {parts.map((part, idx) => {
-        const answered = part.questions.filter((q) => answers[q.id]).length;
-        const total = part.questions.length;
-        const isActive = idx === activePartIdx;
+    <div className="flex items-stretch border-t-2 border-gray-300 bg-white">
+      {parts.map((part, pIdx) => {
+        const answered     = part.questions.filter((q) => answers[q.id]).length;
+        const total        = part.questions.length;
+        const isActivePart = pIdx === activePartIdx;
+
         return (
           <button
             key={part.partNumber}
             type="button"
-            onClick={() => onGoToPart(idx)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold transition whitespace-nowrap ${
-              isActive
-                ? "bg-primary-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            onClick={() => onGoToPart(pIdx)}
+            className={`flex flex-1 items-center justify-center gap-2 border-r border-gray-200 px-3 py-4 text-sm font-bold transition select-none ${
+              isActivePart
+                ? "bg-primary-50 text-primary-700"
+                : "bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700"
             }`}
           >
-            <span>Part {part.partNumber}</span>
-            {isActive && (
-              <span className="rounded bg-white/30 px-1">{activeQIdx + 1}</span>
+            <span className={`whitespace-nowrap ${isActivePart ? "font-extrabold text-primary-700" : "font-medium text-gray-500"}`}>
+              Part {part.partNumber}
+            </span>
+
+            {isActivePart ? (
+              <span className="flex items-center gap-1 ml-1" onClick={(e) => e.stopPropagation()}>
+                {part.questions.map((q, qIdx) => {
+                  const isCurrentQ   = qIdx === activeQIdx;
+                  const isBookmarked = bookmarks.has(q.id);
+                  return (
+                    <span key={q.id} className="relative">
+                      {/* Cờ cam phía trên số câu */}
+                      {isBookmarked && (
+                        <svg
+                          className="absolute -top-3.5 left-1/2 -translate-x-1/2 h-3 w-3 fill-primary-500 text-primary-500"
+                          stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                        </svg>
+                      )}
+                      <span
+                        onClick={(e) => { e.stopPropagation(); onGoToQuestion(pIdx, qIdx); }}
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs font-extrabold cursor-pointer transition ${
+                          isCurrentQ
+                            ? "bg-primary-600 text-white ring-2 ring-primary-300"
+                            : answers[q.id]
+                              ? "bg-primary-100 text-primary-700"
+                              : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                        }`}
+                      >
+                        {part.questions[0].id + qIdx}
+                      </span>
+                    </span>
+                  );
+                })}
+              </span>
+            ) : (
+              <span className="text-xs text-gray-400 font-medium whitespace-nowrap">
+                {answered} of {total}
+              </span>
             )}
-            <span className="opacity-70">{answered} of {total}</span>
           </button>
         );
       })}
-      {/* Nút submit */}
+
+      {/* Submit ✓ */}
       <button
         type="button"
-        className="ml-auto flex items-center gap-1 rounded-lg bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 font-bold transition"
+        onClick={onSubmit}
+        className="flex items-center justify-center px-5 bg-primary-600 hover:bg-primary-700 text-white transition shrink-0 border-l-2 border-primary-700"
+        title="Nộp bài"
       >
-        <Check className="h-4 w-4" />
+        <Check className="h-5 w-5" strokeWidth={2.5} />
       </button>
     </div>
   );
 }
 
-// Question view
+// Question View
 function QuestionView({
   part,
   question,
   selectedAnswer,
+  isBookmarked,
   onSelect,
+  onToggleBookmark,
 }: {
   part: ListeningPart;
   question: ListeningQuestion;
   selectedAnswer: string | null;
+  isBookmarked: boolean;
   onSelect: (optionId: string) => void;
+  onToggleBookmark: () => void;
 }) {
   const hasImages = question.options.some((o) => o.imageUrl);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      {/* Part instruction */}
-      <div className="bg-gray-50 border-b border-gray-200 px-5 py-3">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+    <div className="flex-1 overflow-y-auto bg-[#dce9f0] p-5">
+      {/* Instruction — trong khung trắng nổi bật */}
+      <div className="bg-white border border-gray-300 rounded-lg px-5 py-3 mb-4 shadow-sm">
+        <p className="text-sm font-extrabold text-gray-700">
           Questions {part.questions[0].id}–{part.questions[part.questions.length - 1].id}
         </p>
-        <p className="text-sm text-gray-700 mt-0.5">{part.instruction}</p>
+        <p className="text-base text-gray-700 mt-0.5">{part.instruction}</p>
       </div>
 
-      {/* Question */}
-      <div className="px-5 py-5">
-        <div className="flex items-start gap-3 mb-5">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-600 text-white text-xs font-black">
-            {question.id}
-          </span>
-          <p className="text-base font-semibold text-gray-800 leading-snug">{question.text}</p>
-        </div>
+      {/* Question text + bookmark */}
+      <div className="flex items-start gap-3 mb-5">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
+          {question.id}
+        </span>
+        <p className="text-base font-semibold text-gray-800 leading-snug flex-1">{question.text}</p>
+        {/* Bookmark — cờ: xám khi chưa đánh dấu, cam khi đã đánh dấu */}
+        <button
+          type="button"
+          onClick={onToggleBookmark}
+          className="shrink-0 mr-2 transition-colors"
+          title={isBookmarked ? "Bỏ đánh dấu" : "Đánh dấu câu này"}
+        >
+          <svg
+            className={`h-6 w-6 transition-colors ${isBookmarked ? "fill-primary-500 text-primary-500" : "fill-none text-gray-400 hover:text-gray-600"}`}
+            stroke="currentColor"
+            strokeWidth="1.5"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+          </svg>
+        </button>
+      </div>
 
-        {/* Options */}
-        {hasImages ? (
-          /* Ảnh 3 cột */
-          <div className="grid grid-cols-3 gap-4">
-            {question.options.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => onSelect(opt.id)}
-                className={`flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all ${
-                  selectedAnswer === opt.id
-                    ? "border-primary-500 shadow-md"
-                    : "border-transparent hover:border-gray-300"
-                }`}
-              >
+      {hasImages ? (
+        /* Hình ảnh: cố định 310×230px, căn trái */
+        <div className="flex items-start gap-5 flex-wrap">
+          {question.options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onSelect(opt.id)}
+              className="flex flex-col items-center gap-2 group"
+            >
+              <div className={`overflow-hidden rounded-lg border-4 transition-all bg-white ${
+                selectedAnswer === opt.id
+                  ? "border-primary-500 shadow-lg"
+                  : "border-transparent group-hover:border-gray-300"
+              }`} style={{ width: 310, height: 230 }}>
                 <img
                   src={opt.imageUrl!}
                   alt={`Option ${opt.id}`}
-                  className="w-full rounded-lg object-cover aspect-[4/3]"
+                  className="w-full h-full object-cover"
                 />
-                <span
-                  className={`h-5 w-5 rounded-full border-2 transition-all ${
-                    selectedAnswer === opt.id
-                      ? "border-primary-500 bg-primary-500"
-                      : "border-gray-300 bg-white"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-        ) : (
-          /* Text options */
-          <div className="flex flex-col gap-2">
-            {question.options.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => onSelect(opt.id)}
-                className={`flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all ${
-                  selectedAnswer === opt.id
-                    ? "border-primary-500 bg-primary-50"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold transition-all ${
-                    selectedAnswer === opt.id
-                      ? "border-primary-500 bg-primary-500 text-white"
-                      : "border-gray-300 text-gray-500"
-                  }`}
-                >
-                  {opt.id}
-                </span>
-                <span className="text-sm font-medium text-gray-700">{opt.text}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2 max-w-lg">
+          {question.options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onSelect(opt.id)}
+              className={`flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all ${
+                selectedAnswer === opt.id
+                  ? "border-primary-500 bg-primary-50"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+              }`}
+            >
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold transition-all ${
+                selectedAnswer === opt.id
+                  ? "border-primary-500 bg-primary-500 text-white"
+                  : "border-gray-300 text-gray-500"
+              }`}>{opt.id}</span>
+              <span className="text-sm font-medium text-gray-700">{opt.text}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -248,30 +315,30 @@ function QuestionView({
 // Main Page
 export default function ExamListeningPage() {
   const navigate = useNavigate();
-  const { level, testId } = useParams<{ level: string; testId: string }>();
+  const { level: _level, testId: _testId } = useParams<{ level: string; testId: string }>();
 
-  const parts = A2_TEST1_LISTENING; // mockup — thay bằng API sau
+  const parts = A2_TEST1_LISTENING;
 
-  const [audioStarted, setAudioStarted] = useState(false);
-  const [isPlaying, setIsPlaying]       = useState(false);
-  const [timeLeft, setTimeLeft]         = useState(TOTAL_SECONDS);
+  const [audioStarted, setAudioStarted]   = useState(false);
+  const [isPlaying, setIsPlaying]         = useState(false);
+  const [timeLeft, setTimeLeft]           = useState(TOTAL_SECONDS);
+  const [timeHidden, setTimeHidden]       = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [activePartIdx, setActivePartIdx] = useState(0);
-  const [activeQIdx, setActiveQIdx]     = useState(0);
-  const [answers, setAnswers]           = useState<Record<number, string>>({});
+  const [activeQIdx, setActiveQIdx]       = useState(0);
+  const [answers, setAnswers]             = useState<Record<number, string>>({});
+  const [bookmarks, setBookmarks]         = useState<Set<number>>(new Set());
 
-  const audioRef   = useRef<HTMLAudioElement | null>(null);
-  const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Đồng hồ đếm ngược — chỉ chạy khi đã bắt đầu và đang play
   useEffect(() => {
     if (!audioStarted) return;
     if (isPlaying) {
       timerRef.current = setInterval(() => {
         setTimeLeft((t) => {
-          if (t <= 1) {
-            clearInterval(timerRef.current!);
-            return 0;
-          }
+          if (t <= 1) { clearInterval(timerRef.current!); return 0; }
           return t - 1;
         });
       }, 1000);
@@ -293,109 +360,166 @@ export default function ExamListeningPage() {
   }, []);
 
   const handleToggleAudio = useCallback(() => {
-    if (!audioRef.current) {
-      setIsPlaying((v) => !v);
-      return;
-    }
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
+    if (!audioRef.current) { setIsPlaying((v) => !v); return; }
+    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
+    else           { audioRef.current.play();  setIsPlaying(true);  }
   }, [isPlaying]);
 
-  const activePart = parts[activePartIdx];
+  const activePart     = parts[activePartIdx];
   const activeQuestion = activePart?.questions[activeQIdx];
+  const isFirst = activePartIdx === 0 && activeQIdx === 0;
+  const isLast  = activePartIdx === parts.length - 1 &&
+                  activeQIdx === parts[parts.length - 1].questions.length - 1;
 
   function goNext() {
-    const part = parts[activePartIdx];
-    if (activeQIdx < part.questions.length - 1) {
-      setActiveQIdx((i) => i + 1);
-    } else if (activePartIdx < parts.length - 1) {
-      setActivePartIdx((p) => p + 1);
-      setActiveQIdx(0);
-    }
+    if (activeQIdx < activePart.questions.length - 1) setActiveQIdx((i) => i + 1);
+    else if (activePartIdx < parts.length - 1) { setActivePartIdx((p) => p + 1); setActiveQIdx(0); }
   }
-
   function goPrev() {
-    if (activeQIdx > 0) {
-      setActiveQIdx((i) => i - 1);
-    } else if (activePartIdx > 0) {
+    if (activeQIdx > 0) setActiveQIdx((i) => i - 1);
+    else if (activePartIdx > 0) {
       setActivePartIdx((p) => p - 1);
       setActiveQIdx(parts[activePartIdx - 1].questions.length - 1);
     }
   }
 
-  const isFirst = activePartIdx === 0 && activeQIdx === 0;
-  const isLast  = activePartIdx === parts.length - 1 &&
-                  activeQIdx === parts[parts.length - 1].questions.length - 1;
-
   return (
-    <div className="flex flex-col h-screen bg-[#f0f0f0] overflow-hidden">
-      {/* Header */}
+    <div className="flex flex-col h-screen bg-[#e8eef2] overflow-hidden">
       <ExamHeader
         timeLeft={timeLeft}
         isPlaying={isPlaying}
         audioStarted={audioStarted}
+        timeHidden={timeHidden}
         onToggleAudio={handleToggleAudio}
+        onToggleTime={() => setTimeHidden((v) => !v)}
+        onExit={() => setShowExitModal(true)}
       />
 
-      {/* Nội dung chính */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Khung câu hỏi */}
-        <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full bg-white rounded-xl shadow-sm overflow-hidden my-4 mx-4 relative">
-          {/* Overlay Play */}
-          {!audioStarted && (
-            <AudioStartOverlay onPlay={handleStartAudio} />
-          )}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        {!audioStarted && <AudioStartOverlay onPlay={handleStartAudio} />}
 
-          {activeQuestion && (
-            <QuestionView
-              part={activePart}
-              question={activeQuestion}
-              selectedAnswer={answers[activeQuestion.id] ?? null}
-              onSelect={(optId) =>
-                setAnswers((prev) => ({ ...prev, [activeQuestion.id]: optId }))
-              }
-            />
-          )}
+        {activeQuestion && (
+          <QuestionView
+            part={activePart}
+            question={activeQuestion}
+            selectedAnswer={answers[activeQuestion.id] ?? null}
+            isBookmarked={bookmarks.has(activeQuestion.id)}
+            onSelect={(optId) => setAnswers((prev) => ({ ...prev, [activeQuestion.id]: optId }))}
+            onToggleBookmark={() => setBookmarks((prev) => {
+              const next = new Set(prev);
+              if (next.has(activeQuestion.id)) next.delete(activeQuestion.id);
+              else next.add(activeQuestion.id);
+              return next;
+            })}
+          />
+        )}
 
-          {/* Nút Prev / Next */}
-          <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3 bg-white">
-            <button
-              type="button"
-              onClick={goPrev}
-              disabled={isFirst}
-              className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 transition"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Prev
-            </button>
-            <span className="text-xs text-gray-400 font-semibold">
-              Question {activeQuestion?.id} / {parts.flatMap((p) => p.questions).length}
-            </span>
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={isLast}
-              className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-40 transition"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+        {/* Prev / Next — nút lơ lửng cố định góc phải gần dưới */}
+        <div className="fixed bottom-20 right-4 z-40 flex items-center shadow-lg rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={isFirst}
+            className="flex items-center justify-center h-11 w-11 bg-gray-500 hover:bg-gray-600 disabled:opacity-30 text-white transition"
+          >
+            <ChevronLeft className="h-6 w-6" strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={isLast}
+            className="flex items-center justify-center h-11 w-11 bg-primary-600 hover:bg-primary-700 disabled:opacity-30 text-white transition"
+          >
+            <ChevronRight className="h-6 w-6" strokeWidth={2.5} />
+          </button>
         </div>
       </div>
 
-      {/* Part navigation bar */}
       <PartNavBar
         parts={parts}
         answers={answers}
+        bookmarks={bookmarks}
         activePartIdx={activePartIdx}
         activeQIdx={activeQIdx}
-        onGoToPart={(idx) => { setActivePartIdx(idx); setActiveQIdx(0); }}
+        onGoToPart={(pIdx) => { setActivePartIdx(pIdx); setActiveQIdx(0); }}
+        onGoToQuestion={(pIdx, qIdx) => { setActivePartIdx(pIdx); setActiveQIdx(qIdx); }}
+        onSubmit={() => setShowSubmitModal(true)}
+      />
+
+      {/* Modal xác nhận nộp bài */}
+      {showSubmitModal && (() => {
+        const totalQ    = parts.flatMap((p) => p.questions).length;
+        const answered  = Object.keys(answers).length;
+        const unanswered = totalQ - answered;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowSubmitModal(false)} />
+            <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-extrabold text-gray-900">
+                  Nộp bài và kết thúc?
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowSubmitModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5">
+                <p className="text-sm text-gray-600 mb-4">
+                  Sau khi nộp bài, bạn sẽ không thể thay đổi câu trả lời nữa.
+                </p>
+
+                {unanswered > 0 && (
+                  <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm font-semibold text-yellow-800">
+                    Câu chưa trả lời: {unanswered}
+                  </div>
+                )}
+                {unanswered === 0 && (
+                  <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm font-semibold text-green-700">
+                    Bạn đã trả lời tất cả {totalQ} câu hỏi.
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowSubmitModal(false)}
+                  className="rounded-xl border-2 border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 transition"
+                >
+                  Tiếp tục làm bài
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSubmitModal(false);
+                    // TODO: xử lý nộp bài thật sự
+                    navigate(-1);
+                  }}
+                  className="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-extrabold text-white transition shadow-md"
+                >
+                  Nộp bài
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal thoát */}
+      <LessonExitModal
+        open={showExitModal}
+        onContinue={() => setShowExitModal(false)}
+        onExit={() => navigate(-1)}
+        continueButtonText="Tiếp tục thi"
+        bodyText="Đợi chút, đừng đi mà! Bạn sẽ mất hết tiến trình thi này nếu thoát bây giờ."
       />
     </div>
   );

@@ -29,13 +29,11 @@ function PaperBadge({ paper }: { paper: ExamPaper }) {
 
 function TestCard({
   test,
-  levelColor,
   levelText,
   levelBorder,
   onSelect,
 }: {
   test: ExamTest;
-  levelColor: string;
   levelText: string;
   levelBorder: string;
   onSelect: () => void;
@@ -132,7 +130,6 @@ export default function ExamTestListPage() {
                     <TestCard
                       key={test.id}
                       test={test}
-                      levelColor={levelInfo.color}
                       levelText={levelInfo.textColor}
                       levelBorder={levelInfo.borderColor}
                       onSelect={() =>
