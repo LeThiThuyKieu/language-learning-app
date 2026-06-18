@@ -154,6 +154,21 @@ CREATE TABLE IF NOT EXISTS `levels` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table language_learning_app.phonetics
+CREATE TABLE IF NOT EXISTS `phonetics` (
+                                           `id` int(11) NOT NULL AUTO_INCREMENT,
+    `symbol` varchar(10) NOT NULL COMMENT 'Ký hiệu IPA, vd: ɑ, æ, b, tʃ',
+    `type` enum('VOWEL','CONSONANT') NOT NULL COMMENT 'VOWEL = Nguyên âm, CONSONANT = Phụ âm',
+    `example_word` varchar(50) NOT NULL COMMENT 'Từ ví dụ, vd: hot, cat, book',
+    `audio_url` varchar(255) DEFAULT NULL COMMENT 'URL audio phát âm âm IPA (null → Web Speech API)',
+    `word_audio_url` varchar(255) DEFAULT NULL COMMENT 'URL audio phát âm từ ví dụ',
+    `display_order` int(11) NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị trong nhóm',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_phonetics_symbol` (`symbol`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng âm vị học IPA tiếng Anh — 20 nguyên âm và 24 phụ âm';
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table language_learning_app.placement_test
 CREATE TABLE IF NOT EXISTS `placement_test` (
                                                 `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -346,7 +361,7 @@ CREATE TABLE IF NOT EXISTS `user_general_revision_task_attempt` (
     KEY `idx_ugrta_task` (`task_id`),
     CONSTRAINT `fk_ugrta_task` FOREIGN KEY (`task_id`) REFERENCES `general_revision_task` (`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_ugrta_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-    ) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử làm từng task ôn tập tổng hợp';
+    ) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lịch sử làm từng task ôn tập tổng hợp';
 
 -- Data exporting was unselected.
 
