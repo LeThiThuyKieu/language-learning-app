@@ -95,21 +95,13 @@ public class QuestionImportService {
                     }
                 }
                 case "WRITING" -> {
-                    // WRITING có 2 sheet: WRITING_1 (có category) và WRITING_2 (question_text)
-                    Sheet sheet1 = workbook.getSheet("WRITING_1");
-                    Sheet sheet2 = workbook.getSheet("WRITING_2");
-                    int nextOrder = currentMaxOrder;
-                    if (sheet1 != null) {
-                        int[] result = importWriting1(sheet1, topicId, taskId, nextOrder, errors);
-                        imported += result[0];
-                        nextOrder += result[0];
-                    }
-                    if (sheet2 != null) {
-                        int[] result = importWriting2(sheet2, topicId, taskId, nextOrder, errors);
-                        imported += result[0];
-                    }
-                    if (sheet1 == null && sheet2 == null) {
-                        errors.add("Không tìm thấy sheet 'WRITING_1' hoặc 'WRITING_2' trong file");
+                    // WRITING: chỉ dùng sheet "WRITING" (dạng question_text đơn giản)
+                    Sheet sheet = workbook.getSheet("WRITING");
+                    if (sheet == null) {
+                        errors.add("Không tìm thấy sheet 'WRITING' trong file");
+                    } else {
+//                        int[] result = importWriting(sheet, topicId, taskId, currentMaxOrder, errors);
+//                        imported = result[0];
                     }
                 }
                 default -> errors.add("Loại câu hỏi không được hỗ trợ: " + questionType);
