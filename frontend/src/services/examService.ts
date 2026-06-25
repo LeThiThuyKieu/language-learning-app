@@ -1,0 +1,149 @@
+import apiClient from "@/config/api";
+
+// Types (mirror backend DTOs)
+
+export interface ExamPaperSummaryDto {
+  paperType: "LISTENING" | "READING_WRITING" | "SPEAKING";
+  label: string;
+  durationMinutes: number;
+  durationLabel: string;
+}
+
+export interface ExamTestDto {
+  id: number;
+  cefrLevel: string;
+  testNumber: number;
+  title: string;
+  description: string;
+  papers: ExamPaperSummaryDto[];
+}
+
+export interface ExamOption {
+  id: string;          // "A" | "B" | "C"
+  text: string | null;
+  image_url: string | null;
+}
+
+export interface ExamPassage {
+  text: string;
+  style: "notice" | "normal";
+}
+
+export interface ExamLeftItem {
+  question_number: number;
+  label: string;
+}
+
+export interface ExamRightItem {
+  id: string;
+  label: string;
+}
+
+export interface ExamStoryImage {
+  order: number;
+  image_url: string | null;
+  alt: string;
+}
+
+export interface ExamQuestionDto {
+  id: number;
+  mongoDocId: string;
+  questionType:
+    | "MULTIPLE_CHOICE"
+    | "FILL_IN_FORM"
+    | "MATCHING"
+    | "FILL_IN_TEXT"
+    | "SHORT_WRITE"
+    | "SPEAKING_TASK";
+  questionNumberStart: number;
+  questionNumberEnd: number;
+  /** null khi đang làm bài; có giá trị khi xem lại bài đã nộp */
+  correctAnswer: string | null;
+
+  // chung
+  instruction: string | null;
+
+  // MULTIPLE_CHOICE
+  questionNumber?: number;
+  text?: string;
+  options?: ExamOption[];
+  passage?: ExamPassage | null;
+
+  // FILL_IN_FORM
+  formTitle?: string;
+  formContent?: string;  // plain text, \n + ____ marker
+
+  // MATCHING
+  instructionDetail?: string;
+  leftItems?: ExamLeftItem[];
+  rightItems?: ExamRightItem[];
+
+  // FILL_IN_TEXT
+  sentence?: string;
+
+  // SHORT_WRITE
+  writeType?: "EMAIL" | "STORY";
+  minWords?: number;
+  maxWords?: number | null;
+  promptText?: string;
+  bulletPoints?: string[];
+  storyImages?: ExamStoryImage[];
+
+  // SPEAKING_TASK
+  partTitle?: string;
+  prompt?: string;
+  prepTimeSec?: number;
+  speakTimeSec?: number;
+  imageUrl?: string | null;
+}
+
+export interface ExamPartDto {
+  partNumber: number;
+  questions: ExamQuestionDto[];
+}
+
+export interface ExamPaperDto {
+  paperId: number;
+  paperType: "LISTENING" | "READING_WRITING" | "SPEAKING";
+  durationMinutes: number;
+  audioUrl: string | null;
+  parts: ExamPartDto[];
+}
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+export const examService = {
+  /**
+   * GET /api/exam/tests?level=A2
+   * Lấy danh sách bài thi của 1 level.
+   */
+  getTestsByLevel: async (level: string): Promise<ExamTestDto[]> => {
+    const res = await apiClient.get<ExamTestDto[]>("/exam/tests", {
+      params: { level: level.toUpperCase() },
+    });
+    return res.data;
+  },
+
+  /**
+   * GET /api/exam/tests
+   * Lấy tất cả bài thi (không filter level).
+   */
+  getAllTests: async (): Promise<ExamTestDto[]> => {
+    const res = await apiClient.get<ExamTestDto[]>("/exam/tests");
+    return res.data;
+  },
+
+  /**
+   * GET /api/exam/tests/{testId}/papers/{paperType}
+   * Lấy nội dung đầy đủ 1 paper để làm bài.
+   */
+  getPaper: async (
+    testId: number,
+    paperType: "LISTENING" | "READING_WRITING" | "SPEAKING"
+  ): Promise<ExamPaperDto> => {
+    const res = await apiClient.get<ExamPaperDto>(
+      `/exam/tests/${testId}/papers/${paperType}`
+    );
+    return res.data;
+  },
+};
