@@ -160,7 +160,9 @@ public class ExamService {
 
         dto.setText(mongo.getText());
         dto.setOptions(mongo.getOptions());
-        dto.setPassage(mongo.getPassage());
+        dto.setPassageImageUrl(mongo.getPassageImageUrl());
+        dto.setPassageText(mongo.getPassageText());
+        dto.setBlanksOptions(mongo.getBlanksOptions());
 
         dto.setFormTitle(mongo.getFormTitle());
         dto.setFormContent(mongo.getFormContent());

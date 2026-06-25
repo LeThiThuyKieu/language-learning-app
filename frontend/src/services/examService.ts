@@ -24,11 +24,6 @@ export interface ExamOption {
   image_url: string | null;
 }
 
-export interface ExamPassage {
-  text: string;
-  style: "notice" | "normal";
-}
-
 export interface ExamLeftItem {
   question_number: number;
   label: string;
@@ -67,7 +62,9 @@ export interface ExamQuestionDto {
   questionNumber?: number;
   text?: string;
   options?: ExamOption[];
-  passage?: ExamPassage | null;
+  passageImageUrl?: string | null;  // R&W — ảnh notice/passage
+  passageText?: string | null;      // R&W Part 2+ — đoạn văn dài (lưu ở câu đầu part)
+  blanksOptions?: Array<{ number: number; options: string[] }> | null; // FILL_IN_FORM paragraph dropdown
 
   // FILL_IN_FORM
   formTitle?: string;

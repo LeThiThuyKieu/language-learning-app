@@ -197,12 +197,13 @@ function PartNavBar({
 }
 
 // FillInFormView — tách ra để dùng hooks hợp lệ
-function FillInFormView({ lines, blankCounterStart, parsedAnswer, formTitle, focusBlankNum, onBlankChange, onFocusBlank, instructionBox }: {
+function FillInFormView({ lines, blankCounterStart, parsedAnswer, formTitle, focusBlankNum, blanksOptions, onBlankChange, onFocusBlank, instructionBox }: {
   lines: string[];
   blankCounterStart: number;
   parsedAnswer: Record<string, string>;
   formTitle?: string | null;
   focusBlankNum?: number | null;
+  blanksOptions?: Array<{ number: number; options: string[] }> | null;
   onBlankChange: (num: number, val: string) => void;
   onFocusBlank: (num: number) => void;
   instructionBox: React.ReactNode;
@@ -252,14 +253,36 @@ function FillInFormView({ lines, blankCounterStart, parsedAnswer, formTitle, foc
                         <span className="absolute -top-4 left-2 text-[11px] font-black text-primary-600 select-none">
                           {currentNum}
                         </span>
-                        <input
-                          type="text"
-                          data-blank-num={currentNum}
-                          value={parsedAnswer[currentNum] ?? ""}
-                          onChange={(e) => onBlankChange(currentNum, e.target.value)}
-                          onFocus={() => onFocusBlank(currentNum)}
-                          className="w-36 rounded-md border-2 border-blue-300 bg-blue-50 px-3 py-1.5 text-base font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition"
-                        />
+                        {(() => {
+                          const blankOpts = blanksOptions?.find((b) => b.number === currentNum)?.options;
+                          if (blankOpts && blankOpts.length > 0) {
+                            // Dropdown select
+                            return (
+                              <select
+                                data-blank-num={currentNum}
+                                value={parsedAnswer[currentNum] ?? ""}
+                                onChange={(e) => onBlankChange(currentNum, e.target.value)}
+                                onFocus={() => onFocusBlank(currentNum)}
+                                className="w-36 rounded-md border-2 border-blue-300 bg-blue-50 px-2 py-1.5 text-base font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition cursor-pointer"
+                              >
+                                <option value="" disabled />
+                                {blankOpts.map((opt) => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            );
+                          }
+                          return (
+                            <input
+                              type="text"
+                              data-blank-num={currentNum}
+                              value={parsedAnswer[currentNum] ?? ""}
+                              onChange={(e) => onBlankChange(currentNum, e.target.value)}
+                              onFocus={() => onFocusBlank(currentNum)}
+                              className="w-36 rounded-md border-2 border-blue-300 bg-blue-50 px-3 py-1.5 text-base font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition"
+                            />
+                          );
+                        })()}
                       </span>
                     )}
                   </span>
@@ -380,6 +403,7 @@ function QuestionView({
         parsedAnswer={parsedAnswer}
         formTitle={question.formTitle}
         focusBlankNum={focusBlankNum}
+        blanksOptions={question.blanksOptions as Array<{ number: number; options: string[] }> | null}
         onBlankChange={handleBlankChange}
         onFocusBlank={(num) => onFocusBlank(num)}
         instructionBox={<InstructionBox />}

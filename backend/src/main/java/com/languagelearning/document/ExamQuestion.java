@@ -55,8 +55,20 @@ public class ExamQuestion {
     /** Danh sách lựa chọn: [{ id, text, image_url }] */
     private List<Map<String, Object>> options;
 
-    /** Passage đọc kèm (R&W): { text, style } — style: "notice" | "normal" */
-    private Map<String, Object> passage;
+    /** Passage đọc kèm (R&W): image_url của ảnh notice/passage */
+    @Field("passage_image_url")
+    private String passageImageUrl;
+
+    /** Passage text dạng markdown đơn giản — dùng cho part có đoạn văn dài (R&W Part 2+) */
+    @Field("passage_text")
+    private String passageText;
+
+    /**
+     * Danh sách options cho từng blank trong FILL_IN_FORM dạng paragraph.
+     * Mỗi item: { number: int, options: [String] }
+     */
+    @Field("blanks_options")
+    private List<Map<String, Object>> blanksOptions;
 
     // Dùng cho FILL_IN_FORM
     @Field("question_number_start")

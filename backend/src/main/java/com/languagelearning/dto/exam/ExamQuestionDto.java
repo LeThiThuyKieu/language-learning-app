@@ -31,7 +31,10 @@ public class ExamQuestionDto {
     private Integer questionNumber;
     private String text;
     private List<Map<String, Object>> options;   // [{id, text, image_url}]
-    private Map<String, Object> passage;         // {text, style} — R&W only
+    private Map<String, Object> passage;         // {text, style} — R&W only (legacy, kept for fallback)
+    private String passageImageUrl;              // R&W only — ảnh notice/passage
+    private String passageText;                  // R&W Part 2+ — đoạn văn dài (lưu ở câu đầu part)
+    private List<Map<String, Object>> blanksOptions; // FILL_IN_FORM paragraph — [{number, options:[]}]
 
     // ── FILL_IN_FORM ─────────────────────────────────────────
     private String formTitle;

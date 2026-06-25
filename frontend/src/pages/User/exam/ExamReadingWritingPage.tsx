@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";import { useNavigate, useParams } from "react-router-dom";
 import { examService, type ExamPartDto, type ExamQuestionDto } from "@/services/examService";
 import { ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
@@ -70,18 +69,35 @@ function ExamHeader({ timeLeft, timeHidden, onToggleTime, onExit }: {
 }
 
 function PartNavBar({
-  parts, answers, bookmarks, activePartIdx, activeQIdx,
+  parts, answers, bookmarks, activePartIdx, activeQIdx, focusBlankNum,
   onGoToPart, onGoToQuestion, onSubmit,
 }: {
   parts: ExamPartDto[]; answers: Record<string, string>;
   bookmarks: Set<string>; activePartIdx: number; activeQIdx: number;
-  onGoToPart: (p: number) => void; onGoToQuestion: (p: number, q: number) => void;
+  focusBlankNum: number | null;
+  onGoToPart: (p: number) => void; onGoToQuestion: (p: number, q: number, blankNum?: number) => void;
   onSubmit: () => void;
 }) {
   return (
     <div className="flex items-stretch border-t-2 border-gray-300 bg-white">
       {parts.map((part, pIdx) => {
-        const answered = part.questions.filter((q) => answers[q.mongoDocId]).length;
+        // Đếm answered — expand range cho FILL_IN_FORM
+        const answered = part.questions.reduce((sum, q) => {
+          const start = q.questionNumberStart ?? q.questionNumber ?? 0;
+          const end   = q.questionNumberEnd   ?? q.questionNumber ?? start;
+          const nums  = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+          if (nums.length > 1) {
+            let parsedAns: Record<string, string> = {};
+            try { parsedAns = answers[q.mongoDocId] ? JSON.parse(answers[q.mongoDocId]) : {}; } catch { /* ignore */ }
+            return sum + nums.filter((n) => !!parsedAns[n]).length;
+          }
+          return sum + (answers[q.mongoDocId] ? 1 : 0);
+        }, 0);
+        const total = part.questions.reduce((sum, q) => {
+          const start = q.questionNumberStart ?? q.questionNumber ?? 0;
+          const end   = q.questionNumberEnd   ?? q.questionNumber ?? start;
+          return sum + (end - start + 1);
+        }, 0);
         const isActive = pIdx === activePartIdx;
         return (
           <button key={part.partNumber} type="button" onClick={() => onGoToPart(pIdx)}
@@ -93,33 +109,49 @@ function PartNavBar({
             </span>
             {isActive ? (
               <span className="flex items-center gap-1 ml-1" onClick={(e) => e.stopPropagation()}>
-                {part.questions.map((q, qIdx) => {
-                  const isCurrent = qIdx === activeQIdx;
+                {part.questions.flatMap((q, qIdx) => {
+                  const isCurrQ = qIdx === activeQIdx;
                   const isBookmarked = bookmarks.has(q.mongoDocId);
-                  const displayNum = q.questionNumber ?? q.questionNumberStart;
-                  return (
-                    <span key={q.mongoDocId} className="relative">
-                      {isBookmarked && (
-                        <svg className="absolute -top-3.5 left-1/2 -translate-x-1/2 h-3 w-3 fill-primary-500 text-primary-500"
-                          stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round"
-                            d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
-                        </svg>
-                      )}
-                      <span onClick={(e) => { e.stopPropagation(); onGoToQuestion(pIdx, qIdx); }}
-                        className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs font-extrabold cursor-pointer transition ${
-                          isCurrent ? "bg-primary-600 text-white ring-2 ring-primary-300"
-                          : answers[q.mongoDocId] ? "bg-primary-100 text-primary-700"
-                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                        }`}>
-                        {displayNum}
+                  const start = q.questionNumberStart ?? q.questionNumber ?? 0;
+                  const end   = q.questionNumberEnd   ?? q.questionNumber ?? start;
+                  const nums  = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+                  let parsedAns: Record<string, string> = {};
+                  if (nums.length > 1 && answers[q.mongoDocId]) {
+                    try { parsedAns = JSON.parse(answers[q.mongoDocId]); } catch { /* ignore */ }
+                  }
+
+                  return nums.map((num) => {
+                    const isAnswered = nums.length > 1 ? !!parsedAns[num] : !!answers[q.mongoDocId];
+                    const isCurrent = isCurrQ && (
+                      nums.length > 1
+                        ? (focusBlankNum != null ? num === focusBlankNum : num === start)
+                        : true
+                    );
+                    return (
+                      <span key={`${q.mongoDocId}-${num}`} className="relative">
+                        {isBookmarked && num === start && (
+                          <svg className="absolute -top-3.5 left-1/2 -translate-x-1/2 h-3 w-3 fill-primary-500 text-primary-500"
+                            stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                              d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                          </svg>
+                        )}
+                        <span onClick={(e) => { e.stopPropagation(); onGoToQuestion(pIdx, qIdx, nums.length > 1 ? num : undefined); }}
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs font-extrabold cursor-pointer transition ${
+                            isCurrent ? "bg-primary-600 text-white ring-2 ring-primary-300"
+                            : isAnswered ? "bg-primary-100 text-primary-700"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                          }`}>
+                          {num}
+                        </span>
                       </span>
-                    </span>
-                  );
+                    );
+                  });
                 })}
               </span>
             ) : (
-              <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{answered} of {part.questions.length}</span>
+              <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{answered} of {total}</span>
             )}
           </button>
         );
@@ -134,16 +166,25 @@ function PartNavBar({
 
 function QuestionView({
   question, partQuestions, answer, isBookmarked, onAnswer, onToggleBookmark,
+  answers, bookmarks, onAnswerFor, onToggleBookmarkFor, activeQIdx, focusBlankNum, onFocusBlank,
 }: {
   question: ExamQuestionDto;
-  /** Tất cả câu hỏi trong cùng part — dùng để lấy instruction + range */
   partQuestions: ExamQuestionDto[];
   answer: string;
-  isBookmarked: boolean; onAnswer: (val: string) => void; onToggleBookmark: () => void;
+  isBookmarked: boolean;
+  onAnswer: (val: string) => void;
+  onToggleBookmark: () => void;
+  answers: Record<string, string>;
+  bookmarks: Set<string>;
+  onAnswerFor: (mongoDocId: string, val: string) => void;
+  onToggleBookmarkFor: (mongoDocId: string) => void;
+  activeQIdx: number;
+  focusBlankNum: number | null;
+  onFocusBlank: (num: number) => void;
 }) {
-  const BookmarkBtn = () => (
-    <button type="button" onClick={onToggleBookmark} className="shrink-0 mr-2 transition-colors">
-      <svg className={`h-6 w-6 transition-colors ${isBookmarked ? "fill-primary-500 text-primary-500" : "fill-none text-gray-400 hover:text-gray-600"}`}
+  const BookmarkBtn = ({ docId, bmarked }: { docId: string; bmarked: boolean }) => (
+    <button type="button" onClick={() => onToggleBookmarkFor(docId)} className="shrink-0 mr-2 transition-colors">
+      <svg className={`h-6 w-6 transition-colors ${bmarked ? "fill-primary-500 text-primary-500" : "fill-none text-gray-400 hover:text-gray-600"}`}
         stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round"
           d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
@@ -154,6 +195,7 @@ function QuestionView({
   // Instruction và range lấy từ câu đầu tiên của part
   const firstQ     = partQuestions[0] ?? question;
   const partInstruction = firstQ.instruction ?? null;
+  const partPassageText = firstQ.passageText ?? null;
   const partStart  = firstQ.questionNumber ?? firstQ.questionNumberStart;
   const partEnd    = partQuestions[partQuestions.length - 1]?.questionNumber
                      ?? partQuestions[partQuestions.length - 1]?.questionNumberEnd
@@ -162,7 +204,17 @@ function QuestionView({
     ? `Question ${partStart}`
     : `Questions ${partStart}–${partEnd}`;
 
-  // Header chung: instruction box + range label
+  const rightColRef = useRef<HTMLDivElement>(null);
+
+  // Scroll cột phải đến câu active khi activeQIdx thay đổi
+  useEffect(() => {
+    if (!partPassageText) return;
+    const activeDocId = partQuestions[activeQIdx]?.mongoDocId;
+    if (!activeDocId || !rightColRef.current) return;
+    const el = rightColRef.current.querySelector<HTMLElement>(`[data-q-id="${activeDocId}"]`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [activeQIdx, partPassageText, partQuestions]);
+
   const QuestionHeader = () =>
     partInstruction ? (
       <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 mb-5 shadow-sm">
@@ -173,30 +225,107 @@ function QuestionView({
       </div>
     ) : null;
 
+  // Render một câu MC
+  const McQuestion = ({ q }: { q: ExamQuestionDto }) => {
+    const ans = answers[q.mongoDocId] ?? "";
+    const bmarked = bookmarks.has(q.mongoDocId);
+    return (
+      <div className="mb-6">
+        {q.passageImageUrl && (
+          <div className="mb-3">
+            <img src={q.passageImageUrl} alt="passage"
+              className="max-w-lg rounded-lg border border-gray-200 shadow-sm" />
+          </div>
+        )}
+        <div className="flex items-center gap-3 mb-3">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
+            {q.questionNumber}
+          </span>
+          <p className="text-base font-semibold text-gray-800 flex-1">
+            <RichText text={q.text ?? ""} />
+          </p>
+          <BookmarkBtn docId={q.mongoDocId} bmarked={bmarked} />
+        </div>
+        <div className="flex flex-col gap-2 max-w-xl ml-10">
+          {(q.options ?? []).map((opt) => (
+            <button key={opt.id} type="button" onClick={() => onAnswerFor(q.mongoDocId, opt.id)}
+              className={`flex items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all ${
+                ans === opt.id ? "border-primary-500 bg-primary-50" : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+              }`}>
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold transition-all ${
+                ans === opt.id ? "border-primary-500 bg-primary-500 text-white" : "border-gray-300 text-gray-500"
+              }`}>{opt.id}</span>
+              <span className="text-sm font-medium text-gray-700">
+                <RichText text={opt.text ?? ""} />
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Layout 2 cột nếu có đoạn văn
+  if (question.questionType === "MULTIPLE_CHOICE" && partPassageText) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#dce9f0]">
+        {partInstruction && (
+          <div className="shrink-0 px-5 pt-5">
+            <QuestionHeader />
+          </div>
+        )}
+        <div className="flex flex-1 overflow-hidden">
+          {/* LEFT: đoạn văn — scrollable */}
+          <div className="w-1/2 overflow-y-auto px-5 py-4 border-r border-gray-300">
+            <div className="text-sm text-gray-800 leading-relaxed">
+              <RichText text={partPassageText} />
+            </div>
+          </div>
+          {/* RIGHT: tất cả câu hỏi — scrollable */}
+          <div className="w-1/2 overflow-y-auto px-5 py-4" ref={rightColRef}>
+            {partQuestions.map((q) => (
+              <div key={q.mongoDocId} data-q-id={q.mongoDocId}>
+                <McQuestion q={q} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Layout 1 cột: chỉ câu active
+  const BookmarkBtnSingle = () => (
+    <button type="button" onClick={onToggleBookmark} className="shrink-0 mr-2 transition-colors">
+      <svg className={`h-6 w-6 transition-colors ${isBookmarked ? "fill-primary-500 text-primary-500" : "fill-none text-gray-400 hover:text-gray-600"}`}
+        stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round"
+          d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+      </svg>
+    </button>
+  );
+
   return (
     <div className="flex-1 overflow-y-auto bg-[#dce9f0] p-5">
       <QuestionHeader />
 
-      {/* MULTIPLE_CHOICE */}
+      {/* MULTIPLE_CHOICE (no passage) */}
       {question.questionType === "MULTIPLE_CHOICE" && (
-        <>
-          {question.passage?.text && (
-            <div className={`mb-4 ${
-              question.passage.style === "notice"
-                ? "inline-block border-2 border-gray-800 bg-white rounded px-5 py-4 font-semibold text-gray-900"
-                : "text-sm text-gray-700 leading-relaxed"
-            }`}>
-              <RichText text={question.passage.text} />
+        <div className="mb-6">
+          {question.passageImageUrl && (
+            <div className="mb-4">
+              <img src={question.passageImageUrl} alt="passage"
+                className="max-w-lg rounded-lg border border-gray-200 shadow-sm" />
             </div>
           )}
-          <div className="flex items-start gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-5">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
               {question.questionNumber}
             </span>
-            <p className="text-base font-semibold text-gray-800 leading-snug flex-1">
+            <p className="text-base font-semibold text-gray-800 flex-1">
               <RichText text={question.text ?? ""} />
             </p>
-            <BookmarkBtn />
+            <BookmarkBtnSingle />
           </div>
           <div className="flex flex-col gap-2 max-w-xl">
             {(question.options ?? []).map((opt) => (
@@ -213,20 +342,100 @@ function QuestionView({
               </button>
             ))}
           </div>
-        </>
+        </div>
       )}
+
+      {/* FILL_IN_FORM (paragraph với blanks — R&W) */}
+      {question.questionType === "FILL_IN_FORM" && (() => {
+        const lines = (question.formContent ?? "").split("\n");
+        let blankCounter = question.questionNumberStart ?? 1;
+        let parsedAnswer: Record<string, string> = {};
+        try { parsedAnswer = answer ? JSON.parse(answer) : {}; } catch { /* ignore */ }
+        const handleBlankChange = (num: number, val: string) => {
+          const updated = { ...parsedAnswer, [num]: val };
+          onAnswer(JSON.stringify(updated));
+        };
+        const blanksOpts = question.blanksOptions as Array<{ number: number; options: string[] }> | null;
+
+        // Khi focusBlankNum thay đổi (từ nav bar) → focus element tương ứng
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const formRef = useRef<HTMLDivElement>(null);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        useEffect(() => {
+          if (focusBlankNum == null || !formRef.current) return;
+          const el = formRef.current.querySelector<HTMLElement>(`[data-blank-num="${focusBlankNum}"]`);
+          if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        }, [focusBlankNum]);
+        return (
+          <div className="text-base text-gray-800" style={{ lineHeight: "2.6" }}>
+            {question.formTitle && (
+              <h2 className="text-xl font-extrabold text-gray-900 mb-5" style={{ lineHeight: "normal" }}>{question.formTitle}</h2>
+            )}
+            {lines.map((line, lineIdx) => {
+              const segments = line.split("____");
+              if (segments.length === 1) {
+                if (line.trim() === "") return <div key={lineIdx} className="h-3" />;
+                return <span key={lineIdx} className="block"><RichText text={line} /></span>;
+              }
+              // Mỗi ____ = 1 blank riêng, lấy số trước khi render
+              const blankNums = segments.slice(0, -1).map(() => blankCounter++);
+              return (
+                <span key={lineIdx} className="inline">
+                  {segments.map((seg, sIdx) => {
+                    const currentNum = blankNums[sIdx];
+                    const blankOpts = currentNum != null
+                      ? blanksOpts?.find((b) => b.number === currentNum)?.options
+                      : undefined;
+                    return (
+                      <span key={sIdx} className="inline">
+                        {seg && <RichText text={seg} />}
+                        {sIdx < segments.length - 1 && currentNum != null && (
+                          <span className="relative inline-flex items-center mx-1">
+                            <span className="absolute -top-4 left-1 text-[10px] font-black text-primary-600 select-none">
+                              {currentNum}
+                            </span>
+                            {blankOpts && blankOpts.length > 0 ? (
+                              <select
+                                value={parsedAnswer[currentNum] ?? ""}
+                                onChange={(e) => handleBlankChange(currentNum, e.target.value)}
+                                className="w-32 rounded border-2 border-blue-300 bg-blue-50 px-2 py-1 text-sm font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition cursor-pointer"
+                              >
+                                <option value="" disabled />
+                                {blankOpts.map((opt) => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={parsedAnswer[currentNum] ?? ""}
+                                onChange={(e) => handleBlankChange(currentNum, e.target.value)}
+                                className="w-32 rounded border-2 border-blue-300 bg-blue-50 px-2 py-1 text-sm font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition"
+                              />
+                            )}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </span>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* FILL_IN_TEXT */}
       {question.questionType === "FILL_IN_TEXT" && (
         <>
-          <div className="flex items-start gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-5">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
               {question.questionNumber}
             </span>
-            <p className="text-base font-semibold text-gray-800 leading-snug flex-1">
+            <p className="text-base font-semibold text-gray-800 flex-1">
               <RichText text={question.sentence ?? ""} />
             </p>
-            <BookmarkBtn />
+            <BookmarkBtnSingle />
           </div>
           <input type="text" value={answer} onChange={(e) => onAnswer(e.target.value)}
             placeholder="Nhập câu trả lời…"
@@ -270,7 +479,7 @@ function QuestionView({
               Write your answer below.
               {question.minWords && ` Write ${question.minWords} words or more.`}
             </span>
-            <BookmarkBtn />
+            <BookmarkBtnSingle />
           </div>
           <div>
             <textarea value={answer} onChange={(e) => onAnswer(e.target.value)} rows={7}
@@ -391,8 +600,13 @@ export default function ExamReadingWritingPage() {
             partQuestions={activePart?.questions ?? []}
             answer={answers[activeQuestion.mongoDocId] ?? ""}
             isBookmarked={bookmarks.has(activeQuestion.mongoDocId)}
+            answers={answers}
+            bookmarks={bookmarks}
+            activeQIdx={activeQIdx}
             onAnswer={(val) => setAnswers((prev) => ({ ...prev, [activeQuestion.mongoDocId]: val }))}
             onToggleBookmark={() => toggleBookmark(activeQuestion.mongoDocId)}
+            onAnswerFor={(docId, val) => setAnswers((prev) => ({ ...prev, [docId]: val }))}
+            onToggleBookmarkFor={(docId) => toggleBookmark(docId)}
           />
         )}
 
