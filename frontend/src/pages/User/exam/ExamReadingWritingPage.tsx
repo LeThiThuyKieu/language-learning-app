@@ -165,9 +165,11 @@ function QuestionView({
   // Header chung: instruction box + range label
   const QuestionHeader = () =>
     partInstruction ? (
-      <div className="bg-white border border-gray-300 rounded-lg px-5 py-3 mb-4 shadow-sm">
-        <p className="text-sm font-extrabold text-gray-700">{rangeLabel}</p>
-        <p className="text-base text-gray-700 mt-0.5">{partInstruction}</p>
+      <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 mb-5 shadow-sm">
+        <p className="text-base font-extrabold text-gray-800 mb-1">{rangeLabel}</p>
+        <p className="text-base text-gray-700 leading-relaxed">
+          <RichText text={partInstruction} />
+        </p>
       </div>
     ) : null;
 
@@ -181,17 +183,19 @@ function QuestionView({
           {question.passage?.text && (
             <div className={`mb-4 ${
               question.passage.style === "notice"
-                ? "inline-block border-2 border-gray-800 bg-white rounded px-5 py-4 font-semibold text-gray-900 whitespace-pre-line"
-                : "bg-white rounded-lg px-5 py-4 text-sm text-gray-700 leading-relaxed whitespace-pre-line border border-gray-200"
+                ? "inline-block border-2 border-gray-800 bg-white rounded px-5 py-4 font-semibold text-gray-900"
+                : "text-sm text-gray-700 leading-relaxed"
             }`}>
-              {question.passage.text}
+              <RichText text={question.passage.text} />
             </div>
           )}
           <div className="flex items-start gap-3 mb-5">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
               {question.questionNumber}
             </span>
-            <p className="text-base font-semibold text-gray-800 leading-snug flex-1">{question.text}</p>
+            <p className="text-base font-semibold text-gray-800 leading-snug flex-1">
+              <RichText text={question.text ?? ""} />
+            </p>
             <BookmarkBtn />
           </div>
           <div className="flex flex-col gap-2 max-w-xl">
@@ -203,7 +207,9 @@ function QuestionView({
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold transition-all ${
                   answer === opt.id ? "border-primary-500 bg-primary-500 text-white" : "border-gray-300 text-gray-500"
                 }`}>{opt.id}</span>
-                <span className="text-sm font-medium text-gray-700">{opt.text}</span>
+                <span className="text-sm font-medium text-gray-700">
+                  <RichText text={opt.text ?? ""} />
+                </span>
               </button>
             ))}
           </div>
@@ -217,7 +223,9 @@ function QuestionView({
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
               {question.questionNumber}
             </span>
-            <p className="text-base font-semibold text-gray-800 leading-snug flex-1 whitespace-pre-line">{question.sentence}</p>
+            <p className="text-base font-semibold text-gray-800 leading-snug flex-1">
+              <RichText text={question.sentence ?? ""} />
+            </p>
             <BookmarkBtn />
           </div>
           <input type="text" value={answer} onChange={(e) => onAnswer(e.target.value)}
@@ -243,8 +251,10 @@ function QuestionView({
             </div>
           )}
           {question.promptText && (
-            <div className="mb-4 rounded-xl border border-gray-200 bg-white px-5 py-4">
-              <p className="text-sm text-gray-700 whitespace-pre-line mb-2">{question.promptText}</p>
+            <div className="mb-4">
+              <p className="text-sm text-gray-700 mb-2">
+                <RichText text={question.promptText} />
+              </p>
               {(question.bulletPoints ?? []).length > 0 && (
                 <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
                   {question.bulletPoints!.map((bp, i) => <li key={i}>{bp}</li>)}

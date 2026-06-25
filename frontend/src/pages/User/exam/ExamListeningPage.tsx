@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { examService, type ExamPartDto, type ExamQuestionDto } from "@/services/examService";
 import { Play, Volume2, ChevronLeft, ChevronRight, Check, Headphones, X } from "lucide-react";
@@ -29,7 +30,7 @@ function RichText({ text, className }: { text: string; className?: string }) {
   );
 }
 
-// ── Overlay Play ─────────────────────────────────────────────────────────────
+// Overlay Play
 function AudioStartOverlay({ onPlay }: { onPlay: () => void }) {
   return (
     <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#5a5a5a]/90">
@@ -52,7 +53,7 @@ function AudioStartOverlay({ onPlay }: { onPlay: () => void }) {
   );
 }
 
-// ── Header ───────────────────────────────────────────────────────────────────
+// Header
 function ExamHeader({
   timeLeft, isPlaying, audioStarted, timeHidden, onToggleTime, onExit,
 }: {
@@ -89,21 +90,38 @@ function ExamHeader({
   );
 }
 
-// ── Part Nav Bar ─────────────────────────────────────────────────────────────
+// Part Nav Bar
 function PartNavBar({
-  parts, answers, bookmarks, activePartIdx, activeQIdx,
+  parts, answers, bookmarks, activePartIdx, activeQIdx, focusBlankNum,
   onGoToPart, onGoToQuestion, onSubmit,
 }: {
   parts: ExamPartDto[]; answers: Record<string, string>;
   bookmarks: Set<string>; activePartIdx: number; activeQIdx: number;
-  onGoToPart: (p: number) => void; onGoToQuestion: (p: number, q: number) => void;
+  focusBlankNum: number | null;
+  onGoToPart: (p: number) => void; onGoToQuestion: (p: number, q: number, blankNum?: number) => void;
   onSubmit: () => void;
 }) {
   return (
     <div className="flex items-stretch border-t-2 border-gray-300 bg-white">
       {parts.map((part, pIdx) => {
-        const answered = part.questions.filter((q) => answers[q.mongoDocId]).length;
-        const total = part.questions.length;
+        const answered = part.questions.reduce((sum, q) => {
+          const start = q.questionNumberStart ?? q.questionNumber ?? 0;
+          const end   = q.questionNumberEnd   ?? q.questionNumber ?? start;
+          const nums  = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+          if (nums.length > 1) {
+            // FILL_IN_FORM: đếm từng blank có giá trị
+            let parsedAns: Record<string, string> = {};
+            try { parsedAns = answers[q.mongoDocId] ? JSON.parse(answers[q.mongoDocId]) : {}; } catch { /* ignore */ }
+            return sum + nums.filter((n) => !!parsedAns[n]).length;
+          }
+          return sum + (answers[q.mongoDocId] ? 1 : 0);
+        }, 0);
+        // Tổng số câu thực tế (FILL_IN_FORM 1 object có thể = nhiều câu)
+        const total = part.questions.reduce((sum, q) => {
+          const start = q.questionNumberStart ?? q.questionNumber ?? 0;
+          const end   = q.questionNumberEnd   ?? q.questionNumber ?? start;
+          return sum + (end - start + 1);
+        }, 0);
         const isActive = pIdx === activePartIdx;
         return (
           <button key={part.partNumber} type="button" onClick={() => onGoToPart(pIdx)}
@@ -115,29 +133,53 @@ function PartNavBar({
             </span>
             {isActive ? (
               <span className="flex items-center gap-1 ml-1" onClick={(e) => e.stopPropagation()}>
-                {part.questions.map((q, qIdx) => {
-                  const isCurrent = qIdx === activeQIdx;
+                {part.questions.flatMap((q, qIdx) => {
+                  const isCurrQ = qIdx === activeQIdx;
                   const isBookmarked = bookmarks.has(q.mongoDocId);
-                  const displayNum = q.questionNumber ?? q.questionNumberStart;
-                  return (
-                    <span key={q.mongoDocId} className="relative">
-                      {isBookmarked && (
-                        <svg className="absolute -top-3.5 left-1/2 -translate-x-1/2 h-3 w-3 fill-primary-500 text-primary-500"
-                          stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round"
-                            d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
-                        </svg>
-                      )}
-                      <span onClick={(e) => { e.stopPropagation(); onGoToQuestion(pIdx, qIdx); }}
-                        className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs font-extrabold cursor-pointer transition ${
-                          isCurrent ? "bg-primary-600 text-white ring-2 ring-primary-300"
-                          : answers[q.mongoDocId] ? "bg-primary-100 text-primary-700"
-                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                        }`}>
-                        {displayNum}
+                  // FILL_IN_FORM / MATCHING có thể có range → expand ra từng số
+                  const start = q.questionNumberStart ?? q.questionNumber ?? 0;
+                  const end   = q.questionNumberEnd   ?? q.questionNumber ?? start;
+                  const nums  = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+                  // Parse answer dạng JSON nếu là range question
+                  let parsedAnswer: Record<string, string> = {};
+                  if (nums.length > 1 && answers[q.mongoDocId]) {
+                    try { parsedAnswer = JSON.parse(answers[q.mongoDocId]); } catch { /* ignore */ }
+                  }
+
+                  return nums.map((num) => {
+                    // isAnswered: với range thì check từng num, với single thì check mongoDocId
+                    const isAnswered = nums.length > 1
+                      ? !!parsedAnswer[num]
+                      : !!answers[q.mongoDocId];
+
+                    // isCurrent: với range, active là ô đang focused (focusBlankNum) hoặc ô đầu nếu chưa focus
+                    const isCurrent = isCurrQ && (
+                      nums.length > 1
+                        ? (focusBlankNum != null ? num === focusBlankNum : num === start)
+                        : true
+                    );
+
+                    return (
+                      <span key={`${q.mongoDocId}-${num}`} className="relative">
+                        {isBookmarked && num === start && (
+                          <svg className="absolute -top-3.5 left-1/2 -translate-x-1/2 h-3 w-3 fill-primary-500 text-primary-500"
+                            stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round"
+                              d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                          </svg>
+                        )}
+                        <span onClick={(e) => { e.stopPropagation(); onGoToQuestion(pIdx, qIdx, nums.length > 1 ? num : undefined); }}
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded text-xs font-extrabold cursor-pointer transition ${
+                            isCurrent ? "bg-primary-600 text-white ring-2 ring-primary-300"
+                            : isAnswered ? "bg-primary-100 text-primary-700"
+                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                          }`}>
+                          {num}
+                        </span>
                       </span>
-                    </span>
-                  );
+                    );
+                  });
                 })}
               </span>
             ) : (
@@ -154,15 +196,95 @@ function PartNavBar({
   );
 }
 
-// ── Question View — hỗ trợ MULTIPLE_CHOICE, FILL_IN_FORM, MATCHING ───────────
+// FillInFormView — tách ra để dùng hooks hợp lệ
+function FillInFormView({ lines, blankCounterStart, parsedAnswer, formTitle, focusBlankNum, onBlankChange, onFocusBlank, instructionBox }: {
+  lines: string[];
+  blankCounterStart: number;
+  parsedAnswer: Record<string, string>;
+  formTitle?: string | null;
+  focusBlankNum?: number | null;
+  onBlankChange: (num: number, val: string) => void;
+  onFocusBlank: (num: number) => void;
+  instructionBox: React.ReactNode;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (focusBlankNum == null) return;
+    const input = containerRef.current?.querySelector<HTMLInputElement>(
+      `input[data-blank-num="${focusBlankNum}"]`
+    );
+    if (input) {
+      input.focus();
+      input.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusBlankNum]);
+
+  let blankCounter = blankCounterStart;
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-[#dce9f0] p-5" ref={containerRef}>
+      {instructionBox}
+      <div className="max-w-2xl">
+        {formTitle && (
+          <h2 className="text-xl font-extrabold text-gray-900 mb-5 border-b pb-3 border-gray-300">
+            {formTitle}
+          </h2>
+        )}
+        <div className="flex flex-col gap-4">
+          {lines.map((line, lineIdx) => {
+            const segments = line.split("____");
+            if (segments.length === 1) {
+              return (
+                <p key={lineIdx} className="text-base text-gray-700">
+                  <RichText text={line} />
+                </p>
+              );
+            }
+            const currentNum = blankCounter++;
+            return (
+              <div key={lineIdx} className="flex items-center flex-wrap gap-2 text-base text-gray-800">
+                {segments.map((seg, sIdx) => (
+                  <span key={sIdx} className="flex items-center gap-2">
+                    {seg && <RichText text={seg} />}
+                    {sIdx < segments.length - 1 && (
+                      <span className="relative inline-flex items-center">
+                        <span className="absolute -top-4 left-2 text-[11px] font-black text-primary-600 select-none">
+                          {currentNum}
+                        </span>
+                        <input
+                          type="text"
+                          data-blank-num={currentNum}
+                          value={parsedAnswer[currentNum] ?? ""}
+                          onChange={(e) => onBlankChange(currentNum, e.target.value)}
+                          onFocus={() => onFocusBlank(currentNum)}
+                          className="w-36 rounded-md border-2 border-blue-300 bg-blue-50 px-3 py-1.5 text-base font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition"
+                        />
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+//Question View — hỗ trợ MULTIPLE_CHOICE, FILL_IN_FORM, MATCHING
 function QuestionView({
-  question, partQuestions, answer, isBookmarked, onAnswer, onToggleBookmark,
+  question, partQuestions, answer, isBookmarked, focusBlankNum, onAnswer, onToggleBookmark, onFocusBlank,
 }: {
   question: ExamQuestionDto;
-  /** Tất cả câu hỏi trong cùng part — dùng để lấy instruction + range từ câu đầu */
   partQuestions: ExamQuestionDto[];
   answer: string;
-  isBookmarked: boolean; onAnswer: (val: string) => void; onToggleBookmark: () => void;
+  isBookmarked: boolean;
+  focusBlankNum?: number | null;
+  onAnswer: (val: string) => void;
+  onToggleBookmark: () => void;
+  onFocusBlank: (num: number) => void;
 }) {
   // Instruction và range lấy từ câu đầu tiên của part (câu duy nhất có instruction)
   const firstQ = partQuestions[0] ?? question;
@@ -242,10 +364,7 @@ function QuestionView({
 
   // FILL_IN_FORM
   if (question.questionType === "FILL_IN_FORM") {
-    // parse formContent: split \n, mỗi dòng split ____ → xen kẽ text + input
     const lines = (question.formContent ?? "").split("\n");
-    let blankCounter = question.questionNumberStart ?? 1;
-    // answer là JSON string: {"6":"July", "7":"18", ...}
     let parsedAnswer: Record<string, string> = {};
     try { parsedAnswer = answer ? JSON.parse(answer) : {}; } catch { /* ignore */ }
 
@@ -255,53 +374,16 @@ function QuestionView({
     };
 
     return (
-      <div className="flex-1 overflow-y-auto bg-[#dce9f0] p-5">
-        <InstructionBox />
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-8 py-6 max-w-2xl">
-          {question.formTitle && (
-            <h2 className="text-xl font-extrabold text-gray-900 mb-5 border-b pb-3 border-gray-200">
-              {question.formTitle}
-            </h2>
-          )}
-          <div className="flex flex-col gap-4">
-            {lines.map((line, lineIdx) => {
-              const segments = line.split("____");
-              if (segments.length === 1) {
-                // Dòng không có blank — text thuần, có thể có **bold**
-                return (
-                  <p key={lineIdx} className="text-base text-gray-700">
-                    <RichText text={line} />
-                  </p>
-                );
-              }
-              const currentNum = blankCounter++;
-              return (
-                <div key={lineIdx} className="flex items-center flex-wrap gap-2 text-base text-gray-800">
-                  {segments.map((seg, sIdx) => (
-                    <span key={sIdx} className="flex items-center gap-2">
-                      {seg && <RichText text={seg} />}
-                      {sIdx < segments.length - 1 && (
-                        <span className="relative inline-flex items-center">
-                          {/* Số câu nhỏ phía trên input */}
-                          <span className="absolute -top-4 left-2 text-[11px] font-black text-primary-600 select-none">
-                            {currentNum}
-                          </span>
-                          <input
-                            type="text"
-                            value={parsedAnswer[currentNum] ?? ""}
-                            onChange={(e) => handleBlankChange(currentNum, e.target.value)}
-                            className="w-36 rounded-md border-2 border-blue-300 bg-blue-50 px-3 py-1.5 text-base font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition"
-                          />
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <FillInFormView
+        lines={lines}
+        blankCounterStart={question.questionNumberStart ?? 1}
+        parsedAnswer={parsedAnswer}
+        formTitle={question.formTitle}
+        focusBlankNum={focusBlankNum}
+        onBlankChange={handleBlankChange}
+        onFocusBlank={(num) => onFocusBlank(num)}
+        instructionBox={<InstructionBox />}
+      />
     );
   }
 
@@ -310,13 +392,19 @@ function QuestionView({
     let parsedAnswer: Record<string, string> = {};
     try { parsedAnswer = answer ? JSON.parse(answer) : {}; } catch { /* ignore */ }
 
-    const handleSelect = (questionNum: number, rightId: string) => {
-      const current = parsedAnswer[questionNum];
-      const updated = current === rightId
-        ? { ...parsedAnswer } // deselect: giữ nguyên (user phải chọn lại)
-        : { ...parsedAnswer, [questionNum]: rightId };
-      // nếu bấm lại cùng id thì xóa
-      if (current === rightId) delete updated[questionNum];
+    const handleDrop = (questionNum: number, rightId: string) => {
+      // Nếu rightId đã được dùng ở ô khác → hoán đổi
+      const prevOwner = Object.entries(parsedAnswer).find(([, v]) => v === rightId)?.[0];
+      const updated = { ...parsedAnswer };
+      if (prevOwner !== undefined) delete updated[prevOwner];
+      // Nếu ô đích đang có item → trả item đó về pool (xóa)
+      updated[questionNum] = rightId;
+      onAnswer(JSON.stringify(updated));
+    };
+
+    const handleRemove = (questionNum: number) => {
+      const updated = { ...parsedAnswer };
+      delete updated[questionNum];
       onAnswer(JSON.stringify(updated));
     };
 
@@ -326,9 +414,9 @@ function QuestionView({
         {question.instructionDetail && (
           <p className="text-sm text-gray-600 mb-4 italic">{question.instructionDetail}</p>
         )}
-        <div className="flex gap-6 flex-wrap">
-          {/* Left items */}
-          <div className="flex flex-col gap-3 min-w-[180px]">
+        <div className="flex gap-10 flex-wrap items-start">
+          {/* Left items — drop zones */}
+          <div className="flex flex-col gap-3">
             {(question.leftItems ?? []).map((item) => {
               const qNum = item.question_number as number;
               const selected = parsedAnswer[qNum];
@@ -338,35 +426,59 @@ function QuestionView({
                     {qNum}
                   </span>
                   <span className="text-sm font-semibold text-gray-800 w-24">{item.label as string}</span>
-                  <div className={`rounded-lg border-2 px-3 py-1.5 text-sm font-bold min-w-[80px] text-center ${
-                    selected ? "border-primary-500 bg-primary-50 text-primary-700" : "border-dashed border-gray-300 text-gray-400"
-                  }`}>
-                    {selected ?? "—"}
+                  {/* Drop zone */}
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const rightId = e.dataTransfer.getData("rightId");
+                      if (rightId) handleDrop(qNum, rightId);
+                    }}
+                    className={`relative rounded-lg border-2 min-w-[100px] h-9 flex items-center justify-center transition-all ${
+                      selected
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-dashed border-gray-400 bg-white/50"
+                    }`}
+                  >
+                    {selected ? (
+                      <>
+                        <span className="text-sm font-bold text-primary-700 px-3">{selected}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(qNum)}
+                          className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-gray-400 hover:bg-red-500 text-white flex items-center justify-center text-[10px] font-black transition"
+                        >×</button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-400 select-none">—</span>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
-          {/* Right items (options pool) */}
+
+          {/* Right items — draggable pool */}
           <div className="flex flex-col gap-2">
             {(question.rightItems ?? []).map((item) => {
               const isUsed = Object.values(parsedAnswer).includes(item.id);
               return (
-                <button key={item.id} type="button"
-                  onClick={() => {
-                    // find which left item to assign — cycle through unassigned
-                    const leftNums = (question.leftItems ?? []).map((l) => l.question_number as number);
-                    const unassigned = leftNums.find((n) => !parsedAnswer[n]);
-                    if (unassigned !== undefined) handleSelect(unassigned, item.id);
+                <div
+                  key={item.id}
+                  draggable={!isUsed}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("rightId", item.id);
+                    e.dataTransfer.effectAllowed = "move";
                   }}
-                  className={`flex items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition ${
+                  className={`flex items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-sm font-semibold select-none transition ${
                     isUsed
-                      ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
-                      : "border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50 text-gray-700"
-                  }`}>
+                      ? "border-gray-200 bg-gray-100 text-gray-400 opacity-50 cursor-default"
+                      : "border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50 text-gray-700 cursor-grab active:cursor-grabbing active:border-primary-500 active:shadow-md"
+                  }`}
+                >
                   <span className="font-black text-gray-500">{item.id}</span>
                   <span>{item.label as string}</span>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -382,7 +494,7 @@ function QuestionView({
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// Main Page
 export default function ExamListeningPage() {
   const navigate = useNavigate();
   const { level: _level, testId } = useParams<{ level: string; testId: string }>();
@@ -403,6 +515,7 @@ export default function ExamListeningPage() {
   const [activeQIdx, setActiveQIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
+  const [focusBlankNum, setFocusBlankNum] = useState<number | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -449,6 +562,19 @@ export default function ExamListeningPage() {
       audio.onended = () => setIsPlaying(false);
     }
   }, [audioUrl]);
+
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+  }, []);
+
+  // Dừng audio khi component unmount (navigate đi nơi khác)
+  useEffect(() => {
+    return () => stopAudio();
+  }, [stopAudio]);
 
   const activePart = parts[activePartIdx];
   const activeQuestion = activePart?.questions[activeQIdx];
@@ -515,8 +641,10 @@ export default function ExamListeningPage() {
             partQuestions={activePart?.questions ?? []}
             answer={answers[activeQuestion.mongoDocId] ?? ""}
             isBookmarked={bookmarks.has(activeQuestion.mongoDocId)}
+            focusBlankNum={focusBlankNum}
             onAnswer={(val) => setAnswers((prev) => ({ ...prev, [activeQuestion.mongoDocId]: val }))}
             onToggleBookmark={() => toggleBookmark(activeQuestion.mongoDocId)}
+            onFocusBlank={(num) => setFocusBlankNum(num)}
           />
         )}
 
@@ -536,8 +664,9 @@ export default function ExamListeningPage() {
         <PartNavBar
           parts={parts} answers={answers} bookmarks={bookmarks}
           activePartIdx={activePartIdx} activeQIdx={activeQIdx}
-          onGoToPart={(p) => { setActivePartIdx(p); setActiveQIdx(0); }}
-          onGoToQuestion={(p, q) => { setActivePartIdx(p); setActiveQIdx(q); }}
+          focusBlankNum={focusBlankNum}
+          onGoToPart={(p) => { setActivePartIdx(p); setActiveQIdx(0); setFocusBlankNum(null); }}
+          onGoToQuestion={(p, q, blankNum) => { setActivePartIdx(p); setActiveQIdx(q); setFocusBlankNum(blankNum ?? null); }}
           onSubmit={() => setShowSubmitModal(true)}
         />
       )}
@@ -580,7 +709,7 @@ export default function ExamListeningPage() {
       })()}
 
       <LessonExitModal
-        open={showExitModal} onContinue={() => setShowExitModal(false)} onExit={() => navigate(-1)}
+        open={showExitModal} onContinue={() => setShowExitModal(false)} onExit={() => { stopAudio(); navigate(-1); }}
         continueButtonText="Tiếp tục thi"
         bodyText="Đợi chút! Bạn sẽ mất hết tiến trình thi này nếu thoát bây giờ."
       />
