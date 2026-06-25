@@ -164,6 +164,108 @@ function PartNavBar({
   );
 }
 
+/** Tách component riêng để dùng hooks hợp lệ (không vi phạm rules-of-hooks) */
+function RwFillInFormView({ question, answer, focusBlankNum, onAnswer, onFocusBlank }: {
+  question: ExamQuestionDto;
+  answer: string;
+  focusBlankNum: number | null;
+  onAnswer: (val: string) => void;
+  onFocusBlank: (num: number) => void;
+}) {
+  const formRef = useRef<HTMLDivElement>(null);
+
+  // Nav bar → focus blank tương ứng
+  useEffect(() => {
+    if (focusBlankNum == null || !formRef.current) return;
+    const el = formRef.current.querySelector<HTMLElement>(`[data-blank-num="${focusBlankNum}"]`);
+    if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+  }, [focusBlankNum]);
+
+  const lines = (question.formContent ?? "").split("\n");
+  let blankCounter = question.questionNumberStart ?? 1;
+  let parsedAnswer: Record<string, string> = {};
+  try { parsedAnswer = answer ? JSON.parse(answer) : {}; } catch { /* ignore */ }
+
+  const handleBlankChange = (num: number, val: string) => {
+    const updated = { ...parsedAnswer, [num]: val };
+    onAnswer(JSON.stringify(updated));
+  };
+
+  const blanksOpts = question.blanksOptions as Array<{ number: number; options: string[] }> | null;
+
+  return (
+    <div ref={formRef} className="text-base text-gray-800" style={{ lineHeight: "2.6" }}>
+      {question.formTitle && (
+        <h2 className="text-xl font-extrabold text-gray-900 mb-5" style={{ lineHeight: "normal" }}>
+          {question.formTitle}
+        </h2>
+      )}
+      {lines.map((line, lineIdx) => {
+        const segments = line.split("____");
+        if (segments.length === 1) {
+          if (line.trim() === "") return <div key={lineIdx} className="h-3" />;
+          return <span key={lineIdx} className="block"><RichText text={line} /></span>;
+        }
+        const blankNums = segments.slice(0, -1).map(() => blankCounter++);
+        return (
+          <span key={lineIdx} className="inline">
+            {segments.map((seg, sIdx) => {
+              const currentNum = blankNums[sIdx];
+              const blankOpts = currentNum != null
+                ? blanksOpts?.find((b) => b.number === currentNum)?.options
+                : undefined;
+              const isActive = currentNum != null && currentNum === focusBlankNum;
+              return (
+                <span key={sIdx} className="inline">
+                  {seg && <RichText text={seg} />}
+                  {sIdx < segments.length - 1 && currentNum != null && (
+                    <span className="relative inline-flex items-center mx-1">
+                      <span className="absolute -top-4 left-1 text-[10px] font-black text-primary-600 select-none">
+                        {currentNum}
+                      </span>
+                      {blankOpts && blankOpts.length > 0 ? (
+                        <select
+                          data-blank-num={currentNum}
+                          value={parsedAnswer[currentNum] ?? ""}
+                          onChange={(e) => handleBlankChange(currentNum, e.target.value)}
+                          onFocus={() => onFocusBlank(currentNum)}
+                          className={`w-32 rounded border-2 px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none transition cursor-pointer ${
+                            isActive
+                              ? "border-primary-500 bg-primary-50"
+                              : "border-blue-300 bg-blue-50 focus:border-primary-500 focus:bg-white"
+                          }`}
+                        >
+                          <option value="" disabled />
+                          {blankOpts.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          data-blank-num={currentNum}
+                          value={parsedAnswer[currentNum] ?? ""}
+                          onChange={(e) => handleBlankChange(currentNum, e.target.value)}
+                          onFocus={() => onFocusBlank(currentNum)}
+                          className={`w-32 rounded border-2 px-2 py-1 text-sm font-semibold text-gray-800 focus:outline-none transition ${
+                            isActive
+                              ? "border-primary-500 bg-primary-50"
+                              : "border-blue-300 bg-blue-50 focus:border-primary-500 focus:bg-white"
+                          }`}
+                        />
+                      )}
+                    </span>
+                  )}
+                </span>
+              );
+            })}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function QuestionView({
   question, partQuestions, answer, isBookmarked, onAnswer, onToggleBookmark,
   answers, bookmarks, onAnswerFor, onToggleBookmarkFor, activeQIdx, focusBlankNum, onFocusBlank,
@@ -346,84 +448,15 @@ function QuestionView({
       )}
 
       {/* FILL_IN_FORM (paragraph với blanks — R&W) */}
-      {question.questionType === "FILL_IN_FORM" && (() => {
-        const lines = (question.formContent ?? "").split("\n");
-        let blankCounter = question.questionNumberStart ?? 1;
-        let parsedAnswer: Record<string, string> = {};
-        try { parsedAnswer = answer ? JSON.parse(answer) : {}; } catch { /* ignore */ }
-        const handleBlankChange = (num: number, val: string) => {
-          const updated = { ...parsedAnswer, [num]: val };
-          onAnswer(JSON.stringify(updated));
-        };
-        const blanksOpts = question.blanksOptions as Array<{ number: number; options: string[] }> | null;
-
-        // Khi focusBlankNum thay đổi (từ nav bar) → focus element tương ứng
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const formRef = useRef<HTMLDivElement>(null);
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        useEffect(() => {
-          if (focusBlankNum == null || !formRef.current) return;
-          const el = formRef.current.querySelector<HTMLElement>(`[data-blank-num="${focusBlankNum}"]`);
-          if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
-        }, [focusBlankNum]);
-        return (
-          <div className="text-base text-gray-800" style={{ lineHeight: "2.6" }}>
-            {question.formTitle && (
-              <h2 className="text-xl font-extrabold text-gray-900 mb-5" style={{ lineHeight: "normal" }}>{question.formTitle}</h2>
-            )}
-            {lines.map((line, lineIdx) => {
-              const segments = line.split("____");
-              if (segments.length === 1) {
-                if (line.trim() === "") return <div key={lineIdx} className="h-3" />;
-                return <span key={lineIdx} className="block"><RichText text={line} /></span>;
-              }
-              // Mỗi ____ = 1 blank riêng, lấy số trước khi render
-              const blankNums = segments.slice(0, -1).map(() => blankCounter++);
-              return (
-                <span key={lineIdx} className="inline">
-                  {segments.map((seg, sIdx) => {
-                    const currentNum = blankNums[sIdx];
-                    const blankOpts = currentNum != null
-                      ? blanksOpts?.find((b) => b.number === currentNum)?.options
-                      : undefined;
-                    return (
-                      <span key={sIdx} className="inline">
-                        {seg && <RichText text={seg} />}
-                        {sIdx < segments.length - 1 && currentNum != null && (
-                          <span className="relative inline-flex items-center mx-1">
-                            <span className="absolute -top-4 left-1 text-[10px] font-black text-primary-600 select-none">
-                              {currentNum}
-                            </span>
-                            {blankOpts && blankOpts.length > 0 ? (
-                              <select
-                                value={parsedAnswer[currentNum] ?? ""}
-                                onChange={(e) => handleBlankChange(currentNum, e.target.value)}
-                                className="w-32 rounded border-2 border-blue-300 bg-blue-50 px-2 py-1 text-sm font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition cursor-pointer"
-                              >
-                                <option value="" disabled />
-                                {blankOpts.map((opt) => (
-                                  <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <input
-                                type="text"
-                                value={parsedAnswer[currentNum] ?? ""}
-                                onChange={(e) => handleBlankChange(currentNum, e.target.value)}
-                                className="w-32 rounded border-2 border-blue-300 bg-blue-50 px-2 py-1 text-sm font-semibold text-gray-800 focus:border-primary-500 focus:bg-white focus:outline-none transition"
-                              />
-                            )}
-                          </span>
-                        )}
-                      </span>
-                    );
-                  })}
-                </span>
-              );
-            })}
-          </div>
-        );
-      })()}
+      {question.questionType === "FILL_IN_FORM" && (
+        <RwFillInFormView
+          question={question}
+          answer={answer}
+          focusBlankNum={focusBlankNum}
+          onAnswer={onAnswer}
+          onFocusBlank={onFocusBlank}
+        />
+      )}
 
       {/* FILL_IN_TEXT */}
       {question.questionType === "FILL_IN_TEXT" && (
@@ -447,12 +480,12 @@ function QuestionView({
       {question.questionType === "SHORT_WRITE" && (
         <>
           {question.storyImages && question.storyImages.length > 0 && (
-            <div className="flex gap-2 mb-4 flex-wrap">
+            <div className="grid gap-3 mb-4 w-full"
+              style={{ gridTemplateColumns: `repeat(${question.storyImages.length}, 1fr)` }}>
               {question.storyImages.sort((a, b) => a.order - b.order).map((img) => (
-                <div key={img.order} className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100"
-                  style={{ width: 220, height: 140 }}>
+                <div key={img.order} className="aspect-video">
                   {img.image_url
-                    ? <img src={img.image_url} alt={img.alt} className="w-full h-full object-cover" />
+                    ? <img src={img.image_url} alt={img.alt} className="w-full h-full object-contain rounded-lg" />
                     : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">{img.alt}</div>
                   }
                 </div>
@@ -465,13 +498,13 @@ function QuestionView({
                 <RichText text={question.promptText} />
               </p>
               {(question.bulletPoints ?? []).length > 0 && (
-                <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                <ul className="list-disc list-inside text-sm text-gray-700 space-y-2 mt-1">
                   {question.bulletPoints!.map((bp, i) => <li key={i}>{bp}</li>)}
                 </ul>
               )}
             </div>
           )}
-          <div className="flex items-start gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
               {question.questionNumber}
             </span>
@@ -511,6 +544,7 @@ export default function ExamReadingWritingPage() {
   const [activeQIdx, setActiveQIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
+  const [focusBlankNum, setFocusBlankNum] = useState<number | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -603,10 +637,12 @@ export default function ExamReadingWritingPage() {
             answers={answers}
             bookmarks={bookmarks}
             activeQIdx={activeQIdx}
+            focusBlankNum={focusBlankNum}
             onAnswer={(val) => setAnswers((prev) => ({ ...prev, [activeQuestion.mongoDocId]: val }))}
             onToggleBookmark={() => toggleBookmark(activeQuestion.mongoDocId)}
             onAnswerFor={(docId, val) => setAnswers((prev) => ({ ...prev, [docId]: val }))}
             onToggleBookmarkFor={(docId) => toggleBookmark(docId)}
+            onFocusBlank={(num) => setFocusBlankNum(num)}
           />
         )}
 
@@ -626,8 +662,9 @@ export default function ExamReadingWritingPage() {
         <PartNavBar
           parts={parts} answers={answers} bookmarks={bookmarks}
           activePartIdx={activePartIdx} activeQIdx={activeQIdx}
-          onGoToPart={(p) => { setActivePartIdx(p); setActiveQIdx(0); }}
-          onGoToQuestion={(p, q) => { setActivePartIdx(p); setActiveQIdx(q); }}
+          focusBlankNum={focusBlankNum}
+          onGoToPart={(p) => { setActivePartIdx(p); setActiveQIdx(0); setFocusBlankNum(null); }}
+          onGoToQuestion={(p, q, blankNum) => { setActivePartIdx(p); setActiveQIdx(q); setFocusBlankNum(blankNum ?? null); }}
           onSubmit={() => setShowSubmitModal(true)}
         />
       )}
