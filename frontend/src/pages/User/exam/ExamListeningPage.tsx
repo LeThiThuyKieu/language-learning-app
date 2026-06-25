@@ -322,7 +322,7 @@ function QuestionView({
 
   const InstructionBox = () =>
     partInstruction ? (
-      <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 mb-5 shadow-sm">
+      <div className="bg-white border border-gray-200 px-4 py-2 mb-5 shadow-sm">
         <p className="text-base font-extrabold text-gray-800 mb-1">{rangeLabel}</p>
         <p className="text-base text-gray-700 leading-relaxed">
           <RichText text={partInstruction} />
@@ -376,7 +376,7 @@ function QuestionView({
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold transition-all ${
                   answer === opt.id ? "border-primary-500 bg-primary-500 text-white" : "border-gray-300 text-gray-500"
                 }`}>{opt.id}</span>
-                <span className="text-sm font-medium text-gray-700">{opt.text}</span>
+                <span className="text-base font-medium text-gray-700">{opt.text}</span>
               </button>
             ))}
           </div>
@@ -449,7 +449,7 @@ function QuestionView({
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
                     {qNum}
                   </span>
-                  <span className="text-sm font-semibold text-gray-800 w-24">{item.label as string}</span>
+                  <span className="text-base font-semibold text-gray-800 w-24">{item.label as string}</span>
                   {/* Drop zone */}
                   <div
                     onDragOver={(e) => e.preventDefault()}
@@ -494,7 +494,7 @@ function QuestionView({
                     e.dataTransfer.setData("rightId", item.id);
                     e.dataTransfer.effectAllowed = "move";
                   }}
-                  className={`flex items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-sm font-semibold select-none transition ${
+                  className={`flex items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-base font-semibold select-none transition ${
                     isUsed
                       ? "border-gray-200 bg-gray-100 text-gray-400 opacity-50 cursor-default"
                       : "border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50 text-gray-700 cursor-grab active:cursor-grabbing active:border-primary-500 active:shadow-md"

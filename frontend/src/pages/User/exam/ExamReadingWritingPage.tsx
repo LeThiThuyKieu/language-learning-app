@@ -319,7 +319,7 @@ function QuestionView({
 
   const QuestionHeader = () =>
     partInstruction ? (
-      <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 mb-5 shadow-sm">
+      <div className="bg-white border border-gray-200 px-4 py-2 mb-5 shadow-sm">
         <p className="text-base font-extrabold text-gray-800 mb-1">{rangeLabel}</p>
         <p className="text-base text-gray-700 leading-relaxed">
           <RichText text={partInstruction} />
@@ -357,7 +357,7 @@ function QuestionView({
               <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold transition-all ${
                 ans === opt.id ? "border-primary-500 bg-primary-500 text-white" : "border-gray-300 text-gray-500"
               }`}>{opt.id}</span>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-base font-medium text-gray-700">
                 <RichText text={opt.text ?? ""} />
               </span>
             </button>
@@ -379,7 +379,7 @@ function QuestionView({
         <div className="flex flex-1 overflow-hidden">
           {/* LEFT: đoạn văn — scrollable */}
           <div className="w-1/2 overflow-y-auto px-5 py-4 border-r border-gray-300">
-            <div className="text-sm text-gray-800 leading-relaxed">
+            <div className="text-base text-gray-800 leading-relaxed">
               <RichText text={partPassageText} />
             </div>
           </div>
@@ -438,7 +438,7 @@ function QuestionView({
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold transition-all ${
                   answer === opt.id ? "border-primary-500 bg-primary-500 text-white" : "border-gray-300 text-gray-500"
                 }`}>{opt.id}</span>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-base font-medium text-gray-700">
                   <RichText text={opt.text ?? ""} />
                 </span>
               </button>
@@ -494,11 +494,11 @@ function QuestionView({
           )}
           {question.promptText && (
             <div className="mb-4">
-              <p className="text-sm text-gray-700 mb-2">
+              <p className="text-base text-gray-700 mb-2">
                 <RichText text={question.promptText} />
               </p>
               {(question.bulletPoints ?? []).length > 0 && (
-                <ul className="list-disc list-inside text-sm text-gray-700 space-y-2 mt-1">
+                <ul className="list-disc list-inside text-base text-gray-700 space-y-2 mt-1">
                   {question.bulletPoints!.map((bp, i) => <li key={i}>{bp}</li>)}
                 </ul>
               )}
@@ -508,7 +508,7 @@ function QuestionView({
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">
               {question.questionNumber}
             </span>
-            <span className="text-sm font-semibold text-gray-700 flex-1">
+            <span className="text-base font-semibold text-gray-700 flex-1">
               Write your answer below.
               {question.minWords && ` Write ${question.minWords} words or more.`}
             </span>
