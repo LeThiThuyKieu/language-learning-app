@@ -565,6 +565,147 @@ function QuestionView({
                     </div>
                 </>
             )}
+
+            {/* MATCHING */}
+            {question.questionType === "MATCHING" && (() => {
+              let parsedAnswer: Record<string, string> = {};
+              try { parsedAnswer = answer ? JSON.parse(answer) : {}; } catch { /* ignore */ }
+
+              const handleDrop = (questionNum: number, rightId: string) => {
+                const prevOwner = Object.entries(parsedAnswer).find(([, v]) => v === rightId)?.[0];
+                const updated = { ...parsedAnswer };
+                if (prevOwner !== undefined) delete updated[prevOwner];
+                updated[questionNum] = rightId;
+                onAnswer(JSON.stringify(updated));
+              };
+
+              const handleRemove = (questionNum: number) => {
+                const updated = { ...parsedAnswer };
+                delete updated[questionNum];
+                onAnswer(JSON.stringify(updated));
+              };
+
+              const passageText = question.passageText ?? null;
+
+              // Layout 2 cột: trái = đoạn văn có blank, phải = pool items
+              if (passageText) {
+                const lines = passageText.split("\n");
+                let blankCounter = question.questionNumberStart ?? 1;
+                return (
+                  <div className="flex flex-1 overflow-hidden -mx-5 -mt-5" style={{ height: "calc(100% + 20px)" }}>
+                    {/* LEFT: đoạn văn với blank drop zones — scrollable */}
+                    <div className="w-1/2 overflow-y-auto px-5 py-4 border-r border-gray-300 text-base text-gray-800 leading-relaxed">
+                      {lines.map((line, lineIdx) => {
+                        if (line === "____") {
+                          const qNum = blankCounter++;
+                          const selected = parsedAnswer[qNum];
+                          return (
+                            <div key={lineIdx} className="my-3">
+                              <div
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  const rightId = e.dataTransfer.getData("rightId");
+                                  if (rightId) handleDrop(qNum, rightId);
+                                }}
+                                className={`relative rounded border-2 min-h-[36px] px-3 py-1.5 flex items-center transition-all ${
+                                  selected ? "border-primary-500 bg-primary-50" : "border-dashed border-gray-400 bg-white/60"
+                                }`}
+                              >
+                                <span className="absolute -top-3 left-2 text-[11px] font-black text-primary-600 bg-[#dce9f0] px-0.5 select-none">
+                                  {qNum}
+                                </span>
+                                {selected ? (
+                                  <>
+                                    <span className="text-sm text-gray-700 flex-1 pr-4">{
+                                      (question.rightItems ?? []).find(r => r.id === selected)?.label as string ?? selected
+                                    }</span>
+                                    <button type="button" onClick={() => handleRemove(qNum)}
+                                      className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-gray-400 hover:bg-red-500 text-white flex items-center justify-center text-[10px] font-black transition">×</button>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-gray-400 select-none">Kéo đoạn văn vào đây…</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+                        if (line.trim() === "") return <div key={lineIdx} className="h-3" />;
+                        return <p key={lineIdx} className="mb-1"><RichText text={line} /></p>;
+                      })}
+                    </div>
+
+                    {/* RIGHT: pool items — draggable, scrollable */}
+                    <div className="w-1/2 overflow-y-auto px-4 py-4 flex flex-col gap-2">
+                      {(question.rightItems ?? []).map((item) => {
+                        const isUsed = Object.values(parsedAnswer).includes(item.id);
+                        return (
+                          <div
+                            key={item.id}
+                            draggable={!isUsed}
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData("rightId", item.id);
+                              e.dataTransfer.effectAllowed = "move";
+                            }}
+                            className={`rounded border px-3 py-2 text-sm leading-snug select-none transition ${
+                              isUsed
+                                ? "border-gray-200 bg-gray-100 text-gray-400 opacity-50 cursor-default"
+                                : "border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50 text-gray-700 cursor-grab active:cursor-grabbing active:border-primary-500 active:shadow-md"
+                            }`}
+                          >
+                            {item.label as string}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Layout cũ (không có passage_text)
+              return (
+                <div className="flex gap-10 flex-wrap items-start">
+                  <div className="flex flex-col gap-3">
+                    {(question.leftItems ?? []).map((item) => {
+                      const qNum = item.question_number as number;
+                      const selected = parsedAnswer[qNum];
+                      return (
+                        <div key={qNum} className="flex items-center gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-primary-600 text-white text-xs font-black">{qNum}</span>
+                          <span className="text-base font-semibold text-gray-800 w-28">{item.label as string}</span>
+                          <div
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => { e.preventDefault(); const rightId = e.dataTransfer.getData("rightId"); if (rightId) handleDrop(qNum, rightId); }}
+                            className={`relative rounded-lg border-2 min-w-[100px] h-9 flex items-center justify-center transition-all ${selected ? "border-primary-500 bg-primary-50" : "border-dashed border-gray-400 bg-white/50"}`}
+                          >
+                            {selected ? (
+                              <>
+                                <span className="text-sm font-bold text-primary-700 px-3">{selected}</span>
+                                <button type="button" onClick={() => handleRemove(qNum)} className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-gray-400 hover:bg-red-500 text-white flex items-center justify-center text-[10px] font-black transition">×</button>
+                              </>
+                            ) : <span className="text-xs text-gray-400 select-none">—</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {(question.rightItems ?? []).map((item) => {
+                      const isUsed = Object.values(parsedAnswer).includes(item.id);
+                      return (
+                        <div key={item.id} draggable={!isUsed}
+                          onDragStart={(e) => { e.dataTransfer.setData("rightId", item.id); e.dataTransfer.effectAllowed = "move"; }}
+                          className={`flex items-center gap-2 rounded-lg border-2 px-3 py-1.5 text-base font-semibold select-none transition ${isUsed ? "border-gray-200 bg-gray-100 text-gray-400 opacity-50 cursor-default" : "border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50 text-gray-700 cursor-grab active:cursor-grabbing"}`}
+                        >
+                          <span className="font-black text-gray-500">{item.id}</span>
+                          <span>{item.label as string}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
         </div>
     );
 }
