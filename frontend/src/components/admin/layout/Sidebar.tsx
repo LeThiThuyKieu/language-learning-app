@@ -19,6 +19,7 @@ import {
     BookOpenText,
     BookMarked,
     RotateCcw,
+    GraduationCap,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore.ts";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
@@ -128,6 +129,7 @@ export default function Sidebar() {
                             )}
                         </div>
 
+                        {navLink("/admin/exam-management",           GraduationCap, "Exam Tests")}
                         {navLink("/admin/badges",                    Medal,         "Badge")}
                         {navLink("/admin/placement-test-management", ClipboardList, "Placement Tests")}
                         {navLink("/admin/feedback",                  MessagesSquare,"Feedback")}
