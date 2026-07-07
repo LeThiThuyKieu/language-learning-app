@@ -599,6 +599,7 @@ export default function ExamListeningPage() {
     const [focusBlankNum, setFocusBlankNum] = useState<number | null>(null);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const audioCancelledRef = useRef(false);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Lấy dữ liệu paper từ API
@@ -662,12 +663,12 @@ export default function ExamListeningPage() {
         if (urls.length === 0) return;
 
         // Phát tuần tự với error handling
-        let cancelled = false;
+        audioCancelledRef.current = false;
         let idx = 0;
 
         const playNext = () => {
-            if (cancelled || idx >= urls.length) {
-                if (!cancelled) setIsPlaying(false);
+            if (audioCancelledRef.current || idx >= urls.length) {
+                if (!audioCancelledRef.current) setIsPlaying(false);
                 return;
             }
             const url = urls[idx];
@@ -695,10 +696,11 @@ export default function ExamListeningPage() {
         playNext();
 
         // Trả về cleanup để stopAudio có thể set cancelled
-        return () => { cancelled = true; };
+        return () => { audioCancelledRef.current = true; };
     }, [audioUrl]);
 
     const stopAudio = useCallback(() => {
+        audioCancelledRef.current = true;
         if (audioRef.current) {
             audioRef.current.pause();
             audioRef.current.src = "";
@@ -860,6 +862,7 @@ export default function ExamListeningPage() {
                                 </button>
                                 <button type="button" onClick={() => {
                                     setShowSubmitModal(false);
+                                    stopAudio();
                                     navigate(`/exam/${_level}/${testId}/reading-writing`);
                                 }}
                                         className="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-extrabold text-white transition shadow-md">

@@ -40,6 +40,11 @@ export interface ExamStoryImage {
   alt: string;
 }
 
+export interface SourceText {
+  title: string;
+  text: string;
+}
+
 export interface ExamQuestionDto {
   id: number;
   mongoDocId: string;
@@ -85,6 +90,7 @@ export interface ExamQuestionDto {
   promptText?: string;
   bulletPoints?: string[];
   storyImages?: ExamStoryImage[];
+  source_texts?: SourceText[] | null;
 
   // SPEAKING_TASK
   partTitle?: string;
