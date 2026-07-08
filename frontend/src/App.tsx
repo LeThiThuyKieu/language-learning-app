@@ -21,6 +21,7 @@ import ChatbotRulesPage from "@/pages/Admin/support_management/ChatbotRulesPage.
 import FaqManagementPage from "@/pages/Admin/support_management/FaqManagementPage.tsx";
 import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
 import ExamManagementPage from "@/pages/Admin/exam_management/ExamManagementPage.tsx";
+import ExamTestQuestionsPage from "@/pages/Admin/exam_management/ExamTestQuestionsPage.tsx";
 import FeedbackPage from "@/pages/Admin/FeedbackPage";
 import LearningManagementPage from "@/pages/Admin/learning_management/LearningManagementPage.tsx";
 import LearningQuestionDetailPage from "@/pages/Admin/learning_management/LearningQuestionDetailPage.tsx";
@@ -185,6 +186,7 @@ function App() {
                         <Route path="support-management/chatbot-rules" element={<ChatbotRulesPage/>}/>
                         <Route path="support-management/faq" element={<FaqManagementPage/>}/>
                         <Route path="exam-management" element={<ExamManagementPage/>} />
+                        <Route path="exam-management/:testId/questions" element={<ExamTestQuestionsPage/>} />
                         <Route path="badges" element={<BadgesManagementPage/>} />
                         <Route path="feedback" element={<FeedbackPage/>} />
                         <Route path="learning" element={<LearningManagementPage/>} />
