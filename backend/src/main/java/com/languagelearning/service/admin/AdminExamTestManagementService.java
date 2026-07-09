@@ -57,7 +57,7 @@ public class AdminExamTestManagementService {
         long total = examTestRepository.count();
         long active = examTestRepository.countByIsActive(true);
         long inactive = total - active;
-        long totalQuestions = examQuestionIndexRepository.count();
+        long totalQuestions = examQuestionIndexRepository.findMaxQuestionNumberEnd();
 
         return new ExamTestStatsDto(total, active, inactive, totalQuestions);
     }
@@ -240,9 +240,7 @@ public class AdminExamTestManagementService {
         dto.setAudioUrl(paper.getAudioUrl());
         dto.setOrderIndex(paper.getOrderIndex());
 
-        int questionCount = paper.getParts().stream()
-                .mapToInt(pt -> pt.getQuestions().size())
-                .sum();
+        int questionCount = examQuestionIndexRepository.findMaxQuestionNumberEndByPaperId(paper.getId());
         dto.setTotalQuestions(questionCount);
 
         return dto;
@@ -262,9 +260,7 @@ public class AdminExamTestManagementService {
                 .collect(Collectors.toList());
         dto.setParts(parts);
 
-        int questionCount = parts.stream()
-                .mapToInt(pt -> pt.getQuestions().size())
-                .sum();
+        int questionCount = examQuestionIndexRepository.findMaxQuestionNumberEndByPaperId(paper.getId());
         dto.setTotalQuestions(questionCount);
 
         return dto;
