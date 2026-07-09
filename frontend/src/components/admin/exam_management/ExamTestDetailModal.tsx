@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Headphones, BookOpen, Mic, ChevronDown, ChevronRight, Loader2, Pencil, Check, XCircle, List } from "lucide-react";
+import { X, Headphones, BookOpen, Mic, ChevronDown, ChevronRight, Loader2, Pencil, Check, XCircle, List, Upload, Music } from "lucide-react";
 import toast from "react-hot-toast";
 import {
     examManagementService,
@@ -52,8 +52,63 @@ function PaperEditForm({
     onCancel: () => void;
 }) {
     const [duration, setDuration] = useState(paper.durationMinutes.toString());
-    const [audioUrl, setAudioUrl] = useState(paper.audioUrl ?? "");
+
+    // Parse format DB: {url1,url2,...} → string[]
+    const [audioUrls, setAudioUrls] = useState<string[]>(() => {
+        if (!paper.audioUrl) return [];
+        const raw = paper.audioUrl.trim();
+        // Strip dấu {} nếu có
+        const inner = raw.startsWith("{") && raw.endsWith("}")
+            ? raw.slice(1, -1)
+            : raw;
+        return inner.split(",").map(u => u.trim()).filter(Boolean);
+    });
+
     const [saving, setSaving] = useState(false);
+    const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(new Set());
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const isUploading = uploadingIndexes.size > 0;
+
+    // Upload nhiều file, từng file một, append vào danh sách
+    const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files ?? []);
+        if (files.length === 0) return;
+
+        // Tạo placeholder indexes để track loading
+        const startIdx = audioUrls.length;
+        const placeholderIndexes = files.map((_, i) => startIdx + i);
+        setUploadingIndexes(prev => new Set([...prev, ...placeholderIndexes]));
+
+        // Upload tuần tự từng file
+        const newUrls: string[] = [];
+        for (let i = 0; i < files.length; i++) {
+            try {
+                const url = await examManagementService.uploadPaperAudio(paper.id, files[i]);
+                newUrls.push(url);
+                toast.success(`Upload "${files[i].name}" thành công`);
+            } catch (err) {
+                toast.error(`Upload "${files[i].name}" thất bại: ${getErrorMessage(err, "")}`);
+            } finally {
+                setUploadingIndexes(prev => {
+                    const next = new Set(prev);
+                    next.delete(startIdx + i);
+                    return next;
+                });
+            }
+        }
+
+        if (newUrls.length > 0) {
+            setAudioUrls(prev => [...prev, ...newUrls]);
+        }
+
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const handleRemoveAudio = (idx: number) => {
+        setAudioUrls(prev => prev.filter((_, i) => i !== idx));
+    };
 
     const handleSave = async () => {
         const mins = parseInt(duration, 10);
@@ -63,9 +118,13 @@ function PaperEditForm({
         }
         setSaving(true);
         try {
+            // Serialize thành format DB: {url1,url2,...}
+            const combinedUrl = audioUrls.length > 0
+                ? "{" + audioUrls.join(",") + "}"
+                : null;
             const updated = await examManagementService.updatePaper(paper.id, {
                 durationMinutes: mins,
-                audioUrl: audioUrl.trim() || null,
+                audioUrl: combinedUrl,
             });
             onSaved(updated);
             toast.success("Đã cập nhật paper");
@@ -94,7 +153,7 @@ function PaperEditForm({
                 <div className="flex items-end gap-2">
                     <button
                         onClick={handleSave}
-                        disabled={saving}
+                        disabled={saving || isUploading}
                         className="flex-1 flex items-center justify-center gap-1 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium disabled:opacity-60 transition-colors"
                     >
                         {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
@@ -108,21 +167,101 @@ function PaperEditForm({
                     </button>
                 </div>
             </div>
+
             {paper.paperType === "LISTENING" && (
-                <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">
-                        Audio URL (Listening only)
-                    </label>
-                    <textarea
-                        rows={3}
-                        value={audioUrl}
-                        onChange={e => setAudioUrl(e.target.value)}
-                        className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none font-mono"
-                        placeholder="https://res.cloudinary.com/..."
-                    />
-                    <p className="text-xs text-slate-400 mt-1">
-                        Nhiều file: phân cách bằng dấu phẩy
-                    </p>
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <label className="block text-xs font-medium text-slate-600">
+                            Audio files ({audioUrls.length})
+                        </label>
+                        <span className="text-xs text-slate-400">MP3, WAV, OGG, AAC · tối đa 10MB/file</span>
+                    </div>
+
+                    {/* Upload button — multiple */}
+                    <div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/aac,.mp3,.wav,.ogg,.aac,.m4a"
+                            className="hidden"
+                            onChange={handleAudioUpload}
+                        />
+                        <button
+                            type="button"
+                            disabled={isUploading}
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg text-xs font-medium disabled:opacity-60 transition-colors"
+                        >
+                            {isUploading
+                                ? <Loader2 size={13} className="animate-spin" />
+                                : <Upload size={13} />
+                            }
+                            {isUploading
+                                ? `Đang upload (${uploadingIndexes.size} còn lại)...`
+                                : "Chọn file audio (có thể chọn nhiều)"
+                            }
+                        </button>
+                    </div>
+
+                    {/* Danh sách audio đã upload */}
+                    {audioUrls.length > 0 && (
+                        <div className="space-y-1.5">
+                            {audioUrls.map((url, idx) => (
+                                <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-2 space-y-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <Music size={12} className="text-blue-500 shrink-0" />
+                                            <span className="text-xs font-medium text-slate-600 truncate">
+                                                Part {idx + 1} — {url.split("/").pop()?.split("?")[0]}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveAudio(idx)}
+                                            className="p-1 text-slate-300 hover:text-red-400 rounded transition-colors shrink-0"
+                                            title="Xóa audio này"
+                                        >
+                                            <X size={13} />
+                                        </button>
+                                    </div>
+                                    <audio key={url} controls className="w-full" style={{ height: 32 }}>
+                                        <source src={url} />
+                                    </audio>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {audioUrls.length === 0 && !isUploading && (
+                        <p className="text-xs text-slate-400 italic">Chưa có audio nào.</p>
+                    )}
+
+                    {/* Nhập URL thủ công */}
+                    <details className="group">
+                        <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600 list-none flex items-center gap-1">
+                            <ChevronRight size={11} className="group-open:rotate-90 transition-transform" />
+                            Nhập URL thủ công
+                        </summary>
+                        <div className="mt-1.5">
+                            <textarea
+                                rows={5}
+                                value={audioUrls.join("\n")}
+                                onChange={e => {
+                                    const raw = e.target.value;
+                                    // Split theo newline hoặc dấu phẩy, bỏ {} nếu có
+                                    const urls = raw
+                                        .split(/[\n,]/)
+                                        .map(u => u.trim().replace(/^\{/, "").replace(/\}$/, ""))
+                                        .filter(Boolean);
+                                    setAudioUrls(urls);
+                                }}
+                                className="w-full px-2.5 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-300 font-mono break-all"
+                                placeholder={"https://res.cloudinary.com/.../audio1.mp3\nhttps://res.cloudinary.com/.../audio2.mp3"}
+                            />
+                            <p className="text-xs text-slate-400 mt-0.5">Nhiều URL phân cách bằng dấu phẩy</p>
+                        </div>
+                    </details>
                 </div>
             )}
         </div>

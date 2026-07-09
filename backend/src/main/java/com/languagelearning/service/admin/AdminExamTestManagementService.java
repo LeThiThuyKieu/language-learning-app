@@ -3,6 +3,7 @@ package com.languagelearning.service.admin;
 import com.languagelearning.dto.admin.exam_management.*;
 import com.languagelearning.entity.*;
 import com.languagelearning.repository.mysql.*;
+import com.languagelearning.service.QuestionMediaUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -179,7 +181,7 @@ public class AdminExamTestManagementService {
         paper.setAudioUrl(request.getAudioUrl());
 
         paper = examPaperRepository.save(paper);
-        return toAdminPaperDto(paper);
+        return toAdminPaperDetailDto(paper);
     }
 
     /**
@@ -216,7 +218,27 @@ public class AdminExamTestManagementService {
         return toAdminPartDto(part);
     }
 
-    // ── Mappers ──────────────────────────────────────────────────────────────
+    /**
+     * Upload audio cho Listening paper lên Cloudinary.
+     * Folder: audio_file/exam/{cefrLevel}/{testTitle}
+     * Sau khi upload, lưu URL vào paper.audioUrl.
+     */
+    @Transactional
+    public String uploadPaperAudio(Integer paperId, MultipartFile file, QuestionMediaUploadService mediaUploadService) {
+        ExamPaper paper = examPaperRepository.findById(paperId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paper not found"));
+
+        ExamTest test = paper.getExamTest();
+        String cefrLevel = test.getCefrLevel().name();          // e.g. "A2"
+        String testTitle = "Test " + test.getTestNumber();       // e.g. "Test 1"
+
+        String audioUrl = mediaUploadService.uploadExamAudio(file, cefrLevel, testTitle);
+
+        paper.setAudioUrl(audioUrl);
+        examPaperRepository.save(paper);
+
+        return audioUrl;
+    } ──────────────────────────────────────────────────────────────
 
     private AdminExamTestDto toAdminTestDto(ExamTest test) {
         AdminExamTestDto dto = new AdminExamTestDto();

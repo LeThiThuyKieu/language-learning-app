@@ -2,13 +2,16 @@ package com.languagelearning.controller.admin;
 
 import com.languagelearning.dto.ApiResponse;
 import com.languagelearning.dto.admin.exam_management.*;
+import com.languagelearning.service.QuestionMediaUploadService;
 import com.languagelearning.service.admin.AdminExamTestManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/admin/exam-tests")
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminExamTestManagementController {
 
     private final AdminExamTestManagementService examTestManagementService;
+    private final QuestionMediaUploadService mediaUploadService;
 
     /**
      * Danh sách tất cả exam tests (có phân trang, filter by level).
@@ -113,5 +117,19 @@ public class AdminExamTestManagementController {
             @Valid @RequestBody ExamPartUpdateRequest request
     ) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật part thành công", examTestManagementService.updatePart(partId, request)));
+    }
+
+    /**
+     * Upload audio file cho Listening paper lên Cloudinary.
+     * Lưu trong thư mục: audio_file/exam/{cefrLevel}/{testTitle}
+     * POST /api/admin/exam-tests/papers/{paperId}/upload-audio
+     */
+    @PostMapping(value = "/papers/{paperId}/upload-audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadPaperAudio(
+            @PathVariable Integer paperId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        String audioUrl = examTestManagementService.uploadPaperAudio(paperId, file, mediaUploadService);
+        return ResponseEntity.ok(ApiResponse.success("Upload audio thành công", audioUrl));
     }
 }

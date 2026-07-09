@@ -289,6 +289,22 @@ export const examManagementService = {
         );
         return res.data.data;
     },
+
+    /**
+     * Upload audio file cho Listening paper lên Cloudinary.
+     */
+    async uploadPaperAudio(paperId: number, file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await apiClient.post<ApiResponse<string>>(
+            `/admin/exam-tests/papers/${paperId}/upload-audio`,
+            formData,
+            {
+                headers: { "Content-Type": "multipart/form-data" },
+            }
+        );
+        return res.data.data;
+    },
 };
 
 // ── Exam Question API ─────────────────────────────────────────────────────────
