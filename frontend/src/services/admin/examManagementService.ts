@@ -84,6 +84,94 @@ export interface ExamPaperUpdatePayload {
     audioUrl: string | null;
 }
 
+// ── Exam Question Detail (Mongo + MySQL combined) ─────────────────────────────
+
+export interface ExamOption {
+    id: string;
+    text: string | null;
+    image_url: string | null;
+}
+
+export interface ExamBlankOption {
+    number: number;
+    options: string[];
+}
+
+export interface ExamMatchItem {
+    question_number?: number;
+    label: string;
+    id?: string;
+}
+
+export interface ExamStoryImage {
+    order: number;
+    image_url: string;
+    alt?: string;
+}
+
+export interface ExamQuestionDetailDto {
+    // MySQL
+    id: number;
+    mongoDocId: string;
+    questionType: string;
+    questionNumberStart: number;
+    questionNumberEnd: number;
+    correctAnswer: string | null;
+    orderIndex: number;
+    partId: number;
+    paperId: number;
+    paperType: string;
+    createdAt: string | null;
+    // MongoDB
+    section: string;
+    instruction: string | null;
+    text: string | null;
+    options: ExamOption[] | null;
+    passageImageUrl: string | null;
+    passageText: string | null;
+    formTitle: string | null;
+    formContent: string | null;
+    blanksOptions: ExamBlankOption[] | null;
+    instructionDetail: string | null;
+    leftItems: ExamMatchItem[] | null;
+    rightItems: ExamMatchItem[] | null;
+    sentence: string | null;
+    writeType: string | null;
+    minWords: number | null;
+    maxWords: number | null;
+    promptText: string | null;
+    bulletPoints: string[] | null;
+    storyImages: ExamStoryImage[] | null;
+}
+
+export interface ExamQuestionSaveRequest {
+    partId: number;
+    questionType: string;
+    questionNumberStart: number;
+    questionNumberEnd: number;
+    correctAnswer?: string | null;
+    orderIndex?: number;
+    section: string;
+    instruction?: string | null;
+    text?: string | null;
+    options?: ExamOption[] | null;
+    passageImageUrl?: string | null;
+    passageText?: string | null;
+    formTitle?: string | null;
+    formContent?: string | null;
+    blanksOptions?: ExamBlankOption[] | null;
+    instructionDetail?: string | null;
+    leftItems?: ExamMatchItem[] | null;
+    rightItems?: ExamMatchItem[] | null;
+    sentence?: string | null;
+    writeType?: string | null;
+    minWords?: number | null;
+    maxWords?: number | null;
+    promptText?: string | null;
+    bulletPoints?: string[] | null;
+    storyImages?: ExamStoryImage[] | null;
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 export const examManagementService = {
@@ -164,5 +252,33 @@ export const examManagementService = {
             payload
         );
         return res.data.data;
+    },
+};
+
+// ── Exam Question API ─────────────────────────────────────────────────────────
+
+export const examQuestionApi = {
+    getDetail: async (id: number): Promise<ExamQuestionDetailDto> => {
+        const res = await apiClient.get<ApiResponse<ExamQuestionDetailDto>>(`/admin/exam-questions/${id}`);
+        return res.data.data;
+    },
+
+    getByPart: async (partId: number): Promise<ExamQuestionDetailDto[]> => {
+        const res = await apiClient.get<ApiResponse<ExamQuestionDetailDto[]>>(`/admin/exam-questions/by-part/${partId}`);
+        return res.data.data;
+    },
+
+    create: async (payload: ExamQuestionSaveRequest): Promise<ExamQuestionDetailDto> => {
+        const res = await apiClient.post<ApiResponse<ExamQuestionDetailDto>>("/admin/exam-questions", payload);
+        return res.data.data;
+    },
+
+    update: async (id: number, payload: ExamQuestionSaveRequest): Promise<ExamQuestionDetailDto> => {
+        const res = await apiClient.put<ApiResponse<ExamQuestionDetailDto>>(`/admin/exam-questions/${id}`, payload);
+        return res.data.data;
+    },
+
+    delete: async (id: number): Promise<void> => {
+        await apiClient.delete(`/admin/exam-questions/${id}`);
     },
 };

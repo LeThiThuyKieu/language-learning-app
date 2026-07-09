@@ -186,7 +186,7 @@ export default function ExamManagementPage() {
                 </div>
                 <button
                     onClick={() => setCreateModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
+                    className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
                 >
                     <Plus size={16} />
                     Thêm bài thi

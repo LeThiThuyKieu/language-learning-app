@@ -8,6 +8,7 @@ export type AdminStatCardProps = {
     iconText: string;
     borderColor: string;
     change?: string;
+    changeClassName?: string;
     trend?: "up" | "down";
     pulsing?: boolean;
 };
@@ -15,7 +16,7 @@ export type AdminStatCardProps = {
 /**
  * Stat card dùng chung cho Dashboard và User Management và các trang khác
  */
-export default function AdminStatCard({ label, value, icon, iconBg, iconText, borderColor, change, trend, pulsing }: AdminStatCardProps) {
+export default function AdminStatCard({ label, value, icon, iconBg, iconText, borderColor, change, changeClassName, trend, pulsing }: AdminStatCardProps) {
     return (
         <div className={`bg-white rounded-2xl p-5 shadow-sm border border-gray-100 border-l-4 ${borderColor}`}>
             <div className="flex items-center justify-between">
@@ -38,11 +39,13 @@ export default function AdminStatCard({ label, value, icon, iconBg, iconText, bo
                             </span>
                             {change}
                         </div>
-                    ) : (
+                    ) : trend ? (
                         <div className={`flex items-center gap-1 text-xs font-bold ${trend === "up" ? "text-green-500" : "text-red-500"}`}>
                             {trend === "up" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                             {change}
                         </div>
+                    ) : (
+                        <div className={`text-xs font-bold ${changeClassName ?? "text-gray-400"}`}>{change}</div>
                     )}
                 </div>
             )}

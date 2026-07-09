@@ -15,10 +15,12 @@ import {
 import toast from "react-hot-toast";
 import {
     examManagementService,
+    examQuestionApi,
     type AdminExamTestDto,
     type AdminExamQuestionDto,
 } from "@/services/admin/examManagementService";
 import { getErrorMessage } from "@/utils/errorMessage";
+import AdminStatCard from "@/components/admin/common/AdminStatCard.tsx";
 
 const PAPER_ICONS: Record<string, React.ElementType> = {
     LISTENING: Headphones,
@@ -71,15 +73,6 @@ function tryParseJson(value: string): unknown | null {
     } catch {
         return null;
     }
-}
-
-/**
- * Chuyển array thành chuỗi "a / b / c"
- */
-function arrayToSlash(arr: unknown[]): string {
-    return arr
-        .map(item => (typeof item === "object" ? JSON.stringify(item) : String(item)))
-        .join(" / ");
 }
 
 /** Render một mảng đáp án thành text phẳng, cách nhau bởi " / " */
@@ -186,6 +179,48 @@ export default function ExamTestQuestionsPage() {
     const [test, setTest] = useState<AdminExamTestDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [filterPaper, setFilterPaper] = useState<string>("ALL");
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
+    const handleViewQuestion = (q: FlatQuestion) => {
+        navigate(`/admin/exam-management/${testId}/questions/${q.id}`);
+    };
+
+    const handleEditQuestion = (q: FlatQuestion) => {
+        navigate(`/admin/exam-management/${testId}/questions/${q.id}`, { state: { editMode: true } });
+    };
+
+    const handleDeleteQuestion = async (q: FlatQuestion) => {
+        if (!confirm(`Xóa câu hỏi Q${q.questionNumberStart}? Hành động này không thể hoàn tác.`)) return;
+        setDeletingId(q.id);
+        try {
+            await examQuestionApi.delete(q.id);
+            toast.success("Đã xóa câu hỏi");
+            // Reload test data
+            if (testId) {
+                const updated = await examManagementService.getTestDetail(parseInt(testId, 10));
+                setTest(updated);
+            }
+        } catch (err) {
+            toast.error(getErrorMessage(err, "Không thể xóa câu hỏi"));
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleAddQuestion = () => {
+        // Find first visible part based on filter
+        let partId: number | undefined;
+        let section: string | undefined;
+        if (test) {
+            const targetPaper = filterPaper === "ALL" ? test.papers[0] : test.papers.find(p => p.paperType === filterPaper);
+            if (targetPaper) {
+                const firstPart = targetPaper.parts?.[0];
+                partId = firstPart?.id;
+                section = targetPaper.paperType;
+            }
+        }
+        navigate(`/admin/exam-management/${testId}/questions/new`, { state: { partId, section } });
+    };
 
     useEffect(() => {
         if (!testId) return;
@@ -243,6 +278,22 @@ export default function ExamTestQuestionsPage() {
 
     const totalParts = test.papers.reduce((acc, p) => acc + (p.parts?.length ?? 0), 0);
 
+    // Tính số câu và số part theo từng paper type
+    const paperStats: Record<string, { parts: number; questions: number }> = {};
+    for (const paper of test.papers) {
+        let maxEnd = 0;
+        for (const part of paper.parts ?? []) {
+            for (const q of part.questions) {
+                if ((q.questionNumberEnd ?? 0) > maxEnd) maxEnd = q.questionNumberEnd ?? 0;
+            }
+        }
+        paperStats[paper.paperType] = {
+            parts: paper.parts?.length ?? 0,
+            questions: maxEnd,
+        };
+    }
+    const totalQuestions = Object.values(paperStats).reduce((a, b) => a + b.questions, 0);
+
     return (
         <div className="p-6 space-y-6">
             {/* Back + Header */}
@@ -277,29 +328,56 @@ export default function ExamTestQuestionsPage() {
                         )}
                     </div>
 
-                    <button className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">
+                    <button
+                        onClick={handleAddQuestion}
+                        className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600">
                         <Plus size={15} />
                         Thêm câu hỏi
-                    </button>
-                </div>
+                    </button>                </div>
             </div>
 
-            {/* Summary stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[
-                    { label: "Test Number", value: test.testNumber },
-                    { label: "Papers", value: test.papers.length },
-                    { label: "Parts", value: totalParts },
-                    { label: "Tổng câu hỏi", value: test.totalQuestions },
-                ].map(item => (
-                    <div
-                        key={item.label}
-                        className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 text-center"
-                    >
-                        <p className="text-2xl font-extrabold text-gray-800">{item.value}</p>
-                        <p className="text-xs font-medium text-gray-400 mt-1">{item.label}</p>
-                    </div>
-                ))}
+            {/* Summary stats — 4 ô cố định */}
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+                <AdminStatCard
+                    label="Listening"
+                    value={String(paperStats["LISTENING"]?.questions ?? 0)}
+                    icon={<Headphones size={24} />}
+                    iconBg="bg-blue-50"
+                    iconText="text-blue-500"
+                    borderColor="border-l-blue-500"
+                    change={`${paperStats["LISTENING"]?.parts ?? 0} part`}
+                    changeClassName="text-orange-500"
+                />
+                <AdminStatCard
+                    label="Reading & Writing"
+                    value={String(paperStats["READING_WRITING"]?.questions ?? 0)}
+                    icon={<BookOpen size={24} />}
+                    iconBg="bg-purple-50"
+                    iconText="text-purple-500"
+                    borderColor="border-l-purple-500"
+                    change={`${paperStats["READING_WRITING"]?.parts ?? 0} part`}
+                    changeClassName="text-orange-500"
+                />
+                <AdminStatCard
+                    label="Speaking"
+                    value={String(paperStats["SPEAKING"]?.questions ?? 0)}
+                    icon={<Mic size={24} />}
+                    iconBg="bg-emerald-50"
+                    iconText="text-emerald-500"
+                    borderColor="border-l-emerald-500"
+                    change={`${paperStats["SPEAKING"]?.parts ?? 0} part`}
+                    changeClassName="text-orange-500"
+                />
+                <AdminStatCard
+                    label="Tổng câu hỏi"
+                    value={String(totalQuestions)}
+                    icon={<FileQuestion size={24} />}
+                    iconBg="bg-orange-50"
+                    iconText="text-orange-500"
+                    borderColor="border-l-orange-500"
+                    change={`${totalParts} part`}
+                    changeClassName="text-orange-500"
+                />
             </div>
 
             {/* Questions Table */}
@@ -342,15 +420,24 @@ export default function ExamTestQuestionsPage() {
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <table className="w-full text-left table-fixed">
+                        <colgroup>
+                            <col style={{ width: 48 }} />   {/* # */}
+                            <col style={{ width: 100 }} />  {/* Số câu */}
+                            <col style={{ width: 190 }} />  {/* Loại */}
+                            <col style={{ width: 200 }} />  {/* Phần */}
+                            <col style={{ width: 80 }} />   {/* Order */}
+                            <col style={{ width: 260 }} />  {/* Đáp án */}
+                            <col style={{ width: 149 }} />  {/* Thao tác */}
+                        </colgroup>
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                <th className="px-6 py-4 text-center w-12">#</th>
+                                <th className="px-6 py-4 text-center">#</th>
                                 <th className="px-4 py-4 text-center">Số câu</th>
                                 <th className="px-4 py-4 text-center">Loại</th>
                                 <th className="px-4 py-4 text-center">Phần</th>
                                 <th className="px-4 py-4 text-center">Order</th>
-                                <th className="pl-12 pr-4 py-4 text-left">Đáp án</th>
+                                <th className="pl-14 pr-4 py-4 text-left">Đáp án</th>
                                 <th className="px-4 py-4 text-left">Thao tác</th>
                             </tr>
                         </thead>
@@ -431,7 +518,7 @@ export default function ExamTestQuestionsPage() {
                                             </td>
 
                                             {/* Đáp án */}
-                                            <td className="pl-12 pr-4 py-4 max-w-xs text-left">
+                                            <td className="pl-14 pr-4 py-4 max-w-xs text-left">
                                                 <AnswerCell value={q.correctAnswer} />
                                             </td>
 
@@ -440,21 +527,28 @@ export default function ExamTestQuestionsPage() {
                                                 <div className="flex items-center justify-start gap-1">
                                                     <button
                                                         title="Xem chi tiết"
+                                                        onClick={() => handleViewQuestion(q)}
                                                         className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
                                                     >
                                                         <Eye size={15} />
                                                     </button>
                                                     <button
                                                         title="Chỉnh sửa"
+                                                        onClick={() => handleEditQuestion(q)}
                                                         className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all"
                                                     >
                                                         <Pencil size={15} />
                                                     </button>
                                                     <button
                                                         title="Xóa câu hỏi"
-                                                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                        onClick={() => handleDeleteQuestion(q)}
+                                                        disabled={deletingId === q.id}
+                                                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40"
                                                     >
-                                                        <Trash2 size={15} />
+                                                        {deletingId === q.id
+                                                            ? <Loader2 size={15} className="animate-spin" />
+                                                            : <Trash2 size={15} />
+                                                        }
                                                     </button>
                                                 </div>
                                             </td>
@@ -472,7 +566,9 @@ export default function ExamTestQuestionsPage() {
                         <p className="text-xs font-medium text-gray-400">
                             Tổng{" "}
                             <span className="font-bold text-gray-800">
-                                {displayQuestions.length}
+                                {filterPaper === "ALL"
+                                    ? totalQuestions
+                                    : (paperStats[filterPaper]?.questions ?? 0)}
                             </span>{" "}
                             câu hỏi
                             {filterPaper !== "ALL" && (
