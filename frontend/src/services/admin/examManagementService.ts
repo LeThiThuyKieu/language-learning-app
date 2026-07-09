@@ -172,7 +172,15 @@ export interface ExamQuestionSaveRequest {
     storyImages?: ExamStoryImage[] | null;
 }
 
-// ── Service ───────────────────────────────────────────────────────────────────
+export interface ExamPartCreatePayload {
+    partNumber: number;
+    orderIndex?: number;
+}
+
+export interface ExamPartUpdatePayload {
+    partNumber: number;
+    orderIndex?: number;
+}
 
 export const examManagementService = {
     /**
@@ -249,6 +257,34 @@ export const examManagementService = {
     ): Promise<AdminExamPaperDto> {
         const res = await apiClient.put<ApiResponse<AdminExamPaperDto>>(
             `/admin/exam-tests/papers/${paperId}`,
+            payload
+        );
+        return res.data.data;
+    },
+
+    /**
+     * Tạo part mới trong một paper.
+     */
+    async createPart(
+        paperId: number,
+        payload: ExamPartCreatePayload
+    ): Promise<AdminExamPartDto> {
+        const res = await apiClient.post<ApiResponse<AdminExamPartDto>>(
+            `/admin/exam-tests/papers/${paperId}/parts`,
+            payload
+        );
+        return res.data.data;
+    },
+
+    /**
+     * Cập nhật thông tin part.
+     */
+    async updatePart(
+        partId: number,
+        payload: ExamPartUpdatePayload
+    ): Promise<AdminExamPartDto> {
+        const res = await apiClient.put<ApiResponse<AdminExamPartDto>>(
+            `/admin/exam-tests/parts/${partId}`,
             payload
         );
         return res.data.data;

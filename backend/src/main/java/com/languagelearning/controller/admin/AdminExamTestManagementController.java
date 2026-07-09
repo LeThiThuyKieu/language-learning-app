@@ -90,4 +90,28 @@ public class AdminExamTestManagementController {
     ) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật paper thành công", examTestManagementService.updatePaper(paperId, request)));
     }
+
+    /**
+     * Tạo part mới trong một paper.
+     * POST /api/admin/exam-tests/papers/{paperId}/parts
+     */
+    @PostMapping("/papers/{paperId}/parts")
+    public ResponseEntity<ApiResponse<AdminExamPartDto>> createPart(
+            @PathVariable Integer paperId,
+            @Valid @RequestBody ExamPartCreateRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("Tạo part thành công", examTestManagementService.createPart(paperId, request)));
+    }
+
+    /**
+     * Cập nhật thông tin part (partNumber, orderIndex).
+     * PUT /api/admin/exam-tests/parts/{partId}
+     */
+    @PutMapping("/parts/{partId}")
+    public ResponseEntity<ApiResponse<AdminExamPartDto>> updatePart(
+            @PathVariable Integer partId,
+            @Valid @RequestBody ExamPartUpdateRequest request
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật part thành công", examTestManagementService.updatePart(partId, request)));
+    }
 }

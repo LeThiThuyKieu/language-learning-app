@@ -305,7 +305,7 @@ export default function ExamTestDetailModal({ test, loading, onClose, onPaperUpd
                     <button
                         onClick={() => {
                             onClose();
-                            navigate(`/admin/exam-management/${test.id}/questions`);
+                            navigate(`/admin/exam-management/${test.id}/parts`);
                         }}
                         className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
                     >

@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
     ArrowLeft,
     Headphones,
     BookOpen,
-    Mic,
     Loader2,
-    FileQuestion,
     Eye,
     Pencil,
     Trash2,
     Plus,
+    FileQuestion,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -20,12 +19,10 @@ import {
     type AdminExamQuestionDto,
 } from "@/services/admin/examManagementService";
 import { getErrorMessage } from "@/utils/errorMessage";
-import AdminStatCard from "@/components/admin/common/AdminStatCard.tsx";
 
 const PAPER_ICONS: Record<string, React.ElementType> = {
     LISTENING: Headphones,
     READING_WRITING: BookOpen,
-    SPEAKING: Mic,
 };
 
 const PAPER_LABELS: Record<string, string> = {
@@ -176,17 +173,28 @@ function AnswerCell({ value }: { value: string | null }) {
 export default function ExamTestQuestionsPage() {
     const { testId } = useParams<{ testId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const [test, setTest] = useState<AdminExamTestDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [filterPaper, setFilterPaper] = useState<string>("ALL");
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
+    // Parse ?partId from query string
+    const queryPartId = (() => {
+        const p = new URLSearchParams(location.search).get("partId");
+        return p ? parseInt(p, 10) : null;
+    })();
+
     const handleViewQuestion = (q: FlatQuestion) => {
-        navigate(`/admin/exam-management/${testId}/questions/${q.id}`);
+        navigate(`/admin/exam-management/${testId}/questions/${q.id}`, {
+            state: { fromPartId: queryPartId ?? undefined },
+        });
     };
 
     const handleEditQuestion = (q: FlatQuestion) => {
-        navigate(`/admin/exam-management/${testId}/questions/${q.id}`, { state: { editMode: true } });
+        navigate(`/admin/exam-management/${testId}/questions/${q.id}`, {
+            state: { editMode: true, fromPartId: queryPartId ?? undefined },
+        });
     };
 
     const handleDeleteQuestion = async (q: FlatQuestion) => {
@@ -208,18 +216,26 @@ export default function ExamTestQuestionsPage() {
     };
 
     const handleAddQuestion = () => {
-        // Find first visible part based on filter
-        let partId: number | undefined;
-        let section: string | undefined;
-        if (test) {
-            const targetPaper = filterPaper === "ALL" ? test.papers[0] : test.papers.find(p => p.paperType === filterPaper);
-            if (targetPaper) {
-                const firstPart = targetPaper.parts?.[0];
-                partId = firstPart?.id;
-                section = targetPaper.paperType;
+        // If viewing a specific part, pre-select it
+        if (queryPartId && test) {
+            for (const paper of test.papers) {
+                const part = (paper.parts ?? []).find(p => p.id === queryPartId);
+                if (part) {
+                    navigate(`/admin/exam-management/${testId}/questions/new`, {
+                        state: { partId: part.id, section: paper.paperType },
+                    });
+                    return;
+                }
             }
         }
-        navigate(`/admin/exam-management/${testId}/questions/new`, { state: { partId, section } });
+        // Fallback: first part of first paper
+        if (test) {
+            const firstPaper = test.papers[0];
+            const firstPart = firstPaper?.parts?.[0];
+            navigate(`/admin/exam-management/${testId}/questions/new`, {
+                state: { partId: firstPart?.id, section: firstPaper?.paperType },
+            });
+        }
     };
 
     useEffect(() => {
@@ -271,39 +287,40 @@ export default function ExamTestQuestionsPage() {
 
     const paperTypes = ["ALL", ...Array.from(new Set(test.papers.map(p => p.paperType)))];
 
-    const displayQuestions =
-        filterPaper === "ALL"
-            ? flatQuestions
-            : flatQuestions.filter(q => q.paperType === filterPaper);
+    // If partId query param is present, filter to that part only
+    const activePartInfo = queryPartId
+        ? (() => {
+              for (const paper of test.papers) {
+                  const part = (paper.parts ?? []).find(p => p.id === queryPartId);
+                  if (part) return { paper, part };
+              }
+              return null;
+          })()
+        : null;
 
-    const totalParts = test.papers.reduce((acc, p) => acc + (p.parts?.length ?? 0), 0);
-
-    // Tính số câu và số part theo từng paper type
-    const paperStats: Record<string, { parts: number; questions: number }> = {};
-    for (const paper of test.papers) {
-        let maxEnd = 0;
-        for (const part of paper.parts ?? []) {
-            for (const q of part.questions) {
-                if ((q.questionNumberEnd ?? 0) > maxEnd) maxEnd = q.questionNumberEnd ?? 0;
-            }
-        }
-        paperStats[paper.paperType] = {
-            parts: paper.parts?.length ?? 0,
-            questions: maxEnd,
-        };
-    }
-    const totalQuestions = Object.values(paperStats).reduce((a, b) => a + b.questions, 0);
+    const displayQuestions = queryPartId
+        ? flatQuestions.filter(q => {
+              for (const paper of test.papers) {
+                  const part = (paper.parts ?? []).find(p => p.id === queryPartId);
+                  if (part && part.questions.some(pq => pq.id === q.id)) return true;
+              }
+              return false;
+          })
+        : filterPaper === "ALL"
+        ? flatQuestions
+        : flatQuestions.filter(q => q.paperType === filterPaper);
 
     return (
         <div className="p-6 space-y-6">
             {/* Back + Header */}
             <div>
+                {/* Back button */}
                 <button
-                    onClick={() => navigate("/admin/exam-management")}
+                    onClick={() => navigate(`/admin/exam-management/${testId}/parts`)}
                     className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-700 mb-4 transition-colors"
                 >
                     <ArrowLeft size={15} />
-                    Quay lại Exam Management
+                    Quay lại danh sách Part
                 </button>
 
                 <div className="flex items-start justify-between">
@@ -321,9 +338,33 @@ export default function ExamTestQuestionsPage() {
                             >
                                 {test.isActive ? "Active" : "Ẩn"}
                             </span>
+                            {/* Part breadcrumb badge */}
+                            {activePartInfo && (() => {
+                                const Icon = PAPER_ICONS[activePartInfo.paper.paperType] ?? BookOpen;
+                                const badgeCls = {
+                                    LISTENING: "bg-blue-50 text-blue-600",
+                                    READING_WRITING: "bg-purple-50 text-purple-600",
+                                    SPEAKING: "bg-green-50 text-green-600",
+                                }[activePartInfo.paper.paperType] ?? "bg-gray-100 text-gray-500";
+                                return (
+                                    <>
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${badgeCls}`}>
+                                            <Icon size={10} />
+                                            {PAPER_LABELS[activePartInfo.paper.paperType] ?? activePartInfo.paper.paperType}
+                                        </span>
+                                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-50 text-orange-600">
+                                            Part {activePartInfo.part.partNumber}
+                                        </span>
+                                    </>
+                                );
+                            })()}
                         </div>
-                        <h1 className="text-2xl font-extrabold text-gray-900">{test.title}</h1>
-                        {test.description && (
+                        <h1 className="text-2xl font-extrabold text-gray-900">
+                            {activePartInfo
+                                ? `Part ${activePartInfo.part.partNumber} — Danh sách câu hỏi`
+                                : test.title}
+                        </h1>
+                        {!activePartInfo && test.description && (
                             <p className="text-sm text-gray-500 mt-1">{test.description}</p>
                         )}
                     </div>
@@ -333,51 +374,8 @@ export default function ExamTestQuestionsPage() {
                         className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600">
                         <Plus size={15} />
                         Thêm câu hỏi
-                    </button>                </div>
-            </div>
-
-            {/* Summary stats — 4 ô cố định */}
-            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-                <AdminStatCard
-                    label="Listening"
-                    value={String(paperStats["LISTENING"]?.questions ?? 0)}
-                    icon={<Headphones size={24} />}
-                    iconBg="bg-blue-50"
-                    iconText="text-blue-500"
-                    borderColor="border-l-blue-500"
-                    change={`${paperStats["LISTENING"]?.parts ?? 0} part`}
-                    changeClassName="text-orange-500"
-                />
-                <AdminStatCard
-                    label="Reading & Writing"
-                    value={String(paperStats["READING_WRITING"]?.questions ?? 0)}
-                    icon={<BookOpen size={24} />}
-                    iconBg="bg-purple-50"
-                    iconText="text-purple-500"
-                    borderColor="border-l-purple-500"
-                    change={`${paperStats["READING_WRITING"]?.parts ?? 0} part`}
-                    changeClassName="text-orange-500"
-                />
-                <AdminStatCard
-                    label="Speaking"
-                    value={String(paperStats["SPEAKING"]?.questions ?? 0)}
-                    icon={<Mic size={24} />}
-                    iconBg="bg-emerald-50"
-                    iconText="text-emerald-500"
-                    borderColor="border-l-emerald-500"
-                    change={`${paperStats["SPEAKING"]?.parts ?? 0} part`}
-                    changeClassName="text-orange-500"
-                />
-                <AdminStatCard
-                    label="Tổng câu hỏi"
-                    value={String(totalQuestions)}
-                    icon={<FileQuestion size={24} />}
-                    iconBg="bg-orange-50"
-                    iconText="text-orange-500"
-                    borderColor="border-l-orange-500"
-                    change={`${totalParts} part`}
-                    changeClassName="text-orange-500"
-                />
+                    </button>
+                </div>
             </div>
 
             {/* Questions Table */}
@@ -390,32 +388,36 @@ export default function ExamTestQuestionsPage() {
                         </h2>
                         <p className="text-xs font-medium text-gray-400 mt-0.5">
                             {displayQuestions.length} câu hỏi
-                            {filterPaper !== "ALL" && ` · ${PAPER_LABELS[filterPaper] ?? filterPaper}`}
+                            {activePartInfo
+                                ? ` · ${PAPER_LABELS[activePartInfo.paper.paperType] ?? activePartInfo.paper.paperType} · Part ${activePartInfo.part.partNumber}`
+                                : filterPaper !== "ALL" ? ` · ${PAPER_LABELS[filterPaper] ?? filterPaper}` : ""}
                         </p>
                     </div>
 
-                    {/* Paper filter tabs */}
-                    <div className="flex gap-1.5">
-                        {paperTypes.map(pt => {
-                            const Icon = pt !== "ALL" ? PAPER_ICONS[pt] : null;
-                            const isActive = filterPaper === pt;
-                            return (
-                                <button
-                                    key={pt}
-                                    onClick={() => setFilterPaper(pt)}
-                                    className={[
-                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors",
-                                        isActive
-                                            ? "bg-orange-500 text-white shadow-sm"
-                                            : "bg-gray-100 text-gray-500 hover:bg-gray-200",
-                                    ].join(" ")}
-                                >
-                                    {Icon && <Icon size={11} />}
-                                    {pt === "ALL" ? "Tất cả" : PAPER_LABELS[pt] ?? pt}
-                                </button>
-                            );
-                        })}
-                    </div>
+                    {/* Paper filter tabs — only shown when NOT filtering by part */}
+                    {!activePartInfo && (
+                        <div className="flex gap-1.5">
+                            {paperTypes.map(pt => {
+                                const Icon = pt !== "ALL" ? PAPER_ICONS[pt] : null;
+                                const isActive = filterPaper === pt;
+                                return (
+                                    <button
+                                        key={pt}
+                                        onClick={() => setFilterPaper(pt)}
+                                        className={[
+                                            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors",
+                                            isActive
+                                                ? "bg-orange-500 text-white shadow-sm"
+                                                : "bg-gray-100 text-gray-500 hover:bg-gray-200",
+                                        ].join(" ")}
+                                    >
+                                        {Icon && <Icon size={11} />}
+                                        {pt === "ALL" ? "Tất cả" : PAPER_LABELS[pt] ?? pt}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Table */}
@@ -565,17 +567,13 @@ export default function ExamTestQuestionsPage() {
                     <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100">
                         <p className="text-xs font-medium text-gray-400">
                             Tổng{" "}
-                            <span className="font-bold text-gray-800">
-                                {filterPaper === "ALL"
-                                    ? totalQuestions
-                                    : (paperStats[filterPaper]?.questions ?? 0)}
-                            </span>{" "}
+                            <span className="font-bold text-gray-800">{displayQuestions.length}</span>{" "}
                             câu hỏi
-                            {filterPaper !== "ALL" && (
+                            {activePartInfo && (
                                 <>
                                     {" "}trong{" "}
                                     <span className="font-bold text-gray-800">
-                                        {PAPER_LABELS[filterPaper] ?? filterPaper}
+                                        Part {activePartInfo.part.partNumber}
                                     </span>
                                 </>
                             )}

@@ -182,6 +182,40 @@ public class AdminExamTestManagementService {
         return toAdminPaperDto(paper);
     }
 
+    /**
+     * Tạo part mới trong một paper.
+     * POST /api/admin/exam-tests/papers/{paperId}/parts
+     */
+    @Transactional
+    public AdminExamPartDto createPart(Integer paperId, ExamPartCreateRequest request) {
+        ExamPaper paper = examPaperRepository.findById(paperId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Paper not found"));
+
+        ExamPart part = new ExamPart();
+        part.setPaper(paper);
+        part.setPartNumber(request.getPartNumber());
+        part.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+
+        part = examPartRepository.save(part);
+        return toAdminPartDto(part);
+    }
+
+    /**
+     * Cập nhật thông tin part (partNumber, orderIndex).
+     * PUT /api/admin/exam-tests/parts/{partId}
+     */
+    @Transactional
+    public AdminExamPartDto updatePart(Integer partId, ExamPartUpdateRequest request) {
+        ExamPart part = examPartRepository.findById(partId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Part not found"));
+
+        part.setPartNumber(request.getPartNumber());
+        part.setOrderIndex(request.getOrderIndex() != null ? request.getOrderIndex() : 0);
+
+        part = examPartRepository.save(part);
+        return toAdminPartDto(part);
+    }
+
     // ── Mappers ──────────────────────────────────────────────────────────────
 
     private AdminExamTestDto toAdminTestDto(ExamTest test) {
