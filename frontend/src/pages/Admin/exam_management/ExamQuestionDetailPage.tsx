@@ -298,7 +298,7 @@ function DeleteModal({
                     </div>
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
-                    Bạn có chắc muốn xóa câi hỏi này? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.
+                    Bạn có chắc muốn xóa câu hỏi này? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.
                 </p>
                 <div className="flex gap-3">
                     <button
@@ -320,6 +320,29 @@ function DeleteModal({
             </div>
         </div>
     );
+}
+
+// Helper: render inline markdown — **text** → <strong>, \n → <br/>, \t → indent
+// (Tham khảo từ ExamListeningPage RichText)
+function RichText({ text, className }: { text: string; className?: string }) {
+    const normalized = text.replace(/\\t/g, "\t").replace(/\\n/g, "\n");
+    const parts = normalized.split(/(\*\*.+?\*\*|\n|\t)/g);
+    return (
+        <span className={className}>
+            {parts.map((part, i) => {
+                if (part === "\n") return <br key={i} />;
+                if (part === "\t") return <span key={i} style={{ marginRight: "2em" }}>&nbsp;</span>;
+                if (part.startsWith("**") && part.endsWith("**"))
+                    return <strong key={i}>{part.slice(2, -2)}</strong>;
+                return <span key={i}>{part}</span>;
+            })}
+        </span>
+    );
+}
+
+// Helper: render inline markdown bold (**text**)
+function renderInlineMd(text: string): React.ReactNode {
+    return <RichText text={text} />;
 }
 
 // MULTIPLE_CHOICE
@@ -362,48 +385,45 @@ function MultipleChoiceSection({
                         placeholder="Nội dung câu hỏi..."
                     />
                 ) : (
-                    <ReadonlyBox value={form.text} />
+                    <p className="text-sm text-gray-800 leading-relaxed">
+                        <RichText text={form.text ?? ""} />
+                    </p>
                 )}
             </div>
 
-            {/* Passage Image URL */}
-            <div>
-                <FieldLabel>Passage Image URL</FieldLabel>
-                {isEdit ? (
-                    <input
-                        type="text"
-                        className={inputCls}
-                        value={form.passageImageUrl}
-                        onChange={e => onChange({ passageImageUrl: e.target.value })}
-                        placeholder="https://..."
-                    />
-                ) : (
-                    <ReadonlyBox value={form.passageImageUrl} />
-                )}
-                {form.passageImageUrl && (
-                    <img
-                        src={form.passageImageUrl}
-                        alt="passage"
-                        className="mt-2 rounded-xl border border-gray-200 max-h-48 object-contain"
-                        onError={e => (e.currentTarget.style.display = "none")}
-                    />
-                )}
-            </div>
+            {/* Passage Image URL & Passage Text — chỉ hiển thị khi edit (view mode đã có Passage block bên trên) */}
+            {isEdit && (
+                <>
+                    <div>
+                        <FieldLabel>Passage Image URL</FieldLabel>
+                        <input
+                            type="text"
+                            className={inputCls}
+                            value={form.passageImageUrl}
+                            onChange={e => onChange({ passageImageUrl: e.target.value })}
+                            placeholder="https://..."
+                        />
+                        {form.passageImageUrl && (
+                            <img
+                                src={form.passageImageUrl}
+                                alt="passage"
+                                className="mt-2 rounded-xl border border-gray-200 max-h-48 object-contain"
+                                onError={e => (e.currentTarget.style.display = "none")}
+                            />
+                        )}
+                    </div>
 
-            {/* Passage Text */}
-            <div>
-                <FieldLabel>Passage Text</FieldLabel>
-                {isEdit ? (
-                    <textarea
-                        className={`${inputCls} min-h-[120px] resize-y font-mono text-xs`}
-                        value={form.passageText}
-                        onChange={e => onChange({ passageText: e.target.value })}
-                        placeholder=" Nội dung passage (có thể dùng markdown)..."
-                    />
-                ) : (
-                    <ReadonlyBox value={form.passageText} className="whitespace-pre-wrap min-h-[80px] font-mono text-xs" />
-                )}
-            </div>
+                    <div>
+                        <FieldLabel>Passage Text</FieldLabel>
+                        <textarea
+                            className={`${inputCls} min-h-[120px] resize-y font-mono text-xs`}
+                            value={form.passageText}
+                            onChange={e => onChange({ passageText: e.target.value })}
+                            placeholder="Nội dung passage (có thể dùng markdown)..."
+                        />
+                    </div>
+                </>
+            )}
 
             {/* Options */}
             <div>
@@ -423,52 +443,82 @@ function MultipleChoiceSection({
                     {form.options.length === 0 && (
                         <p className="text-xs text-gray-300 italic">Chưa có lựa chọn nào.</p>
                     )}
-                    {form.options.map((opt, idx) => (
-                        <div key={idx} className={isEdit ? "rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" : "flex items-center gap-3 py-1.5"}>
-                            <div className="flex items-center gap-2">
-                                <span className="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 text-xs font-extrabold flex items-center justify-center shrink-0">
-                                    {opt.id}
-                                </span>
+                    {/* VIEW mode: if any option has image → 2-col grid */}
+                    {!isEdit && form.options.some(o => o.image_url) ? (
+                        <div className="grid grid-cols-2 gap-3">
+                            {form.options.map((opt, idx) => (
+                                <div key={idx} className="p-2 space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 text-xs font-extrabold flex items-center justify-center shrink-0">
+                                            {opt.id}
+                                        </span>
+                                        {opt.text && (
+                                            <span className="text-sm text-gray-800 flex-1">
+                                                {renderInlineMd(opt.text)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {opt.image_url && (
+                                        <img
+                                            src={opt.image_url}
+                                            alt={`option ${opt.id}`}
+                                            className="w-full max-h-40 object-contain"
+                                            onError={e => (e.currentTarget.style.display = "none")}
+                                        />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        form.options.map((opt, idx) => (
+                            <div key={idx} className={isEdit ? "rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" : "flex items-center gap-3 py-1.5"}>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-7 h-7 rounded-lg bg-orange-100 text-orange-600 text-xs font-extrabold flex items-center justify-center shrink-0">
+                                        {opt.id}
+                                    </span>
+                                    {isEdit ? (
+                                        <input
+                                            type="text"
+                                            className={`${inputCls} flex-1`}
+                                            value={opt.text ?? ""}
+                                            onChange={e => updateOption(idx, { text: e.target.value })}
+                                            placeholder="Nội dung lựa chọn..."
+                                        />
+                                    ) : (
+                                        <span className="text-sm text-gray-800 flex-1">
+                                            {renderInlineMd(opt.text ?? "")}
+                                        </span>
+                                    )}
+                                    {isEdit && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeOption(idx)}
+                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                                        >
+                                            <X size={13} />
+                                        </button>
+                                    )}
+                                </div>
                                 {isEdit ? (
                                     <input
                                         type="text"
-                                        className={`${inputCls} flex-1`}
-                                        value={opt.text ?? ""}
-                                        onChange={e => updateOption(idx, { text: e.target.value })}
-                                        placeholder="Nội dung lựa chọn..."
+                                        className={inputCls}
+                                        value={opt.image_url ?? ""}
+                                        onChange={e => updateOption(idx, { image_url: e.target.value || null })}
+                                        placeholder="Image URL (tùy chọn)..."
                                     />
-                                ) : (
-                                    <span className="text-sm text-gray-800 flex-1">{opt.text}</span>
-                                )}
-                                {isEdit && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeOption(idx)}
-                                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                                    >
-                                        <X size={13} />
-                                    </button>
+                                ) : null}
+                                {!isEdit && opt.image_url && (
+                                    <img
+                                        src={opt.image_url}
+                                        alt={`option ${opt.id}`}
+                                        className="rounded-lg border border-gray-200 max-h-32 object-contain mt-1"
+                                        onError={e => (e.currentTarget.style.display = "none")}
+                                    />
                                 )}
                             </div>
-                            {isEdit ? (
-                                <input
-                                    type="text"
-                                    className={inputCls}
-                                    value={opt.image_url ?? ""}
-                                    onChange={e => updateOption(idx, { image_url: e.target.value || null })}
-                                    placeholder="Image URL (tùy chọn)..."
-                                />
-                            ) : null}
-                            {opt.image_url && (
-                                <img
-                                    src={opt.image_url}
-                                    alt={`option ${opt.id}`}
-                                    className="rounded-lg border border-gray-200 max-h-32 object-contain mt-1"
-                                    onError={e => (e.currentTarget.style.display = "none")}
-                                />
-                            )}
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
         </div>
@@ -536,45 +586,49 @@ function FillInFormSection({
                         className={inputCls}
                         value={form.formTitle}
                         onChange={e => onChange({ formTitle: e.target.value })}
-                        placeholder="Tieu de form..."
+                        placeholder="Tiêu đề form..."
                     />
                 ) : (
-                    <ReadonlyBox value={form.formTitle} />
+                    <p className="text-sm text-gray-800 leading-relaxed">
+                        <RichText text={form.formTitle ?? ""} />
+                    </p>
                 )}
             </div>
 
             {/* Form Content */}
             <div>
-                <FieldLabel>Form Content (dung ____ cho cho trong)</FieldLabel>
+                <FieldLabel>Form Content (dùng ____ cho chỗ trống)</FieldLabel>
                 {isEdit ? (
                     <textarea
                         className={`${inputCls} min-h-[140px] resize-y font-mono text-xs`}
                         value={form.formContent}
                         onChange={e => onChange({ formContent: e.target.value })}
-                        placeholder="Noi dung form voi ____ la cho trong..."
+                        placeholder="Nội dung form với ____ là chỗ trống..."
                     />
                 ) : (
-                    <ReadonlyBox value={form.formContent} className="whitespace-pre-wrap min-h-[80px] font-mono text-xs" />
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap min-h-[80px] leading-relaxed">
+                        <RichText text={form.formContent ?? ""} />
+                    </p>
                 )}
             </div>
 
             {/* Blanks Options */}
             <div>
                 <div className="flex items-center justify-between mb-2">
-                    <FieldLabel>Cac lua chon cho trong</FieldLabel>
+                    <FieldLabel>Các lựa chọn cho chỗ trống</FieldLabel>
                     {isEdit && (
                         <button
                             type="button"
                             onClick={addBlank}
                             className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600"
                         >
-                            <Plus size={13} /> Them cho trong
+                            <Plus size={13} /> Thêm chỗ trống
                         </button>
                     )}
                 </div>
                 <div className="space-y-3">
                     {form.blanksOptions.length === 0 && (
-                        <p className="text-xs text-gray-300 italic">Chua co cho trong nao.</p>
+                        <p className="text-xs text-gray-300 italic">Chưa có chỗ trống nào.</p>
                     )}
                     {form.blanksOptions.map((blank, bIdx) => (
                         <div key={bIdx} className={isEdit ? "rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" : "py-1.5 space-y-1.5"}>
@@ -612,7 +666,9 @@ function FillInFormSection({
                                                 placeholder="Option..."
                                             />
                                         ) : (
-                                            <span className="text-sm text-gray-800">{opt}</span>
+                                            <span className="text-sm text-gray-800">
+                                                <RichText text={opt} />
+                                            </span>
                                         )}
                                         {isEdit && (
                                             <button
@@ -634,7 +690,7 @@ function FillInFormSection({
                                         onClick={() => addBlankOption(bIdx)}
                                         className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-dashed border-orange-300 text-orange-400 text-xs font-bold hover:border-orange-500 transition"
                                     >
-                                        <Plus size={11} /> Them
+                                        <Plus size={11} /> Thêm
                                     </button>
                                 )}
                             </div>
@@ -687,10 +743,12 @@ function MatchingSection({
                         className={`${inputCls} min-h-[80px] resize-y`}
                         value={form.instructionDetail}
                         onChange={e => onChange({ instructionDetail: e.target.value })}
-                        placeholder="Huong dan chi tiet..."
+                        placeholder="Hướng dẫn chi tiết..."
                     />
                 ) : (
-                    <ReadonlyBox value={form.instructionDetail} />
+                    <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                        <RichText text={form.instructionDetail ?? ""} />
+                    </p>
                 )}
             </div>
 
@@ -711,7 +769,7 @@ function MatchingSection({
                     </div>
                     <div className="space-y-2">
                         {form.leftItems.length === 0 && (
-                            <p className="text-xs text-gray-300 italic">Trong.</p>
+                            <p className="text-xs text-gray-300 italic">Trống.</p>
                         )}
                         {form.leftItems.map((item, idx) => (
                             <div key={idx} className={isEdit ? "flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2" : "flex items-center gap-2 py-1"}>
@@ -742,7 +800,7 @@ function MatchingSection({
                                 ) : (
                                     <>
                                         <span className="w-8 text-xs font-bold text-orange-500 shrink-0">Q{item.question_number}</span>
-                                        <span className="text-sm text-gray-800 flex-1">{item.label}</span>
+                                        <span className="text-sm text-gray-800 flex-1"><RichText text={item.label ?? ""} /></span>
                                     </>
                                 )}
                             </div>
@@ -753,20 +811,20 @@ function MatchingSection({
                 {/* Right Items */}
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <FieldLabel>Right Items (dap an)</FieldLabel>
+                        <FieldLabel>Right Items (đáp án)</FieldLabel>
                         {isEdit && (
                             <button
                                 type="button"
                                 onClick={addRight}
                                 className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600"
                             >
-                                <Plus size={11} /> Them
+                                <Plus size={11} /> Thêm
                             </button>
                         )}
                     </div>
                     <div className="space-y-2">
                         {form.rightItems.length === 0 && (
-                            <p className="text-xs text-gray-300 italic">Trong.</p>
+                            <p className="text-xs text-gray-300 italic">Trống.</p>
                         )}
                         {form.rightItems.map((item, idx) => (
                             <div key={idx} className={isEdit ? "flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2" : "flex items-center gap-2 py-1"}>
@@ -797,7 +855,7 @@ function MatchingSection({
                                 ) : (
                                     <>
                                         <span className="w-8 text-xs font-bold text-teal-600 shrink-0">{item.id}</span>
-                                        <span className="text-sm text-gray-800 flex-1">{item.label}</span>
+                                        <span className="text-sm text-gray-800 flex-1"><RichText text={item.label ?? ""} /></span>
                                     </>
                                 )}
                             </div>
@@ -822,20 +880,22 @@ function FillInTextSection({
     const isEdit = mode !== "view";
     return (
         <div>
-            <FieldLabel>Sentence (dung ____ cho cho trong)</FieldLabel>
+            <FieldLabel>Sentence (dùng ____ cho chỗ trống)</FieldLabel>
             {isEdit ? (
                 <textarea
                     className={`${inputCls} min-h-[100px] resize-y`}
                     value={form.sentence}
                     onChange={e => onChange({ sentence: e.target.value })}
-                    placeholder="Vi du: The train leaves ____ ten minutes."
+                    placeholder="Ví dụ: The train leaves ____ ten minutes."
                 />
             ) : (
-                <ReadonlyBox value={form.sentence} className="whitespace-pre-wrap" />
+                <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                    <RichText text={form.sentence ?? ""} />
+                </p>
             )}
             {form.sentence && (
                 <p className="mt-1.5 text-xs text-gray-400">
-                    So cho trong:{" "}
+                    Số chỗ trống:{" "}
                     <span className="font-bold text-orange-500">
                         {(form.sentence.match(/____/g) || []).length}
                     </span>
@@ -932,10 +992,12 @@ function ShortWriteSection({
                         className={`${inputCls} min-h-[100px] resize-y`}
                         value={form.promptText}
                         onChange={e => onChange({ promptText: e.target.value })}
-                        placeholder="Yeu cau bai viet..."
+                        placeholder="Yêu cầu bài viết..."
                     />
                 ) : (
-                    <ReadonlyBox value={form.promptText} className="whitespace-pre-wrap" />
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                        <RichText text={form.promptText ?? ""} />
+                    </p>
                 )}
             </div>
 
@@ -949,13 +1011,13 @@ function ShortWriteSection({
                             onClick={addBullet}
                             className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600"
                         >
-                            <Plus size={13} /> Them
+                            <Plus size={13} /> Thêm
                         </button>
                     )}
                 </div>
                 <div className="space-y-2">
                     {form.bulletPoints.length === 0 && (
-                        <p className="text-xs text-gray-300 italic">Chua co bullet point nao.</p>
+                        <p className="text-xs text-gray-300 italic">Chưa có bullet point nào.</p>
                     )}
                     {form.bulletPoints.map((bp, idx) => (
                         <div key={idx} className="flex items-center gap-2">
@@ -969,7 +1031,7 @@ function ShortWriteSection({
                                     placeholder="Bullet point..."
                                 />
                             ) : (
-                                <span className="text-sm text-gray-700 flex-1">{bp}</span>
+                                <span className="text-sm text-gray-700 flex-1"><RichText text={bp} /></span>
                             )}
                             {isEdit && (
                                 <button
@@ -995,13 +1057,13 @@ function ShortWriteSection({
                             onClick={addImage}
                             className="flex items-center gap-1 text-xs font-bold text-orange-500 hover:text-orange-600"
                         >
-                            <Plus size={13} /> Them anh
+                            <Plus size={13} /> Thêm ảnh
                         </button>
                     )}
                 </div>
                 <div className="space-y-3">
                     {form.storyImages.length === 0 && (
-                        <p className="text-xs text-gray-300 italic">Chua co anh nao.</p>
+                        <p className="text-xs text-gray-300 italic">Chưa có ảnh nào.</p>
                     )}
                     {form.storyImages.map((img, idx) => (
                         <div key={idx} className={isEdit ? "rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2" : "space-y-1.5 py-1"}>
@@ -1041,7 +1103,7 @@ function ShortWriteSection({
                                         className={inputCls}
                                         value={img.alt ?? ""}
                                         onChange={e => updateImage(idx, { alt: e.target.value })}
-                                        placeholder="Alt text (tuy chon)..."
+                                        placeholder="Alt text (tùy chọn)..."
                                     />
                                 </>
                             ) : img.image_url ? (
@@ -1071,7 +1133,9 @@ export default function ExamQuestionDetailPage() {
     // Detect mode
     const isNew = questionId === "new" || questionId === undefined;
     // Support editMode shortcut from navigation state
-    const locationState = location.state as { partId?: number; section?: string; editMode?: boolean } | null;
+    const locationState = location.state as { partId?: number; section?: string; editMode?: boolean; fromPartId?: number } | null;
+    const fromPartId = locationState?.fromPartId ?? null;
+
     const [mode, setMode] = useState<Mode>(
         isNew ? "create" : locationState?.editMode ? "edit" : "view"
     );
@@ -1089,6 +1153,9 @@ export default function ExamQuestionDetailPage() {
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    // Tất cả câu hỏi trong cùng part (để resolve passageText/URL)
+    const [partSiblings, setPartSiblings] = useState<ExamQuestionDetailDto[]>([]);
 
     // partId -> { partNumber, paperType }
     const partMap = useCallback((): Map<number, { partNumber: number; paperType: string }> => {
@@ -1120,7 +1187,7 @@ export default function ExamQuestionDetailPage() {
         if (!testId) return;
         const tid = parseInt(testId, 10);
         if (isNaN(tid)) {
-            toast.error("Test ID khong hop le");
+            toast.error("Test ID không hợp lệ");
             navigate("/admin/exam-management");
             return;
         }
@@ -1140,10 +1207,14 @@ export default function ExamQuestionDetailPage() {
                     const f = fromApiToForm(dto);
                     setForm(f);
                     setOriginalForm(f);
+                    // Load siblings để resolve passageText/URL
+                    examQuestionApi.getByPart(dto.partId).then(siblings => {
+                        setPartSiblings(siblings);
+                    }).catch(() => {});
                 }
             })
             .catch(err => {
-                const msg = err instanceof Error ? err.message : "Loi tai du lieu";
+                const msg = err instanceof Error ? err.message : "Lỗi tải dữ liệu";
                 toast.error(msg);
                 navigate(`/admin/exam-management/${testId}/questions`);
             })
@@ -1165,12 +1236,12 @@ export default function ExamQuestionDetailPage() {
     };
 
     const validate = (): string | null => {
-        if (form.partId === "") return "Vui long chon Part.";
-        if (!form.questionType) return "Vui long chon loai cau hoi.";
-        if (form.questionNumberStart === "") return "So cau bat dau la bat buoc.";
-        if (form.questionNumberEnd === "") return "So cau ket thuc la bat buoc.";
+        if (form.partId === "") return "Vui lòng chọn Part.";
+        if (!form.questionType) return "Vui lòng chọn loại câu hỏi.";
+        if (form.questionNumberStart === "") return "Số câu bắt đầu là bắt buộc.";
+        if (form.questionNumberEnd === "") return "Số câu kết thúc là bắt buộc.";
         if ((form.questionNumberEnd as number) < (form.questionNumberStart as number)) {
-            return "So cau ket thuc phai >= so cau bat dau.";
+            return "Số câu kết thúc phải >= số câu bắt đầu.";
         }
         return null;
     };
@@ -1184,14 +1255,20 @@ export default function ExamQuestionDetailPage() {
             const payload = buildSaveRequest(form);
             if (mode === "create") {
                 await examQuestionApi.create(payload);
-                toast.success("Tao cau hoi thanh cong!");
+                toast.success("Tạo câu hỏi thành công!");
             } else {
                 await examQuestionApi.update(detail!.id, payload);
-                toast.success("Cap nhat cau hoi thanh cong!");
+                toast.success("Cập nhật câu hỏi thành công!");
             }
-            navigate(`/admin/exam-management/${testId}/questions`);
+            // Quay lại đúng part nếu có
+            const targetPartId = fromPartId ?? (mode === "create" ? (form.partId !== "" ? form.partId : null) : null);
+            if (targetPartId) {
+                navigate(`/admin/exam-management/${testId}/questions?partId=${targetPartId}`);
+            } else {
+                navigate(`/admin/exam-management/${testId}/questions`);
+            }
         } catch (e) {
-            const msg = e instanceof Error ? e.message : "Loi luu cau hoi";
+            const msg = e instanceof Error ? e.message : "Lỗi lưu câu hỏi";
             toast.error(msg);
         } finally {
             setSaving(false);
@@ -1203,10 +1280,14 @@ export default function ExamQuestionDetailPage() {
         setDeleting(true);
         try {
             await examQuestionApi.delete(detail.id);
-            toast.success("Da xoa cau hoi.");
-            navigate(`/admin/exam-management/${testId}/questions`);
+            toast.success("Đã xóa câu hỏi.");
+            if (fromPartId) {
+                navigate(`/admin/exam-management/${testId}/questions?partId=${fromPartId}`);
+            } else {
+                navigate(`/admin/exam-management/${testId}/questions`);
+            }
         } catch (e) {
-            const msg = e instanceof Error ? e.message : "Loi xoa cau hoi";
+            const msg = e instanceof Error ? e.message : "Lỗi xóa câu hỏi";
             toast.error(msg);
             setShowDeleteModal(false);
         } finally {
@@ -1219,13 +1300,75 @@ export default function ExamQuestionDetailPage() {
         setMode("view");
     };
 
+    /** Tính passageText / passageImageUrl để hiển thị:
+     *  1. Ưu tiên của câu hỏi hiện tại
+     *  2. Câu hỏi đứng trước (order nhỏ hơn, gần nhất)
+     *  3. Câu hỏi có order nhỏ nhất trong part có passageText/URL
+     */
+    type ResolvedField<T extends object> = T & {
+        isInherited: boolean;
+        sourceQ: { id: number; questionNumberStart: number; questionNumberEnd: number; orderIndex: number } | null;
+    };
+
+    const resolvedPassage: ResolvedField<{ passageText: string | null; passageImageUrl: string | null }> = (() => {
+        const ownPassageText = form.passageText?.trim() ? form.passageText : null;
+        const ownPassageImg = form.passageImageUrl?.trim() ? form.passageImageUrl : null;
+        if (ownPassageText || ownPassageImg) {
+            return { passageText: ownPassageText, passageImageUrl: ownPassageImg, isInherited: false, sourceQ: null };
+        }
+        if (partSiblings.length === 0) {
+            return { passageText: null, passageImageUrl: null, isInherited: false, sourceQ: null };
+        }
+        const currentOrder = typeof form.orderIndex === "number" ? form.orderIndex : -1;
+        const sorted = [...partSiblings].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+        // Tìm câu đứng trước (order < current, gần nhất)
+        const before = [...sorted].reverse().find(
+            s => (s.orderIndex ?? 0) < currentOrder && (s.passageText?.trim() || s.passageImageUrl?.trim())
+        );
+        const src = before ?? sorted.find(s => s.passageText?.trim() || s.passageImageUrl?.trim()) ?? null;
+        if (src) {
+            return {
+                passageText: src.passageText?.trim() ? src.passageText : null,
+                passageImageUrl: src.passageImageUrl?.trim() ? src.passageImageUrl : null,
+                isInherited: true,
+                sourceQ: { id: src.id, questionNumberStart: src.questionNumberStart, questionNumberEnd: src.questionNumberEnd, orderIndex: src.orderIndex },
+            };
+        }
+        return { passageText: null, passageImageUrl: null, isInherited: false, sourceQ: null };
+    })();
+
+    /** Tính instruction kế thừa tương tự passage */
+    const resolvedInstruction: ResolvedField<{ instruction: string | null }> = (() => {
+        const own = form.instruction?.trim() ? form.instruction : null;
+        if (own) return { instruction: own, isInherited: false, sourceQ: null };
+        if (partSiblings.length === 0) return { instruction: null, isInherited: false, sourceQ: null };
+        const currentOrder = typeof form.orderIndex === "number" ? form.orderIndex : -1;
+        const sorted = [...partSiblings].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+        const before = [...sorted].reverse().find(
+            s => (s.orderIndex ?? 0) < currentOrder && s.instruction?.trim()
+        );
+        const src = before ?? sorted.find(s => s.instruction?.trim()) ?? null;
+        if (src) {
+            return {
+                instruction: src.instruction?.trim() ? src.instruction : null,
+                isInherited: true,
+                sourceQ: { id: src.id, questionNumberStart: src.questionNumberStart, questionNumberEnd: src.questionNumberEnd, orderIndex: src.orderIndex },
+            };
+        }
+        return { instruction: null, isInherited: false, sourceQ: null };
+    })();
+
+    const backUrl = fromPartId
+        ? `/admin/exam-management/${testId}/questions?partId=${fromPartId}`
+        : `/admin/exam-management/${testId}/questions`;
+
     const qRangeLabel = () => {
-        if (isNew) return "Cau hoi moi";
+        if (isNew) return "Câu hỏi mới";
         const s = form.questionNumberStart;
         const e = form.questionNumberEnd;
-        if (s === "" && e === "") return "Cau hoi";
-        if (s === e) return `Cau hoi Q${s}`;
-        return `Cau hoi Q${s}-${e}`;
+        if (s === "" && e === "") return "Câu hỏi";
+        if (s === e) return `Câu hỏi Q${s}`;
+        return `Câu hỏi Q${s}-${e}`;
     };
 
     if (loading) {
@@ -1256,11 +1399,11 @@ export default function ExamQuestionDetailPage() {
                 <div>
                     {/* Back button */}
                     <button
-                        onClick={() => navigate(`/admin/exam-management/${testId}/questions`)}
+                        onClick={() => navigate(backUrl)}
                         className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-700 mb-4 transition-colors"
                     >
                         <ArrowLeft size={15} />
-                        Quay lại danh sách câu hỏi
+                        {fromPartId ? "Quay lại danh sách Part" : "Quay lại danh sách câu hỏi"}
                     </button>
 
                     {/* Breadcrumb + actions */}
@@ -1333,10 +1476,8 @@ export default function ExamQuestionDetailPage() {
 
                 <div className="flex gap-6 items-start">
 
-                    {/* — Question Content */}
-                    <div className="flex-1 min-w-0 space-y-5">
-
-                        {/* Common fields card */}
+                    {/* LEFT — Thông tin chung (sticky sidebar) */}
+                    <div className="w-2/5 shrink-0 sticky top-6">
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
                             <h2 className="text-sm font-extrabold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-3">
                                 Thông tin chung
@@ -1382,8 +1523,35 @@ export default function ExamQuestionDetailPage() {
                                 </div>
                             </div>
 
+                            {/* Part selector */}
+                            <div>
+                                <FieldLabel>Part (theo section)</FieldLabel>
+                                {mode !== "view" ? (
+                                    <select
+                                        className={inputCls}
+                                        value={form.partId}
+                                        onChange={e => patchForm({ partId: e.target.value === "" ? "" : Number(e.target.value) })}
+                                    >
+                                        <option value="">-- Chọn Part --</option>
+                                        {parts.map(p => (
+                                            <option key={p.id} value={p.id}>
+                                                Part {p.partNumber} ({p.paperType.replace("_", " ")})
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <ReadonlyBox
+                                        value={
+                                            currentPartInfo
+                                                ? `Part ${currentPartInfo.partNumber} (${currentPartInfo.paperType.replace("_", " ")})`
+                                                : String(form.partId)
+                                        }
+                                    />
+                                )}
+                            </div>
+
                             {/* Question numbers + order */}
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <FieldLabel>Số câu bắt đầu</FieldLabel>
                                     {mode !== "view" ? (
@@ -1414,105 +1582,99 @@ export default function ExamQuestionDetailPage() {
                                         <ReadonlyBox value={form.questionNumberEnd} />
                                     )}
                                 </div>
-                                <div>
-                                    <FieldLabel>Order Index</FieldLabel>
-                                    {mode !== "view" ? (
-                                        <input
-                                            type="number"
-                                            className={inputCls}
-                                            value={form.orderIndex}
-                                            onChange={e => patchForm({ orderIndex: e.target.value === "" ? "" : Number(e.target.value) })}
-                                            placeholder="0"
-                                            min={0}
-                                        />
-                                    ) : (
-                                        <ReadonlyBox value={form.orderIndex} />
-                                    )}
-                                </div>
+                            </div>
+
+                            {/* Order Index */}
+                            <div>
+                                <FieldLabel>Order Index</FieldLabel>
+                                {mode !== "view" ? (
+                                    <input
+                                        type="number"
+                                        className={inputCls}
+                                        value={form.orderIndex}
+                                        onChange={e => patchForm({ orderIndex: e.target.value === "" ? "" : Number(e.target.value) })}
+                                        placeholder="0"
+                                        min={0}
+                                    />
+                                ) : (
+                                    <ReadonlyBox value={form.orderIndex} />
+                                )}
                             </div>
 
                             {/* Instruction */}
                             <div>
-                                <FieldLabel>Instruction</FieldLabel>
-                                {mode !== "view" ? (
-                                    <textarea
-                                        className={`${inputCls} min-h-[72px] resize-y`}
-                                        value={form.instruction}
-                                        onChange={e => patchForm({ instruction: e.target.value })}
-                                        placeholder="Hướng dẫn cho người làm bài..."
-                                    />
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <label className={labelCls} style={{ margin: 0 }}>Instruction</label>
+                                    {resolvedInstruction.isInherited && (
+                                        <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[9px] font-bold uppercase tracking-wider shrink-0">
+                                            Kế thừa
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* View mode: hiện instruction resolved */}
+                                {mode === "view" ? (
+                                    resolvedInstruction.instruction ? (
+                                        <>
+                                            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                                <RichText text={resolvedInstruction.instruction} />
+                                            </p>
+                                            {resolvedInstruction.isInherited && resolvedInstruction.sourceQ && (
+                                                <div className="mt-2 flex items-center gap-1.5 text-[10px] text-blue-500 font-medium">
+                                                    <span className="text-blue-400">↑</span>
+                                                    Lấy từ câu{" "}
+                                                    <span className="font-bold">
+                                                        Q{resolvedInstruction.sourceQ.questionNumberStart}
+                                                        {resolvedInstruction.sourceQ.questionNumberEnd !== resolvedInstruction.sourceQ.questionNumberStart
+                                                            ? `–${resolvedInstruction.sourceQ.questionNumberEnd}`
+                                                            : ""}
+                                                    </span>
+                                                    <span className="text-gray-300">·</span>
+                                                    <span className="text-gray-400">order {resolvedInstruction.sourceQ.orderIndex}</span>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <p className="text-sm text-gray-300 italic">—</p>
+                                    )
                                 ) : (
-                                    <ReadonlyBox value={form.instruction} className="whitespace-pre-wrap" />
+                                    /* Edit/Create mode */
+                                    <>
+                                        <textarea
+                                            className={`${inputCls} min-h-[72px] resize-y`}
+                                            value={form.instruction}
+                                            onChange={e => patchForm({ instruction: e.target.value })}
+                                            placeholder="Hướng dẫn cho người làm bài..."
+                                        />
+                                        {resolvedInstruction.isInherited && resolvedInstruction.sourceQ && (
+                                            <div className="mt-2 space-y-1.5">
+                                                <div className="flex items-center gap-1.5 text-[10px] text-blue-500 font-medium">
+                                                    <span className="text-blue-400">↑</span>
+                                                    Đang hiển thị instruction từ câu{" "}
+                                                    <span className="font-bold">
+                                                        Q{resolvedInstruction.sourceQ.questionNumberStart}
+                                                        {resolvedInstruction.sourceQ.questionNumberEnd !== resolvedInstruction.sourceQ.questionNumberStart
+                                                            ? `–${resolvedInstruction.sourceQ.questionNumberEnd}`
+                                                            : ""}
+                                                    </span>
+                                                    <span className="text-gray-300">·</span>
+                                                    <span className="text-gray-400">order {resolvedInstruction.sourceQ.orderIndex}</span>
+                                                </div>
+                                                <div className="flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                                                    <span className="text-amber-500 text-xs leading-none shrink-0 mt-0.5">⚠️</span>
+                                                    <p className="text-xs text-amber-700 leading-relaxed">
+                                                        <strong>Lưu ý:</strong> Câu hỏi này không có Instruction riêng — đang kế thừa từ câu Q{resolvedInstruction.sourceQ.questionNumberStart}. Nếu bạn nhập Instruction ở đây, chỉ câu hỏi này bị ảnh hưởng. Để thay đổi cho cả Part, hãy sửa câu nguồn.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
-                        </div>
 
-                        {/* Type-specific card */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <h2 className="text-sm font-extrabold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-3 mb-5">
-                                {form.questionType.replace(/_/g, " ")} — Nội dung
-                            </h2>
-
-                            {form.questionType === "MULTIPLE_CHOICE" && (
-                                <MultipleChoiceSection form={form} mode={mode} onChange={patchForm} />
-                            )}
-                            {form.questionType === "FILL_IN_FORM" && (
-                                <FillInFormSection form={form} mode={mode} onChange={patchForm} />
-                            )}
-                            {form.questionType === "MATCHING" && (
-                                <MatchingSection form={form} mode={mode} onChange={patchForm} />
-                            )}
-                            {form.questionType === "FILL_IN_TEXT" && (
-                                <FillInTextSection form={form} mode={mode} onChange={patchForm} />
-                            )}
-                            {form.questionType === "SHORT_WRITE" && (
-                                <ShortWriteSection form={form} mode={mode} onChange={patchForm} />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Answer*/}
-                    <div className="w-80 shrink-0 space-y-5">
-
-                        {/* Part selector */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                            <h2 className="text-xs font-extrabold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-3 mb-4">
-                                Part
-                            </h2>
+                            {/* Correct Answer */}
                             <div>
-                                <FieldLabel>Part (theo section)</FieldLabel>
-                                {mode !== "view" ? (
-                                    <select
-                                        className={inputCls}
-                                        value={form.partId}
-                                        onChange={e => patchForm({ partId: e.target.value === "" ? "" : Number(e.target.value) })}
-                                    >
-                                        <option value="">-- Chọn Part --</option>
-                                        {parts.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                Part {p.partNumber} ({p.paperType.replace("_", " ")})
-                                            </option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <ReadonlyBox
-                                        value={
-                                            currentPartInfo
-                                                ? `Part ${currentPartInfo.partNumber} (${currentPartInfo.paperType.replace("_", " ")})`
-                                                : String(form.partId)
-                                        }
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Correct Answer */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                            <h2 className="text-xs font-extrabold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-3 mb-4">
-                                Đáp án đúng
-                            </h2>
-                            <div>
-                                <FieldLabel>Correct Answer</FieldLabel>
+                                <FieldLabel>Đáp án đúng</FieldLabel>
                                 {mode !== "view" ? (
                                     <>
                                         <textarea
@@ -1535,35 +1697,85 @@ export default function ExamQuestionDetailPage() {
                                 )}
                             </div>
                         </div>
+                    </div>
 
-                        {/* Meta info (view/edit only) */}
-                        {detail && (
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-                                <h2 className="text-xs font-extrabold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-3">
-                                    Meta
-                                </h2>
-                                <div>
-                                    <FieldLabel>Created At</FieldLabel>
-                                    <ReadonlyBox
-                                        value={
-                                            detail.createdAt
-                                                ? new Date(detail.createdAt).toLocaleString("vi-VN")
-                                                : "—"
-                                        }
+                    {/* RIGHT — Nội dung câu hỏi */}
+                    <div className="w-3/5 min-w-0 space-y-4">
+
+                        {/* Passage block (passageText / passageImageUrl) */}
+                        {form.questionType === "MULTIPLE_CHOICE" && (resolvedPassage.passageText || resolvedPassage.passageImageUrl) && (
+                            <div className={`rounded-2xl border shadow-sm p-5 ${resolvedPassage.isInherited ? "bg-blue-50/40 border-blue-100" : "bg-white border-gray-100"}`}>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <h3 className="text-sm font-extrabold text-gray-700 uppercase tracking-wider">
+                                        Passage
+                                    </h3>
+                                    {resolvedPassage.isInherited && (
+                                        <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold uppercase tracking-wider">
+                                            Kế thừa từ part
+                                        </span>
+                                    )}
+                                </div>
+                                {resolvedPassage.passageImageUrl && (
+                                    <img
+                                        src={resolvedPassage.passageImageUrl}
+                                        alt="passage"
+                                        className="rounded-xl border border-gray-200 max-h-48 object-contain mb-3"
+                                        onError={e => (e.currentTarget.style.display = "none")}
                                     />
-                                </div>
-                                <div>
-                                    <FieldLabel>MongoDB Doc ID</FieldLabel>
-                                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] text-gray-400 font-mono break-all">
-                                        {detail.mongoDocId}
+                                )}
+                                {resolvedPassage.passageText && (
+                                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                        <RichText text={resolvedPassage.passageText} />
+                                    </p>
+                                )}
+                                {/* Source info */}
+                                {resolvedPassage.isInherited && resolvedPassage.sourceQ && (
+                                    <div className="mt-3 flex items-center gap-1.5 text-[10px] text-blue-500 font-medium">
+                                        <span className="text-blue-400">↑</span>
+                                        Lấy từ câu{" "}
+                                        <span className="font-bold">
+                                            Q{resolvedPassage.sourceQ.questionNumberStart}
+                                            {resolvedPassage.sourceQ.questionNumberEnd !== resolvedPassage.sourceQ.questionNumberStart
+                                                ? `–${resolvedPassage.sourceQ.questionNumberEnd}`
+                                                : ""}
+                                        </span>
+                                        <span className="text-gray-300">·</span>
+                                        <span className="text-gray-400">order {resolvedPassage.sourceQ.orderIndex}</span>
                                     </div>
-                                </div>
-                                <div>
-                                    <FieldLabel>MySQL ID</FieldLabel>
-                                    <ReadonlyBox value={detail.id} />
-                                </div>
+                                )}
+                                {/* Warning khi edit mà passage là kế thừa */}
+                                {resolvedPassage.isInherited && mode !== "view" && resolvedPassage.sourceQ && (
+                                    <div className="mt-3 flex items-start gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                                        <span className="text-amber-500 text-xs leading-none shrink-0 mt-0.5">⚠️</span>
+                                        <p className="text-xs text-amber-700 leading-relaxed">
+                                            <strong>Lưu ý:</strong> Câu hỏi này đang dùng Passage từ câu Q{resolvedPassage.sourceQ.questionNumberStart}. Nếu bạn chỉnh sửa Passage Text / Passage Image URL trong mục bên dưới, thay đổi chỉ ảnh hưởng đến câu hỏi này. Để thay đổi passage chung cho toàn Part, hãy sửa câu Q{resolvedPassage.sourceQ.questionNumberStart} đó.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
+
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            <h2 className="text-sm font-extrabold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-3 mb-5">
+                                {form.questionType.replace(/_/g, " ")} — Nội dung
+                            </h2>
+
+                            {form.questionType === "MULTIPLE_CHOICE" && (
+                                <MultipleChoiceSection form={form} mode={mode} onChange={patchForm} />
+                            )}
+                            {form.questionType === "FILL_IN_FORM" && (
+                                <FillInFormSection form={form} mode={mode} onChange={patchForm} />
+                            )}
+                            {form.questionType === "MATCHING" && (
+                                <MatchingSection form={form} mode={mode} onChange={patchForm} />
+                            )}
+                            {form.questionType === "FILL_IN_TEXT" && (
+                                <FillInTextSection form={form} mode={mode} onChange={patchForm} />
+                            )}
+                            {form.questionType === "SHORT_WRITE" && (
+                                <ShortWriteSection form={form} mode={mode} onChange={patchForm} />
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
