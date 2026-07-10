@@ -136,9 +136,9 @@ public class AdminExamQuestionService {
     // ── Helpers ────────────────────────────────────────────────────────────
 
     private void validateSection(String section) {
-        if (!"LISTENING".equals(section) && !"READING_WRITING".equals(section)) {
+        if (!"LISTENING".equals(section) && !"READING_WRITING".equals(section) && !"SPEAKING".equals(section)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Section phải là LISTENING hoặc READING_WRITING, không hỗ trợ: " + section);
+                    "Section phải là LISTENING, READING_WRITING hoặc SPEAKING, không hỗ trợ: " + section);
         }
     }
 
@@ -191,6 +191,14 @@ public class AdminExamQuestionService {
         doc.setBulletPoints(req.getBulletPoints());
         doc.setStoryImages(req.getStoryImages());
 
+        // SPEAKING_TASK
+        doc.setPartTitle(req.getPartTitle());
+        doc.setPrompt(req.getPrompt());
+        doc.setPrepTimeSec(req.getPrepTimeSec());
+        doc.setSpeakTimeSec(req.getSpeakTimeSec());
+        doc.setImageUrl(req.getImageUrl());
+        doc.setSpeakingParts(req.getSpeakingParts());
+
         return doc;
     }
 
@@ -236,6 +244,13 @@ public class AdminExamQuestionService {
             dto.setPromptText(doc.getPromptText());
             dto.setBulletPoints(doc.getBulletPoints());
             dto.setStoryImages(doc.getStoryImages());
+            // SPEAKING_TASK
+            dto.setPartTitle(doc.getPartTitle());
+            dto.setPrompt(doc.getPrompt());
+            dto.setPrepTimeSec(doc.getPrepTimeSec());
+            dto.setSpeakTimeSec(doc.getSpeakTimeSec());
+            dto.setImageUrl(doc.getImageUrl());
+            dto.setSpeakingParts(doc.getSpeakingParts());
         }
 
         return dto;

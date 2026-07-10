@@ -60,4 +60,12 @@ public class ExamQuestionSaveRequest {
     private String promptText;
     private List<String> bulletPoints;
     private List<Map<String, Object>> storyImages;
+
+    // SPEAKING_TASK
+    private String partTitle;
+    private String prompt;
+    private Integer prepTimeSec;
+    private Integer speakTimeSec;
+    private String imageUrl;
+    private List<Map<String, Object>> speakingParts;
 }

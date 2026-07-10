@@ -10,6 +10,7 @@ import {
     Trash2,
     Plus,
     FileQuestion,
+    Mic,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -24,6 +25,7 @@ import ConfirmModal from "@/components/user/layout/ConfirmModal";
 const PAPER_ICONS: Record<string, React.ElementType> = {
     LISTENING: Headphones,
     READING_WRITING: BookOpen,
+    SPEAKING: Mic,
 };
 
 const PAPER_LABELS: Record<string, string> = {
@@ -41,9 +43,13 @@ const PAPER_BADGE: Record<string, string> = {
 const QUESTION_TYPE_COLORS: Record<string, string> = {
     MULTIPLE_CHOICE: "bg-sky-100 text-sky-700",
     FILL_IN_BLANK: "bg-amber-100 text-amber-700",
+    FILL_IN_FORM: "bg-amber-100 text-amber-700",
+    FILL_IN_TEXT: "bg-amber-100 text-amber-700",
     MATCHING: "bg-teal-100 text-teal-700",
     SHORT_ANSWER: "bg-pink-100 text-pink-700",
+    SHORT_WRITE: "bg-pink-100 text-pink-700",
     SPEAKING: "bg-emerald-100 text-emerald-700",
+    SPEAKING_TASK: "bg-emerald-100 text-emerald-700",
 };
 
 const LEVEL_COLORS: Record<string, string> = {

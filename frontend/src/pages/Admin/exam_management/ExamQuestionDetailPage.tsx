@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+﻿import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
     ArrowLeft,
@@ -11,6 +11,9 @@ import {
     Headphones,
     BookOpen,
     ChevronRight,
+    Mic,
+    Clock,
+    Image as ImageIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -54,6 +57,13 @@ interface QuestionForm {
     leftItems: ExamMatchItem[];
     rightItems: ExamMatchItem[];
     storyImages: ExamStoryImage[];
+    // SPEAKING_TASK
+    partTitle: string;
+    prompt: string;
+    prepTimeSec: number | "";
+    speakTimeSec: number | "";
+    imageUrl: string;
+    speakingParts: Record<string, unknown>[] | null;
 }
 
 const QUESTION_TYPES = [
@@ -62,11 +72,13 @@ const QUESTION_TYPES = [
     { value: "MATCHING", label: "Matching" },
     { value: "FILL_IN_TEXT", label: "Fill in Text" },
     { value: "SHORT_WRITE", label: "Short Write" },
+    { value: "SPEAKING_TASK", label: "Speaking Task" },
 ];
 
 const SECTIONS = [
     { value: "LISTENING", label: "Listening" },
     { value: "READING_WRITING", label: "Reading & Writing" },
+    { value: "SPEAKING", label: "Speaking" },
 ];
 
 const WRITE_TYPES = [
@@ -77,11 +89,13 @@ const WRITE_TYPES = [
 const SECTION_PAPER: Record<string, string> = {
     LISTENING: "LISTENING",
     READING_WRITING: "READING_WRITING",
+    SPEAKING: "SPEAKING",
 };
 
 const SECTION_BADGE: Record<string, string> = {
     LISTENING: "bg-blue-50 text-blue-600",
     READING_WRITING: "bg-purple-50 text-purple-600",
+    SPEAKING: "bg-emerald-50 text-emerald-600",
 };
 
 const QTYPE_BADGE: Record<string, string> = {
@@ -90,6 +104,7 @@ const QTYPE_BADGE: Record<string, string> = {
     FILL_IN_TEXT: "bg-amber-100 text-amber-700",
     MATCHING: "bg-teal-100 text-teal-700",
     SHORT_WRITE: "bg-pink-100 text-pink-700",
+    SPEAKING_TASK: "bg-emerald-100 text-emerald-700",
 };
 
 const QTYPE_HINTS: Record<string, string> = {
@@ -98,17 +113,21 @@ const QTYPE_HINTS: Record<string, string> = {
     MATCHING: 'Ví dụ: {"1":"D","2":"A","3":"C"}',
     FILL_IN_TEXT: 'Ví dụ: ["word1","word2"]',
     SHORT_WRITE: "Không bắt buộc với dạng viết",
+    SPEAKING_TASK: "Không bắt buộc — LLM đánh giá",
 };
 
 function buildEmptyForm(partId?: number, section?: string): QuestionForm {
+    const resolvedSection = section ?? "LISTENING";
+    // Speaking paper mặc định dùng SPEAKING_TASK
+    const defaultType = resolvedSection === "SPEAKING" ? "SPEAKING_TASK" : "MULTIPLE_CHOICE";
     return {
         partId: partId ?? "",
-        questionType: "MULTIPLE_CHOICE",
+        questionType: defaultType,
         questionNumberStart: "",
         questionNumberEnd: "",
         correctAnswer: "",
         orderIndex: "",
-        section: section ?? "LISTENING",
+        section: resolvedSection,
         instruction: "",
         text: "",
         passageImageUrl: "",
@@ -127,6 +146,13 @@ function buildEmptyForm(partId?: number, section?: string): QuestionForm {
         leftItems: [],
         rightItems: [],
         storyImages: [],
+        // SPEAKING_TASK
+        partTitle: "",
+        prompt: "",
+        prepTimeSec: 0,
+        speakTimeSec: 60,
+        imageUrl: "",
+        speakingParts: null,
     };
 }
 
@@ -157,6 +183,13 @@ function fromApiToForm(dto: ExamQuestionDetailDto): QuestionForm {
         leftItems: dto.leftItems ?? [],
         rightItems: dto.rightItems ?? [],
         storyImages: dto.storyImages ?? [],
+        // SPEAKING_TASK
+        partTitle: dto.partTitle ?? "",
+        prompt: dto.prompt ?? "",
+        prepTimeSec: dto.prepTimeSec ?? 0,
+        speakTimeSec: dto.speakTimeSec ?? 60,
+        imageUrl: dto.imageUrl ?? "",
+        speakingParts: dto.speakingParts ?? null,
     };
 }
 
@@ -214,6 +247,17 @@ function buildSaveRequest(form: QuestionForm): ExamQuestionSaveRequest {
             storyImages: form.storyImages.length > 0 ? form.storyImages : null,
         };
     }
+    if (form.questionType === "SPEAKING_TASK") {
+        return {
+            ...base,
+            partTitle: form.partTitle || null,
+            prompt: form.prompt || null,
+            prepTimeSec: form.prepTimeSec === "" ? null : (form.prepTimeSec as number),
+            speakTimeSec: form.speakTimeSec === "" ? null : (form.speakTimeSec as number),
+            imageUrl: form.imageUrl || null,
+            speakingParts: form.speakingParts && form.speakingParts.length > 0 ? form.speakingParts : null,
+        };
+    }
     return base;
 }
 
@@ -237,6 +281,13 @@ function resetTypeSpecificFields(form: QuestionForm): QuestionForm {
         promptText: "",
         bulletPoints: [],
         storyImages: [],
+        // speaking
+        partTitle: "",
+        prompt: "",
+        prepTimeSec: 0,
+        speakTimeSec: 60,
+        imageUrl: "",
+        speakingParts: null,
     };
 }
 
@@ -258,8 +309,8 @@ function ReadonlyBox({ value, className }: { value?: string | number | null; cla
 
 function SectionBadge({ section }: { section: string }) {
     const cls = SECTION_BADGE[section] ?? "bg-gray-100 text-gray-500";
-    const label = section === "LISTENING" ? "Listening" : "Reading & Writing";
-    const Icon = section === "LISTENING" ? Headphones : BookOpen;
+    const label = section === "LISTENING" ? "Listening" : section === "SPEAKING" ? "Speaking" : "Reading & Writing";
+    const Icon = section === "LISTENING" ? Headphones : section === "SPEAKING" ? Mic : BookOpen;
     return (
         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${cls}`}>
             <Icon size={11} />
@@ -1127,6 +1178,505 @@ function ShortWriteSection({
     );
 }
 
+// SPEAKING_TASK
+function SpeakingTaskSection({
+    form,
+    mode,
+    onChange,
+    partId,
+}: {
+    form: QuestionForm;
+    mode: Mode;
+    onChange: (patch: Partial<QuestionForm>) => void;
+    partId?: number;
+}) {
+    const isEdit = mode !== "view";
+    const hasSpeakingParts = !!(form.speakingParts && form.speakingParts.length > 0);
+
+    // JSON editor state for speakingParts
+    const [jsonText, setJsonText] = useState<string>(() =>
+        hasSpeakingParts ? JSON.stringify(form.speakingParts, null, 2) : ""
+    );
+    const [jsonError, setJsonError] = useState<string | null>(null);
+
+    // Sync jsonText khi chuyển mode (view <-> edit)
+    useEffect(() => {
+        if (form.speakingParts && form.speakingParts.length > 0) {
+            setJsonText(JSON.stringify(form.speakingParts, null, 2));
+        } else {
+            setJsonText("");
+        }
+        setJsonError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode]);
+
+    const handleJsonChange = (val: string) => {
+        setJsonText(val);
+        if (!val.trim()) {
+            setJsonError(null);
+            onChange({ speakingParts: null });
+            return;
+        }
+        try {
+            const parsed = JSON.parse(val);
+            if (!Array.isArray(parsed)) {
+                setJsonError("Phải là JSON array [ ... ]");
+                return;
+            }
+            setJsonError(null);
+            onChange({ speakingParts: parsed as Record<string, unknown>[] });
+        } catch (e) {
+            setJsonError("JSON không hợp lệ: " + (e instanceof Error ? e.message : String(e)));
+        }
+    };
+
+    return (
+        <div className="space-y-5">
+            {/* Part Title */}
+            <div>
+                <FieldLabel>Part Title</FieldLabel>
+                {isEdit ? (
+                    <input
+                        type="text"
+                        className={inputCls}
+                        value={form.partTitle}
+                        onChange={e => onChange({ partTitle: e.target.value })}
+                        placeholder="Ví dụ: Part 1 — Introduction"
+                    />
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <Mic size={14} className="text-emerald-500 shrink-0" />
+                        <span className="text-sm font-semibold text-gray-800">{form.partTitle || <span className="text-gray-300 italic">—</span>}</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Prompt — chỉ hiện khi không có speakingParts hoặc trong edit mode */}
+            {(!hasSpeakingParts || isEdit) && (
+                <div>
+                    <FieldLabel>Prompt đơn giản (câu hỏi / yêu cầu nói)</FieldLabel>
+                    {isEdit ? (
+                        <textarea
+                            className={`${inputCls} min-h-[120px] resize-y`}
+                            value={form.prompt}
+                            onChange={e => onChange({ prompt: e.target.value })}
+                            placeholder="Ví dụ: Tell me about your hobbies. What do you enjoy doing in your free time?"
+                        />
+                    ) : (
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                            {form.prompt ? <RichText text={form.prompt} /> : <span className="text-gray-300 italic">—</span>}
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {/* Prep Time + Speak Time */}
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <FieldLabel>Thời gian chuẩn bị (giây)</FieldLabel>
+                    {isEdit ? (
+                        <div className="relative">
+                            <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="number"
+                                className={`${inputCls} pl-8`}
+                                value={form.prepTimeSec}
+                                onChange={e => onChange({ prepTimeSec: e.target.value === "" ? "" : Number(e.target.value) })}
+                                placeholder="0"
+                                min={0}
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5">
+                            <Clock size={13} className="text-gray-400" />
+                            <span className="text-sm font-medium text-gray-700">{form.prepTimeSec ?? 0}s</span>
+                        </div>
+                    )}
+                </div>
+                <div>
+                    <FieldLabel>Thời gian nói (giây)</FieldLabel>
+                    {isEdit ? (
+                        <div className="relative">
+                            <Mic size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="number"
+                                className={`${inputCls} pl-8`}
+                                value={form.speakTimeSec}
+                                onChange={e => onChange({ speakTimeSec: e.target.value === "" ? "" : Number(e.target.value) })}
+                                placeholder="60"
+                                min={0}
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5">
+                            <Mic size={13} className="text-emerald-500" />
+                            <span className="text-sm font-medium text-gray-700">{form.speakTimeSec ?? 60}s</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Image URL */}
+            <div>
+                <FieldLabel>Ảnh minh họa (tùy chọn)</FieldLabel>
+                {isEdit ? (
+                    <>
+                        <ExamImageUploadInput
+                            value={form.imageUrl}
+                            onChange={url => onChange({ imageUrl: url })}
+                            partId={partId}
+                            placeholder="https://..."
+                        />
+                        {form.imageUrl && (
+                            <img
+                                src={form.imageUrl}
+                                alt="speaking illustration"
+                                className="mt-2 rounded-xl border border-gray-200 max-h-48 object-contain"
+                                onError={e => (e.currentTarget.style.display = "none")}
+                            />
+                        )}
+                    </>
+                ) : form.imageUrl ? (
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-1.5">
+                            <ImageIcon size={13} className="text-gray-400" />
+                            <p className="text-xs text-gray-400 break-all">{form.imageUrl}</p>
+                        </div>
+                        <img
+                            src={form.imageUrl}
+                            alt="speaking"
+                            className="rounded-xl border border-gray-200 max-h-48 object-contain"
+                            onError={e => (e.currentTarget.style.display = "none")}
+                        />
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-300 italic">Không có ảnh</p>
+                )}
+            </div>
+
+            {/* ── Speaking Parts (structured Cambridge format) ── */}
+            <div>
+                <div className="flex items-center justify-between mb-2">
+                    <FieldLabel>Speaking Parts (cấu trúc Cambridge)</FieldLabel>
+                    {hasSpeakingParts && !isEdit && (
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            {(form.speakingParts as Record<string, unknown>[]).length} parts
+                        </span>
+                    )}
+                </div>
+
+                {/* VIEW MODE — render structured speakingParts */}
+                {!isEdit && hasSpeakingParts && (
+                    <SpeakingPartsView parts={form.speakingParts as Record<string, unknown>[]} />
+                )}
+
+                {!isEdit && !hasSpeakingParts && (
+                    <p className="text-xs text-gray-300 italic">Không có dữ liệu Speaking Parts.</p>
+                )}
+
+                {/* EDIT MODE — JSON editor */}
+                {isEdit && (
+                    <div className="space-y-2">
+                        <p className="text-xs text-gray-400">
+                            Chỉnh sửa JSON trực tiếp. Cấu trúc:{" "}
+                            <code className="text-orange-500 text-[10px]">
+                                [{"{"}partNumber, partTitle, duration, phases: [{"{"}phaseNumber, interlocutorIntro, questions, mediaUrl, allowedTime{"}"}]{"}"}]
+                            </code>
+                        </p>
+                        <textarea
+                            className={`${inputCls} min-h-[320px] resize-y font-mono text-xs leading-relaxed${jsonError ? " border-red-400 focus:border-red-400" : ""}`}
+                            value={jsonText}
+                            onChange={e => handleJsonChange(e.target.value)}
+                            placeholder={'[\n  {\n    "partNumber": 1,\n    "partTitle": "Part 1",\n    "duration": 4,\n    "phases": [...]\n  }\n]'}
+                            spellCheck={false}
+                        />
+                        {jsonError && (
+                            <p className="text-xs text-red-500 font-medium">{jsonError}</p>
+                        )}
+                        {!jsonError && jsonText.trim() && (
+                            <p className="text-xs text-emerald-600 font-medium">JSON hợp lệ</p>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Preview card — view mode (chỉ khi không có speakingParts) */}
+            {!isEdit && !hasSpeakingParts && (
+                <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                        <Mic size={16} className="text-emerald-500" />
+                        <span className="text-sm font-extrabold text-emerald-700">Preview Speaking Task</span>
+                    </div>
+                    {form.partTitle && (
+                        <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">{form.partTitle}</p>
+                    )}
+                    {form.prompt && (
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{form.prompt}</p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs font-medium text-emerald-600">
+                        {(form.prepTimeSec !== "" && (form.prepTimeSec as number) > 0) && (
+                            <span className="flex items-center gap-1">
+                                <Clock size={11} />
+                                Chuẩn bị {form.prepTimeSec}s
+                            </span>
+                        )}
+                        {form.speakTimeSec !== "" && (
+                            <span className="flex items-center gap-1">
+                                <Mic size={11} />
+                                Nói {form.speakTimeSec}s
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── SpeakingPartsView — hiển thị cấu trúc Cambridge speaking_parts ────────────
+function SpeakingPartsView({ parts }: { parts: Record<string, unknown>[] }) {
+    const [expandedParts, setExpandedParts] = useState<Set<number>>(() => new Set([0]));
+    const [expandedPhases, setExpandedPhases] = useState<Set<string>>(() => new Set(["0-0"]));
+
+    const togglePart = (idx: number) => {
+        setExpandedParts(prev => {
+            const next = new Set(prev);
+            if (next.has(idx)) next.delete(idx); else next.add(idx);
+            return next;
+        });
+    };
+
+    const togglePhase = (key: string) => {
+        setExpandedPhases(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key); else next.add(key);
+            return next;
+        });
+    };
+
+    return (
+        <div className="space-y-3">
+            {parts.map((part, pIdx) => {
+                const partNumber = part.partNumber as number;
+                const partTitle = part.partTitle as string;
+                const duration = part.duration as number | undefined;
+                const phases = (part.phases as Record<string, unknown>[] | undefined) ?? [];
+                const isPartOpen = expandedParts.has(pIdx);
+
+                return (
+                    <div key={pIdx} className="rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden">
+                        {/* Part header */}
+                        <button
+                            type="button"
+                            onClick={() => togglePart(pIdx)}
+                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-emerald-50 transition"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-extrabold flex items-center justify-center shrink-0">
+                                    {partNumber}
+                                </span>
+                                <div className="text-left">
+                                    <p className="text-sm font-bold text-emerald-800">{partTitle || `Part ${partNumber}`}</p>
+                                    {duration !== undefined && (
+                                        <p className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                                            <Clock size={9} />
+                                            {duration} phút · {phases.length} phase{phases.length !== 1 ? "s" : ""}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <ChevronRight
+                                size={14}
+                                className={`text-emerald-400 transition-transform ${isPartOpen ? "rotate-90" : ""}`}
+                            />
+                        </button>
+
+                        {/* Part body */}
+                        {isPartOpen && (
+                            <div className="border-t border-emerald-200 divide-y divide-emerald-100">
+                                {phases.map((phase, phIdx) => {
+                                    const phaseKey = `${pIdx}-${phIdx}`;
+                                    const phaseNumber = phase.phaseNumber as number;
+                                    const intro = phase.interlocutorIntro as string | null;
+                                    const questions = (phase.questions as Record<string, unknown>[] | undefined) ?? [];
+                                    const backupPrompts = (phase.backupPrompts as string[] | undefined) ?? [];
+                                    const extendedResponse = phase.extendedResponse as Record<string, unknown> | null;
+                                    const mediaUrl = phase.mediaUrl as string | null;
+                                    const mediaUrls = phase.mediaUrls as string[] | null;
+                                    const allowedTime = phase.allowedTime as number | null;
+                                    const isPhaseOpen = expandedPhases.has(phaseKey);
+
+                                    return (
+                                        <div key={phIdx} className="bg-white">
+                                            {/* Phase header */}
+                                            <button
+                                                type="button"
+                                                onClick={() => togglePhase(phaseKey)}
+                                                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-5 h-5 rounded bg-gray-100 text-gray-600 text-[10px] font-bold flex items-center justify-center shrink-0">
+                                                        {phaseNumber}
+                                                    </span>
+                                                    <span className="text-xs font-semibold text-gray-600">
+                                                        Phase {phaseNumber}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-400">
+                                                        · {questions.length} câu hỏi
+                                                        {allowedTime !== null && allowedTime !== undefined && ` · ${allowedTime} phút`}
+                                                    </span>
+                                                    {mediaUrl && (
+                                                        <span className="text-[10px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded font-medium">
+                                                            Ảnh
+                                                        </span>
+                                                    )}
+                                                    {mediaUrls && mediaUrls.length > 0 && (
+                                                        <span className="text-[10px] bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded font-medium">
+                                                            {mediaUrls.length} ảnh
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <ChevronRight
+                                                    size={12}
+                                                    className={`text-gray-300 transition-transform ${isPhaseOpen ? "rotate-90" : ""}`}
+                                                />
+                                            </button>
+
+                                            {/* Phase body */}
+                                            {isPhaseOpen && (
+                                                <div className="px-4 pb-4 space-y-3">
+                                                    {/* Interlocutor intro */}
+                                                    {intro && (
+                                                        <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
+                                                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">
+                                                                Interlocutor Intro
+                                                            </p>
+                                                            <p className="text-xs text-gray-700 leading-relaxed italic">"{intro}"</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Media */}
+                                                    {mediaUrl && (
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Hình ảnh</p>
+                                                            <img
+                                                                src={mediaUrl}
+                                                                alt="phase media"
+                                                                className="rounded-xl border border-gray-200 max-h-52 object-contain"
+                                                                onError={e => (e.currentTarget.style.display = "none")}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    {mediaUrls && mediaUrls.length > 0 && (
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                                                                Hình ảnh ({mediaUrls.length})
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {mediaUrls.map((url, uIdx) => (
+                                                                    <img
+                                                                        key={uIdx}
+                                                                        src={url}
+                                                                        alt={`media ${uIdx + 1}`}
+                                                                        className="rounded-xl border border-gray-200 max-h-40 object-contain"
+                                                                        onError={e => (e.currentTarget.style.display = "none")}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Questions */}
+                                                    {questions.length > 0 && (
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                                                Câu hỏi ({questions.length})
+                                                            </p>
+                                                            <div className="space-y-2">
+                                                                {questions.map((q, qIdx) => {
+                                                                    const target = q.candidateTarget as string;
+                                                                    const qText = q.questionText as string;
+                                                                    const qType = q.type as string;
+                                                                    const backups = (q.backupQuestions as string[] | undefined) ?? [];
+                                                                    return (
+                                                                        <div key={qIdx} className="flex items-start gap-2.5 py-2 border-b border-gray-50 last:border-0">
+                                                                            <div className="flex gap-1 shrink-0 mt-0.5">
+                                                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                                                                                    target === "both"
+                                                                                        ? "bg-purple-100 text-purple-600"
+                                                                                        : target === "A"
+                                                                                        ? "bg-blue-100 text-blue-600"
+                                                                                        : "bg-pink-100 text-pink-600"
+                                                                                }`}>
+                                                                                    {target}
+                                                                                </span>
+                                                                                {qType && qType !== "direct" && (
+                                                                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 uppercase">
+                                                                                        {qType}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <p className="text-sm text-gray-800 leading-snug">{qText}</p>
+                                                                                {backups.length > 0 && (
+                                                                                    <div className="mt-1.5 flex flex-wrap gap-1">
+                                                                                        {backups.map((bq, bIdx) => (
+                                                                                            <span key={bIdx} className="text-[10px] text-gray-400 italic bg-gray-50 px-2 py-0.5 rounded">
+                                                                                                {bq}
+                                                                                            </span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Extended Response */}
+                                                    {extendedResponse && (
+                                                        <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3 space-y-1.5">
+                                                            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Extended Response</p>
+                                                            <p className="text-xs text-gray-700 italic">
+                                                                "{extendedResponse.prompt as string}"
+                                                            </p>
+                                                            {(extendedResponse.backupQuestions as string[] | undefined)?.map((bq, bIdx) => (
+                                                                <span key={bIdx} className="text-[10px] text-gray-400 italic bg-white px-2 py-0.5 rounded inline-block mr-1">
+                                                                    {bq}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Backup Prompts */}
+                                                    {backupPrompts.length > 0 && (
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Backup Prompts</p>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {backupPrompts.map((bp, bpIdx) => (
+                                                                    <span key={bpIdx} className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                                                        {bp}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function ExamQuestionDetailPage() {
     const { testId, questionId } = useParams<{ testId: string; questionId: string }>();
     const navigate = useNavigate();
@@ -1234,7 +1784,9 @@ export default function ExamQuestionDetailPage() {
 
     const handleSectionChange = (newSection: string) => {
         // Reset partId when section changes
-        patchForm({ section: newSection, partId: "" });
+        // Auto-switch questionType: SPEAKING → SPEAKING_TASK, others → MULTIPLE_CHOICE
+        const newType = newSection === "SPEAKING" ? "SPEAKING_TASK" : "MULTIPLE_CHOICE";
+        patchForm(resetTypeSpecificFields({ ...form, section: newSection, partId: "", questionType: newType }));
     };
 
     const validate = (): string | null => {
@@ -1603,7 +2155,8 @@ export default function ExamQuestionDetailPage() {
                                 )}
                             </div>
 
-                            {/* Instruction */}
+                            {/* Instruction — ẩn với SPEAKING_TASK (đã nằm trong SpeakingTaskSection) */}
+                            {form.questionType !== "SPEAKING_TASK" && (
                             <div>
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <label className={labelCls} style={{ margin: 0 }}>Instruction</label>
@@ -1673,8 +2226,10 @@ export default function ExamQuestionDetailPage() {
                                     </>
                                 )}
                             </div>
+                            )}
 
-                            {/* Correct Answer */}
+                            {/* Correct Answer — ẩn với SPEAKING_TASK / SHORT_WRITE (LLM chấm) */}
+                            {form.questionType !== "SPEAKING_TASK" && form.questionType !== "SHORT_WRITE" && (
                             <div>
                                 <FieldLabel>Đáp án đúng</FieldLabel>
                                 {mode !== "view" ? (
@@ -1698,6 +2253,17 @@ export default function ExamQuestionDetailPage() {
                                     />
                                 )}
                             </div>
+                            )}
+
+                            {/* Với SPEAKING_TASK / SHORT_WRITE — note LLM chấm */}
+                            {(form.questionType === "SPEAKING_TASK" || form.questionType === "SHORT_WRITE") && (
+                                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
+                                    <Mic size={13} className="text-emerald-500 shrink-0" />
+                                    <p className="text-xs text-emerald-600 font-medium">
+                                        Bài làm được chấm tự động bởi AI — không cần đáp án cứng.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -1776,6 +2342,9 @@ export default function ExamQuestionDetailPage() {
                             )}
                             {form.questionType === "SHORT_WRITE" && (
                                 <ShortWriteSection form={form} mode={mode} onChange={patchForm} partId={form.partId !== "" ? (form.partId as number) : undefined} />
+                            )}
+                            {form.questionType === "SPEAKING_TASK" && (
+                                <SpeakingTaskSection form={form} mode={mode} onChange={patchForm} partId={form.partId !== "" ? (form.partId as number) : undefined} />
                             )}
                         </div>
                     </div>

@@ -140,6 +140,13 @@ export interface ExamQuestionDetailDto {
     promptText: string | null;
     bulletPoints: string[] | null;
     storyImages: ExamStoryImage[] | null;
+    // SPEAKING_TASK
+    partTitle: string | null;
+    prompt: string | null;
+    prepTimeSec: number | null;
+    speakTimeSec: number | null;
+    imageUrl: string | null;
+    speakingParts: Record<string, unknown>[] | null;
 }
 
 export interface ExamQuestionSaveRequest {
@@ -168,6 +175,13 @@ export interface ExamQuestionSaveRequest {
     promptText?: string | null;
     bulletPoints?: string[] | null;
     storyImages?: ExamStoryImage[] | null;
+    // SPEAKING_TASK
+    partTitle?: string | null;
+    prompt?: string | null;
+    prepTimeSec?: number | null;
+    speakTimeSec?: number | null;
+    imageUrl?: string | null;
+    speakingParts?: Record<string, unknown>[] | null;
 }
 
 export interface ExamPartCreatePayload {
