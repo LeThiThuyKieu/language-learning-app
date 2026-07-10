@@ -186,6 +186,7 @@ public class ExamService {
         dto.setPrepTimeSec(mongo.getPrepTimeSec());
         dto.setSpeakTimeSec(mongo.getSpeakTimeSec());
         dto.setImageUrl(mongo.getImageUrl());
+        dto.setSpeakingParts(mongo.getSpeakingParts());
 
         return dto;
     }

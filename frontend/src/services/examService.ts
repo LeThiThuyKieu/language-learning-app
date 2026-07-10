@@ -98,6 +98,33 @@ export interface ExamQuestionDto {
   prepTimeSec?: number;
   speakTimeSec?: number;
   imageUrl?: string | null;
+  /** Cambridge format: Part → Phase → Question */
+  speakingParts?: SpeakingPart[];
+}
+
+export interface SpeakingPart {
+  partNumber: number;
+  partTitle: string;
+  duration: number; // phút
+  phases: SpeakingPhase[];
+}
+
+export interface SpeakingPhase {
+  phaseNumber: number;
+  interlocutorIntro: string | null;
+  questions: SpeakingQuestion[];
+  backupPrompts: string[];
+  extendedResponse: { prompt: string; backupQuestions: string[] } | null;
+  mediaUrl: string | null;       // 1 ảnh (backward compat)
+  mediaUrls: string[] | null;    // nhiều ảnh (B2 Part 2)
+  allowedTime: number | null;
+}
+
+export interface SpeakingQuestion {
+  candidateTarget: "A" | "B" | "both";
+  questionText: string;
+  type: "direct" | "follow-up" | "optional";
+  backupQuestions: string[];
 }
 
 export interface ExamPartDto {
@@ -113,7 +140,7 @@ export interface ExamPaperDto {
   parts: ExamPartDto[];
 }
 
-// ── Service ───────────────────────────────────────────────────────────────────
+// Service
 
 export const examService = {
   /**
