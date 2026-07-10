@@ -16,7 +16,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class ExamQuestionDto {
 
-    // ── Từ MySQL ─────────────────────────────────────────────
+    // Từ MySQL
     private Long id;                  // exam_question.id (MySQL PK)
     private String mongoDocId;        // mongo_doc_id (dùng làm key trên UI)
     private String questionType;      // MULTIPLE_CHOICE | FILL_IN_FORM | MATCHING | FILL_IN_TEXT | SHORT_WRITE | SPEAKING_TASK
@@ -24,10 +24,10 @@ public class ExamQuestionDto {
     private Integer questionNumberEnd;
     private String correctAnswer;     // null khi show lại bài chưa nộp hết
 
-    // ── Từ MongoDB (chung) ───────────────────────────────────
+    // Từ MongoDB (chung)
     private String instruction;       // hiển thị nếu khác null (câu đầu nhóm)
 
-    // ── MULTIPLE_CHOICE ──────────────────────────────────────
+    // MULTIPLE_CHOICE
     private Integer questionNumber;
     private String text;
     private List<Map<String, Object>> options;   // [{id, text, image_url}]
@@ -36,19 +36,19 @@ public class ExamQuestionDto {
     private String passageText;                  // R&W Part 2+ — đoạn văn dài (lưu ở câu đầu part)
     private List<Map<String, Object>> blanksOptions; // FILL_IN_FORM paragraph — [{number, options:[]}]
 
-    // ── FILL_IN_FORM ─────────────────────────────────────────
+    // FILL_IN_FORM
     private String formTitle;
     private String formContent;      // plain text với ____ marker + \n
 
-    // ── MATCHING ─────────────────────────────────────────────
+    // MATCHING
     private String instructionDetail;
     private List<Map<String, Object>> leftItems;   // [{question_number, label}]
     private List<Map<String, Object>> rightItems;  // [{id, label}]
 
-    // ── FILL_IN_TEXT ─────────────────────────────────────────
+    // FILL_IN_TEXT
     private String sentence;         // câu có ____ marker
 
-    // ── SHORT_WRITE ──────────────────────────────────────────
+    // SHORT_WRITE
     private String writeType;        // "EMAIL" | "STORY"
     private Integer minWords;
     private Integer maxWords;
@@ -56,10 +56,18 @@ public class ExamQuestionDto {
     private List<String> bulletPoints;
     private List<Map<String, Object>> storyImages; // [{order, image_url, alt}]
 
-    // ── SPEAKING_TASK ─────────────────────────────────────────
+    // SPEAKING_TASK
     private String partTitle;
     private String prompt;
     private Integer prepTimeSec;
     private Integer speakTimeSec;
     private String imageUrl;
+
+    /**
+     * Dữ liệu Speaking dạng Cambridge (Part → Phase → Question).
+     * Mỗi phần tử là một SpeakingPart gồm: partNumber, partTitle, duration, phases[].
+     * Mỗi phase gồm: phaseNumber, interlocutorIntro, questions[], backupPrompts,
+     * extendedResponse, mediaUrl, allowedTime.
+     */
+    private List<Map<String, Object>> speakingParts;
 }
