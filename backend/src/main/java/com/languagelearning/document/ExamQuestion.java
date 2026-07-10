@@ -134,4 +134,27 @@ public class ExamQuestion {
 
     @Field("image_url")
     private String imageUrl;
+
+    /**
+     * Dùng cho SPEAKING_TASK dạng structured (Cambridge A2/B1...).
+     * Thay thế prompt đơn giản khi Speaking có nhiều Part → Phase → Question.
+     *
+     * speaking_parts: [
+     *   {
+     *     partNumber, partTitle, duration,
+     *     phases: [
+     *       {
+     *         phaseNumber, interlocutorIntro,
+     *         questions: [{ candidateTarget, questionText, type, backupQuestions }],
+     *         backupPrompts, extendedResponse, mediaUrl, allowedTime
+     *       }
+     *     ]
+     *   }
+     * ]
+     */
+    @Field("speaking_parts")
+    private List<Map<String, Object>> speakingParts;
+    // Note: trong mỗi phase của speaking_parts, hỗ trợ cả:
+    // - mediaUrl  (String)   — 1 ảnh
+    // - mediaUrls (List)     — nhiều ảnh (vd B2 Part 2 có 2 ảnh/phase)
 }
