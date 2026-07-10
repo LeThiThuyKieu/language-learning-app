@@ -19,6 +19,7 @@ import {
     type AdminExamQuestionDto,
 } from "@/services/admin/examManagementService";
 import { getErrorMessage } from "@/utils/errorMessage";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 const PAPER_ICONS: Record<string, React.ElementType> = {
     LISTENING: Headphones,
@@ -178,6 +179,7 @@ export default function ExamTestQuestionsPage() {
     const [loading, setLoading] = useState(true);
     const [filterPaper, setFilterPaper] = useState<string>("ALL");
     const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<FlatQuestion | null>(null);
 
     // Parse ?partId from query string
     const queryPartId = (() => {
@@ -198,7 +200,13 @@ export default function ExamTestQuestionsPage() {
     };
 
     const handleDeleteQuestion = async (q: FlatQuestion) => {
-        if (!confirm(`Xóa câu hỏi Q${q.questionNumberStart}? Hành động này không thể hoàn tác.`)) return;
+        setPendingDelete(q);
+    };
+
+    const confirmDelete = async () => {
+        if (!pendingDelete) return;
+        const q = pendingDelete;
+        setPendingDelete(null);
         setDeletingId(q.id);
         try {
             await examQuestionApi.delete(q.id);
@@ -311,6 +319,7 @@ export default function ExamTestQuestionsPage() {
         : flatQuestions.filter(q => q.paperType === filterPaper);
 
     return (
+        <>
         <div className="p-6 space-y-6">
             {/* Back + Header */}
             <div>
@@ -582,5 +591,13 @@ export default function ExamTestQuestionsPage() {
                 )}
             </div>
         </div>
+
+        <ConfirmModal
+            isOpen={pendingDelete !== null}
+            onClose={() => setPendingDelete(null)}
+            onConfirm={confirmDelete}
+            message={`Bạn có chắc muốn xóa câu hỏi Q${pendingDelete?.questionNumberStart}? Hành động này không thể hoàn tác.`}
+        />
+        </>
     );
 }

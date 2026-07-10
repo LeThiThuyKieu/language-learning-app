@@ -6,8 +6,6 @@ interface ApiResponse<T> {
     data: T;
 }
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 export interface ExamTestStats {
     totalTests: number;
     activeTests: number;
@@ -305,9 +303,24 @@ export const examManagementService = {
         );
         return res.data.data;
     },
-};
 
-// ── Exam Question API ─────────────────────────────────────────────────────────
+    /**
+     * Upload ảnh câu hỏi exam lên Cloudinary.
+     * Folder: img_file/exam/{cefrLevel}/{testTitle} — dựa theo partId để resolve test info.
+     */
+    async uploadQuestionImage(partId: number, file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await apiClient.post<ApiResponse<string>>(
+            `/admin/exam-tests/parts/${partId}/upload-image`,
+            formData,
+            {
+                headers: { "Content-Type": "multipart/form-data" },
+            }
+        );
+        return res.data.data;
+    },
+};
 
 export const examQuestionApi = {
     getDetail: async (id: number): Promise<ExamQuestionDetailDto> => {

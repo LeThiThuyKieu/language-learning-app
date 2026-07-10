@@ -238,7 +238,23 @@ public class AdminExamTestManagementService {
         examPaperRepository.save(paper);
 
         return audioUrl;
-    } ──────────────────────────────────────────────────────────────
+    }
+
+    /**
+     * Upload ảnh cho câu hỏi exam lên Cloudinary.
+     * Folder: img_file/exam/{cefrLevel}/{testTitle}
+     * Ví dụ: img_file/exam/A2/Test 1
+     */
+    public String uploadExamImage(Integer partId, MultipartFile file, QuestionMediaUploadService mediaUploadService) {
+        ExamPart part = examPartRepository.findByIdWithPaperAndTest(partId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Part not found"));
+
+        ExamTest test = part.getPaper().getExamTest();
+        String cefrLevel = test.getCefrLevel().name();          // e.g. "A2"
+        String testTitle = "Test " + test.getTestNumber();       // e.g. "Test 1"
+
+        return mediaUploadService.uploadExamImage(file, cefrLevel, testTitle);
+    } 
 
     private AdminExamTestDto toAdminTestDto(ExamTest test) {
         AdminExamTestDto dto = new AdminExamTestDto();

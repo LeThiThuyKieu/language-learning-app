@@ -24,6 +24,7 @@ import {
     type ExamStoryImage,
     type AdminExamTestDto,
 } from "@/services/admin/examManagementService";
+import ExamImageUploadInput from "@/components/admin/exam_management/ExamImageUploadInput";
 
 type Mode = "view" | "edit" | "create";
 
@@ -350,10 +351,12 @@ function MultipleChoiceSection({
     form,
     mode,
     onChange,
+    partId,
 }: {
     form: QuestionForm;
     mode: Mode;
     onChange: (patch: Partial<QuestionForm>) => void;
+    partId?: number;
 }) {
     const isEdit = mode !== "view";
 
@@ -396,11 +399,10 @@ function MultipleChoiceSection({
                 <>
                     <div>
                         <FieldLabel>Passage Image URL</FieldLabel>
-                        <input
-                            type="text"
-                            className={inputCls}
+                        <ExamImageUploadInput
                             value={form.passageImageUrl}
-                            onChange={e => onChange({ passageImageUrl: e.target.value })}
+                            onChange={url => onChange({ passageImageUrl: url })}
+                            partId={partId}
                             placeholder="https://..."
                         />
                         {form.passageImageUrl && (
@@ -500,11 +502,10 @@ function MultipleChoiceSection({
                                     )}
                                 </div>
                                 {isEdit ? (
-                                    <input
-                                        type="text"
-                                        className={inputCls}
+                                    <ExamImageUploadInput
                                         value={opt.image_url ?? ""}
-                                        onChange={e => updateOption(idx, { image_url: e.target.value || null })}
+                                        onChange={url => updateOption(idx, { image_url: url || null })}
+                                        partId={partId}
                                         placeholder="Image URL (tùy chọn)..."
                                     />
                                 ) : null}
@@ -910,10 +911,12 @@ function ShortWriteSection({
     form,
     mode,
     onChange,
+    partId,
 }: {
     form: QuestionForm;
     mode: Mode;
     onChange: (patch: Partial<QuestionForm>) => void;
+    partId?: number;
 }) {
     const isEdit = mode !== "view";
 
@@ -1091,11 +1094,10 @@ function ShortWriteSection({
                             </div>
                             {isEdit ? (
                                 <>
-                                    <input
-                                        type="text"
-                                        className={inputCls}
+                                    <ExamImageUploadInput
                                         value={img.image_url}
-                                        onChange={e => updateImage(idx, { image_url: e.target.value })}
+                                        onChange={url => updateImage(idx, { image_url: url })}
+                                        partId={partId}
                                         placeholder="Image URL..."
                                     />
                                     <input
@@ -1761,7 +1763,7 @@ export default function ExamQuestionDetailPage() {
                             </h2>
 
                             {form.questionType === "MULTIPLE_CHOICE" && (
-                                <MultipleChoiceSection form={form} mode={mode} onChange={patchForm} />
+                                <MultipleChoiceSection form={form} mode={mode} onChange={patchForm} partId={form.partId !== "" ? (form.partId as number) : undefined} />
                             )}
                             {form.questionType === "FILL_IN_FORM" && (
                                 <FillInFormSection form={form} mode={mode} onChange={patchForm} />
@@ -1773,7 +1775,7 @@ export default function ExamQuestionDetailPage() {
                                 <FillInTextSection form={form} mode={mode} onChange={patchForm} />
                             )}
                             {form.questionType === "SHORT_WRITE" && (
-                                <ShortWriteSection form={form} mode={mode} onChange={patchForm} />
+                                <ShortWriteSection form={form} mode={mode} onChange={patchForm} partId={form.partId !== "" ? (form.partId as number) : undefined} />
                             )}
                         </div>
                     </div>

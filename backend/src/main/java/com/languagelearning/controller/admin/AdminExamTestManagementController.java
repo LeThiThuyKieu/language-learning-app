@@ -132,4 +132,19 @@ public class AdminExamTestManagementController {
         String audioUrl = examTestManagementService.uploadPaperAudio(paperId, file, mediaUploadService);
         return ResponseEntity.ok(ApiResponse.success("Upload audio thành công", audioUrl));
     }
+
+    /**
+     * Upload ảnh câu hỏi lên Cloudinary.
+     * Lưu trong thư mục: img_file/exam/{cefrLevel}/{testTitle}
+     * Ví dụ: img_file/exam/A2/Test 1
+     * POST /api/admin/exam-tests/parts/{partId}/upload-image
+     */
+    @PostMapping(value = "/parts/{partId}/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadExamImage(
+            @PathVariable Integer partId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        String imageUrl = examTestManagementService.uploadExamImage(partId, file, mediaUploadService);
+        return ResponseEntity.ok(ApiResponse.success("Upload ảnh thành công", imageUrl));
+    }
 }
