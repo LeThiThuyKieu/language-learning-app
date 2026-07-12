@@ -1178,6 +1178,349 @@ function ShortWriteSection({
     );
 }
 
+// ── Types cho structured speaking editor ──────────────────────────────────────
+interface SpeakingQuestion {
+    candidateTarget: string;
+    questionText: string;
+    type: string;
+    backupQuestions: string[];
+}
+interface SpeakingExtendedResponse {
+    prompt: string;
+    backupQuestions: string[];
+}
+interface SpeakingPhase {
+    phaseNumber: number;
+    interlocutorIntro: string;
+    questions: SpeakingQuestion[];
+    backupPrompts: string[];
+    extendedResponse: SpeakingExtendedResponse | null;
+    mediaUrl: string;
+    mediaUrls: string[];
+    allowedTime: number | null;
+}
+interface SpeakingPart {
+    partNumber: number;
+    partTitle: string;
+    duration: number | "";
+    phases: SpeakingPhase[];
+}
+
+function toSpeakingParts(raw: Record<string, unknown>[]): SpeakingPart[] {
+    return raw.map(p => ({
+        partNumber: (p.partNumber as number) ?? 0,
+        partTitle: (p.partTitle as string) ?? "",
+        duration: (p.duration as number) ?? "",
+        phases: ((p.phases as Record<string, unknown>[]) ?? []).map(ph => ({
+            phaseNumber: (ph.phaseNumber as number) ?? 0,
+            interlocutorIntro: (ph.interlocutorIntro as string) ?? "",
+            questions: ((ph.questions as Record<string, unknown>[]) ?? []).map(q => ({
+                candidateTarget: (q.candidateTarget as string) ?? "both",
+                questionText: (q.questionText as string) ?? "",
+                type: (q.type as string) ?? "direct",
+                backupQuestions: (q.backupQuestions as string[]) ?? [],
+            })),
+            backupPrompts: (ph.backupPrompts as string[]) ?? [],
+            extendedResponse: ph.extendedResponse
+                ? {
+                    prompt: ((ph.extendedResponse as Record<string, unknown>).prompt as string) ?? "",
+                    backupQuestions: ((ph.extendedResponse as Record<string, unknown>).backupQuestions as string[]) ?? [],
+                }
+                : null,
+            mediaUrl: (ph.mediaUrl as string) ?? "",
+            mediaUrls: (ph.mediaUrls as string[]) ?? [],
+            allowedTime: (ph.allowedTime as number | null) ?? null,
+        })),
+    }));
+}
+
+function fromSpeakingParts(parts: SpeakingPart[]): Record<string, unknown>[] {
+    return parts.map(p => ({
+        partNumber: p.partNumber,
+        partTitle: p.partTitle,
+        duration: p.duration === "" ? null : p.duration,
+        phases: p.phases.map(ph => ({
+            phaseNumber: ph.phaseNumber,
+            interlocutorIntro: ph.interlocutorIntro || null,
+            questions: ph.questions,
+            backupPrompts: ph.backupPrompts.filter(Boolean),
+            extendedResponse: ph.extendedResponse?.prompt
+                ? {
+                    prompt: ph.extendedResponse.prompt,
+                    backupQuestions: ph.extendedResponse.backupQuestions.filter(Boolean),
+                }
+                : null,
+            mediaUrl: ph.mediaUrl || null,
+            mediaUrls: ph.mediaUrls.filter(Boolean).length > 0 ? ph.mediaUrls.filter(Boolean) : undefined,
+            allowedTime: ph.allowedTime,
+        })),
+    }));
+}
+
+const smInputCls = "w-full rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-sm outline-none transition focus:border-orange-400 focus:bg-white";
+
+// Editor cho 1 question trong phase
+function QuestionEditor({
+    q, idx, onUpdate, onRemove,
+}: {
+    q: SpeakingQuestion; idx: number;
+    onUpdate: (patch: Partial<SpeakingQuestion>) => void;
+    onRemove: () => void;
+}) {
+    const [open, setOpen] = useState(idx === 0);
+    return (
+        <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+            <div
+                className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50 transition select-none"
+                onClick={() => setOpen(o => !o)}
+            >
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                    q.candidateTarget === "both" ? "bg-purple-100 text-purple-600"
+                    : q.candidateTarget === "A" ? "bg-blue-100 text-blue-600"
+                    : "bg-pink-100 text-pink-600"
+                }`}>{q.candidateTarget}</span>
+                <span className="text-xs text-gray-700 flex-1 truncate">{q.questionText || <span className="text-gray-300 italic">Chưa có nội dung</span>}</span>
+                <button type="button" onClick={e => { e.stopPropagation(); onRemove(); }}
+                    className="p-1 text-gray-300 hover:text-red-500 transition shrink-0">
+                    <X size={12} />
+                </button>
+                <ChevronRight size={12} className={`text-gray-300 transition-transform shrink-0 ${open ? "rotate-90" : ""}`} />
+            </div>
+            {open && (
+                <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
+                    {/* Candidate + Type row */}
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                        <div>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Candidate</label>
+                            <select className={smInputCls} value={q.candidateTarget}
+                                onChange={e => onUpdate({ candidateTarget: e.target.value })}>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Type</label>
+                            <select className={smInputCls} value={q.type}
+                                onChange={e => onUpdate({ type: e.target.value })}>
+                                <option value="direct">Direct</option>
+                                <option value="follow-up">Follow-up</option>
+                                <option value="optional">Optional</option>
+                            </select>
+                        </div>
+                    </div>
+                    {/* Question text */}
+                    <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nội dung câu hỏi</label>
+                        <textarea className={`${smInputCls} min-h-[60px] resize-y`} value={q.questionText}
+                            onChange={e => onUpdate({ questionText: e.target.value })}
+                            placeholder="Nhập câu hỏi..." />
+                    </div>
+                    {/* Backup questions */}
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Backup Questions</label>
+                            <button type="button" onClick={() => onUpdate({ backupQuestions: [...q.backupQuestions, ""] })}
+                                className="text-[10px] font-bold text-orange-500 hover:text-orange-600 flex items-center gap-0.5">
+                                <Plus size={10} /> Thêm
+                            </button>
+                        </div>
+                        {q.backupQuestions.map((bq, bIdx) => (
+                            <div key={bIdx} className="flex items-center gap-1.5 mb-1">
+                                <input type="text" className={`${smInputCls} flex-1`} value={bq}
+                                    onChange={e => {
+                                        const next = q.backupQuestions.map((v, i) => i === bIdx ? e.target.value : v);
+                                        onUpdate({ backupQuestions: next });
+                                    }}
+                                    placeholder="Backup question..." />
+                                <button type="button" onClick={() => onUpdate({ backupQuestions: q.backupQuestions.filter((_, i) => i !== bIdx) })}
+                                    className="p-1 text-gray-300 hover:text-red-500 transition">
+                                    <X size={11} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Editor cho 1 phase
+function PhaseEditor({
+    phase, phaseIdx, partId: uploadPartId, onUpdate, onRemove,
+}: {
+    phase: SpeakingPhase; phaseIdx: number;
+    partId?: number;
+    onUpdate: (patch: Partial<SpeakingPhase>) => void;
+    onRemove: () => void;
+}) {
+    const [open, setOpen] = useState(phaseIdx === 0);
+
+    const updateQuestion = (qIdx: number, patch: Partial<SpeakingQuestion>) => {
+        const next = phase.questions.map((q, i) => i === qIdx ? { ...q, ...patch } : q);
+        onUpdate({ questions: next });
+    };
+    const removeQuestion = (qIdx: number) => onUpdate({ questions: phase.questions.filter((_, i) => i !== qIdx) });
+    const addQuestion = () => onUpdate({
+        questions: [...phase.questions, { candidateTarget: "both", questionText: "", type: "direct", backupQuestions: [] }]
+    });
+
+    return (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/30 overflow-hidden">
+            {/* Phase header */}
+            <div
+                className="flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:bg-blue-50 transition select-none"
+                onClick={() => setOpen(o => !o)}
+            >
+                <span className="w-5 h-5 rounded bg-blue-100 text-blue-600 text-[10px] font-extrabold flex items-center justify-center shrink-0">
+                    {phase.phaseNumber}
+                </span>
+                <span className="text-xs font-bold text-blue-700 flex-1">Phase {phase.phaseNumber}</span>
+                <span className="text-[10px] text-blue-400">{phase.questions.length} câu hỏi</span>
+                <button type="button" onClick={e => { e.stopPropagation(); onRemove(); }}
+                    className="p-1 text-gray-300 hover:text-red-500 transition shrink-0">
+                    <X size={12} />
+                </button>
+                <ChevronRight size={12} className={`text-blue-300 transition-transform shrink-0 ${open ? "rotate-90" : ""}`} />
+            </div>
+
+            {open && (
+                <div className="border-t border-blue-200 bg-white px-4 pb-4 space-y-3 pt-3">
+                    {/* Phase number */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Phase Number</label>
+                            <input type="number" className={smInputCls} value={phase.phaseNumber} min={1}
+                                onChange={e => onUpdate({ phaseNumber: Number(e.target.value) })} />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Allowed Time (phút)</label>
+                            <input type="number" className={smInputCls}
+                                value={phase.allowedTime ?? ""} min={0}
+                                onChange={e => onUpdate({ allowedTime: e.target.value === "" ? null : Number(e.target.value) })}
+                                placeholder="Không giới hạn" />
+                        </div>
+                    </div>
+
+                    {/* Interlocutor Intro */}
+                    <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Interlocutor Intro</label>
+                        <textarea className={`${smInputCls} min-h-[60px] resize-y`} value={phase.interlocutorIntro}
+                            onChange={e => onUpdate({ interlocutorIntro: e.target.value })}
+                            placeholder="Lời giới thiệu của giám khảo..." />
+                    </div>
+
+                    {/* Media URL */}
+                    <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Ảnh (Media URL)</label>
+                        <ExamImageUploadInput value={phase.mediaUrl} partId={uploadPartId}
+                            onChange={url => onUpdate({ mediaUrl: url })} placeholder="https://..." />
+                        {phase.mediaUrl && (
+                            <img src={phase.mediaUrl} alt="phase media"
+                                className="mt-1.5 rounded-lg border border-gray-200 max-h-32 object-contain"
+                                onError={e => (e.currentTarget.style.display = "none")} />
+                        )}
+                    </div>
+
+                    {/* Questions */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Câu hỏi ({phase.questions.length})
+                            </label>
+                            <button type="button" onClick={addQuestion}
+                                className="flex items-center gap-1 text-[10px] font-bold text-orange-500 hover:text-orange-600">
+                                <Plus size={11} /> Thêm câu hỏi
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            {phase.questions.length === 0 && (
+                                <p className="text-xs text-gray-300 italic">Chưa có câu hỏi nào.</p>
+                            )}
+                            {phase.questions.map((q, qIdx) => (
+                                <QuestionEditor key={qIdx} q={q} idx={qIdx}
+                                    onUpdate={patch => updateQuestion(qIdx, patch)}
+                                    onRemove={() => removeQuestion(qIdx)} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Backup Prompts */}
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Backup Prompts</label>
+                            <button type="button" onClick={() => onUpdate({ backupPrompts: [...phase.backupPrompts, ""] })}
+                                className="text-[10px] font-bold text-orange-500 hover:text-orange-600 flex items-center gap-0.5">
+                                <Plus size={10} /> Thêm
+                            </button>
+                        </div>
+                        {phase.backupPrompts.map((bp, bpIdx) => (
+                            <div key={bpIdx} className="flex items-center gap-1.5 mb-1">
+                                <input type="text" className={`${smInputCls} flex-1`} value={bp}
+                                    onChange={e => {
+                                        const next = phase.backupPrompts.map((v, i) => i === bpIdx ? e.target.value : v);
+                                        onUpdate({ backupPrompts: next });
+                                    }} placeholder="Backup prompt..." />
+                                <button type="button"
+                                    onClick={() => onUpdate({ backupPrompts: phase.backupPrompts.filter((_, i) => i !== bpIdx) })}
+                                    className="p-1 text-gray-300 hover:text-red-500 transition"><X size={11} /></button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Extended Response */}
+                    <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-3 space-y-2">
+                        <label className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Extended Response (tùy chọn)</label>
+                        <textarea className={`${smInputCls} min-h-[52px] resize-y`}
+                            value={phase.extendedResponse?.prompt ?? ""}
+                            onChange={e => onUpdate({
+                                extendedResponse: e.target.value
+                                    ? { prompt: e.target.value, backupQuestions: phase.extendedResponse?.backupQuestions ?? [] }
+                                    : null
+                            })}
+                            placeholder="Prompt extended response..." />
+                        {phase.extendedResponse?.prompt && (
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Backup Questions</label>
+                                    <button type="button"
+                                        onClick={() => onUpdate({
+                                            extendedResponse: {
+                                                prompt: phase.extendedResponse!.prompt,
+                                                backupQuestions: [...(phase.extendedResponse?.backupQuestions ?? []), ""],
+                                            }
+                                        })}
+                                        className="text-[10px] font-bold text-orange-500 hover:text-orange-600 flex items-center gap-0.5">
+                                        <Plus size={10} /> Thêm
+                                    </button>
+                                </div>
+                                {(phase.extendedResponse?.backupQuestions ?? []).map((bq, bIdx) => (
+                                    <div key={bIdx} className="flex items-center gap-1.5 mb-1">
+                                        <input type="text" className={`${smInputCls} flex-1`} value={bq}
+                                            onChange={e => {
+                                                const next = (phase.extendedResponse?.backupQuestions ?? []).map((v, i) => i === bIdx ? e.target.value : v);
+                                                onUpdate({ extendedResponse: { prompt: phase.extendedResponse!.prompt, backupQuestions: next } });
+                                            }} placeholder="Backup question..." />
+                                        <button type="button"
+                                            onClick={() => onUpdate({
+                                                extendedResponse: {
+                                                    prompt: phase.extendedResponse!.prompt,
+                                                    backupQuestions: (phase.extendedResponse?.backupQuestions ?? []).filter((_, i) => i !== bIdx),
+                                                }
+                                            })}
+                                            className="p-1 text-gray-300 hover:text-red-500 transition"><X size={11} /></button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 // SPEAKING_TASK
 function SpeakingTaskSection({
     form,
@@ -1193,41 +1536,77 @@ function SpeakingTaskSection({
     const isEdit = mode !== "view";
     const hasSpeakingParts = !!(form.speakingParts && form.speakingParts.length > 0);
 
-    // JSON editor state for speakingParts
-    const [jsonText, setJsonText] = useState<string>(() =>
-        hasSpeakingParts ? JSON.stringify(form.speakingParts, null, 2) : ""
+    // Structured state for the visual editor
+    const [editParts, setEditParts] = useState<SpeakingPart[]>(() =>
+        hasSpeakingParts ? toSpeakingParts(form.speakingParts as Record<string, unknown>[]) : []
     );
-    const [jsonError, setJsonError] = useState<string | null>(null);
 
-    // Sync jsonText khi chuyển mode (view <-> edit)
+    // Sync khi mode chuyển sang edit: rebuild from form.speakingParts
     useEffect(() => {
-        if (form.speakingParts && form.speakingParts.length > 0) {
-            setJsonText(JSON.stringify(form.speakingParts, null, 2));
-        } else {
-            setJsonText("");
+        if (isEdit) {
+            setEditParts(
+                form.speakingParts && form.speakingParts.length > 0
+                    ? toSpeakingParts(form.speakingParts as Record<string, unknown>[])
+                    : []
+            );
         }
-        setJsonError(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mode]);
+    }, [isEdit]);
 
-    const handleJsonChange = (val: string) => {
-        setJsonText(val);
-        if (!val.trim()) {
-            setJsonError(null);
-            onChange({ speakingParts: null });
-            return;
-        }
-        try {
-            const parsed = JSON.parse(val);
-            if (!Array.isArray(parsed)) {
-                setJsonError("Phải là JSON array [ ... ]");
-                return;
-            }
-            setJsonError(null);
-            onChange({ speakingParts: parsed as Record<string, unknown>[] });
-        } catch (e) {
-            setJsonError("JSON không hợp lệ: " + (e instanceof Error ? e.message : String(e)));
-        }
+    // Push changes up
+    const updateParts = (next: SpeakingPart[]) => {
+        setEditParts(next);
+        onChange({ speakingParts: next.length > 0 ? fromSpeakingParts(next) : null });
+    };
+
+    const addPart = () => {
+        const nextNum = editParts.length + 1;
+        updateParts([...editParts, {
+            partNumber: nextNum,
+            partTitle: `Part ${nextNum}`,
+            duration: "",
+            phases: [{
+                phaseNumber: 1,
+                interlocutorIntro: "",
+                questions: [],
+                backupPrompts: [],
+                extendedResponse: null,
+                mediaUrl: "",
+                mediaUrls: [],
+                allowedTime: null,
+            }],
+        }]);
+    };
+
+    const updatePart = (pIdx: number, patch: Partial<SpeakingPart>) => {
+        updateParts(editParts.map((p, i) => i === pIdx ? { ...p, ...patch } : p));
+    };
+
+    const removePart = (pIdx: number) => updateParts(editParts.filter((_, i) => i !== pIdx));
+
+    const addPhase = (pIdx: number) => {
+        const part = editParts[pIdx];
+        const nextPhaseNum = part.phases.length + 1;
+        const newPhase: SpeakingPhase = {
+            phaseNumber: nextPhaseNum,
+            interlocutorIntro: "",
+            questions: [],
+            backupPrompts: [],
+            extendedResponse: null,
+            mediaUrl: "",
+            mediaUrls: [],
+            allowedTime: null,
+        };
+        updatePart(pIdx, { phases: [...part.phases, newPhase] });
+    };
+
+    const updatePhase = (pIdx: number, phIdx: number, patch: Partial<SpeakingPhase>) => {
+        const phases = editParts[pIdx].phases.map((ph, i) => i === phIdx ? { ...ph, ...patch } : ph);
+        updatePart(pIdx, { phases });
+    };
+
+    const removePhase = (pIdx: number, phIdx: number) => {
+        updatePart(pIdx, { phases: editParts[pIdx].phases.filter((_, i) => i !== phIdx) });
     };
 
     return (
@@ -1365,37 +1744,75 @@ function SpeakingTaskSection({
                     )}
                 </div>
 
-                {/* VIEW MODE — render structured speakingParts */}
+                {/* VIEW MODE */}
                 {!isEdit && hasSpeakingParts && (
                     <SpeakingPartsView parts={form.speakingParts as Record<string, unknown>[]} />
                 )}
-
                 {!isEdit && !hasSpeakingParts && (
                     <p className="text-xs text-gray-300 italic">Không có dữ liệu Speaking Parts.</p>
                 )}
 
-                {/* EDIT MODE — JSON editor */}
+                {/* EDIT MODE — visual form editor */}
                 {isEdit && (
-                    <div className="space-y-2">
-                        <p className="text-xs text-gray-400">
-                            Chỉnh sửa JSON trực tiếp. Cấu trúc:{" "}
-                            <code className="text-orange-500 text-[10px]">
-                                [{"{"}partNumber, partTitle, duration, phases: [{"{"}phaseNumber, interlocutorIntro, questions, mediaUrl, allowedTime{"}"}]{"}"}]
-                            </code>
-                        </p>
-                        <textarea
-                            className={`${inputCls} min-h-[320px] resize-y font-mono text-xs leading-relaxed${jsonError ? " border-red-400 focus:border-red-400" : ""}`}
-                            value={jsonText}
-                            onChange={e => handleJsonChange(e.target.value)}
-                            placeholder={'[\n  {\n    "partNumber": 1,\n    "partTitle": "Part 1",\n    "duration": 4,\n    "phases": [...]\n  }\n]'}
-                            spellCheck={false}
-                        />
-                        {jsonError && (
-                            <p className="text-xs text-red-500 font-medium">{jsonError}</p>
+                    <div className="space-y-3">
+                        {editParts.length === 0 && (
+                            <div className="rounded-xl border-2 border-dashed border-emerald-200 p-6 text-center">
+                                <Mic size={24} className="text-emerald-200 mx-auto mb-2" />
+                                <p className="text-sm text-gray-400 font-medium">Chưa có Part nào</p>
+                                <p className="text-xs text-gray-300 mt-0.5">Nhấn "Thêm Part" để bắt đầu tạo cấu trúc speaking</p>
+                            </div>
                         )}
-                        {!jsonError && jsonText.trim() && (
-                            <p className="text-xs text-emerald-600 font-medium">JSON hợp lệ</p>
-                        )}
+
+                        {/* Parts */}
+                        {editParts.map((part, pIdx) => (
+                            <div key={pIdx} className="rounded-xl border border-emerald-200 bg-emerald-50/30 overflow-hidden">
+                                {/* Part header bar */}
+                                <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50 border-b border-emerald-200">
+                                    <span className="w-7 h-7 rounded-full bg-emerald-500 text-white text-xs font-extrabold flex items-center justify-center shrink-0">
+                                        {part.partNumber}
+                                    </span>
+                                    <div className="flex-1 grid grid-cols-3 gap-2">
+                                        <div className="col-span-2">
+                                            <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-0.5">Part Title</label>
+                                            <input type="text" className={smInputCls} value={part.partTitle}
+                                                onChange={e => updatePart(pIdx, { partTitle: e.target.value })}
+                                                placeholder="Part 1 — Introduction" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block mb-0.5">Duration (phút)</label>
+                                            <input type="number" className={smInputCls} min={0}
+                                                value={part.duration}
+                                                onChange={e => updatePart(pIdx, { duration: e.target.value === "" ? "" : Number(e.target.value) })}
+                                                placeholder="4" />
+                                        </div>
+                                    </div>
+                                    <button type="button" onClick={() => removePart(pIdx)}
+                                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
+                                        <Trash2 size={13} />
+                                    </button>
+                                </div>
+
+                                {/* Phases */}
+                                <div className="p-3 space-y-2">
+                                    {part.phases.map((phase, phIdx) => (
+                                        <PhaseEditor key={phIdx}
+                                            phase={phase} phaseIdx={phIdx} partId={partId}
+                                            onUpdate={patch => updatePhase(pIdx, phIdx, patch)}
+                                            onRemove={() => removePhase(pIdx, phIdx)} />
+                                    ))}
+                                    <button type="button" onClick={() => addPhase(pIdx)}
+                                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-blue-300 text-xs font-bold text-blue-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition">
+                                        <Plus size={12} /> Thêm Phase
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Add Part button */}
+                        <button type="button" onClick={addPart}
+                            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-sm font-bold text-emerald-500 hover:border-emerald-400 hover:bg-emerald-50 transition">
+                            <Plus size={14} /> Thêm Part
+                        </button>
                     </div>
                 )}
             </div>
