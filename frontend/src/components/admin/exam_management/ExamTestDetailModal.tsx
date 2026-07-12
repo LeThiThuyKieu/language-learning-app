@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Headphones, BookOpen, Mic, ChevronDown, ChevronRight, Loader2, Pencil, Check, XCircle, List, Upload, Music } from "lucide-react";
+import { X, Headphones, BookOpen, Mic, ChevronRight, Loader2, Pencil, Check, XCircle, List, Upload, Music } from "lucide-react";
 import toast from "react-hot-toast";
 import {
     examManagementService,
@@ -14,6 +14,7 @@ interface Props {
     loading: boolean;
     onClose: () => void;
     onPaperUpdated: (paper: AdminExamPaperDto) => void;
+    speakingPhaseCount?: number;
 }
 
 const PAPER_ICONS = {
@@ -270,30 +271,30 @@ function PaperEditForm({
 
 function PaperSection({
     paper,
+    speakingPhaseCount,
     onPaperUpdated,
 }: {
     paper: AdminExamPaperDto;
+    speakingPhaseCount?: number;
     onPaperUpdated: (p: AdminExamPaperDto) => void;
 }) {
-    const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState(false);
     const Icon = PAPER_ICONS[paper.paperType] ?? BookOpen;
     const colorClass = PAPER_COLORS[paper.paperType] ?? "bg-slate-50 text-slate-600 border-slate-200";
+
+    const questionCount = paper.paperType === "SPEAKING"
+        ? (speakingPhaseCount ?? 0)
+        : paper.totalQuestions;
+    const questionLabel = paper.paperType === "SPEAKING" ? "phrase" : "câu";
 
     return (
         <div className={`border rounded-xl overflow-hidden ${colorClass}`}>
             <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setOpen(v => !v)}
-                        className="flex items-center gap-2 font-medium text-sm"
-                    >
-                        {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-                        <Icon size={15} />
-                        {PAPER_LABELS[paper.paperType]}
-                    </button>
+                    <Icon size={15} />
+                    <span className="font-medium text-sm">{PAPER_LABELS[paper.paperType]}</span>
                     <span className="text-xs opacity-70">
-                        {paper.durationMinutes} phút · {paper.totalQuestions} câu
+                        {paper.durationMinutes} phút · {questionCount} {questionLabel}
                     </span>
                 </div>
                 <button
@@ -317,50 +318,19 @@ function PaperSection({
                     />
                 </div>
             )}
-
-            {open && paper.parts && paper.parts.length > 0 && (
-                <div className="px-4 pb-3 space-y-2">
-                    {paper.parts.map(part => (
-                        <div key={part.id} className="bg-white/70 rounded-lg px-3 py-2 text-xs">
-                            <p className="font-medium text-slate-700 mb-1">Part {part.partNumber}</p>
-                            <div className="space-y-1">
-                                {part.questions.map(q => (
-                                    <div
-                                        key={q.id}
-                                        className="flex items-center justify-between text-slate-500"
-                                    >
-                                        <span className="font-mono text-[10px] text-slate-400">{q.mongoDocId}</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">
-                                                {q.questionType.replace("_", " ")}
-                                            </span>
-                                            <span>
-                                                Q{q.questionNumberStart}
-                                                {q.questionNumberEnd !== q.questionNumberStart
-                                                    ? `–${q.questionNumberEnd}`
-                                                    : ""}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {open && (!paper.parts || paper.parts.length === 0) && (
-                <div className="px-4 pb-3 text-xs text-slate-400 italic">
-                    Chưa có câu hỏi nào trong paper này.
-                </div>
-            )}
         </div>
     );
 }
 
-export default function ExamTestDetailModal({ test, loading, onClose, onPaperUpdated }: Props) {
+export default function ExamTestDetailModal({ test, loading, onClose, onPaperUpdated, speakingPhaseCount }: Props) {
     const navigate = useNavigate();
     const levelColor = LEVEL_COLORS[test.cefrLevel] ?? "bg-slate-100 text-slate-600";
+
+    // Tổng câu hỏi: speaking dùng phase count nếu có, còn lại dùng totalQuestions từ backend
+    const nonSpeakingTotal = test.papers
+        .filter(p => p.paperType !== "SPEAKING")
+        .reduce((sum, p) => sum + p.totalQuestions, 0);
+    const computedTotalQuestions = nonSpeakingTotal + (speakingPhaseCount ?? 0);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -417,7 +387,7 @@ export default function ExamTestDetailModal({ test, loading, onClose, onPaperUpd
                                     <p className="text-xs text-slate-400">Papers</p>
                                 </div>
                                 <div className="bg-slate-50 rounded-xl py-3">
-                                    <p className="text-xl font-bold text-slate-800">{test.totalQuestions}</p>
+                                    <p className="text-xl font-bold text-slate-800">{computedTotalQuestions}</p>
                                     <p className="text-xs text-slate-400">Câu hỏi</p>
                                 </div>
                             </div>
@@ -430,6 +400,7 @@ export default function ExamTestDetailModal({ test, loading, onClose, onPaperUpd
                                         <PaperSection
                                             key={paper.id}
                                             paper={paper}
+                                            speakingPhaseCount={paper.paperType === "SPEAKING" ? speakingPhaseCount : undefined}
                                             onPaperUpdated={onPaperUpdated}
                                         />
                                     ))}

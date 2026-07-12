@@ -11,6 +11,7 @@ import {
     Plus,
     FileQuestion,
     Mic,
+    ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
@@ -18,6 +19,7 @@ import {
     examQuestionApi,
     type AdminExamTestDto,
     type AdminExamQuestionDto,
+    type ExamQuestionDetailDto,
 } from "@/services/admin/examManagementService";
 import { getErrorMessage } from "@/utils/errorMessage";
 import ConfirmModal from "@/components/user/layout/ConfirmModal";
@@ -186,6 +188,10 @@ export default function ExamTestQuestionsPage() {
     const [filterPaper, setFilterPaper] = useState<string>("ALL");
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [pendingDelete, setPendingDelete] = useState<FlatQuestion | null>(null);
+    // speakingParts detail map: questionId → ExamQuestionDetailDto
+    const [speakingDetailMap, setSpeakingDetailMap] = useState<Map<number, ExamQuestionDetailDto>>(new Map());
+    // expanded speaking rows: set of questionId that are "expanded" to show parts
+    const [expandedSpeakingIds, setExpandedSpeakingIds] = useState<Set<number>>(new Set());
 
     // Parse ?partId from query string
     const queryPartId = (() => {
@@ -193,16 +199,42 @@ export default function ExamTestQuestionsPage() {
         return p ? parseInt(p, 10) : null;
     })();
 
-    const handleViewQuestion = (q: FlatQuestion) => {
+    const handleViewQuestion = (q: FlatQuestion, speakingPartIndex?: number) => {
         navigate(`/admin/exam-management/${testId}/questions/${q.id}`, {
-            state: { fromPartId: queryPartId ?? undefined },
+            state: {
+                fromPartId: queryPartId ?? undefined,
+                speakingPartIndex: speakingPartIndex ?? undefined,
+            },
         });
     };
 
-    const handleEditQuestion = (q: FlatQuestion) => {
+    const handleEditQuestion = (q: FlatQuestion, speakingPartIndex?: number) => {
         navigate(`/admin/exam-management/${testId}/questions/${q.id}`, {
-            state: { editMode: true, fromPartId: queryPartId ?? undefined },
+            state: {
+                editMode: true,
+                fromPartId: queryPartId ?? undefined,
+                speakingPartIndex: speakingPartIndex ?? undefined,
+            },
         });
+    };
+
+    const toggleSpeakingExpand = async (q: FlatQuestion) => {
+        const id = q.id;
+        if (expandedSpeakingIds.has(id)) {
+            setExpandedSpeakingIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+            return;
+        }
+        // Fetch detail if not already loaded
+        if (!speakingDetailMap.has(id)) {
+            try {
+                const detail = await examQuestionApi.getDetail(id);
+                setSpeakingDetailMap(prev => new Map(prev).set(id, detail));
+            } catch {
+                toast.error("Không thể tải chi tiết Speaking");
+                return;
+            }
+        }
+        setExpandedSpeakingIds(prev => new Set(prev).add(id));
     };
 
     const handleDeleteQuestion = async (q: FlatQuestion) => {
@@ -471,7 +503,7 @@ export default function ExamTestQuestionsPage() {
                                     </td>
                                 </tr>
                             ) : (
-                                displayQuestions.map((q, idx) => {
+                                displayQuestions.flatMap((q, idx) => {
                                     const typeColor =
                                         QUESTION_TYPE_COLORS[q.questionType] ??
                                         "bg-gray-100 text-gray-500";
@@ -484,7 +516,150 @@ export default function ExamTestQuestionsPage() {
                                         "bg-gray-50 text-gray-500";
                                     const PaperIcon = PAPER_ICONS[q.paperType] ?? BookOpen;
 
-                                    return (
+                                    // SPEAKING_TASK: render expand row + virtual part rows
+                                    if (q.questionType === "SPEAKING_TASK") {
+                                        const isExpanded = expandedSpeakingIds.has(q.id);
+                                        const detail = speakingDetailMap.get(q.id);
+                                        const parts = detail?.speakingParts ?? [];
+
+                                        const headerRow = (
+                                            <tr
+                                                key={q.id}
+                                                className="group hover:bg-emerald-50/40 transition-all align-top cursor-pointer"
+                                                onClick={() => toggleSpeakingExpand(q)}
+                                            >
+                                                {/* # STT */}
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className="text-xs font-bold text-gray-400">{idx + 1}</span>
+                                                </td>
+                                                {/* Số câu */}
+                                                <td className="px-4 py-4 text-center">
+                                                    <span className="text-sm font-bold text-gray-800">{qRange}</span>
+                                                </td>
+                                                {/* Loại */}
+                                                <td className="px-4 py-4 text-center">
+                                                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${typeColor}`}>
+                                                        {q.questionType.replace(/_/g, " ")}
+                                                    </span>
+                                                </td>
+                                                {/* Phần */}
+                                                <td className="px-4 py-4">
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${paperBadge}`}>
+                                                            <PaperIcon size={10} />
+                                                            {PAPER_LABELS[q.paperType] ?? q.paperType}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                            Part {q.partNumber}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                {/* Order */}
+                                                <td className="px-4 py-4 text-center">
+                                                    <span className="text-sm font-bold text-gray-500">{q.orderIndex}</span>
+                                                </td>
+                                                {/* Đáp án — hiển thị expand hint */}
+                                                <td className="pl-14 pr-4 py-4 text-left">
+                                                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                                                        <ChevronDown
+                                                            size={13}
+                                                            className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                                        />
+                                                        {isExpanded
+                                                            ? `${parts.length} part${parts.length !== 1 ? "s" : ""} (thu gọn)`
+                                                            : "Nhấn để xem các Parts"}
+                                                    </div>
+                                                </td>
+                                                {/* Thao tác — view toàn bộ document */}
+                                                <td className="px-4 py-4 text-left" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex items-center justify-start gap-1">
+                                                        <button
+                                                            title="Xem toàn bộ"
+                                                            onClick={() => handleViewQuestion(q)}
+                                                            className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                        >
+                                                            <Eye size={15} />
+                                                        </button>
+                                                        <button
+                                                            title="Xóa câu hỏi"
+                                                            onClick={() => handleDeleteQuestion(q)}
+                                                            disabled={deletingId === q.id}
+                                                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all disabled:opacity-40"
+                                                        >
+                                                            {deletingId === q.id
+                                                                ? <Loader2 size={15} className="animate-spin" />
+                                                                : <Trash2 size={15} />
+                                                            }
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+
+                                        if (!isExpanded || parts.length === 0) return [headerRow];
+
+                                        const partRows = parts.map((part, pIdx) => {
+                                            const p = part as Record<string, unknown>;
+                                            const partNumber = p.partNumber as number ?? pIdx + 1;
+                                            const partTitle = (p.partTitle as string) || `Part ${partNumber}`;
+                                            const duration = p.duration as number | undefined;
+                                            const phases = (p.phases as unknown[] | undefined) ?? [];
+
+                                            return (
+                                                <tr key={`${q.id}-part-${pIdx}`}
+                                                    className="bg-emerald-50/60 hover:bg-emerald-50 transition-all align-top">
+                                                    {/* indent marker */}
+                                                    <td className="px-6 py-3 text-center">
+                                                        <div className="flex justify-center">
+                                                            <div className="w-0.5 h-5 bg-emerald-200 rounded-full" />
+                                                        </div>
+                                                    </td>
+                                                    {/* Part number */}
+                                                    <td className="px-4 py-3 text-center">
+                                                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px] font-extrabold">
+                                                            {partNumber}
+                                                        </span>
+                                                    </td>
+                                                    {/* Part title */}
+                                                    <td className="px-4 py-3" colSpan={2}>
+                                                        <p className="text-sm font-bold text-emerald-800 leading-snug">{partTitle}</p>
+                                                        <p className="text-[10px] text-emerald-500 font-medium mt-0.5">
+                                                            {phases.length} phase{phases.length !== 1 ? "s" : ""}
+                                                            {duration !== undefined && ` · ${duration} phút`}
+                                                        </p>
+                                                    </td>
+                                                    {/* Order (empty) */}
+                                                    <td className="px-4 py-3" />
+                                                    {/* Đáp án (empty) */}
+                                                    <td className="pl-14 pr-4 py-3" />
+                                                    {/* Thao tác */}
+                                                    <td className="px-4 py-3 text-left">
+                                                        <div className="flex items-center justify-start gap-1">
+                                                            <button
+                                                                title="Xem Part"
+                                                                onClick={() => handleViewQuestion(q, pIdx)}
+                                                                className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                            >
+                                                                <Eye size={15} />
+                                                            </button>
+                                                            <button
+                                                                title="Chỉnh sửa Part"
+                                                                onClick={() => handleEditQuestion(q, pIdx)}
+                                                                className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all"
+                                                            >
+                                                                <Pencil size={15} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        });
+
+                                        return [headerRow, ...partRows];
+                                    }
+
+                                    // Regular question row
+                                    return [(
                                         <tr
                                             key={q.id}
                                             className="group hover:bg-orange-50/30 transition-all align-top"
@@ -570,7 +745,7 @@ export default function ExamTestQuestionsPage() {
                                                 </div>
                                             </td>
                                         </tr>
-                                    );
+                                    )];
                                 })
                             )}
                         </tbody>

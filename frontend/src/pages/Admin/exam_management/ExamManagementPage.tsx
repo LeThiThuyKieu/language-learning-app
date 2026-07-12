@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import AdminStatCard, { type AdminStatCardProps } from "@/components/admin/common/AdminStatCard";
 import {
     examManagementService,
+    examQuestionApi,
     type AdminExamTestDto,
     type AdminExamPaperDto,
     type ExamTestStats,
@@ -89,6 +90,7 @@ export default function ExamManagementPage() {
     const [editTest, setEditTest] = useState<AdminExamTestDto | null>(null);
     const [detailTest, setDetailTest] = useState<AdminExamTestDto | null>(null);
     const [detailLoading, setDetailLoading] = useState(false);
+    const [speakingPhaseCount, setSpeakingPhaseCount] = useState(0);
 
     const loadStats = useCallback(async () => {
         try {
@@ -141,9 +143,29 @@ export default function ExamManagementPage() {
     const handleOpenDetail = async (test: AdminExamTestDto) => {
         setDetailLoading(true);
         setDetailTest(test);
+        setSpeakingPhaseCount(0);
         try {
             const detail = await examManagementService.getTestDetail(test.id);
             setDetailTest(detail);
+
+            // Fetch speaking questions để đếm phases
+            let phaseCount = 0;
+            for (const paper of detail.papers) {
+                if (paper.paperType !== "SPEAKING") continue;
+                for (const part of paper.parts ?? []) {
+                    try {
+                        const qs = await examQuestionApi.getByPart(part.id);
+                        const taskQ = qs.find(q => q.questionType === "SPEAKING_TASK");
+                        if (taskQ?.speakingParts) {
+                            for (const sp of taskQ.speakingParts) {
+                                const phases = (sp as Record<string, unknown>).phases as unknown[] | undefined;
+                                phaseCount += phases?.length ?? 0;
+                            }
+                        }
+                    } catch { /* ignore */ }
+                }
+            }
+            setSpeakingPhaseCount(phaseCount);
         } catch (err) {
             toast.error(getErrorMessage(err, "Không thể tải chi tiết"));
         } finally {
@@ -331,6 +353,7 @@ export default function ExamManagementPage() {
                     test={detailTest}
                     loading={detailLoading}
                     onClose={() => setDetailTest(null)}
+                    speakingPhaseCount={speakingPhaseCount}
                     onPaperUpdated={(updatedPaper: AdminExamPaperDto) => {
                         setDetailTest(prev => {
                             if (!prev) return prev;

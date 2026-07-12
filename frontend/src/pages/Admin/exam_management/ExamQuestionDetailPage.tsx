@@ -1527,11 +1527,13 @@ function SpeakingTaskSection({
     mode,
     onChange,
     partId,
+    singlePartMode = false,
 }: {
     form: QuestionForm;
     mode: Mode;
     onChange: (patch: Partial<QuestionForm>) => void;
     partId?: number;
+    singlePartMode?: boolean;
 }) {
     const isEdit = mode !== "view";
     const hasSpeakingParts = !!(form.speakingParts && form.speakingParts.length > 0);
@@ -1755,7 +1757,7 @@ function SpeakingTaskSection({
                 {/* EDIT MODE — visual form editor */}
                 {isEdit && (
                     <div className="space-y-3">
-                        {editParts.length === 0 && (
+                        {editParts.length === 0 && !singlePartMode && (
                             <div className="rounded-xl border-2 border-dashed border-emerald-200 p-6 text-center">
                                 <Mic size={24} className="text-emerald-200 mx-auto mb-2" />
                                 <p className="text-sm text-gray-400 font-medium">Chưa có Part nào</p>
@@ -1786,10 +1788,13 @@ function SpeakingTaskSection({
                                                 placeholder="4" />
                                         </div>
                                     </div>
-                                    <button type="button" onClick={() => removePart(pIdx)}
-                                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
-                                        <Trash2 size={13} />
-                                    </button>
+                                    {/* Only allow removing parts when not in single-part mode */}
+                                    {!singlePartMode && (
+                                        <button type="button" onClick={() => removePart(pIdx)}
+                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0">
+                                            <Trash2 size={13} />
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Phases */}
@@ -1808,11 +1813,13 @@ function SpeakingTaskSection({
                             </div>
                         ))}
 
-                        {/* Add Part button */}
-                        <button type="button" onClick={addPart}
-                            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-sm font-bold text-emerald-500 hover:border-emerald-400 hover:bg-emerald-50 transition">
-                            <Plus size={14} /> Thêm Part
-                        </button>
+                        {/* Add Part button — hidden in single-part mode */}
+                        {!singlePartMode && (
+                            <button type="button" onClick={addPart}
+                                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-sm font-bold text-emerald-500 hover:border-emerald-400 hover:bg-emerald-50 transition">
+                                <Plus size={14} /> Thêm Part
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -2102,8 +2109,9 @@ export default function ExamQuestionDetailPage() {
     // Detect mode
     const isNew = questionId === "new" || questionId === undefined;
     // Support editMode shortcut from navigation state
-    const locationState = location.state as { partId?: number; section?: string; editMode?: boolean; fromPartId?: number } | null;
+    const locationState = location.state as { partId?: number; section?: string; editMode?: boolean; fromPartId?: number; speakingPartIndex?: number } | null;
     const fromPartId = locationState?.fromPartId ?? null;
+    const speakingPartIndex = locationState?.speakingPartIndex ?? null;
 
     const [mode, setMode] = useState<Mode>(
         isNew ? "create" : locationState?.editMode ? "edit" : "view"
@@ -2173,7 +2181,11 @@ export default function ExamQuestionDetailPage() {
                 if (qData) {
                     const dto = qData as ExamQuestionDetailDto;
                     setDetail(dto);
-                    const f = fromApiToForm(dto);
+                    let f = fromApiToForm(dto);
+                    // If navigated with speakingPartIndex, isolate that single part for focused editing
+                    if (speakingPartIndex !== null && dto.speakingParts && dto.speakingParts[speakingPartIndex]) {
+                        f = { ...f, speakingParts: [dto.speakingParts[speakingPartIndex]] };
+                    }
                     setForm(f);
                     setOriginalForm(f);
                     // Load siblings để resolve passageText/URL
@@ -2223,20 +2235,40 @@ export default function ExamQuestionDetailPage() {
 
         setSaving(true);
         try {
-            const payload = buildSaveRequest(form);
+            let payload = buildSaveRequest(form);
+
+            // If editing a single speaking part, merge the edited part back into the full speakingParts array
+            if (
+                speakingPartIndex !== null &&
+                form.questionType === "SPEAKING_TASK" &&
+                detail?.speakingParts
+            ) {
+                const editedPart = form.speakingParts?.[0] ?? null;
+                if (editedPart) {
+                    const merged = detail.speakingParts.map((p, i) =>
+                        i === speakingPartIndex ? editedPart : p
+                    );
+                    payload = { ...payload, speakingParts: merged };
+                }
+            }
+
             if (mode === "create") {
                 await examQuestionApi.create(payload);
                 toast.success("Tạo câu hỏi thành công!");
             } else {
                 await examQuestionApi.update(detail!.id, payload);
-                toast.success("Cập nhật câu hỏi thành công!");
+                toast.success("Cập nhật thành công!");
             }
-            // Quay lại đúng part nếu có
-            const targetPartId = fromPartId ?? (mode === "create" ? (form.partId !== "" ? form.partId : null) : null);
-            if (targetPartId) {
-                navigate(`/admin/exam-management/${testId}/questions?partId=${targetPartId}`);
+            // Quay lại đúng trang
+            if (speakingPartIndex !== null) {
+                navigate(`/admin/exam-management/${testId}/parts#speaking`);
             } else {
-                navigate(`/admin/exam-management/${testId}/questions`);
+                const targetPartId = fromPartId ?? (mode === "create" ? (form.partId !== "" ? form.partId : null) : null);
+                if (targetPartId) {
+                    navigate(`/admin/exam-management/${testId}/questions?partId=${targetPartId}`);
+                } else {
+                    navigate(`/admin/exam-management/${testId}/questions`);
+                }
             }
         } catch (e) {
             const msg = e instanceof Error ? e.message : "Lỗi lưu câu hỏi";
@@ -2252,7 +2284,9 @@ export default function ExamQuestionDetailPage() {
         try {
             await examQuestionApi.delete(detail.id);
             toast.success("Đã xóa câu hỏi.");
-            if (fromPartId) {
+            if (speakingPartIndex !== null) {
+                navigate(`/admin/exam-management/${testId}/parts#speaking`);
+            } else if (fromPartId) {
                 navigate(`/admin/exam-management/${testId}/questions?partId=${fromPartId}`);
             } else {
                 navigate(`/admin/exam-management/${testId}/questions`);
@@ -2329,12 +2363,23 @@ export default function ExamQuestionDetailPage() {
         return { instruction: null, isInherited: false, sourceQ: null };
     })();
 
-    const backUrl = fromPartId
-        ? `/admin/exam-management/${testId}/questions?partId=${fromPartId}`
-        : `/admin/exam-management/${testId}/questions`;
+    const partsUrl = `/admin/exam-management/${testId}/parts`;
+
+    const backUrl = speakingPartIndex !== null
+        ? `${partsUrl}#speaking`
+        : fromPartId
+            ? `/admin/exam-management/${testId}/questions?partId=${fromPartId}`
+            : `/admin/exam-management/${testId}/questions`;
 
     const qRangeLabel = () => {
         if (isNew) return "Câu hỏi mới";
+        // Focused speaking part mode
+        if (speakingPartIndex !== null && form.questionType === "SPEAKING_TASK" && form.speakingParts?.[0]) {
+            const p = form.speakingParts[0] as Record<string, unknown>;
+            const partNum = p.partNumber as number ?? speakingPartIndex + 1;
+            const partTitle = (p.partTitle as string) || `Part ${partNum}`;
+            return `Speaking · ${partTitle}`;
+        }
         const s = form.questionNumberStart;
         const e = form.questionNumberEnd;
         if (s === "" && e === "") return "Câu hỏi";
@@ -2374,7 +2419,7 @@ export default function ExamQuestionDetailPage() {
                         className="flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-700 mb-4 transition-colors"
                     >
                         <ArrowLeft size={15} />
-                        {fromPartId ? "Quay lại danh sách Part" : "Quay lại danh sách câu hỏi"}
+                        {fromPartId ? "Quay lại danh sách Part" : speakingPartIndex !== null ? "Quay lại danh sách Part" : "Quay lại danh sách câu hỏi"}
                     </button>
 
                     {/* Breadcrumb + actions */}
@@ -2761,7 +2806,7 @@ export default function ExamQuestionDetailPage() {
                                 <ShortWriteSection form={form} mode={mode} onChange={patchForm} partId={form.partId !== "" ? (form.partId as number) : undefined} />
                             )}
                             {form.questionType === "SPEAKING_TASK" && (
-                                <SpeakingTaskSection form={form} mode={mode} onChange={patchForm} partId={form.partId !== "" ? (form.partId as number) : undefined} />
+                                <SpeakingTaskSection form={form} mode={mode} onChange={patchForm} partId={form.partId !== "" ? (form.partId as number) : undefined} singlePartMode={speakingPartIndex !== null} />
                             )}
                         </div>
                     </div>

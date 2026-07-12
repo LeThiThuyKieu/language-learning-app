@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     ArrowLeft,
@@ -24,6 +24,7 @@ import {
 } from "@/services/admin/examManagementService";
 import { getErrorMessage } from "@/utils/errorMessage";
 import AdminStatCard from "@/components/admin/common/AdminStatCard.tsx";
+
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -78,12 +79,23 @@ function RichText({ text, className }: { text: string; className?: string }) {
     );
 }
 
+// Speaking part row (virtual — không phải DB row)
+interface SpeakingPartRow {
+    partNumber: number;
+    partTitle: string;
+    phaseCount: number;
+    questionId: number;  // id của SPEAKING_TASK question
+    partIndex: number;   // index trong speakingParts[]
+}
+
 interface PartPreview {
     part: AdminExamPartDto;
     paper: AdminExamPaperDto;
     instruction: string | null;
     maxQuestionEnd: number;
     loadingDetail: boolean;
+    // populated for SPEAKING paper
+    speakingRows: SpeakingPartRow[];
 }
 
 // Modal thêm/sửa part
@@ -123,6 +135,7 @@ export default function ExamPartListPage() {
                     instruction: null,
                     maxQuestionEnd: maxEnd,
                     loadingDetail: true,
+                    speakingRows: [],
                 });
             }
         }
@@ -132,6 +145,30 @@ export default function ExamPartListPage() {
         // Load instruction từ câu hỏi order nhỏ nhất của từng part
         const withDetails = await Promise.all(
             allParts.map(async (pv): Promise<PartPreview> => {
+                // Speaking paper: extract speakingParts from the single SPEAKING_TASK question
+                if (pv.paper.paperType === "SPEAKING") {
+                    try {
+                        const details = await examQuestionApi.getByPart(pv.part.id);
+                        const taskQ = details.find(d => d.questionType === "SPEAKING_TASK");
+                        if (taskQ && taskQ.speakingParts && taskQ.speakingParts.length > 0) {
+                            const rows: SpeakingPartRow[] = taskQ.speakingParts.map((sp, idx) => {
+                                const p = sp as Record<string, unknown>;
+                                const phases = (p.phases as unknown[] | undefined) ?? [];
+                                return {
+                                    partNumber: (p.partNumber as number) ?? idx + 1,
+                                    partTitle: (p.partTitle as string) || `Part ${idx + 1}`,
+                                    phaseCount: phases.length,
+                                    questionId: taskQ.id,
+                                    partIndex: idx,
+                                };
+                            });
+                            return { ...pv, speakingRows: rows, loadingDetail: false };
+                        }
+                    } catch { /* ignore */ }
+                    return { ...pv, loadingDetail: false };
+                }
+
+                // Non-speaking: load instruction as before
                 let instruction: string | null = null;
                 try {
                     const details = await examQuestionApi.getByPart(pv.part.id);
@@ -169,8 +206,33 @@ export default function ExamPartListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [testId]);
 
+    // Scroll to hash anchor after data is loaded
+    const hasScrolled = useRef(false);
+    useEffect(() => {
+        if (loading || hasScrolled.current) return;
+        const hash = window.location.hash;
+        if (!hash) return;
+        const el = document.getElementById(hash.slice(1));
+        if (el) {
+            hasScrolled.current = true;
+            setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+        }
+    }, [loading]);
+
     const handlePartClick = (partId: number) => {
         navigate(`/admin/exam-management/${testId}/questions?partId=${partId}`);
+    };
+
+    const handleSpeakingPartClick = (questionId: number, partIndex: number) => {
+        navigate(`/admin/exam-management/${testId}/questions/${questionId}`, {
+            state: { speakingPartIndex: partIndex },
+        });
+    };
+
+    const handleSpeakingPartEditClick = (questionId: number, partIndex: number) => {
+        navigate(`/admin/exam-management/${testId}/questions/${questionId}`, {
+            state: { editMode: true, speakingPartIndex: partIndex },
+        });
     };
 
     // Mở modal thêm part
@@ -248,23 +310,7 @@ export default function ExamPartListPage() {
 
     const levelColor = LEVEL_COLORS[test.cefrLevel] ?? "bg-slate-100 text-slate-600";
 
-    const paperStats: Record<string, { parts: number; questions: number }> = {};
-    for (const paper of test.papers) {
-        let maxEnd = 0;
-        for (const part of paper.parts ?? []) {
-            for (const q of part.questions) {
-                if ((q.questionNumberEnd ?? 0) > maxEnd) maxEnd = q.questionNumberEnd ?? 0;
-            }
-        }
-        paperStats[paper.paperType] = {
-            parts: paper.parts?.length ?? 0,
-            questions: maxEnd,
-        };
-    }
-    const totalParts = test.papers.reduce((acc, p) => acc + (p.parts?.length ?? 0), 0);
-    const totalQuestions = Object.values(paperStats).reduce((a, b) => a + b.questions, 0);
-
-    // Group previews by paper
+    // Group previews by paper — phải khai báo TRƯỚC paperStats
     const previewsByPaper: Record<string, PartPreview[]> = {};
     for (const pv of previews) {
         const key = pv.paper.paperType;
@@ -278,6 +324,34 @@ export default function ExamPartListPage() {
         const pvs = previewsByPaper[paper.paperType] ?? [];
         allPreviews.push(...pvs);
     }
+
+    const paperStats: Record<string, { parts: number; questions: number }> = {};
+    for (const paper of test.papers) {
+        if (paper.paperType === "SPEAKING") {
+            // Đếm tổng phrases từ speakingRows đã loaded
+            const pvs = previewsByPaper["SPEAKING"] ?? [];
+            const phaseTotal = pvs.reduce((sum, pv) =>
+                sum + pv.speakingRows.reduce((s, sr) => s + sr.phaseCount, 0), 0
+            );
+            paperStats[paper.paperType] = {
+                parts: pvs.reduce((s, pv) => s + pv.speakingRows.length, 0),
+                questions: phaseTotal,
+            };
+        } else {
+            let maxEnd = 0;
+            for (const part of paper.parts ?? []) {
+                for (const q of part.questions) {
+                    if ((q.questionNumberEnd ?? 0) > maxEnd) maxEnd = q.questionNumberEnd ?? 0;
+                }
+            }
+            paperStats[paper.paperType] = {
+                parts: paper.parts?.length ?? 0,
+                questions: maxEnd,
+            };
+        }
+    }
+    const totalParts = test.papers.reduce((acc, p) => acc + (p.parts?.length ?? 0), 0);
+    const totalQuestions = Object.values(paperStats).reduce((a, b) => a + b.questions, 0);
 
     return (
         <div className="p-6 space-y-6 max-w-screen-xl mx-auto">
@@ -404,6 +478,7 @@ export default function ExamPartListPage() {
                 {(["LISTENING", "READING_WRITING", "SPEAKING"] as const).map(pt => {
                     const acc = PAPER_ACCENT[pt];
                     const Icon = PAPER_ICONS[pt];
+                    const isSpeaking = pt === "SPEAKING";
                     return (
                         <AdminStatCard
                             key={pt}
@@ -413,7 +488,7 @@ export default function ExamPartListPage() {
                             iconBg={acc.iconBg}
                             iconText={acc.iconText}
                             borderColor={acc.border}
-                            change={`${paperStats[pt]?.parts ?? 0} part`}
+                            change={`${paperStats[pt]?.parts ?? 0} part · ${isSpeaking ? "phrase" : "câu hỏi"}`}
                             changeClassName="text-orange-500"
                         />
                     );
@@ -437,7 +512,8 @@ export default function ExamPartListPage() {
                 const badgeCls = PAPER_BADGE[paper.paperType] ?? "bg-gray-50 text-gray-500 border-gray-100";
 
                 return (
-                    <div key={paper.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div key={paper.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                    id={paper.paperType === "SPEAKING" ? "speaking" : undefined}>
                         {/* Toolbar */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                             <div className="flex items-center gap-3">
@@ -450,7 +526,7 @@ export default function ExamPartListPage() {
                                         Danh sách Part
                                     </h2>
                                     <p className="text-xs font-medium text-gray-400 mt-0.5">
-                                        {pvs.length} part · {paperStats[paper.paperType]?.questions ?? 0} câu hỏi · {paper.durationMinutes} phút
+                                        {paperStats[paper.paperType]?.parts ?? pvs.length} part · {paperStats[paper.paperType]?.questions ?? 0} {paper.paperType === "SPEAKING" ? "phase" : "câu hỏi"} · {paper.durationMinutes} phút
                                     </p>
                                 </div>
                             </div>
@@ -502,82 +578,166 @@ export default function ExamPartListPage() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        pvs.map((pv, idx) => (
-                                            <tr
-                                                key={pv.part.id}
-                                                className="group hover:bg-orange-50/30 transition-all align-middle"
-                                            >
-                                                {/* # STT */}
-                                                <td className="px-6 py-4 text-center">
-                                                    <span className="text-xs font-bold text-gray-400">
-                                                        {idx + 1}
-                                                    </span>
-                                                </td>
+                                        pvs.flatMap((pv, idx) => {
+                                            // SPEAKING: render virtual rows per speaking part
+                                            if (pv.paper.paperType === "SPEAKING") {
+                                                if (pv.loadingDetail) {
+                                                    return (
+                                                        <tr key={pv.part.id} className="align-middle">
+                                                            <td colSpan={6} className="px-6 py-4">
+                                                                <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                                                                    <Loader2 size={11} className="animate-spin" />
+                                                                    Đang tải Speaking Parts...
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
+                                                if (pv.speakingRows.length === 0) {
+                                                    return (
+                                                        <tr key={pv.part.id} className="align-middle">
+                                                            <td colSpan={6} className="px-6 py-4 text-center">
+                                                                <span className="text-xs text-gray-300 italic">Chưa có Speaking Part nào.</span>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
+                                                return pv.speakingRows.map((sr, srIdx) => (
+                                                    <tr
+                                                        key={`${pv.part.id}-sp-${srIdx}`}
+                                                        className="group hover:bg-emerald-50/40 transition-all align-middle"
+                                                    >
+                                                        {/* # STT */}
+                                                        <td className="px-6 py-4 text-center">
+                                                            <span className="text-xs font-bold text-gray-400">{srIdx + 1}</span>
+                                                        </td>
+                                                        {/* Part number */}
+                                                        <td className="px-4 py-4 text-center">
+                                                            <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-50">
+                                                                <span className="text-sm font-extrabold text-emerald-600">
+                                                                    {sr.partNumber}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        {/* Order = partNumber */}
+                                                        <td className="px-4 py-4 text-center">
+                                                            <span className="text-sm font-medium text-gray-500">{sr.partNumber}</span>
+                                                        </td>
+                                                        {/* Số câu = phaseCount */}
+                                                        <td className="px-4 py-4 text-center">
+                                                            <span className="text-sm font-extrabold text-gray-800">{sr.phaseCount}</span>
+                                                        </td>
+                                                        {/* Instruction = partTitle */}
+                                                        <td className="px-4 py-4 max-w-xs">
+                                                            <div className="flex items-start gap-2">
+                                                                <AlignLeft size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                                                                <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                                                                    {sr.partTitle}
+                                                                </p>
+                                                            </div>
+                                                        </td>
+                                                        {/* Thao tác */}
+                                                        <td className="px-4 py-4 text-center">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <button
+                                                                    title="Sửa Speaking Part"
+                                                                    onClick={() => handleSpeakingPartEditClick(sr.questionId, sr.partIndex)}
+                                                                    className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all"
+                                                                >
+                                                                    <Pencil size={14} />
+                                                                </button>
+                                                                <button
+                                                                    title="Xem Speaking Part"
+                                                                    onClick={() => handleSpeakingPartClick(sr.questionId, sr.partIndex)}
+                                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-500 hover:bg-blue-50 transition-all"
+                                                                >
+                                                                    <Eye size={13} />
+                                                                    Xem
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ));
+                                            }
 
-                                                {/* Part number */}
-                                                <td className="px-4 py-4 text-center">
-                                                    <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-orange-50">
-                                                        <span className="text-sm font-extrabold text-orange-500">
-                                                            {pv.part.partNumber}
+                                            // Non-speaking: regular row
+                                            return [(
+                                                <tr
+                                                    key={pv.part.id}
+                                                    className="group hover:bg-orange-50/30 transition-all align-middle"
+                                                >
+                                                    {/* # STT */}
+                                                    <td className="px-6 py-4 text-center">
+                                                        <span className="text-xs font-bold text-gray-400">
+                                                            {idx + 1}
                                                         </span>
-                                                    </div>
-                                                </td>
+                                                    </td>
 
-                                                {/* Order Index */}
-                                                <td className="px-4 py-4 text-center">
-                                                    <span className="text-sm font-medium text-gray-500">
-                                                        {pv.part.orderIndex}
-                                                    </span>
-                                                </td>
-
-                                                {/* Số câu */}
-                                                <td className="px-4 py-4 text-center">
-                                                    <span className="text-sm font-extrabold text-gray-800">
-                                                        {pv.maxQuestionEnd > 0 ? pv.maxQuestionEnd : "—"}
-                                                    </span>
-                                                </td>
-
-                                                {/* Instruction */}
-                                                <td className="px-4 py-4 max-w-xs">
-                                                    {pv.loadingDetail ? (
-                                                        <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                                                            <Loader2 size={11} className="animate-spin" />
-                                                            Đang tải...
+                                                    {/* Part number */}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-orange-50">
+                                                            <span className="text-sm font-extrabold text-orange-500">
+                                                                {pv.part.partNumber}
+                                                            </span>
                                                         </div>
-                                                    ) : pv.instruction ? (
-                                                        <div className="flex items-start gap-2">
-                                                            <AlignLeft size={13} className="text-gray-400 shrink-0 mt-0.5" />
-                                                            <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
-                                                                <RichText text={pv.instruction} />
-                                                            </p>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-xs text-gray-300 italic">Chưa có instruction</span>
-                                                    )}
-                                                </td>
+                                                    </td>
 
-                                                {/* Thao tác */}
-                                                <td className="px-4 py-4 text-center">
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        <button
-                                                            title="Sửa Part"
-                                                            onClick={() => openEditPartModal(pv)}
-                                                            className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all"
-                                                        >
-                                                            <Pencil size={14} />
-                                                        </button>
-                                                        <button
-                                                            title="Xem câu hỏi"
-                                                            onClick={() => handlePartClick(pv.part.id)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-500 hover:bg-blue-50 transition-all"
-                                                        >
-                                                            <Eye size={13} />
-                                                            Xem
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
+                                                    {/* Order Index */}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="text-sm font-medium text-gray-500">
+                                                            {pv.part.orderIndex}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* Số câu */}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="text-sm font-extrabold text-gray-800">
+                                                            {pv.maxQuestionEnd > 0 ? pv.maxQuestionEnd : "—"}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* Instruction */}
+                                                    <td className="px-4 py-4 max-w-xs">
+                                                        {pv.loadingDetail ? (
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-300">
+                                                                <Loader2 size={11} className="animate-spin" />
+                                                                Đang tải...
+                                                            </div>
+                                                        ) : pv.instruction ? (
+                                                            <div className="flex items-start gap-2">
+                                                                <AlignLeft size={13} className="text-gray-400 shrink-0 mt-0.5" />
+                                                                <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+                                                                    <RichText text={pv.instruction} />
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-300 italic">Chưa có instruction</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Thao tác */}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button
+                                                                title="Sửa Part"
+                                                                onClick={() => openEditPartModal(pv)}
+                                                                className="p-2 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all"
+                                                            >
+                                                                <Pencil size={14} />
+                                                            </button>
+                                                            <button
+                                                                title="Xem câu hỏi"
+                                                                onClick={() => handlePartClick(pv.part.id)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-500 hover:bg-blue-50 transition-all"
+                                                            >
+                                                                <Eye size={13} />
+                                                                Xem
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )];
+                                        })
                                     )}
                                 </tbody>
                             </table>
@@ -588,10 +748,10 @@ export default function ExamPartListPage() {
                             <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100">
                                 <p className="text-xs font-medium text-gray-400">
                                     Tổng{" "}
-                                    <span className="font-bold text-gray-800">{pvs.length}</span>{" "}
+                                    <span className="font-bold text-gray-800">{paperStats[paper.paperType]?.parts ?? pvs.length}</span>{" "}
                                     part ·{" "}
                                     <span className="font-bold text-gray-800">{paperStats[paper.paperType]?.questions ?? 0}</span>{" "}
-                                    câu hỏi
+                                    {paper.paperType === "SPEAKING" ? "phase" : "câu hỏi"}
                                 </p>
                             </div>
                         )}
