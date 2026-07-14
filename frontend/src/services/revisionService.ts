@@ -167,4 +167,14 @@ export const revisionApi = {
             headers: { "Content-Type": "multipart/form-data" },
         }).then(r => r.data.data);
     },
+
+    importQuestions: (topicId: number, taskId: number, file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return apiClient.post<ApiResponse<{ imported: number; errors: string[] }>>(
+            `${BASE}/${topicId}/tasks/${taskId}/questions/import`,
+            formData,
+            { headers: { "Content-Type": "multipart/form-data" } }
+        ).then(r => r.data);
+    },
 };

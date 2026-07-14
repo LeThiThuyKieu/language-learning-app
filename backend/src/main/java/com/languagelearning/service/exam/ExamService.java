@@ -179,6 +179,7 @@ public class ExamService {
         dto.setPromptText(mongo.getPromptText());
         dto.setBulletPoints(mongo.getBulletPoints());
         dto.setStoryImages(mongo.getStoryImages());
+        dto.setSourceTexts(mongo.getSourceTexts());
 
         dto.setPartTitle(mongo.getPartTitle());
         dto.setPrompt(mongo.getPrompt());

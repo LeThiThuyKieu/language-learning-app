@@ -1,6 +1,8 @@
 package com.languagelearning.repository.mysql;
 
 import com.languagelearning.entity.ExamTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,4 +28,10 @@ public interface ExamTestRepository extends JpaRepository<ExamTest, Integer> {
     List<ExamTest> findAllActive();
 
     Optional<ExamTest> findByCefrLevelAndTestNumber(ExamTest.CefrLevel cefrLevel, Integer testNumber);
+
+    /** Admin: lấy tất cả tests (kể cả inactive) theo level có phân trang */
+    Page<ExamTest> findByCefrLevel(ExamTest.CefrLevel cefrLevel, Pageable pageable);
+
+    /** Đếm theo trạng thái active */
+    long countByIsActive(Boolean isActive);
 }

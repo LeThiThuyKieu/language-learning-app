@@ -85,6 +85,65 @@ public class QuestionMediaUploadService {
                     file.getBytes(),
                     ObjectUtils.asMap(
                             "folder", folder,
+                            "resource_type", "video"
+                    )
+            );
+            Object secureUrl = result.get("secure_url");
+            if (secureUrl == null) {
+                throw new IllegalStateException("Cloudinary did not return secure_url");
+            }
+            return secureUrl.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to upload question audio to Cloudinary", e);
+        }
+    }
+
+    /**
+     * Upload ảnh câu hỏi exam lên thư mục img_file/exam/{cefrLevel}/{testTitle}
+     * Ví dụ: img_file/exam/A2/Test 1
+     * cefrLevel và testTitle giữ nguyên định dạng gốc (không sanitize).
+     */
+    public String uploadExamImage(MultipartFile file, String cefrLevel, String testTitle) {
+        validateImageFile(file);
+        Cloudinary cloudinary = buildCloudinaryClient();
+
+        String folder = "img_file/exam/" + cefrLevel + "/" + testTitle;
+
+        try {
+            Map<?, ?> result = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", folder,
+                            "resource_type", "image"
+                    )
+            );
+            Object secureUrl = result.get("secure_url");
+            if (secureUrl == null) {
+                throw new IllegalStateException("Cloudinary did not return secure_url");
+            }
+            return secureUrl.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to upload exam image to Cloudinary", e);
+        }
+    }
+
+    /**
+     * Upload audio bài thi (Listening paper) lên thư mục audio_file/exam/{cefrLevel}/{testTitle}
+     * Ví dụ: audio_file/exam/A2/Test 1
+     * cefrLevel và testTitle giữ nguyên định dạng gốc (không sanitize) để khớp với folder Cloudinary đã có.
+     */
+    public String uploadExamAudio(MultipartFile file, String cefrLevel, String testTitle) {
+        validateAudioFile(file);
+        Cloudinary cloudinary = buildCloudinaryClient();
+
+        // Không dùng sanitizeFolderName để giữ đúng định dạng "A2/Test 1"
+        String folder = "audio_file/exam/" + cefrLevel + "/" + testTitle;
+
+        try {
+            Map<?, ?> result = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", folder,
                             "resource_type", "video"  // Cloudinary uses "video" resource_type for audio
                     )
             );

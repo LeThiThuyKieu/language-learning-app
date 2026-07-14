@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import {examService, type ExamPartDto, type ExamQuestionDto} from "@/services/examService";
+import {examService, type ExamPartDto, type ExamQuestionDto, type SourceText} from "@/services/examService";
 import {ChevronLeft, ChevronRight, Check, X} from "lucide-react";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 
@@ -519,7 +519,7 @@ function QuestionView({
             {/* SHORT_WRITE */}
             {question.questionType === "SHORT_WRITE" && (
                 <>
-                    {question.storyImages && question.storyImages.length > 0 && (
+                    {question.storyImages && question.storyImages.filter(img => img.image_url).length > 0 && (
                         <div className="grid gap-3 mb-4 w-full"
                              style={{gridTemplateColumns: `repeat(${question.storyImages.length}, 1fr)`}}>
                             {question.storyImages.sort((a, b) => a.order - b.order).map((img) => (
@@ -530,6 +530,20 @@ function QuestionView({
                                         : <div
                                             className="w-full h-full flex items-center justify-center text-xs text-gray-400">{img.alt}</div>
                                     }
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {question.source_texts && question.source_texts.length > 0 && (
+                        <div className="mb-5 flex flex-col gap-4">
+                            {question.source_texts.map((src: SourceText, i: number) => (
+                                <div key={i} className="rounded-xl border border-gray-300 bg-white shadow-sm overflow-hidden">
+                                    <div className="bg-gray-100 border-b border-gray-300 px-4 py-2">
+                                        <p className="text-sm font-bold text-gray-700">{src.title}</p>
+                                    </div>
+                                    <div className="px-4 py-3 text-base text-gray-800 leading-relaxed">
+                                        <RichText text={src.text}/>
+                                    </div>
                                 </div>
                             ))}
                         </div>
