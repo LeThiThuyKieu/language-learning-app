@@ -34,6 +34,7 @@ public class LlmGradingService {
     private String model;
 
     private static final String OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions";
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -42,15 +43,18 @@ public class LlmGradingService {
         int wordCount = countWords(req.getUserAnswer());
 
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("[LlmGrading] OPENAI_API_KEY chưa được cấu hình.");
+            log.warn("[LlmGrading] openai.api-key chưa được cấu hình — bài Writing không được chấm.");
             return fallbackWriting(wordCount);
         }
 
+        log.info("[LlmGrading] Bắt đầu chấm Writing — mongoDocId={}, wordCount={}", req.getMongoDocId(), wordCount);
         try {
             String raw = callOpenAi(buildWritingSystemPrompt(), buildWritingUserPrompt(req, wordCount));
-            return parseWritingResponse(raw, wordCount);
+            GradeResponse result = parseWritingResponse(raw, wordCount);
+            log.info("[LlmGrading] Writing xong — score={}", result.getScore());
+            return result;
         } catch (Exception e) {
-            log.error("[LlmGrading] Writing error: {}", e.getMessage(), e);
+            log.error("[LlmGrading] Writing error (mongoDocId={}): {}", req.getMongoDocId(), e.getMessage(), e);
             return fallbackWriting(wordCount);
         }
     }
@@ -145,18 +149,22 @@ public class LlmGradingService {
      */
     public GradeResponse gradeSpeaking(SpeakingGradeRequest req) {
         if (apiKey == null || apiKey.isBlank()) {
-            log.warn("[LlmGrading] OPENAI_API_KEY chưa được cấu hình.");
+            log.warn("[LlmGrading] openai.api-key chưa được cấu hình — bài Speaking không được chấm.");
             return fallbackSpeaking();
         }
         if (req.getTranscript() == null || req.getTranscript().isBlank()) {
             return new GradeResponse(0, "Không nhận được nội dung ghi âm. Hãy thử lại.", null, null, null);
         }
 
+        log.info("[LlmGrading] Bắt đầu chấm Speaking — part={}, transcriptLen={}",
+            req.getPartNumber(), req.getTranscript().length());
         try {
             String raw = callOpenAi(buildSpeakingSystemPrompt(), buildSpeakingUserPrompt(req));
-            return parseSpeakingResponse(raw);
+            GradeResponse result = parseSpeakingResponse(raw);
+            log.info("[LlmGrading] Speaking xong — score={}", result.getScore());
+            return result;
         } catch (Exception e) {
-            log.error("[LlmGrading] Speaking error: {}", e.getMessage(), e);
+            log.error("[LlmGrading] Speaking error (part={}): {}", req.getPartNumber(), e.getMessage(), e);
             return fallbackSpeaking();
         }
     }
@@ -241,11 +249,17 @@ public class LlmGradingService {
         return new GradeResponse(0, "Không thể chấm bài tự động.", null, null, null);
     }
 
-    // ══════════════════════════════════════════
-    // OpenAI HTTP call
-    // ══════════════════════════════════════════
-
+    // LLM HTTP call — hỗ trợ cả OpenAI và Gemini
     private String callOpenAi(String systemPrompt, String userPrompt) throws Exception {
+        // Gemini format
+        if (model != null && model.startsWith("gemini")) {
+            return callGemini(systemPrompt, userPrompt);
+        }
+        // Groq hoặc OpenAI — cùng format, chỉ khác URL
+        String url = (model != null && (model.startsWith("llama") || model.startsWith("mixtral")
+            || model.startsWith("gemma") || model.startsWith("deepseek")))
+            ? GROQ_URL : OPENAI_URL;
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiKey);
@@ -253,25 +267,65 @@ public class LlmGradingService {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("model", model);
         body.put("temperature", 0.2);
-        body.put("max_tokens", 600);
-
+        body.put("max_tokens", 800);
         body.put("messages", List.of(
             Map.of("role", "system", "content", systemPrompt),
             Map.of("role", "user",   "content", userPrompt)
         ));
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        ResponseEntity<String> response = restTemplate.exchange(OPENAI_URL, HttpMethod.POST, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new RuntimeException("OpenAI error: " + response.getStatusCode());
+            throw new RuntimeException("LLM error (" + url + "): " + response.getStatusCode());
         }
 
-        JsonNode root   = objectMapper.readTree(response.getBody());
-        String content  = root.path("choices").path(0).path("message").path("content").asText("").trim();
-
+        JsonNode root  = objectMapper.readTree(response.getBody());
+        String content = root.path("choices").path(0).path("message").path("content").asText("").trim();
         log.debug("[LlmGrading] raw: {}", content);
+        return stripCodeBlock(content);
+    }
 
+    /**
+     * Gọi Google Gemini API (generateContent endpoint).
+     * Format: POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}
+     */
+    private String callGemini(String systemPrompt, String userPrompt) throws Exception {
+        String geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/"
+            + model + ":generateContent?key=" + apiKey;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Gemini dùng "contents" array, system instruction tách riêng
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("system_instruction", Map.of(
+            "parts", List.of(Map.of("text", systemPrompt))
+        ));
+        body.put("contents", List.of(
+            Map.of("role", "user", "parts", List.of(Map.of("text", userPrompt)))
+        ));
+        body.put("generationConfig", Map.of(
+            "temperature", 0.2,
+            "maxOutputTokens", 800,
+            "responseMimeType", "application/json"
+        ));
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        ResponseEntity<String> response = restTemplate.exchange(geminiUrl, HttpMethod.POST, entity, String.class);
+
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new RuntimeException("Gemini error: " + response.getStatusCode());
+        }
+
+        JsonNode root = objectMapper.readTree(response.getBody());
+        String content = root.path("candidates").path(0)
+            .path("content").path("parts").path(0).path("text").asText("").trim();
+        log.debug("[LlmGrading] Gemini raw: {}", content);
+        return stripCodeBlock(content);
+    }
+
+    private String stripCodeBlock(String content) {
         if (content.startsWith("```")) {
             content = content.replaceAll("^```(?:json)?\\s*", "").replaceAll("```\\s*$", "").trim();
         }
