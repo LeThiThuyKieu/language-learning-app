@@ -3,7 +3,7 @@ import ExcelImportModal, { type ColDef, type ImportResult } from "@/components/a
 import { revisionApi, type AdminTaskDetail } from "@/services/revisionService";
 
 // ─── Column definitions per question type ─────────────────────────────────────
-type QuestionType = "VOCAB_IMAGE" | "LISTENING" | "MATCHING" | "WRITING";
+type QuestionType = "VOCAB_IMAGE" | "LISTENING" | "MATCHING" | "WRITING" | "WRITING_MULTI";
 
 const COLUMNS: Record<QuestionType, ColDef[]> = {
   VOCAB_IMAGE: [
@@ -26,6 +26,10 @@ const COLUMNS: Record<QuestionType, ColDef[]> = {
     { key: "category_slots", label: "Slots",          required: false },
     { key: "correct_answer", label: "Answer JSON",    required: false },
   ],
+  WRITING_MULTI: [
+    { key: "question",       label: "Câu hỏi",        required: true  },
+    { key: "answer",         label: "Đáp án",         required: true  },
+  ],
 };
 
 // Extra client-side validation per type
@@ -40,9 +44,6 @@ function validateRow(type: QuestionType) {
     };
     if (type === "VOCAB_IMAGE") tryUrl("image_url",  "Image URL");
     if (type === "LISTENING")   tryUrl("audio_url",  "Audio URL");
-    if (type === "MATCHING") {
-      // no extra validation needed
-    }
     return errs;
   };
 }
@@ -52,17 +53,24 @@ interface Props {
   topicId: number;
   taskId: number;
   task: AdminTaskDetail;
+  isMultiWriting?: boolean;
   onClose: () => void;
   onImported: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function RevisionImportModal({ topicId, taskId, task, onClose, onImported }: Props) {
-  const type = task.questionType as QuestionType;
+export default function RevisionImportModal({ topicId, taskId, task, isMultiWriting, onClose, onImported }: Props) {
+  const rawType = task.questionType as QuestionType;
+  const type: QuestionType = (rawType === "WRITING" && isMultiWriting) ? "WRITING_MULTI" : rawType;
 
   const handleSubmit = async (file: File): Promise<ImportResult> => {
     try {
-      const res = await revisionApi.importQuestions(topicId, taskId, file);
+      const res = await revisionApi.importQuestions(
+        topicId,
+        taskId,
+        file,
+        isMultiWriting ? "multi" : undefined
+      );
       if (res.data.imported > 0) {
         toast.success(`Import thành công ${res.data.imported} câu hỏi`);
       }
@@ -75,18 +83,10 @@ export default function RevisionImportModal({ topicId, taskId, task, onClose, on
     }
   };
 
-  const typeColor =
-    type === "VOCAB_IMAGE" ? "text-violet-500" :
-    type === "LISTENING"   ? "text-sky-500"    :
-    type === "MATCHING"    ? "text-emerald-600":
-                             "text-amber-500";
-
   return (
     <ExcelImportModal
       title="Import Questions"
-      subtitle={
-        `Task: ${task.taskLabel} · `
-      }
+      subtitle={`Task: ${task.taskLabel} · `}
       columns={COLUMNS[type] ?? []}
       sheetName={type}
       templateUrl={`/general_revision/${type}.xlsx`}

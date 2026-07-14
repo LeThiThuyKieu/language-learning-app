@@ -214,7 +214,8 @@ public class AdminRevisionTopicController {
     public ResponseEntity<ApiResponse<ImportResultDto>> importQuestions(
             @PathVariable Integer topicId,
             @PathVariable Integer taskId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "mode", required = false) String mode) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("File không được để trống"));
@@ -224,7 +225,7 @@ public class AdminRevisionTopicController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Chỉ hỗ trợ file Excel (.xlsx hoặc .xls)"));
         }
-        ImportResultDto result = questionImportService.importQuestions(topicId, taskId, file);
+        ImportResultDto result = questionImportService.importQuestions(topicId, taskId, file, mode);
         String msg = "Import hoàn tất: " + result.getImported() + " câu hỏi"
                 + (result.getErrors().isEmpty() ? "" : " (" + result.getErrors().size() + " lỗi)");
         return ResponseEntity.ok(ApiResponse.success(msg, result));

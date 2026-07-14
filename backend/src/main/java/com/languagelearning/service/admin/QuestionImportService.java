@@ -48,7 +48,7 @@ public class QuestionImportService {
     // ══════════════════════════════════════════════════════════════════════════
 
     @Transactional
-    public ImportResultDto importQuestions(Integer topicId, Integer taskId, MultipartFile file) {
+    public ImportResultDto importQuestions(Integer topicId, Integer taskId, MultipartFile file, String mode) {
 
         // 1. Validate task
         GeneralRevisionTask task = taskRepository.findById(taskId)
@@ -82,8 +82,15 @@ public class QuestionImportService {
                     if (sheet != null) imported = importMatching(sheet, topicId, taskId, startOrder, errors);
                 }
                 case "WRITING" -> {
-                    Sheet sheet = findSheet(wb, "WRITING", errors);
-                    if (sheet != null) imported = importWriting(sheet, topicId, taskId, startOrder, errors);
+                    if ("multi".equalsIgnoreCase(mode)) {
+                        // WRITING_MULTI: mỗi row = 1 câu hỏi (questionText + correctAnswer)
+                        Sheet sheet = findSheet(wb, "WRITING_MULTI", errors);
+                        if (sheet != null) imported = importWritingMulti(sheet, topicId, taskId, startOrder, errors);
+                    } else {
+                        // WRITING thường: categories + slots
+                        Sheet sheet = findSheet(wb, "WRITING", errors);
+                        if (sheet != null) imported = importWriting(sheet, topicId, taskId, startOrder, errors);
+                    }
                 }
                 default -> errors.add("Loại câu hỏi không được hỗ trợ: " + questionType);
             }
@@ -231,23 +238,23 @@ public class QuestionImportService {
     //  Row 0: header, Row 1: description (skip), Row 2+: data
     //  Cột: 0=left | 1=right
     //
-    //  Toàn bộ file = 1 câu hỏi duy nhất với danh sách pairs.
+    //  Import sẽ APPEND pairs vào câu hỏi MATCHING hiện có của task.
+    //  Nếu chưa có câu hỏi nào → tạo mới 1 câu hỏi với các pairs này.
     // ══════════════════════════════════════════════════════════════════════════
 
     private int importMatching(Sheet sheet, Integer topicId, Integer taskId,
                                int startOrder, List<String> errors) {
-        int order = startOrder + 1;
 
-        List<Map<String, String>> pairs = new ArrayList<>();
-
+        // Thu thập các pair hợp lệ từ file
+        List<Map<String, String>> newPairs = new ArrayList<>();
         for (Row row : sheet) {
-            if (row.getRowNum() < 2) continue;  // skip header + description
+            if (row.getRowNum() < 2) continue;
             if (isRowEmpty(row, 2)) continue;
 
             String left  = cellStr(row, 0);
             String right = cellStr(row, 1);
 
-            log.debug("MATCHING row {}: col0='{}' col1='{}'", row.getRowNum() + 1, left, right);
+            log.debug("MATCHING row {}: left='{}' right='{}'", row.getRowNum() + 1, left, right);
 
             if (left.isBlank() || right.isBlank()) {
                 errors.add("Dòng " + (row.getRowNum() + 1) + " MATCHING: cả left và right đều bắt buộc");
@@ -257,25 +264,91 @@ public class QuestionImportService {
             Map<String, String> pair = new LinkedHashMap<>();
             pair.put("left",  left);
             pair.put("right", right);
-            pairs.add(pair);
+            newPairs.add(pair);
         }
 
-        if (pairs.isEmpty()) {
+        if (newPairs.isEmpty()) {
             errors.add("Không có pair hợp lệ nào để import");
             return 0;
         }
 
-        flushMatching(pairs, topicId, taskId, order);
-        return 1;
+        // Tìm câu hỏi MATCHING hiện có trong task (nếu có thì append, không thì tạo mới)
+        List<GeneralRevisionQuestionIndex> existingIndexes = questionIndexRepository
+                .findByTopicIdAndTaskIdOrderById(topicId, taskId);
+
+        GeneralRevisionQuestion existingDoc = existingIndexes.stream()
+                .map(idx -> mongoQuestionRepository.findById(idx.getMongoQuestionId()).orElse(null))
+                .filter(q -> q != null && "MATCHING".equals(q.getQuestionType()))
+                .findFirst()
+                .orElse(null);
+
+        if (existingDoc != null) {
+            // Append pairs vào câu hỏi hiện có
+            List<Map<String, String>> allPairs = new ArrayList<>();
+            if (existingDoc.getPairs() != null) allPairs.addAll(existingDoc.getPairs());
+            allPairs.addAll(newPairs);
+            existingDoc.setPairs(allPairs);
+            mongoQuestionRepository.save(existingDoc);
+            log.info("MATCHING: appended {} pairs to existing question {}", newPairs.size(), existingDoc.getId());
+        } else {
+            // Tạo câu hỏi mới
+            int order = startOrder + 1;
+            GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
+            doc.setQuestionType("MATCHING");
+            doc.setOrderIndex(order);
+            doc.setPairs(new ArrayList<>(newPairs));
+            mongoQuestionRepository.save(doc);
+            questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "MATCHING", null));
+            log.info("MATCHING: created new question {} with {} pairs", doc.getId(), newPairs.size());
+        }
+
+        return newPairs.size();
     }
 
-    private void flushMatching(List<Map<String, String>> pairs, Integer topicId, Integer taskId, int order) {
-        GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
-        doc.setQuestionType("MATCHING");
-        doc.setOrderIndex(order);
-        doc.setPairs(new ArrayList<>(pairs));
-        mongoQuestionRepository.save(doc);
-        questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "MATCHING", null));
+    // ══════════════════════════════════════════════════════════════════════════
+    //  WRITING_MULTI
+    //  Row 0: header, Row 1: description (skip), Row 2+: data
+    //  Cột: 0=question | 1=answer
+    //
+    //  Mỗi row = 1 câu hỏi WRITING mới (questionText + correctAnswer).
+    //  Giống MATCHING: append vào các câu hỏi hiện có của task,
+    //  hoặc tạo mới nếu chưa có.
+    // ══════════════════════════════════════════════════════════════════════════
+
+    private int importWritingMulti(Sheet sheet, Integer topicId, Integer taskId,
+                                   int startOrder, List<String> errors) {
+        int imported = 0;
+        int order    = startOrder;
+
+        for (Row row : sheet) {
+            if (row.getRowNum() < 2) continue;
+            if (isRowEmpty(row, 2)) continue;
+
+            String question = cellStr(row, 0);
+            String answer   = cellStr(row, 1);
+
+            if (question.isBlank() || answer.isBlank()) {
+                errors.add("Dòng " + (row.getRowNum() + 1) + " WRITING_MULTI: câu hỏi và đáp án đều bắt buộc");
+                continue;
+            }
+
+            order++;
+            GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
+            doc.setQuestionType("WRITING");
+            doc.setOrderIndex(order);
+            doc.setQuestionText(question);
+            mongoQuestionRepository.save(doc);
+
+            questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "WRITING", answer));
+            imported++;
+            log.debug("WRITING_MULTI row {}: question='{}' answer='{}'", row.getRowNum() + 1, question, answer);
+        }
+
+        if (imported == 0) {
+            errors.add("Không có câu hỏi hợp lệ nào để import");
+        }
+
+        return imported;
     }
 
     // ══════════════════════════════════════════════════════════════════════════

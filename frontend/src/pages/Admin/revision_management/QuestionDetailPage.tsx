@@ -18,6 +18,7 @@ import {
 } from "@/services/revisionService";
 import { skipsTaskDetail, sortQuestions } from "./revisionNavigation";
 import RevisionImportModal from "@/components/admin/revision_management/ImportExcelModal";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 type QuestionType = "VOCAB_IMAGE" | "LISTENING" | "MATCHING" | "WRITING";
 type Mode = "view" | "edit" | "create";
@@ -786,124 +787,131 @@ function WritingSection({ form, setForm, mode, isMultiQuestion, topicId }: {
     );
 }
 
-// ── WRITING multi-question: hiển thị tất cả câu hỏi trên 1 trang (giống MATCHING) ──
+// WRITING multi-question: 
 function WritingMultiSection({
-    questions,
+    mode,
+    pairs,
+    setPairs,
+    onAdd,
+    onDelete,
+    onSave,
+    onEdit,
+    onCancel,
+    isSaving,
+    showImport,
+    setShowImport,
+    onImported,
     task,
     topicId,
     taskId,
-    navigate,
-    onQuestionsUpdated,
 }: {
-    questions: AdminQuestion[];
+    mode: Mode;
+    pairs: { mongoId: string; question: string; answer: string }[];
+    setPairs: React.Dispatch<React.SetStateAction<{ mongoId: string; question: string; answer: string }[]>>;
+    onEdit: () => void;
+    onCancel: () => void;
+    onAdd: () => void;
+    onDelete: (idx: number) => void;
+    onSave: () => void;
+    isSaving: boolean;
+    showImport: boolean;
+    setShowImport: (v: boolean) => void;
+    onImported: () => void;
     task: AdminTaskDetail | null;
     topicId: string;
     taskId: string;
-    navigate: (path: string) => void;
-    onQuestionsUpdated: (qs: AdminQuestion[]) => void;
 }) {
-    // ── Import state ──
-    const [showImport, setShowImport] = useState(false);
-
-    const handleImported = async () => {
-        const qData = await revisionApi.getQuestions(parseInt(topicId), parseInt(taskId));
-        onQuestionsUpdated(qData ?? []);
-    };
+    const isView = mode === "view";
+    const updatePair = (idx: number, field: "question" | "answer", val: string) =>
+        setPairs(prev => prev.map((p, i) => i === idx ? { ...p, [field]: val } : p));
 
     return (
-        <>
-        <div className="space-y-6">
-            {/* Header: loại câu hỏi + nội dung câu hỏi */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                    <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-gray-400">Loại câu hỏi</p>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-600">
-                        <AlignLeft className="w-3.5 h-3.5" /> Writing
-                    </span>
-                </div>
-                <div>
-                    <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-gray-400">Số câu hỏi</p>
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 min-h-[40px]">
-                        {questions.length}
-                    </div>
-                </div>
+        <div className="space-y-4">
+            <div className="mb-2 flex items-center justify-between">
+                <FieldLabel>Questions ({pairs.length})</FieldLabel>
+                {!isView && (
+                    <button
+                        type="button"
+                        onClick={onAdd}
+                        className="flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-700"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                        Thêm câu hỏi
+                    </button>
+                )}
             </div>
-            {task?.description && (
-                <div>
-                    <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-gray-400">Nội dung câu hỏi</p>
-                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 min-h-[40px]">
-                        {task.description}
-                    </div>
+
+            {pairs.length === 0 && (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-center text-sm text-gray-400">
+                    Chưa có câu hỏi nào.
                 </div>
             )}
 
-            <hr className="border-gray-100" />
-
-            {/* Questions list */}
-            <div>
-                <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                        Questions ({questions.length})
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/new`)}
-                            className="flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-700"
-                        >
-                            <Plus className="w-3.5 h-3.5" /> Thêm câu hỏi
-                        </button>
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    {questions.length === 0 && (
-                        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-center text-sm text-gray-400">
-                            Chưa có câu hỏi nào.
+            <div className="space-y-2">
+                {pairs.map((p, i) => (
+                    <div key={p.mongoId || i} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3">
+                        <span className="w-6 shrink-0 text-center text-xs font-bold text-gray-400">{i + 1}</span>
+                      <div className="flex-1">
+    {isView ? (
+        <ReadonlyBox>
+            {p.question || (
+                <span className="italic text-gray-400">
+                    Chưa có câu hỏi
+                </span>
+            )}
+        </ReadonlyBox>
+    ) : (
+        <input
+            value={p.question}
+            onChange={e => updatePair(i, "question", e.target.value)}
+            placeholder="Câu hỏi..."
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-orange-400"
+        />
+    )}
+</div>
+                        <span className="shrink-0 text-xs font-bold text-gray-300">→</span>
+                       <div className="flex-1">
+                            {isView ? (
+                                <ReadonlyBox>
+                                    {p.answer || (
+                                        <span className="italic text-gray-400">
+                                            Chưa có đáp án
+                                        </span>
+                                    )}
+                                </ReadonlyBox>
+                            ) : (
+                                <input
+                                    value={p.answer}
+                                    onChange={e => updatePair(i, "answer", e.target.value)}
+                                    placeholder="Đáp án..."
+                                    className="w-full rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-2 text-sm outline-none transition focus:border-emerald-400 focus:bg-white"
+                                />
+                            )}
                         </div>
-                    )}
-                    {questions.map((q, i) => (
-                        <div key={q.mongoId} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 p-3 group hover:border-orange-200 transition">
-                            <span className="w-6 shrink-0 text-center text-xs font-bold text-gray-400">{i + 1}</span>
-                            {/* Question text (left) */}
-                            <div className="flex-1">
-                                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 min-h-[40px]">
-                                    {q.questionText || <span className="italic text-gray-400">Chưa có nội dung</span>}
-                                </div>
-                            </div>
-                            <span className="shrink-0 text-xs font-bold text-gray-300">→</span>
-                            {/* Correct answer (right) */}
-                            <div className="flex-1">
-                                {q.correctAnswer
-                                    ? <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 min-h-[40px]">{q.correctAnswer}</div>
-                                    : <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm min-h-[40px]"><span className="italic text-gray-400">Chưa có đáp án</span></div>
-                                }
-                            </div>
-                            {/* Edit action */}
+                        {!isView && (
                             <button
                                 type="button"
-                                onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/${q.mongoId}/edit`)}
-                                title="Chỉnh sửa"
-                                className="shrink-0 p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition opacity-0 group-hover:opacity-100"
+                                onClick={() => onDelete(i)}
+                                className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
                             >
-                                <Pencil className="w-3.5 h-3.5" />
+                                <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                        </div>
-                    ))}
-                </div>
+                        )}
+                    </div>
+                ))}
             </div>
-        </div>
 
-        {/* ── Import Modal (WRITING) ── */}
-        {showImport && task && (
-            <RevisionImportModal
-                topicId={parseInt(topicId)}
-                taskId={parseInt(taskId)}
-                task={task}
-                onClose={() => setShowImport(false)}
-                onImported={handleImported}
-            />
-        )}
-        </>
+            {showImport && task && (
+                <RevisionImportModal
+                    topicId={parseInt(topicId)}
+                    taskId={parseInt(taskId)}
+                    task={task}
+                    isMultiWriting={true}
+                    onClose={() => setShowImport(false)}
+                    onImported={onImported}
+                />
+            )}
+        </div>
     );
 }
 
@@ -927,6 +935,11 @@ export default function QuestionDetailPage() {
 
     // Import state (dùng cho MATCHING)
     const [showImport, setShowImport] = useState(false);
+    // Writing multi inline edit state
+    const [writingPairs, setWritingPairs] = useState<{ mongoId: string; question: string; answer: string }[]>([]);
+   const [writingEditMode, setWritingEditMode] = useState(false);
+    const [deleteWritingIdx, setDeleteWritingIdx] = useState<number | null>(null);
+    const [isSavingWriting, setIsSavingWriting] = useState(false);
 
     useEffect(() => {
         if (!topicId || !taskId) return;
@@ -945,6 +958,15 @@ export default function QuestionDetailPage() {
             .then(qs => setSiblingQuestions(sortQuestions(qs)))
             .catch(() => setSiblingQuestions([]));
     }, [topicId, taskId, task]);
+
+    // Sync writingPairs khi siblingQuestions thay đổi
+    useEffect(() => {
+        setWritingPairs(siblingQuestions.map(q => ({
+            mongoId: q.mongoId,
+            question: q.questionText ?? "",
+            answer: q.correctAnswer ?? "",
+        })));
+    }, [siblingQuestions]);
 
     // Set questionType from task when task is loaded
     useEffect(() => {
@@ -1023,6 +1045,58 @@ export default function QuestionDetailPage() {
         }
     }
 
+    // ── Writing multi: save tất cả pairs ──
+    async function handleSaveWriting() {
+        toast.success("Đã lưu thay đổi");
+        setWritingEditMode(false);
+        try {
+            await Promise.all(writingPairs.map(p =>
+                revisionApi.updateQuestion(parseInt(topicId!), parseInt(taskId!), p.mongoId, {
+                    questionType: "WRITING",
+                    orderIndex: siblingQuestions.find(q => q.mongoId === p.mongoId)?.orderIndex ?? 1,
+                    questionText: p.question || undefined,
+                    correctAnswer: p.answer || undefined,
+                })
+            ));
+            // Reload
+            const qs = await revisionApi.getQuestions(parseInt(topicId!), parseInt(taskId!));
+            setSiblingQuestions(sortQuestions(qs ?? []));
+            toast.success("Đã lưu thay đổi");
+        } catch {
+            toast.error("Có lỗi xảy ra khi lưu");
+        } finally {
+            setIsSavingWriting(false);
+        }
+    }
+
+    // ── Writing multi: thêm câu hỏi mới ──
+    async function handleAddWritingPair() {
+        try {
+            const newOrderIndex = (siblingQuestions[siblingQuestions.length - 1]?.orderIndex ?? 0) + 1;
+            const created = await revisionApi.createQuestion(parseInt(topicId!), parseInt(taskId!), {
+                questionType: "WRITING",
+                orderIndex: newOrderIndex,
+            });
+            setSiblingQuestions(prev => sortQuestions([...prev, created]));
+            toast.success("Đã thêm câu hỏi");
+        } catch {
+            toast.error("Không thể thêm câu hỏi");
+        }
+    }
+
+    // ── Writing multi: xóa câu hỏi ──
+    async function handleDeleteWritingPair(idx: number) {
+        const p = writingPairs[idx];
+        if (!p) return;
+        try {
+            await revisionApi.deleteQuestion(parseInt(topicId!), parseInt(taskId!), p.mongoId);
+            setSiblingQuestions(prev => prev.filter(q => q.mongoId !== p.mongoId));
+            toast.success("Đã xóa câu hỏi");
+        } catch {
+            toast.error("Không thể xóa câu hỏi");
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="flex justify-center py-24">
@@ -1040,8 +1114,8 @@ export default function QuestionDetailPage() {
 
     const ActionButtons = () => (
         <>
-            {/* Import Excel — hiện ở cả view lẫn edit cho MATCHING và WRITING multi */}
-            {(form.questionType === "MATCHING" || isMultiWriting) && mode !== "create" && (
+            {/* Import Excel — hiện ở cả view lẫn edit cho MATCHING */}
+            {form.questionType === "MATCHING" && mode !== "create" && (
                 <button
                     type="button"
                     onClick={() => setShowImport(true)}
@@ -1050,14 +1124,14 @@ export default function QuestionDetailPage() {
                     <Upload className="w-4 h-4" /> Import Excel
                 </button>
             )}
-            {mode === "view" && questionId && (
+            {mode === "view" && questionId && !isMultiWriting && (
                 <button
                     onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/${questionId}/edit`)}
                     className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600">
                     <Pencil className="w-4 h-4" /> Chỉnh sửa
                 </button>
             )}
-            {mode !== "view" && (
+            {mode !== "view" && !isMultiWriting && (
                 <>
                     <button
                         onClick={() => mode === "edit" && questionId
@@ -1118,60 +1192,120 @@ export default function QuestionDetailPage() {
                     </div>
                 </div>
                 <div className="shrink-0 flex items-center gap-3">
-                    {mode === "view" && (
+
+                    {(mode === "view" || isMultiWriting) && (
                         <div className="text-sm text-gray-400 flex items-center gap-1.5">
-                            <Eye className="w-4 h-4" /> View mode
+                            <Eye className="w-4 h-4" />
+                            {writingEditMode && isMultiWriting ? "Edit mode" : "View mode"}
                         </div>
                     )}
-                    <ActionButtons />
+
+                    {isMultiWriting ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setShowImport(true)}
+                                className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100"
+                            >
+                                <Upload className="w-4 h-4" />
+                                Import Excel
+                            </button>
+
+                            {!writingEditMode ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setWritingEditMode(true)}
+                                    className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                    Chỉnh sửa
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setWritingEditMode(false);
+
+                                            setWritingPairs(
+                                                siblingQuestions.map(q => ({
+                                                    mongoId: q.mongoId,
+                                                    question: q.questionText ?? "",
+                                                    answer: q.correctAnswer ?? "",
+                                                }))
+                                            );
+                                        }}
+                                        className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
+                                    >
+                                        Huỷ
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleSaveWriting}
+                                        disabled={isSavingWriting}
+                                        className="flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600 disabled:opacity-60"
+                                    >
+                                        {isSavingWriting ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Save className="w-4 h-4" />
+                                        )}
+                                        Lưu thay đổi
+                                    </button>
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <ActionButtons />
+                    )}
+
                 </div>
             </div>
 
-            {siblingQuestions.length > 1 && questionId && !isMultiWriting && (
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Câu hỏi:</span>
-                    {siblingQuestions.map(q => (
-                        <button
-                            key={q.mongoId}
-                            type="button"
-                            onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/${q.mongoId}`)}
-                            className={[
-                                "rounded-xl border px-3 py-1.5 text-xs font-bold transition",
-                                q.mongoId === questionId
-                                    ? "border-orange-300 bg-orange-50 text-orange-600"
-                                    : "border-gray-200 bg-white text-gray-500 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600",
-                            ].join(" ")}
-                        >
-                            #{q.orderIndex}
-                        </button>
-                    ))}
-                    <button
-                        type="button"
-                        onClick={() => navigate(`/admin/revision-management/topics/${topicId}/tasks/${taskId}/questions/new`)}
-                        className="rounded-xl border border-dashed border-gray-300 px-3 py-1.5 text-xs font-bold text-gray-400 transition hover:border-orange-300 hover:text-orange-600"
-                    >
-                        + Thêm
-                    </button>
-                </div>
-            )}
-
-            {/* Writing multi-question: tất cả câu trên 1 trang */}
+            {/* Writing multi-question: inline edit tất cả câu trên 1 trang */}
             {isMultiWriting && (
                 <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
                     <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
                         <h3 className="flex items-center gap-2 text-base font-extrabold text-gray-900">
                             <span className="inline-block w-1 h-5 rounded-full bg-orange-500" />
-                            Thông tin câu hỏi
+                            Danh sách câu hỏi
                         </h3>
+                        <TypeBadge type="WRITING" />
                     </div>
                     <div className="p-6">
-                        <WritingMultiSection
-                            questions={siblingQuestions}
+                     <WritingMultiSection
+                            mode={writingEditMode ? "edit" : "view"}
+                            pairs={writingPairs}
+                            setPairs={setWritingPairs}
+                            onAdd={handleAddWritingPair}
+                            onDelete={idx => setDeleteWritingIdx(idx)}
+                            onSave={handleSaveWriting}
+
+                            onEdit={() => setWritingEditMode(true)}
+
+                            onCancel={() => {
+                                setWritingEditMode(false);
+
+                                setWritingPairs(
+                                    siblingQuestions.map(q => ({
+                                        mongoId: q.mongoId,
+                                        question: q.questionText ?? "",
+                                        answer: q.correctAnswer ?? "",
+                                    }))
+                                );
+                            }}
+
+                            isSaving={isSavingWriting}
+                            showImport={showImport}
+                            setShowImport={setShowImport}
+                            onImported={async () => {
+                                const qs = await revisionApi.getQuestions(parseInt(topicId!), parseInt(taskId!));
+                                setSiblingQuestions(sortQuestions(qs ?? []));
+                            }}
                             task={task}
                             topicId={topicId!}
                             taskId={taskId!}
-                            navigate={navigate}
-                            onQuestionsUpdated={qs => setSiblingQuestions(sortQuestions(qs))}
                         />
                     </div>
                 </div>
@@ -1236,7 +1370,7 @@ export default function QuestionDetailPage() {
                     {form.questionType === "VOCAB_IMAGE" && <VocabImageSection form={form} setForm={setForm} mode={mode} topicId={topicId} />}
                     {form.questionType === "LISTENING"   && <ListeningSection  form={form} setForm={setForm} mode={mode} topicId={topicId} />}
                     {form.questionType === "MATCHING"    && <MatchingSection   form={form} setForm={setForm} mode={mode} />}
-                    {form.questionType === "WRITING"     && <WritingSection    form={form} setForm={setForm} mode={mode} isMultiQuestion={siblingQuestions.length > 1} topicId={topicId} />}
+                    {form.questionType === "WRITING"     && <WritingSection    form={form} setForm={setForm} mode={mode} topicId={topicId} />}
                 </div>
 
                 {/* Bottom actions */}
@@ -1250,7 +1384,7 @@ export default function QuestionDetailPage() {
         </div>
 
         {/* ── Import Modal (MATCHING) ── */}
-        {showImport && task && (
+        {showImport && !isMultiWriting && task && (
             <RevisionImportModal
                 topicId={parseInt(topicId!)}
                 taskId={parseInt(taskId!)}
@@ -1264,6 +1398,17 @@ export default function QuestionDetailPage() {
                 }}
             />
         )}
+
+        {/* ── Confirm xóa câu hỏi writing multi ── */}
+        <ConfirmModal
+            isOpen={deleteWritingIdx !== null}
+            onClose={() => setDeleteWritingIdx(null)}
+            onConfirm={() => {
+                if (deleteWritingIdx !== null) handleDeleteWritingPair(deleteWritingIdx);
+                setDeleteWritingIdx(null);
+            }}
+            message={`Xóa câu hỏi #${(deleteWritingIdx ?? 0) + 1} "${writingPairs[deleteWritingIdx ?? 0]?.question || ""}"? Hành động này không thể hoàn tác.`}
+        />
         </>
     );
 }
