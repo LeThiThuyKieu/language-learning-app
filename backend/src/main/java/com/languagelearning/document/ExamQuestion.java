@@ -120,6 +120,9 @@ public class ExamQuestion {
     @Field("story_images")
     private List<Map<String, Object>> storyImages; // [{ order, image_url, alt }]
 
+    @Field("source_texts")
+    private List<Map<String, Object>> sourceTexts; // [{ title, text }] — cho SHORT_WRITE dạng argumentative
+
     // Dùng cho SPEAKING_TASK
     @Field("part_title")
     private String partTitle;

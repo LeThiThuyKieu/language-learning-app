@@ -148,6 +148,13 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
+        <!-- Apache POI — đọc Excel (.xlsx) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
         <!-- OpenAI Java Client (gọi GPT cho writing/speaking grading) -->
         <dependency>
             <groupId>com.theokanning.openai-gpt3-java</groupId>

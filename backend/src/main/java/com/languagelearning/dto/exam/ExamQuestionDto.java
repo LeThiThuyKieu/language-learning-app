@@ -1,5 +1,6 @@
 package com.languagelearning.dto.exam;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -55,6 +56,8 @@ public class ExamQuestionDto {
     private String promptText;
     private List<String> bulletPoints;
     private List<Map<String, Object>> storyImages; // [{order, image_url, alt}]
+    @JsonProperty("source_texts")
+    private List<Map<String, Object>> sourceTexts; // [{title, text}]
 
     // SPEAKING_TASK
     private String partTitle;

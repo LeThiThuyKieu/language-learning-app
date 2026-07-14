@@ -6,6 +6,7 @@ import com.languagelearning.entity.GeneralRevisionTopic;
 import com.languagelearning.repository.mysql.GeneralRevisionTopicRepository;
 import com.languagelearning.service.QuestionMediaUploadService;
 import com.languagelearning.service.admin.AdminRevisionTopicService;
+import com.languagelearning.service.admin.QuestionImportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ public class AdminRevisionTopicController {
     private final AdminRevisionTopicService adminRevisionTopicService;
     private final QuestionMediaUploadService questionMediaUploadService;
     private final GeneralRevisionTopicRepository generalRevisionTopicRepository;
+    private final QuestionImportService questionImportService;
 
     // ══════════════════════════ TOPIC ═══════════════════════════════════════
 
@@ -199,6 +201,33 @@ public class AdminRevisionTopicController {
             @RequestBody List<ReorderMongoItemRequest> items) {
         adminRevisionTopicService.reorderQuestions(topicId, taskId, items);
         return ResponseEntity.ok(ApiResponse.success("Đã lưu thứ tự câu hỏi", null));
+    }
+
+    // ══════════════════════════ IMPORT ══════════════════════════════════════
+
+    /**
+     * POST /api/admin/revision/topics/{topicId}/tasks/{taskId}/questions/import
+     * Import câu hỏi từ file Excel (.xlsx) vào task cụ thể.
+     * Chỉ import sheet khớp với questionType của task.
+     */
+    @PostMapping("/{topicId}/tasks/{taskId}/questions/import")
+    public ResponseEntity<ApiResponse<ImportResultDto>> importQuestions(
+            @PathVariable Integer topicId,
+            @PathVariable Integer taskId,
+            @RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("File không được để trống"));
+        }
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.toLowerCase().endsWith(".xlsx")) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Chỉ hỗ trợ file .xlsx"));
+        }
+        ImportResultDto result = questionImportService.importQuestions(topicId, taskId, file);
+        String msg = "Import hoàn tất: " + result.getImported() + " câu hỏi"
+                + (result.getErrors().isEmpty() ? "" : " (" + result.getErrors().size() + " lỗi)");
+        return ResponseEntity.ok(ApiResponse.success(msg, result));
     }
 
     // ══════════════════════════ MEDIA UPLOAD ════════════════════════════════
