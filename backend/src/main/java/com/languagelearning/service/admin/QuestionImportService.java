@@ -10,7 +10,6 @@ import com.languagelearning.repository.mysql.GeneralRevisionTaskRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,90 +18,72 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Xử lý import câu hỏi revision từ file Excel (.xlsx).
- * Mỗi sheet tương ứng 1 question_type và chỉ import sheet khớp với questionType của task.
+ * Import câu hỏi revision từ file Excel (.xls / .xlsx).
+ *
+ * Quy tắc chung cho mọi sheet:
+ *   - Row 0 : header (tên cột) — bỏ qua
+ *   - Row 1 : mô tả / ghi chú   — bỏ qua
+ *   - Row 2+: dữ liệu thực
+ *
+ * Hỗ trợ:
+ *   - VOCAB_IMAGE : sheet "VOCAB_IMAGE"   | cột: image_url, correct_answer
+ *   - LISTENING   : sheet "LISTENING"     | cột: image_url, audio_url, sentence, correct_answer
+ *   - MATCHING    : sheet "MATCHING"      | cột: pair_index, left, right
+ *   - WRITING     : sheet "WRITING"       | cột: image_url, category_label, category_slots, correct_answer_json
+ *
+ * Sheet lookup: tìm theo tên chính xác, nếu không thấy thì fallback tìm case-insensitive
+ * hoặc lấy sheet đầu tiên nếu workbook chỉ có 1 sheet.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class QuestionImportService {
 
-    private final GeneralRevisionTaskRepository taskRepository;
-    private final GeneralRevisionQuestionIndexRepository questionIndexRepository;
-    private final GeneralRevisionQuestionRepository mongoQuestionRepository;
+    private final GeneralRevisionTaskRepository             taskRepository;
+    private final GeneralRevisionQuestionIndexRepository    questionIndexRepository;
+    private final GeneralRevisionQuestionRepository         mongoQuestionRepository;
 
-    /**
-     * Import questions từ file Excel vào task.
-     *
-     * @param topicId  topic chứa task
-     * @param taskId   task cần import vào
-     * @param file     file .xlsx
-     * @return kết quả import (số thành công, danh sách lỗi)
-     */
+    // ══════════════════════════════════════════════════════════════════════════
+    //  ENTRY POINT
+    // ══════════════════════════════════════════════════════════════════════════
+
     @Transactional
     public ImportResultDto importQuestions(Integer topicId, Integer taskId, MultipartFile file) {
-        // 1. Kiểm tra task tồn tại và thuộc topic
+
+        // 1. Validate task
         GeneralRevisionTask task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy task: " + taskId));
         if (!task.getTopic().getId().equals(topicId)) {
             throw new IllegalArgumentException("Task không thuộc topic: " + topicId);
         }
+        String questionType = task.getQuestionType();
 
-        String questionType = task.getQuestionType(); // VOCAB_IMAGE | LISTENING | MATCHING | WRITING
+        // 2. Mở workbook — WorkbookFactory tự nhận .xls và .xlsx
+        try (Workbook wb = WorkbookFactory.create(file.getInputStream())) {
 
-        // 2. Đọc file Excel
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
-            List<String> errors = new ArrayList<>();
-            int imported = 0;
+            List<String> errors  = new ArrayList<>();
+            int          imported = 0;
 
-            // Xác định orderIndex bắt đầu (sau các câu đã có)
-            int currentMaxOrder = questionIndexRepository
-                    .findByTopicIdAndTaskIdOrderById(topicId, taskId)
-                    .stream()
-                    .mapToInt(idx -> {
-                        GeneralRevisionQuestion q = mongoQuestionRepository.findById(idx.getMongoQuestionId()).orElse(null);
-                        return (q != null && q.getOrderIndex() != null) ? q.getOrderIndex() : 0;
-                    })
-                    .max()
-                    .orElse(0);
+            // 3. Tính startOrder (append sau câu đã có)
+            int startOrder = calcStartOrder(topicId, taskId);
 
+            // 4. Dispatch theo loại
             switch (questionType) {
                 case "VOCAB_IMAGE" -> {
-                    Sheet sheet = workbook.getSheet("VOCAB_IMAGE");
-                    if (sheet == null) {
-                        errors.add("Không tìm thấy sheet 'VOCAB_IMAGE' trong file");
-                    } else {
-                        int[] result = importVocabImage(sheet, topicId, taskId, currentMaxOrder, errors);
-                        imported = result[0];
-                    }
+                    Sheet sheet = findSheet(wb, "VOCAB_IMAGE", errors);
+                    if (sheet != null) imported = importVocabImage(sheet, topicId, taskId, startOrder, errors);
                 }
                 case "LISTENING" -> {
-                    Sheet sheet = workbook.getSheet("LISTENING");
-                    if (sheet == null) {
-                        errors.add("Không tìm thấy sheet 'LISTENING' trong file");
-                    } else {
-                        int[] result = importListening(sheet, topicId, taskId, currentMaxOrder, errors);
-                        imported = result[0];
-                    }
+                    Sheet sheet = findSheet(wb, "LISTENING", errors);
+                    if (sheet != null) imported = importListening(sheet, topicId, taskId, startOrder, errors);
                 }
                 case "MATCHING" -> {
-                    Sheet sheet = workbook.getSheet("MATCHING");
-                    if (sheet == null) {
-                        errors.add("Không tìm thấy sheet 'MATCHING' trong file");
-                    } else {
-                        int[] result = importMatching(sheet, topicId, taskId, currentMaxOrder, errors);
-                        imported = result[0];
-                    }
+                    Sheet sheet = findSheet(wb, "MATCHING", errors);
+                    if (sheet != null) imported = importMatching(sheet, topicId, taskId, startOrder, errors);
                 }
                 case "WRITING" -> {
-                    // WRITING: chỉ dùng sheet "WRITING" (dạng question_text đơn giản)
-                    Sheet sheet = workbook.getSheet("WRITING");
-                    if (sheet == null) {
-                        errors.add("Không tìm thấy sheet 'WRITING' trong file");
-                    } else {
-//                        int[] result = importWriting(sheet, topicId, taskId, currentMaxOrder, errors);
-//                        imported = result[0];
-                    }
+                    Sheet sheet = findSheet(wb, "WRITING", errors);
+                    if (sheet != null) imported = importWriting(sheet, topicId, taskId, startOrder, errors);
                 }
                 default -> errors.add("Loại câu hỏi không được hỗ trợ: " + questionType);
             }
@@ -113,82 +94,124 @@ public class QuestionImportService {
                     .build();
 
         } catch (IOException e) {
-            log.error("Lỗi khi đọc file Excel", e);
+            log.error("Không thể đọc file Excel: {}", e.getMessage(), e);
             throw new IllegalArgumentException("Không thể đọc file Excel: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Lỗi khi import Excel: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("Lỗi khi xử lý file: " + e.getMessage());
         }
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  SHEET LOOKUP — flexible: exact → case-insensitive → first sheet
+    // ══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Sheet VOCAB_IMAGE: header row 0, description row 1 (bỏ qua), data từ row 2.
-     * Cột: image_url | correct_answer
+     * Tìm sheet theo tên:
+     * 1. Tìm chính xác
+     * 2. Tìm case-insensitive
+     * 3. Nếu workbook chỉ có 1 sheet → dùng luôn sheet đó
+     * 4. Không tìm thấy → thêm lỗi, trả về null
      */
-    private int[] importVocabImage(Sheet sheet, Integer topicId, Integer taskId,
-                                   int startOrder, List<String> errors) {
+    private Sheet findSheet(Workbook wb, String sheetName, List<String> errors) {
+        // Exact match
+        Sheet sheet = wb.getSheet(sheetName);
+        if (sheet != null) return sheet;
+
+        // Case-insensitive
+        for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+            if (wb.getSheetName(i).equalsIgnoreCase(sheetName)) {
+                log.info("Sheet '{}' found via case-insensitive match as '{}'", sheetName, wb.getSheetName(i));
+                return wb.getSheetAt(i);
+            }
+        }
+
+        // Single-sheet workbook → dùng sheet đó, warn user
+        if (wb.getNumberOfSheets() == 1) {
+            log.warn("Sheet '{}' not found, using the only sheet '{}'", sheetName, wb.getSheetName(0));
+            return wb.getSheetAt(0);
+        }
+
+        // All sheets listed in error for easier debugging
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < wb.getNumberOfSheets(); i++) names.add(wb.getSheetName(i));
+        errors.add("Không tìm thấy sheet '" + sheetName + "'. Các sheet có trong file: " + names);
+        return null;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  VOCAB_IMAGE
+    //  Row 0: header, Row 1: description (skip), Row 2+: data
+    //  Cột: 0=image_url | 1=correct_answer
+    // ══════════════════════════════════════════════════════════════════════════
+
+    private int importVocabImage(Sheet sheet, Integer topicId, Integer taskId,
+                                 int startOrder, List<String> errors) {
         int imported = 0;
-        int orderIdx = startOrder;
+        int order    = startOrder;
 
-        for (int r = 2; r <= sheet.getLastRowNum(); r++) {
-            Row row = sheet.getRow(r);
-            if (row == null || isRowEmpty(row, 2)) continue;
+        for (Row row : sheet) {
+            if (row.getRowNum() < 2) continue;  // skip header + description
+            if (isRowEmpty(row, 2)) continue;
 
-            String imageUrl    = cellStr(row, 0);
+            String imageUrl     = cellStr(row, 0);
             String correctAnswer = cellStr(row, 1);
 
-            if (imageUrl.isBlank()) {
-                errors.add("Dòng " + (r + 1) + ": image_url bắt buộc");
-                continue;
-            }
-            if (correctAnswer.isBlank()) {
-                errors.add("Dòng " + (r + 1) + ": correct_answer bắt buộc");
+            // Validation
+            List<String> rowErrors = new ArrayList<>();
+            if (imageUrl.isBlank())      rowErrors.add("image_url bắt buộc");
+            if (correctAnswer.isBlank()) rowErrors.add("correct_answer bắt buộc");
+            if (!rowErrors.isEmpty()) {
+                errors.add("Dòng " + (row.getRowNum() + 1) + ": " + String.join(", ", rowErrors));
                 continue;
             }
 
-            orderIdx++;
+            order++;
             GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
             doc.setQuestionType("VOCAB_IMAGE");
-            doc.setOrderIndex(orderIdx);
+            doc.setOrderIndex(order);
             doc.setImageUrl(imageUrl);
             mongoQuestionRepository.save(doc);
 
-            GeneralRevisionQuestionIndex idx = buildIndex(doc.getId(), topicId, taskId, "VOCAB_IMAGE", correctAnswer);
-            questionIndexRepository.save(idx);
+            questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "VOCAB_IMAGE", correctAnswer));
             imported++;
         }
-        return new int[]{ imported };
+        return imported;
     }
 
-    /**
-     * Sheet LISTENING: header row 0, description row 1 (bỏ qua), data từ row 2.
-     * Cột: image_url | audio_url | sentence | correct_answer
-     */
-    private int[] importListening(Sheet sheet, Integer topicId, Integer taskId,
-                                  int startOrder, List<String> errors) {
-        int imported = 0;
-        int orderIdx = startOrder;
+    // ══════════════════════════════════════════════════════════════════════════
+    //  LISTENING
+    //  Row 0: header, Row 1: description (skip), Row 2+: data
+    //  Cột: 0=image_url | 1=audio_url | 2=sentence | 3=correct_answer
+    // ══════════════════════════════════════════════════════════════════════════
 
-        for (int r = 2; r <= sheet.getLastRowNum(); r++) {
-            Row row = sheet.getRow(r);
-            if (row == null || isRowEmpty(row, 4)) continue;
+    private int importListening(Sheet sheet, Integer topicId, Integer taskId,
+                                int startOrder, List<String> errors) {
+        int imported = 0;
+        int order    = startOrder;
+
+        for (Row row : sheet) {
+            if (row.getRowNum() < 2) continue;  // skip header + description
+            if (isRowEmpty(row, 4)) continue;
 
             String imageUrl      = cellStr(row, 0);
             String audioUrl      = cellStr(row, 1);
             String sentence      = cellStr(row, 2);
             String correctAnswer = cellStr(row, 3);
 
-            if (audioUrl.isBlank()) {
-                errors.add("Dòng " + (r + 1) + ": audio_url bắt buộc");
-                continue;
-            }
-            if (correctAnswer.isBlank()) {
-                errors.add("Dòng " + (r + 1) + ": correct_answer bắt buộc");
+            // Validation
+            List<String> rowErrors = new ArrayList<>();
+            if (audioUrl.isBlank())      rowErrors.add("audio_url bắt buộc");
+            if (correctAnswer.isBlank()) rowErrors.add("correct_answer bắt buộc");
+            if (!rowErrors.isEmpty()) {
+                errors.add("Dòng " + (row.getRowNum() + 1) + ": " + String.join(", ", rowErrors));
                 continue;
             }
 
-            orderIdx++;
+            order++;
             GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
             doc.setQuestionType("LISTENING");
-            doc.setOrderIndex(orderIdx);
+            doc.setOrderIndex(order);
             doc.setImageUrl(imageUrl.isBlank() ? null : imageUrl);
             doc.setSentence(sentence.isBlank() ? null : sentence);
 
@@ -197,135 +220,131 @@ public class QuestionImportService {
             doc.setMetadata(meta);
 
             mongoQuestionRepository.save(doc);
-
-            GeneralRevisionQuestionIndex idx = buildIndex(doc.getId(), topicId, taskId, "LISTENING", correctAnswer);
-            questionIndexRepository.save(idx);
+            questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "LISTENING", correctAnswer));
             imported++;
         }
-        return new int[]{ imported };
+        return imported;
     }
 
-    /**
-     * Sheet MATCHING: header row 0, description row 1 (bỏ qua), data từ row 2.
-     * Cột: pair_index | left | right
-     * Nhiều dòng liên tiếp tạo thành 1 câu hỏi MATCHING.
-     * Câu hỏi mới bắt đầu khi pair_index == 1 và currentPairs không rỗng.
-     */
-    private int[] importMatching(Sheet sheet, Integer topicId, Integer taskId,
-                                 int startOrder, List<String> errors) {
-        int imported = 0;
-        int orderIdx = startOrder;
+    // ══════════════════════════════════════════════════════════════════════════
+    //  MATCHING
+    //  Row 0: header, Row 1: description (skip), Row 2+: data
+    //  Cột: 0=left | 1=right
+    //
+    //  Toàn bộ file = 1 câu hỏi duy nhất với danh sách pairs.
+    // ══════════════════════════════════════════════════════════════════════════
 
-        List<Map<String, String>> currentPairs = new ArrayList<>();
+    private int importMatching(Sheet sheet, Integer topicId, Integer taskId,
+                               int startOrder, List<String> errors) {
+        int order = startOrder + 1;
 
-        // Collect all data rows first
-        List<Row> dataRows = new ArrayList<>();
-        for (int r = 2; r <= sheet.getLastRowNum(); r++) {
-            Row row = sheet.getRow(r);
-            if (row != null && !isRowEmpty(row, 3)) {
-                dataRows.add(row);
-            }
-        }
+        List<Map<String, String>> pairs = new ArrayList<>();
 
-        for (int i = 0; i < dataRows.size(); i++) {
-            Row row = dataRows.get(i);
-            int pairIndex = (int) cellNum(row, 0);
-            String left   = cellStr(row, 1);
-            String right  = cellStr(row, 2);
+        for (Row row : sheet) {
+            if (row.getRowNum() < 2) continue;  // skip header + description
+            if (isRowEmpty(row, 2)) continue;
 
-            // pair_index == 1 AND we already have pairs → flush previous question
-            if (pairIndex == 1 && !currentPairs.isEmpty()) {
-                orderIdx++;
-                GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
-                doc.setQuestionType("MATCHING");
-                doc.setOrderIndex(orderIdx);
-                doc.setPairs(new ArrayList<>(currentPairs));
-                mongoQuestionRepository.save(doc);
-                questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "MATCHING", null));
-                imported++;
-                currentPairs.clear();
-            }
+            String left  = cellStr(row, 0);
+            String right = cellStr(row, 1);
 
-            if (left.isBlank()) {
-                errors.add("Dòng " + (sheet.getRow(2 + i) != null ? (2 + i + 1) : "?") + " MATCHING: left bắt buộc");
-                continue;
-            }
-            if (right.isBlank()) {
-                errors.add("Dòng " + (2 + i + 1) + " MATCHING: right bắt buộc");
+            log.debug("MATCHING row {}: col0='{}' col1='{}'", row.getRowNum() + 1, left, right);
+
+            if (left.isBlank() || right.isBlank()) {
+                errors.add("Dòng " + (row.getRowNum() + 1) + " MATCHING: cả left và right đều bắt buộc");
                 continue;
             }
 
             Map<String, String> pair = new LinkedHashMap<>();
-            pair.put("left", left);
+            pair.put("left",  left);
             pair.put("right", right);
-            currentPairs.add(pair);
+            pairs.add(pair);
         }
 
-        // Flush last question
-        if (!currentPairs.isEmpty()) {
-            orderIdx++;
-            GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
-            doc.setQuestionType("MATCHING");
-            doc.setOrderIndex(orderIdx);
-            doc.setPairs(new ArrayList<>(currentPairs));
-            mongoQuestionRepository.save(doc);
-            questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "MATCHING", null));
-            imported++;
+        if (pairs.isEmpty()) {
+            errors.add("Không có pair hợp lệ nào để import");
+            return 0;
         }
 
-        return new int[]{ imported };
+        flushMatching(pairs, topicId, taskId, order);
+        return 1;
     }
 
-    /**
-     * Sheet WRITING_1: header row 0, description row 1 (bỏ qua), data từ row 2.
-     * Cột: image_url | category_label | category_slots | correct_answer
-     * Dòng đầu của mỗi câu hỏi có image_url. Các dòng tiếp theo của cùng câu hỏi để trống image_url.
-     */
-    private int[] importWriting1(Sheet sheet, Integer topicId, Integer taskId,
-                                 int startOrder, List<String> errors) {
+    private void flushMatching(List<Map<String, String>> pairs, Integer topicId, Integer taskId, int order) {
+        GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
+        doc.setQuestionType("MATCHING");
+        doc.setOrderIndex(order);
+        doc.setPairs(new ArrayList<>(pairs));
+        mongoQuestionRepository.save(doc);
+        questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "MATCHING", null));
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  WRITING
+    //  Row 0: header, Row 1: description (skip), Row 2+: data
+    //  Cột: 0=image_url | 1=category_label | 2=category_slots | 3=correct_answer_json
+    //
+    //  Mỗi câu hỏi gồm nhiều dòng (1 dòng/category).
+    //  Câu hỏi mới bắt đầu khi cột image_url có giá trị (không rỗng).
+    //  image_url có thể để trống ở các dòng category tiếp theo.
+    //
+    //  correct_answer_json (cột 3): JSON mảng đáp án cho từng slot của category đó.
+    //  Ví dụ: [["apple","apples"],["banana"]]
+    //  Nếu không có JSON hợp lệ, fallback coi như chuỗi đơn → [[value]]
+    // ══════════════════════════════════════════════════════════════════════════
+
+    private int importWriting(Sheet sheet, Integer topicId, Integer taskId,
+                              int startOrder, List<String> errors) {
         int imported = 0;
-        int orderIdx = startOrder;
+        int order    = startOrder;
 
-        String currentImageUrl = null;
-        List<Map<String, Object>> currentCats = new ArrayList<>();
+        String                   currentImageUrl = null;
+        List<WritingCatRow>      currentCats     = new ArrayList<>();
 
-        for (int r = 2; r <= sheet.getLastRowNum() + 1; r++) {
-            Row row = (r <= sheet.getLastRowNum()) ? sheet.getRow(r) : null;
-            boolean isEnd = (row == null || isRowEmpty(row, 4));
+        // Collect all data rows first (avoids getLastRowNum() unreliability with SheetJS files)
+        List<Row> dataRows = new ArrayList<>();
+        for (Row row : sheet) {
+            if (row.getRowNum() >= 2 && !isRowEmpty(row, 2)) dataRows.add(row);
+        }
+
+        for (int i = 0; i <= dataRows.size(); i++) {   // extra sentinel iteration to flush last question
+            Row     row   = (i < dataRows.size()) ? dataRows.get(i) : null;
+            boolean isEnd = (row == null);
 
             if (!isEnd) {
-                String imageUrl      = cellStr(row, 0);
-                String catLabel      = cellStr(row, 1);
-                String slotsStr      = cellStr(row, 2);
-                String correctAnswer = cellStr(row, 3);
+                String imageUrl  = cellStr(row, 0);
+                String catLabel  = cellStr(row, 1);
+                String slotsStr  = cellStr(row, 2);
+                String answerRaw = cellStr(row, 3);
 
                 boolean isNewQuestion = !imageUrl.isBlank();
 
-                // New question starts → flush previous
+                // Flush previous if new question starts
                 if (isNewQuestion && !currentCats.isEmpty()) {
-                    orderIdx++;
-                    saveWriting1Question(topicId, taskId, orderIdx, currentImageUrl, currentCats);
+                    order++;
+                    flushWriting(currentImageUrl, currentCats, topicId, taskId, order);
                     imported++;
                     currentCats = new ArrayList<>();
                     currentImageUrl = null;
                 }
 
                 if (isNewQuestion) currentImageUrl = imageUrl;
-                if (catLabel.isBlank()) continue;
+                if (catLabel.isBlank()) continue;   // row chỉ có image, không có category
 
                 int slots = 4;
-                try { slots = (int) Double.parseDouble(slotsStr); } catch (Exception ignored) {}
+                if (!slotsStr.isBlank()) {
+                    try { slots = (int) Double.parseDouble(slotsStr); }
+                    catch (NumberFormatException ignored) {
+                        errors.add("Dòng " + (row.getRowNum() + 1) + " WRITING: category_slots không hợp lệ '" + slotsStr + "', dùng mặc định 4");
+                    }
+                }
 
-                Map<String, Object> cat = new LinkedHashMap<>();
-                cat.put("label", catLabel);
-                cat.put("slots", slots);
-                if (!correctAnswer.isBlank()) cat.put("correctAnswer", correctAnswer);
-                currentCats.add(cat);
+                currentCats.add(new WritingCatRow(catLabel, slots, answerRaw));
+
             } else {
-                // Flush on empty row or end of sheet
+                // Sentinel end → flush last question
                 if (!currentCats.isEmpty()) {
-                    orderIdx++;
-                    saveWriting1Question(topicId, taskId, orderIdx, currentImageUrl, currentCats);
+                    order++;
+                    flushWriting(currentImageUrl, currentCats, topicId, taskId, order);
                     imported++;
                     currentCats = new ArrayList<>();
                     currentImageUrl = null;
@@ -333,90 +352,197 @@ public class QuestionImportService {
             }
         }
 
-        return new int[]{ imported };
+        return imported;
     }
 
-    private void saveWriting1Question(Integer topicId, Integer taskId, int orderIdx,
-                                      String imageUrl,
-                                      List<Map<String, Object>> cats) {
-        // Build categories và correctAnswer JSON
-        List<Map<String, Object>> categories = new ArrayList<>();
-        Map<String, Object> correctAnswerMap = new LinkedHashMap<>();
+    private void flushWriting(String imageUrl, List<WritingCatRow> cats,
+                              Integer topicId, Integer taskId, int order) {
 
-        for (Map<String, Object> cat : cats) {
-            String label = (String) cat.get("label");
-            int slots    = cat.get("slots") instanceof Integer ? (Integer) cat.get("slots") : 4;
+        List<Map<String, Object>>    categories      = new ArrayList<>();
+        Map<String, List<List<String>>> correctAnswerMap = new LinkedHashMap<>();
+
+        for (WritingCatRow cat : cats) {
             Map<String, Object> catEntry = new LinkedHashMap<>();
-            catEntry.put("label", label);
-            catEntry.put("slots", slots);
+            catEntry.put("label", cat.label);
+            catEntry.put("slots", cat.slots);
             categories.add(catEntry);
 
-            String rawAnswer = (String) cat.getOrDefault("correctAnswer", "");
-            if (!rawAnswer.isBlank()) {
-                correctAnswerMap.put(label, rawAnswer);
+            if (!cat.answerRaw.isBlank()) {
+                List<List<String>> parsed = parseWritingAnswer(cat.answerRaw, cat.slots);
+                correctAnswerMap.put(cat.label, parsed);
+            } else {
+                // Không có đáp án → tạo slots rỗng
+                List<List<String>> empty = new ArrayList<>();
+                for (int s = 0; s < cat.slots; s++) empty.add(Collections.singletonList(""));
+                correctAnswerMap.put(cat.label, empty);
             }
         }
 
-        // Build correctAnswer JSON: { "Kitchen": [[...],[...]], ... }
-        StringBuilder sb = new StringBuilder("{");
-        boolean first = true;
-        for (Map.Entry<String, Object> e : correctAnswerMap.entrySet()) {
-            if (!first) sb.append(",");
-            first = false;
-            sb.append("\"").append(escapeJson(e.getKey())).append("\":").append(e.getValue());
-        }
-        sb.append("}");
+        String correctAnswerJson = buildWritingAnswerJson(correctAnswerMap);
 
         GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
         doc.setQuestionType("WRITING");
-        doc.setOrderIndex(orderIdx);
+        doc.setOrderIndex(order);
         doc.setImageUrl((imageUrl == null || imageUrl.isBlank()) ? null : imageUrl);
         doc.setCategories(categories);
         mongoQuestionRepository.save(doc);
 
-        GeneralRevisionQuestionIndex idx = buildIndex(doc.getId(), topicId, taskId, "WRITING",
-                first ? null : sb.toString());
-        questionIndexRepository.save(idx);
+        questionIndexRepository.save(buildIndex(doc.getId(), topicId, taskId, "WRITING", correctAnswerJson));
     }
 
     /**
-     * Sheet WRITING_2: header row 0, description row 1 (bỏ qua), data từ row 2.
-     * Cột: question_text | correct_answer
-     * Mỗi dòng = 1 câu hỏi độc lập.
+     * Parse đáp án WRITING từ chuỗi raw.
+     * Hỗ trợ:
+     *   - JSON mảng:        [["apple","apples"],["banana"]]
+     *   - Pipe-separated:   apple|apples;;banana  (;; phân tách slot, | phân tách variant)
+     *   - Chuỗi đơn giản:   apple  → [[apple]]
      */
-    private int[] importWriting2(Sheet sheet, Integer topicId, Integer taskId,
-                                 int startOrder, List<String> errors) {
-        int imported = 0;
-        int orderIdx = startOrder;
-
-        for (int r = 2; r <= sheet.getLastRowNum(); r++) {
-            Row row = sheet.getRow(r);
-            if (row == null || isRowEmpty(row, 2)) continue;
-
-            String questionText  = cellStr(row, 0);
-            String correctAnswer = cellStr(row, 1);
-
-            if (questionText.isBlank()) {
-                errors.add("Dòng " + (r + 1) + " WRITING_2: question_text bắt buộc");
-                continue;
-            }
-            if (correctAnswer.isBlank()) {
-                errors.add("Dòng " + (r + 1) + " WRITING_2: correct_answer bắt buộc");
-                continue;
-            }
-
-            orderIdx++;
-            GeneralRevisionQuestion doc = new GeneralRevisionQuestion();
-            doc.setQuestionType("WRITING");
-            doc.setOrderIndex(orderIdx);
-            doc.setQuestionText(questionText);
-            mongoQuestionRepository.save(doc);
-
-            GeneralRevisionQuestionIndex idx = buildIndex(doc.getId(), topicId, taskId, "WRITING", correctAnswer);
-            questionIndexRepository.save(idx);
-            imported++;
+    @SuppressWarnings("unchecked")
+    private List<List<String>> parseWritingAnswer(String raw, int slots) {
+        if (raw == null || raw.isBlank()) {
+            List<List<String>> empty = new ArrayList<>();
+            for (int i = 0; i < slots; i++) empty.add(Collections.singletonList(""));
+            return empty;
         }
-        return new int[]{ imported };
+
+        String trimmed = raw.trim();
+
+        // 1. Try JSON array
+        if (trimmed.startsWith("[")) {
+            try {
+                // Manual simple JSON parse để không cần Jackson dependency
+                // Chấp nhận: [["a","b"],["c"]]
+                List<List<String>> result = new ArrayList<>();
+                // Remove outer brackets
+                String inner = trimmed.substring(1, trimmed.length() - 1).trim();
+                if (inner.isEmpty()) return result;
+
+                // Split into sub-arrays
+                List<String> subArrays = splitJsonArrays(inner);
+                for (String sub : subArrays) {
+                    String s = sub.trim();
+                    if (s.startsWith("[") && s.endsWith("]")) {
+                        s = s.substring(1, s.length() - 1);
+                        List<String> variants = new ArrayList<>();
+                        for (String v : s.split(",")) {
+                            String val = v.trim().replaceAll("^\"|\"$", "").trim();
+                            if (!val.isEmpty()) variants.add(val);
+                        }
+                        result.add(variants.isEmpty() ? Collections.singletonList("") : variants);
+                    } else {
+                        // Bare string in array
+                        String val = s.replaceAll("^\"|\"$", "").trim();
+                        result.add(Collections.singletonList(val));
+                    }
+                }
+                // Pad or truncate to slots
+                while (result.size() < slots) result.add(Collections.singletonList(""));
+                return result;
+            } catch (Exception ignored) {
+                // fallthrough
+            }
+        }
+
+        // 2. Pipe/double-semicolon format: "apple|apples;;banana"
+        if (trimmed.contains(";;") || trimmed.contains("|")) {
+            List<List<String>> result = new ArrayList<>();
+            String[] slotParts = trimmed.split(";;");
+            for (String slotPart : slotParts) {
+                List<String> variants = new ArrayList<>();
+                for (String v : slotPart.split("\\|")) {
+                    String val = v.trim();
+                    if (!val.isEmpty()) variants.add(val);
+                }
+                result.add(variants.isEmpty() ? Collections.singletonList("") : variants);
+            }
+            while (result.size() < slots) result.add(Collections.singletonList(""));
+            return result;
+        }
+
+        // 3. Comma-separated single slot: "apple, apples" → [[apple, apples]]
+        if (trimmed.contains(",")) {
+            List<String> variants = new ArrayList<>();
+            for (String v : trimmed.split(",")) {
+                String val = v.trim();
+                if (!val.isEmpty()) variants.add(val);
+            }
+            List<List<String>> result = new ArrayList<>();
+            result.add(variants);
+            while (result.size() < slots) result.add(Collections.singletonList(""));
+            return result;
+        }
+
+        // 4. Plain single value
+        List<List<String>> result = new ArrayList<>();
+        result.add(Collections.singletonList(trimmed));
+        while (result.size() < slots) result.add(Collections.singletonList(""));
+        return result;
+    }
+
+    /** Tách "[[a,b],[c]]" thành ["[a,b]", "[c]"] — xử lý nested brackets */
+    private List<String> splitJsonArrays(String inner) {
+        List<String> parts = new ArrayList<>();
+        int depth = 0, start = 0;
+        for (int i = 0; i < inner.length(); i++) {
+            char c = inner.charAt(i);
+            if (c == '[') { if (depth == 0) start = i; depth++; }
+            else if (c == ']') {
+                depth--;
+                if (depth == 0) parts.add(inner.substring(start, i + 1));
+            }
+        }
+        // Fallback: no nested arrays → treat as flat
+        if (parts.isEmpty() && !inner.isBlank()) {
+            for (String p : inner.split(",")) {
+                parts.add(p.trim());
+            }
+        }
+        return parts;
+    }
+
+    /** Serialise correctAnswer map → JSON string */
+    private String buildWritingAnswerJson(Map<String, List<List<String>>> map) {
+        if (map.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder("{");
+        boolean firstCat = true;
+        for (Map.Entry<String, List<List<String>>> entry : map.entrySet()) {
+            if (!firstCat) sb.append(",");
+            firstCat = false;
+            sb.append("\"").append(escapeJson(entry.getKey())).append("\":[");
+            boolean firstSlot = true;
+            for (List<String> variants : entry.getValue()) {
+                if (!firstSlot) sb.append(",");
+                firstSlot = false;
+                sb.append("[");
+                boolean firstV = true;
+                for (String v : variants) {
+                    if (!firstV) sb.append(",");
+                    firstV = false;
+                    sb.append("\"").append(escapeJson(v)).append("\"");
+                }
+                sb.append("]");
+            }
+            sb.append("]");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    private int calcStartOrder(Integer topicId, Integer taskId) {
+        return questionIndexRepository
+                .findByTopicIdAndTaskIdOrderById(topicId, taskId)
+                .stream()
+                .mapToInt(idx -> {
+                    GeneralRevisionQuestion q =
+                            mongoQuestionRepository.findById(idx.getMongoQuestionId()).orElse(null);
+                    return (q != null && q.getOrderIndex() != null) ? q.getOrderIndex() : 0;
+                })
+                .max()
+                .orElse(0);
     }
 
     private GeneralRevisionQuestionIndex buildIndex(String mongoId, Integer topicId, Integer taskId,
@@ -430,7 +556,10 @@ public class QuestionImportService {
         return idx;
     }
 
-    /** Đọc cell thành String, trim. */
+    /**
+     * Đọc cell thành String, trim.
+     * Dùng DataFormatter để xử lý mọi loại cell kể cả BLANK.
+     */
     private String cellStr(Row row, int col) {
         Cell cell = row.getCell(col, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
         if (cell == null) return "";
@@ -438,14 +567,22 @@ public class QuestionImportService {
             case STRING  -> cell.getStringCellValue().trim();
             case NUMERIC -> {
                 double val = cell.getNumericCellValue();
-                yield (val == Math.floor(val)) ? String.valueOf((long) val) : String.valueOf(val);
+                yield (val == Math.floor(val) && !Double.isInfinite(val))
+                        ? String.valueOf((long) val)
+                        : String.valueOf(val);
             }
             case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case BLANK   -> "";
             case FORMULA -> {
-                try { yield cell.getStringCellValue().trim(); }
-                catch (Exception e) { yield String.valueOf(cell.getNumericCellValue()); }
+                try {
+                    String sv = cell.getStringCellValue().trim();
+                    yield sv.isBlank() ? String.valueOf(cell.getNumericCellValue()) : sv;
+                } catch (Exception ignored) {
+                    try { yield String.valueOf(cell.getNumericCellValue()); }
+                    catch (Exception e2) { yield new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell).trim(); }
+                }
             }
-            default -> "";
+            default -> new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell).trim();
         };
     }
 
@@ -455,12 +592,19 @@ public class QuestionImportService {
         if (cell == null) return 0;
         return switch (cell.getCellType()) {
             case NUMERIC -> cell.getNumericCellValue();
-            case STRING  -> { try { yield Double.parseDouble(cell.getStringCellValue().trim()); } catch (Exception e) { yield 0; } }
+            case STRING  -> {
+                try { yield Double.parseDouble(cell.getStringCellValue().trim()); }
+                catch (NumberFormatException e) { yield 0; }
+            }
+            case FORMULA -> {
+                try { yield cell.getNumericCellValue(); }
+                catch (Exception e) { yield 0; }
+            }
             default -> 0;
         };
     }
 
-    /** Kiểm tra row có trống không (kiểm tra n cột đầu). */
+    /** Kiểm tra row có trống không (xét checkCols cột đầu). */
     private boolean isRowEmpty(Row row, int checkCols) {
         if (row == null) return true;
         for (int c = 0; c < checkCols; c++) {
@@ -470,6 +614,14 @@ public class QuestionImportService {
     }
 
     private String escapeJson(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+        if (s == null) return "";
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
+
+    // ── Internal DTO ─────────────────────────────────────────────────────────
+    private record WritingCatRow(String label, int slots, String answerRaw) {}
 }

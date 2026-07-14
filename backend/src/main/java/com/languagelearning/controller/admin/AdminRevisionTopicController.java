@@ -220,9 +220,9 @@ public class AdminRevisionTopicController {
                     .body(ApiResponse.error("File không được để trống"));
         }
         String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".xlsx")) {
+        if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Chỉ hỗ trợ file .xlsx"));
+                    .body(ApiResponse.error("Chỉ hỗ trợ file Excel (.xlsx hoặc .xls)"));
         }
         ImportResultDto result = questionImportService.importQuestions(topicId, taskId, file);
         String msg = "Import hoàn tất: " + result.getImported() + " câu hỏi"
