@@ -17,6 +17,8 @@ import com.languagelearning.repository.mysql.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -69,8 +71,12 @@ public class GeneralRevisionService {
                 .collect(Collectors.toList());
     }
 
+    private static final int MAX_QUESTIONS = 10;
+
     /**
      * Lấy danh sách câu hỏi theo task_id.
+     * - Non-MATCHING: random tối đa 10 documents.
+     * - MATCHING: lấy 1 document, random tối đa 10 pairs từ document đó.
      */
     public List<RevisionQuestionDto> getQuestionsByTask(Integer taskId) {
         List<GeneralRevisionQuestionIndex> indexes =
@@ -80,21 +86,49 @@ public class GeneralRevisionService {
             return List.of();
         }
 
-        List<String> mongoIds = indexes.stream()
-                .map(GeneralRevisionQuestionIndex::getMongoQuestionId)
-                .collect(Collectors.toList());
+        // Kiểm tra loại câu hỏi của task (lấy từ index đầu tiên)
+        String questionType = indexes.get(0).getQuestionType();
+        boolean isMatching = "MATCHING".equalsIgnoreCase(questionType);
 
-        List<GeneralRevisionQuestion> mongoDocs = questionRepository.findAllById(mongoIds);
+        if (isMatching) {
+            // MATCHING: lấy document đầu tiên, random tối đa 10 pairs
+            GeneralRevisionQuestionIndex firstIndex = indexes.get(0);
+            GeneralRevisionQuestion mongoDoc = questionRepository.findById(firstIndex.getMongoQuestionId()).orElse(null);
+            if (mongoDoc == null) return List.of();
 
-        Map<String, GeneralRevisionQuestion> mongoMap = mongoDocs.stream()
-                .collect(Collectors.toMap(GeneralRevisionQuestion::getId, q -> q));
+            // Random tối đa MAX_QUESTIONS pairs
+            List<Map<String, String>> allPairs = mongoDoc.getPairs();
+            if (allPairs != null && allPairs.size() > MAX_QUESTIONS) {
+                List<Map<String, String>> shuffled = new ArrayList<>(allPairs);
+                Collections.shuffle(shuffled);
+                mongoDoc.setPairs(shuffled.subList(0, MAX_QUESTIONS));
+            }
 
-        return indexes.stream()
-                .map(index -> {
-                    GeneralRevisionQuestion mongoDoc = mongoMap.get(index.getMongoQuestionId());
-                    return toQuestionDto(index, mongoDoc);
-                })
-                .collect(Collectors.toList());
+            return List.of(toQuestionDto(firstIndex, mongoDoc));
+        } else {
+            // Non-MATCHING: random tối đa MAX_QUESTIONS documents
+            List<GeneralRevisionQuestionIndex> selectedIndexes = new ArrayList<>(indexes);
+            if (selectedIndexes.size() > MAX_QUESTIONS) {
+                Collections.shuffle(selectedIndexes);
+                selectedIndexes = selectedIndexes.subList(0, MAX_QUESTIONS);
+            }
+
+            List<String> mongoIds = selectedIndexes.stream()
+                    .map(GeneralRevisionQuestionIndex::getMongoQuestionId)
+                    .collect(Collectors.toList());
+
+            List<GeneralRevisionQuestion> mongoDocs = questionRepository.findAllById(mongoIds);
+
+            Map<String, GeneralRevisionQuestion> mongoMap = mongoDocs.stream()
+                    .collect(Collectors.toMap(GeneralRevisionQuestion::getId, q -> q));
+
+            return selectedIndexes.stream()
+                    .map(index -> {
+                        GeneralRevisionQuestion mongoDoc = mongoMap.get(index.getMongoQuestionId());
+                        return toQuestionDto(index, mongoDoc);
+                    })
+                    .collect(Collectors.toList());
+        }
     }
 
     // Mappers

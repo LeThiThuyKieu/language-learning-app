@@ -20,6 +20,7 @@ import ChatSupportPage from "@/pages/Admin/support_management/ChatSupportPage.ts
 import ChatbotRulesPage from "@/pages/Admin/support_management/ChatbotRulesPage.tsx";
 import FaqManagementPage from "@/pages/Admin/support_management/FaqManagementPage.tsx";
 import BadgesManagementPage from "@/pages/Admin/BadgesManagementPage";
+import ExamProgressPage from "@/pages/Admin/ExamProgressPage.tsx";
 import ExamManagementPage from "@/pages/Admin/exam_management/ExamManagementPage.tsx";
 import ExamTestQuestionsPage from "@/pages/Admin/exam_management/ExamTestQuestionsPage.tsx";
 import ExamPartListPage from "@/pages/Admin/exam_management/ExamPartListPage.tsx";
@@ -191,6 +192,7 @@ function App() {
                         <Route path="support-management/chat-support" element={<ChatSupportPage/>}/>
                         <Route path="support-management/chatbot-rules" element={<ChatbotRulesPage/>}/>
                         <Route path="support-management/faq" element={<FaqManagementPage/>}/>
+                        <Route path="exam-progress" element={<ExamProgressPage/>} />
                         <Route path="exam-management" element={<ExamManagementPage/>} />
                         <Route path="exam-management/:testId/parts" element={<ExamPartListPage/>} />
                         <Route path="exam-management/:testId/questions" element={<ExamTestQuestionsPage/>} />

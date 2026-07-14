@@ -24,4 +24,41 @@ public interface UserExamAttemptRepository extends JpaRepository<UserExamAttempt
     /** Tất cả attempt của 1 test (admin view) */
     @Query("SELECT a FROM UserExamAttempt a WHERE a.testId = :testId ORDER BY a.attemptedAt DESC")
     List<UserExamAttempt> findByTestId(@Param("testId") Integer testId);
+
+    /** Tất cả attempt của 1 user, kèm eager load question results */
+    @Query("SELECT DISTINCT a FROM UserExamAttempt a LEFT JOIN FETCH a.questionResults WHERE a.userId = :userId ORDER BY a.attemptedAt DESC")
+    List<UserExamAttempt> findByUserIdWithResults(@Param("userId") Integer userId);
+
+    // ─── Global aggregate stats (dùng cho admin stat cards) ───────────────────
+
+    /** Tổng số lượt thi toàn hệ thống */
+    @Query("SELECT COUNT(a) FROM UserExamAttempt a")
+    long countAll();
+
+    /** Số user đã thi ít nhất 1 lần */
+    @Query("SELECT COUNT(DISTINCT a.userId) FROM UserExamAttempt a")
+    long countDistinctUsers();
+
+    /**
+     * TB tỉ lệ đúng câu có đáp án chuẩn (correct_count / total_count), %.
+     * total_count = Listening + R&W objective, KHÔNG tính SHORT_WRITE / SPEAKING_TASK.
+     */
+    @Query("SELECT AVG(CAST(a.correctCount AS double) / a.totalCount * 100) FROM UserExamAttempt a WHERE a.totalCount > 0")
+    Double avgObjectiveAccuracyGlobal();
+
+    /** Tổng writing_score (LLM) — dùng để tính avgAiScore */
+    @Query("SELECT SUM(a.writingScore) FROM UserExamAttempt a WHERE a.writingScore IS NOT NULL")
+    Double sumWritingScore();
+
+    /** Tổng speaking_score (LLM) — dùng để tính avgAiScore */
+    @Query("SELECT SUM(a.speakingScore) FROM UserExamAttempt a WHERE a.speakingScore IS NOT NULL")
+    Double sumSpeakingScore();
+
+    /** Số attempt có writing_score */
+    @Query("SELECT COUNT(a) FROM UserExamAttempt a WHERE a.writingScore IS NOT NULL")
+    long countWithWritingScore();
+
+    /** Số attempt có speaking_score */
+    @Query("SELECT COUNT(a) FROM UserExamAttempt a WHERE a.speakingScore IS NOT NULL")
+    long countWithSpeakingScore();
 }
