@@ -29,7 +29,7 @@ function RichText({text, className}: { text: string; className?: string }) {
           if (part === "\t") {
               return (
                   <div key={i} style={{marginRight: "2em"}}>
-                    &nbsp;
+                      &nbsp;
                   </div>
               );
           }
@@ -863,7 +863,24 @@ export default function ExamListeningPage() {
                                 <button type="button" onClick={() => {
                                     setShowSubmitModal(false);
                                     stopAudio();
-                                    navigate(`/exam/${_level}/${testId}/reading-writing`);
+                                    // Build correctAnswers + questionTypes + paperTypes từ parts đã load
+                                    const allQ = parts.flatMap((p) => p.questions);
+                                    const correctAnswers: Record<string, string> = {};
+                                    const questionTypes: Record<string, string>  = {};
+                                    const paperTypes: Record<string, string>     = {};
+                                    allQ.forEach((q) => {
+                                        if (q.correctAnswer) correctAnswers[q.mongoDocId] = q.correctAnswer;
+                                        questionTypes[q.mongoDocId] = q.questionType;
+                                        paperTypes[q.mongoDocId]    = "LISTENING";
+                                    });
+                                    navigate(`/exam/${_level}/${testId}/reading-writing`, {
+                                        state: {
+                                            listeningAnswers: answers,
+                                            correctAnswers,
+                                            questionTypes,
+                                            paperTypes,
+                                        },
+                                    });
                                 }}
                                         className="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-extrabold text-white transition shadow-md">
                                     Nộp bài
