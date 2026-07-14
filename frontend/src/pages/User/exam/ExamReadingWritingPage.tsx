@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from "react";
-import {useNavigate, useParams} from "react-router-dom";
-import {examService, type ExamPartDto, type ExamQuestionDto} from "@/services/examService";
-import {ChevronLeft, ChevronRight, Check, X} from "lucide-react";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
+import {examService, type ExamPartDto, type ExamQuestionDto, type GradeResponse} from "@/services/examService";
+import {ChevronLeft, ChevronRight, Check, X, Loader2} from "lucide-react";
 import LessonExitModal from "@/components/user/learn/LessonExitModal.tsx";
 
 function formatTime(sec: number) {
@@ -712,7 +712,20 @@ function QuestionView({
 
 export default function ExamReadingWritingPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const {level: _level, testId} = useParams<{ level: string; testId: string }>();
+
+    // State passed from ExamListeningPage
+    const locState = (location.state ?? {}) as {
+        listeningAnswers?: Record<string, string>;
+        correctAnswers?:   Record<string, string>;
+        questionTypes?:    Record<string, string>;
+        paperTypes?:       Record<string, string>;
+    };
+    const listeningAnswers: Record<string, string> = locState.listeningAnswers ?? {};
+    const incomingCorrectAnswers: Record<string, string> = locState.correctAnswers ?? {};
+    const incomingQuestionTypes:  Record<string, string> = locState.questionTypes  ?? {};
+    const incomingPaperTypes:     Record<string, string> = locState.paperTypes     ?? {};
 
     const [parts, setParts] = useState<ExamPartDto[]>([]);
     const [durationSeconds, setDurationSeconds] = useState(60 * 60);
@@ -730,9 +743,12 @@ export default function ExamReadingWritingPage() {
     const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
     const [focusBlankNum, setFocusBlankNum] = useState<number | null>(null);
 
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    // Writing grading state
+    const [writingGradeMap, setWritingGradeMap] = useState<Record<string, GradeResponse>>({});
+    const [gradingLoading, setGradingLoading] = useState(false);
+    void writingGradeMap; // used only as intermediate state before navigation
 
-    // Load paper
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     useEffect(() => {
         if (!testId) return;
         const numericTestId = parseInt(testId.replace(/\D/g, ""), 10);
@@ -800,6 +816,95 @@ export default function ExamReadingWritingPage() {
             const next = new Set(prev);
             next.has(key) ? next.delete(key) : next.add(key);
             return next;
+        });
+    }
+
+    /** Thu thập tất cả câu SHORT_WRITE đã có bài làm và gọi LLM grade song song */
+    async function handleSubmitWithGrading() {
+        setShowSubmitModal(false);
+        setGradingLoading(true);
+
+        const shortWriteQuestions = parts
+            .flatMap((p) => p.questions)
+            .filter((q) => q.questionType === "SHORT_WRITE" && answers[q.mongoDocId]?.trim());
+
+        if (shortWriteQuestions.length === 0) {
+            const allQuestionsNoWrite = parts.flatMap((p) => p.questions);
+            const correctAnswersNW: Record<string, string> = { ...incomingCorrectAnswers };
+            const questionTypesNW: Record<string, string>  = { ...incomingQuestionTypes };
+            const paperTypesNW:    Record<string, string>  = { ...incomingPaperTypes };
+            allQuestionsNoWrite.forEach((q) => {
+                if (q.correctAnswer) correctAnswersNW[q.mongoDocId] = q.correctAnswer;
+                questionTypesNW[q.mongoDocId] = q.questionType;
+                paperTypesNW[q.mongoDocId]    = "READING_WRITING";
+            });
+            const allAnswersNW = { ...listeningAnswers, ...answers };
+            setGradingLoading(false);
+            navigate(`/exam/${_level}/${testId}/speaking`, {
+                state: {
+                    testId:         parseInt((testId ?? "0").replace(/\D/g, ""), 10),
+                    writingGrades:  {},
+                    answers:        allAnswersNW,
+                    correctAnswers: correctAnswersNW,
+                    questionTypes:  questionTypesNW,
+                    paperTypes:     paperTypesNW,
+                },
+            });
+            return;
+        }
+
+        const gradeResults: Record<string, GradeResponse> = {};
+        await Promise.all(
+            shortWriteQuestions.map(async (q) => {
+                try {
+                    const result = await examService.gradeWriting({
+                        mongoDocId: q.mongoDocId,
+                        writeType: q.writeType,
+                        promptText: q.promptText,
+                        bulletPoints: q.bulletPoints,
+                        minWords: q.minWords,
+                        maxWords: q.maxWords,
+                        userAnswer: answers[q.mongoDocId],
+                        correctAnswer: q.correctAnswer,
+                    });
+                    gradeResults[q.mongoDocId] = result;
+                } catch {
+                    gradeResults[q.mongoDocId] = {
+                        score: 0,
+                        feedback: "Không thể chấm bài tự động.",
+                        breakdown: null,
+                        suggestion: null,
+                        wordCount: answers[q.mongoDocId]?.trim().split(/\s+/).filter(Boolean).length ?? 0,
+                    };
+                }
+            })
+        );
+
+        // Build correctAnswers, questionTypes, paperTypes maps for result page
+        const allQuestions = parts.flatMap((p) => p.questions);
+        const correctAnswers: Record<string, string> = { ...incomingCorrectAnswers };
+        const questionTypes: Record<string, string>  = { ...incomingQuestionTypes };
+        const paperTypes: Record<string, string>     = { ...incomingPaperTypes };
+        allQuestions.forEach((q) => {
+            if (q.correctAnswer) correctAnswers[q.mongoDocId] = q.correctAnswer;
+            questionTypes[q.mongoDocId] = q.questionType;
+            paperTypes[q.mongoDocId]    = "READING_WRITING";
+        });
+
+        // Merge R&W answers with listening answers
+        const allAnswers = { ...listeningAnswers, ...answers };
+
+        setWritingGradeMap(gradeResults);
+        setGradingLoading(false);
+        navigate(`/exam/${_level}/${testId}/speaking`, {
+            state: {
+                testId:         parseInt((testId ?? "0").replace(/\D/g, ""), 10),
+                writingGrades:  gradeResults,
+                answers:        allAnswers,
+                correctAnswers,
+                questionTypes,
+                paperTypes,
+            },
         });
     }
 
@@ -903,8 +1008,7 @@ export default function ExamReadingWritingPage() {
                                 </button>
                             </div>
                             <div className="px-6 py-5">
-                                <p className="text-sm text-gray-600 mb-4">Sau khi nộp, bạn sẽ không thể thay đổi câu trả
-                                    lời.</p>
+                                <p className="text-sm text-gray-600 mb-4">Sau khi nộp, bài viết sẽ được chấm điểm tự động bằng AI.</p>
                                 {unanswered > 0
                                     ? <div
                                         className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm font-semibold text-yellow-800">Câu
@@ -919,10 +1023,7 @@ export default function ExamReadingWritingPage() {
                                         className="rounded-xl border-2 border-gray-300 px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 transition">
                                     Tiếp tục làm bài
                                 </button>
-                                <button type="button" onClick={() => {
-                                    setShowSubmitModal(false);
-                                    navigate(`/exam/${_level}/${testId}/speaking`);
-                                }}
+                                <button type="button" onClick={handleSubmitWithGrading}
                                         className="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-extrabold text-white transition shadow-md">
                                     Nộp bài
                                 </button>
@@ -931,6 +1032,17 @@ export default function ExamReadingWritingPage() {
                     </div>
                 );
             })()}
+
+            {/* Loading overlay khi đang chấm bài Writing */}
+            {gradingLoading && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-4 rounded-2xl bg-white px-10 py-8 shadow-2xl">
+                        <Loader2 className="h-10 w-10 animate-spin text-primary-500"/>
+                        <p className="text-base font-bold text-gray-700">Đang chấm bài viết…</p>
+                        <p className="text-sm text-gray-400">Vui lòng chờ trong giây lát</p>
+                    </div>
+                </div>
+            )}
 
             <LessonExitModal open={showExitModal} onContinue={() => setShowExitModal(false)} onExit={() => navigate(-1)}
                              continueButtonText="Tiếp tục thi"
