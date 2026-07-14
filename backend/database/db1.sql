@@ -51,6 +51,68 @@ CREATE TABLE IF NOT EXISTS `chatbot_rule` (
 
 -- Data exporting was unselected.
 
+-- Dumping structure for table language_learning_app.exam_paper
+CREATE TABLE IF NOT EXISTS `exam_paper` (
+                                            `id` int(11) NOT NULL AUTO_INCREMENT,
+    `exam_test_id` int(11) NOT NULL,
+    `paper_type` enum('LISTENING','READING_WRITING','SPEAKING') NOT NULL,
+    `duration_minutes` int(11) NOT NULL,
+    `audio_url` varchar(500) DEFAULT NULL COMMENT 'Listening only: 1 file audio chạy liên tục toàn paper',
+    `order_index` int(11) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_paper_test_type` (`exam_test_id`,`paper_type`),
+    CONSTRAINT `fk_paper_test` FOREIGN KEY (`exam_test_id`) REFERENCES `exam_test` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='3 bài thi (paper) trong mỗi đề thi';
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.exam_part
+CREATE TABLE IF NOT EXISTS `exam_part` (
+                                           `id` int(11) NOT NULL AUTO_INCREMENT,
+    `paper_id` int(11) NOT NULL,
+    `part_number` int(11) NOT NULL,
+    `order_index` int(11) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_part_paper_num` (`paper_id`,`part_number`),
+    CONSTRAINT `fk_part_paper` FOREIGN KEY (`paper_id`) REFERENCES `exam_paper` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Part trong mỗi paper (Part 1…5 cho Listening, Part 1…7 cho R&W…)';
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.exam_question
+CREATE TABLE IF NOT EXISTS `exam_question` (
+                                               `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `part_id` int(11) NOT NULL,
+    `mongo_doc_id` varchar(50) NOT NULL COMMENT 'ObjectId trong MongoDB collection exam_questions',
+    `question_type` enum('MULTIPLE_CHOICE','FILL_IN_FORM','MATCHING','FILL_IN_TEXT','SHORT_WRITE','SPEAKING_TASK') NOT NULL,
+    `question_number_start` int(11) NOT NULL,
+    `question_number_end` int(11) NOT NULL,
+    `correct_answer` text DEFAULT NULL,
+    `order_index` int(11) DEFAULT NULL,
+    `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_exam_question_mongo` (`mongo_doc_id`),
+    KEY `idx_eq_part` (`part_id`),
+    CONSTRAINT `fk_eq_part` FOREIGN KEY (`part_id`) REFERENCES `exam_part` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=396 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Mapping câu hỏi SQL ↔ MongoDB; lưu correct_answer để show lại bài làm';
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.exam_test
+CREATE TABLE IF NOT EXISTS `exam_test` (
+                                           `id` int(11) NOT NULL AUTO_INCREMENT,
+    `cefr_level` enum('A2','B1','B2','C1','C2') NOT NULL,
+    `test_number` int(11) NOT NULL,
+    `title` varchar(100) NOT NULL COMMENT 'Vd: A2 Test 1',
+    `description` varchar(255) DEFAULT NULL,
+    `is_active` tinyint(1) NOT NULL DEFAULT 1,
+    `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_exam_test_level_num` (`cefr_level`,`test_number`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đề thi theo cấp độ CEFR';
+
+-- Data exporting was unselected.
+
 -- Dumping structure for table language_learning_app.faq
 CREATE TABLE IF NOT EXISTS `faq` (
                                      `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -125,6 +187,21 @@ CREATE TABLE IF NOT EXISTS `general_revision_topic` (
     `is_active` tinyint(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='10 chủ đề ôn tập tổng hợp';
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.grammar_topics
+CREATE TABLE IF NOT EXISTS `grammar_topics` (
+                                                `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `slug` varchar(100) NOT NULL,
+    `name` varchar(255) NOT NULL,
+    `display_order` int(11) NOT NULL,
+    `json_url` varchar(255) NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `slug` (`slug`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -344,6 +421,48 @@ CREATE TABLE IF NOT EXISTS `user_badges` (
     CONSTRAINT `user_badges_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
     CONSTRAINT `user_badges_ibfk_2` FOREIGN KEY (`badge_id`) REFERENCES `badges` (`id`)
     ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.user_exam_attempt
+CREATE TABLE IF NOT EXISTS `user_exam_attempt` (
+                                                   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `test_id` int(11) NOT NULL,
+    `writing_score` int(11) DEFAULT NULL,
+    `speaking_score` int(11) DEFAULT NULL,
+    `correct_count` int(11) NOT NULL DEFAULT 0,
+    `total_count` int(11) NOT NULL DEFAULT 0,
+    `attempted_at` datetime NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_uea_user` (`user_id`),
+    KEY `idx_uea_test` (`test_id`),
+    KEY `idx_uea_user_test` (`user_id`,`test_id`),
+    CONSTRAINT `fk_uea_test` FOREIGN KEY (`test_id`) REFERENCES `exam_test` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_uea_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Data exporting was unselected.
+
+-- Dumping structure for table language_learning_app.user_exam_question_result
+CREATE TABLE IF NOT EXISTS `user_exam_question_result` (
+                                                           `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `attempt_id` bigint(20) NOT NULL,
+    `mongo_doc_id` varchar(100) NOT NULL,
+    `question_type` varchar(30) NOT NULL,
+    `user_answer` text DEFAULT NULL,
+    `is_correct` tinyint(1) DEFAULT NULL,
+    `llm_score` int(11) DEFAULT NULL,
+    `llm_feedback` text DEFAULT NULL,
+    `llm_breakdown` text DEFAULT NULL,
+    `llm_suggestion` text DEFAULT NULL,
+    `word_count` int(11) DEFAULT NULL,
+    `transcript` text DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_ueqr_attempt` (`attempt_id`),
+    KEY `idx_ueqr_mongo_doc` (`mongo_doc_id`),
+    CONSTRAINT `fk_ueqr_attempt` FOREIGN KEY (`attempt_id`) REFERENCES `user_exam_attempt` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Data exporting was unselected.
 
@@ -570,16 +689,6 @@ CREATE TABLE IF NOT EXISTS `user_streak` (
     KEY `user_id` (`user_id`),
     CONSTRAINT `streak_history_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
     ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE grammar_topics (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    slug VARCHAR(100) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    display_order INT NOT NULL,
-    json_url VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
 
 -- Data exporting was unselected.
 

@@ -38,6 +38,8 @@ import ExamTestListPage from "@/pages/User/exam/ExamTestListPage.tsx";
 import ExamListeningPage from "@/pages/User/exam/ExamListeningPage.tsx";
 import ExamReadingWritingPage from "@/pages/User/exam/ExamReadingWritingPage.tsx";
 import ExamSpeakingPage from "@/pages/User/exam/ExamSpeakingPage.tsx";
+import ExamResultPage from "@/pages/User/exam/ExamResultPage.tsx";
+import ExamAttemptViewPage from "@/pages/User/exam/ExamAttemptViewPage.tsx";
 import GrammarPage from "@/pages/User/learn/grammar/GrammarPage.tsx";
 import GrammarTopicListPage from "@/pages/User/learn/grammar/GrammarTopicListPage.tsx";
 import GrammarTopicDetailPage from "@/pages/User/learn/grammar/GrammarTopicDetailPage.tsx";
@@ -161,6 +163,8 @@ function App() {
                     <Route path="/exam/:level/:testId/listening" element={<ExamListeningPage/>}/>
                     <Route path="/exam/:level/:testId/reading-writing" element={<ExamReadingWritingPage/>}/>
                     <Route path="/exam/:level/:testId/speaking" element={<ExamSpeakingPage/>}/>
+                    <Route path="/exam/:level/:testId/result" element={<ExamResultPage/>}/>
+                    <Route path="/exam/:level/:testId/attempts/:attemptId" element={<ExamAttemptViewPage/>}/>
 
                     {/* Trang Welcome */}
                     <Route path="/welcome"

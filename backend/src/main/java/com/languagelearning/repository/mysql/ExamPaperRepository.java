@@ -19,4 +19,8 @@ public interface ExamPaperRepository extends JpaRepository<ExamPaper, Integer> {
     Optional<ExamPaper> findByTestIdAndType(
             @Param("testId") Integer testId,
             @Param("paperType") ExamPaper.PaperType paperType);
+
+    /** Lấy tất cả paper của 1 test (dùng khi build correct_answer map) */
+    @Query("SELECT p FROM ExamPaper p WHERE p.examTest.id = :testId")
+    java.util.List<ExamPaper> findAllByTestId(@Param("testId") Integer testId);
 }
