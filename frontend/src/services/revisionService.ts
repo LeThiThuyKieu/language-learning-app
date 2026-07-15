@@ -168,11 +168,14 @@ export const revisionApi = {
         }).then(r => r.data.data);
     },
 
-    importQuestions: (topicId: number, taskId: number, file: File) => {
+    importQuestions: (topicId: number, taskId: number, file: File, mode?: string) => {
         const formData = new FormData();
         formData.append("file", file);
+        const url = mode
+            ? `${BASE}/${topicId}/tasks/${taskId}/questions/import?mode=${mode}`
+            : `${BASE}/${topicId}/tasks/${taskId}/questions/import`;
         return apiClient.post<ApiResponse<{ imported: number; errors: string[] }>>(
-            `${BASE}/${topicId}/tasks/${taskId}/questions/import`,
+            url,
             formData,
             { headers: { "Content-Type": "multipart/form-data" } }
         ).then(r => r.data);

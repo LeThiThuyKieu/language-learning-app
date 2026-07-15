@@ -4,7 +4,6 @@ import {
     LayoutDashboard,
     Users,
     Medal,
-    BarChart2,
     MessagesSquare,
     ClipboardList,
     BookOpen,
@@ -32,10 +31,13 @@ export default function Sidebar() {
     const isSupportActive  = location.pathname.startsWith("/admin/support-management");
     const isLearningActive = location.pathname.startsWith("/admin/learning") || location.pathname.startsWith("/admin/learn-progress");
     const isRevisionActive = location.pathname.startsWith("/admin/general-revision-progress") || location.pathname.startsWith("/admin/review-topics") || location.pathname.startsWith("/admin/revision-management");
-
+    const isExamActive =
+        location.pathname.startsWith("/admin/exam-management") ||
+        location.pathname.startsWith("/admin/exam-progress");
     const [supportOpen,      setSupportOpen]      = useState(isSupportActive);
     const [learningOpen,     setLearningOpen]     = useState(isLearningActive);
     const [revisionOpen,     setRevisionOpen]     = useState(isRevisionActive);
+    const [examOpen, setExamOpen] = useState(isExamActive);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     useEffect(() => {
@@ -129,11 +131,19 @@ export default function Sidebar() {
                             )}
                         </div>
 
-                        {navLink("/admin/exam-management",           GraduationCap, "Exam Tests")}
+                        {/* ── Exam group ── */}
+                        <div>
+                            {groupBtn("Exam",  GraduationCap, isExamActive, examOpen, () => setExamOpen(v => !v))}
+                            {examOpen && (
+                                <div className="mt-1 ml-4 pl-3 border-l-2 border-orange-100 space-y-1">
+                                    {subLink("/admin/exam-progress", TrendingUp, "Progress")}
+                                    {subLink("/admin/exam-management",       BookMarked, "Tests")}
+                                </div>
+                            )}
+                        </div>
                         {navLink("/admin/badges",                    Medal,         "Badge")}
                         {navLink("/admin/placement-test-management", ClipboardList, "Placement Tests")}
                         {navLink("/admin/feedback",                  MessagesSquare,"Feedback")}
-                        {navLink("/admin/reports",                   BarChart2,     "Reports")}
                     </nav>
                 </div>
 
