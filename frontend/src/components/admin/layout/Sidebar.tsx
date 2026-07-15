@@ -4,7 +4,6 @@ import {
     LayoutDashboard,
     Users,
     Medal,
-    BarChart2,
     MessagesSquare,
     ClipboardList,
     BookOpen,
@@ -145,7 +144,6 @@ export default function Sidebar() {
                         {navLink("/admin/badges",                    Medal,         "Badge")}
                         {navLink("/admin/placement-test-management", ClipboardList, "Placement Tests")}
                         {navLink("/admin/feedback",                  MessagesSquare,"Feedback")}
-                        {navLink("/admin/reports",                   BarChart2,     "Reports")}
                     </nav>
                 </div>
 
