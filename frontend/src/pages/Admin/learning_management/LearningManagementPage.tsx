@@ -17,6 +17,8 @@ import {
 import toast from "react-hot-toast";
 import AdminStatCard from "@/components/admin/common/AdminStatCard.tsx";
 import { adminApi, adminMeta } from "@/services/learningService.ts";
+import LearningImportModal from "@/components/admin/learning_management/LearningImportModal";
+import ConfirmModal from "@/components/user/layout/ConfirmModal";
 
 type LearningLevel = "L1" | "L2" | "L3";
 type LearningType = "Vocab" | "Listening" | "Speaking" | "Matching";
@@ -75,6 +77,8 @@ export default function LearningManagementPage() {
         vocab: 0, listening: 0, speaking: 0, matching: 0,
     });
     const [deleteTarget, setDeleteTarget] = useState<LearningQuestion | null>(null);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+    const [showImport, setShowImport] = useState(false);
     const menuRef = useRef<HTMLDivElement | null>(null);
     const size = 20;
     useEffect(() => {
@@ -109,6 +113,18 @@ export default function LearningManagementPage() {
         setDeleteTarget(null);
         setOpenMenuId(null);
         toast.success("Đã xoá câu hỏi");
+    }
+
+    async function handleBulkDelete() {
+        try {
+            await adminApi.bulkAction({ action: 'delete', ids: selectedIds });
+            setQuestions((cur) => cur.filter(q => !selectedIds.includes(q.id)));
+            setSelectedIds([]);
+            setShowBulkDeleteConfirm(false);
+            toast.success(`Đã xoá ${selectedIds.length} câu hỏi`);
+        } catch {
+            toast.error('Lỗi khi xoá');
+        }
     }
 
     // Map between Vietnamese UI types and backend QuestionType enum
@@ -195,7 +211,7 @@ export default function LearningManagementPage() {
                 <div className="flex flex-wrap items-center gap-3">
                     <button
                         type="button"
-                        onClick={() => toast.success("Sẽ kết nối import file sau")}
+                        onClick={() => setShowImport(true)}
                         className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-orange-50 hover:text-orange-700"
                     >
                         <FileUp className="h-4 w-4" />
@@ -428,16 +444,10 @@ export default function LearningManagementPage() {
                         <p className="text-sm text-slate-500">
                             Hiển thị {filteredQuestions.length} trên tổng số {questions.length} câu hỏi
                         </p>
-                        <button disabled={selectedIds.length===0} onClick={async () => {
-                            if (!confirm(`Xác nhận xoá ${selectedIds.length} câu hỏi?`)) return;
-                            try {
-                                const svc = (await import("@/services/learningService.ts")).adminApi;
-                                await svc.bulkAction({ action: 'delete', ids: selectedIds });
-                                setQuestions((cur) => cur.filter(q => !selectedIds.includes(q.id)));
-                                setSelectedIds([]);
-                                toast.success('Đã xoá');
-                            } catch (e) { toast.error('Lỗi khi xoá'); }
-                        }} className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-rose-600">Xoá đã chọn</button>
+                        <button disabled={selectedIds.length===0} onClick={() => setShowBulkDeleteConfirm(true)}
+                            className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm text-rose-600 disabled:opacity-40 disabled:cursor-not-allowed transition hover:bg-rose-50">
+                            Xoá đã chọn ({selectedIds.length})
+                        </button>
                     </div>
                     <div className="flex items-center gap-2">
                         <button type="button" onClick={() => setPage((p) => Math.max(0, p-1))} disabled={page<=0} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-400 transition hover:bg-gray-50">
@@ -501,33 +511,31 @@ export default function LearningManagementPage() {
                 document.body,
             )}
 
-            {deleteTarget && createPortal(
-                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
-                        <h3 className="text-xl font-extrabold text-slate-900">Xoá câu hỏi</h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                            Bạn có chắc chắn muốn xoá câu hỏi <span className="font-semibold text-slate-800">{deleteTarget.title}</span> không?
-                        </p>
-                        <div className="mt-6 flex items-center justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setDeleteTarget(null)}
-                                className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
-                            >
-                                Huỷ
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleDeleteQuestion}
-                                className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-rose-700"
-                            >
-                                Xoá
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body,
+            {showImport && (
+                <LearningImportModal
+                    onClose={() => setShowImport(false)}
+                    onImported={() => {
+                        setShowImport(false);
+                        setPage(0);
+                        // trigger refetch by resetting search slightly
+                        setSearchText(prev => prev);
+                    }}
+                />
             )}
+
+            <ConfirmModal
+                isOpen={deleteTarget !== null}
+                onClose={() => setDeleteTarget(null)}
+                onConfirm={handleDeleteQuestion}
+                message={`Bạn có chắc chắn muốn xoá câu hỏi "${deleteTarget?.title}" không?`}
+            />
+
+            <ConfirmModal
+                isOpen={showBulkDeleteConfirm}
+                onClose={() => setShowBulkDeleteConfirm(false)}
+                onConfirm={handleBulkDelete}
+                message={`Bạn có chắc chắn muốn xoá ${selectedIds.length} câu hỏi đã chọn không?`}
+            />
         </div>
     );
 }

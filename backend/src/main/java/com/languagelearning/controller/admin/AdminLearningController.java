@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -185,6 +186,26 @@ public class AdminLearningController {
         out.put("mysql_questions_count", mysqlCount);
         out.put("mongo_questions_count", mongoCount);
         return out;
+    }
+
+    @PostMapping(value = "/questions/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> importQuestions(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("type") String type,
+            @RequestParam(value = "levelId", required = false) Integer levelId
+    ) {
+        if (levelId == null) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("success", false);
+            err.put("message", "levelId là bắt buộc");
+            return ResponseEntity.badRequest().body(err);
+        }
+        Map<String, Object> result = adminLearningService.importQuestions(file, type, levelId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Import completed");
+        response.put("data", result);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping(value = "/types", produces = MediaType.APPLICATION_JSON_VALUE)

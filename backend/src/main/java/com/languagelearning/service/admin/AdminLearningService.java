@@ -5,6 +5,8 @@ import com.languagelearning.entity.QuestionIndex;
 import com.languagelearning.repository.mongo.QuestionRepository;
 import com.languagelearning.repository.mysql.QuestionIndexRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -12,7 +14,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -392,5 +396,216 @@ public class AdminLearningService {
             result.put("error", e.getMessage());
             return result;
         }
+    }
+    @Transactional
+    public Map<String, Object> importQuestions(MultipartFile file, String type, Integer levelId) {
+        Map<String, Object> result = new HashMap<>();
+        List<String> errors = new ArrayList<>();
+        int imported = 0;
+
+        try (InputStream is = file.getInputStream();
+             Workbook wb = WorkbookFactory.create(is)) {
+
+            // Find sheet by name (case-insensitive) or use first sheet
+            Sheet sheet = null;
+            for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+                if (wb.getSheetName(i).equalsIgnoreCase(type)) {
+                    sheet = wb.getSheetAt(i);
+                    break;
+                }
+            }
+            if (sheet == null) sheet = wb.getSheetAt(0);
+
+            // Skip row 0 (header) and row 1 (description), data starts at row 2
+            for (int ri = 2; ri <= sheet.getLastRowNum(); ri++) {
+                Row row = sheet.getRow(ri);
+                if (row == null) continue;
+
+                // Skip completely empty rows
+                boolean allEmpty = true;
+                for (Cell c : row) {
+                    if (c != null && c.getCellType() != CellType.BLANK && !getCellString(c).isBlank()) {
+                        allEmpty = false; break;
+                    }
+                }
+                if (allEmpty) continue;
+
+                try {
+                    switch (type.toUpperCase()) {
+                        case "VOCAB":
+                            imported += importVocabRow(row, levelId, errors, ri);
+                            break;
+                        case "LISTENING":
+                            imported += importListeningRow(row, levelId, errors, ri);
+                            break;
+                        case "SPEAKING":
+                            imported += importSpeakingRow(row, levelId, errors, ri);
+                            break;
+                        case "MATCHING":
+                            imported += importMatchingRow(row, levelId, errors, ri);
+                            break;
+                        default:
+                            errors.add("Type không hỗ trợ: " + type);
+                    }
+                } catch (Exception e) {
+                    errors.add("Dòng " + (ri + 1) + ": " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            errors.add("Không thể đọc file: " + e.getMessage());
+        }
+
+        result.put("imported", imported);
+        result.put("errors", errors);
+        return result;
+    }
+
+    private int importVocabRow(Row row, Integer levelId, List<String> errors, int ri) {
+        // Columns: question_text | option_1 | option_2 | option_3 | option_4 | correct_answer | audio_url
+        String questionText  = getCellString(row.getCell(0));
+        String opt1          = getCellString(row.getCell(1));
+        String opt2          = getCellString(row.getCell(2));
+        String opt3          = getCellString(row.getCell(3));
+        String opt4          = getCellString(row.getCell(4));
+        String correctAnswer = getCellString(row.getCell(5));
+        String audioUrl      = getCellString(row.getCell(6));
+
+        if (questionText.isBlank()) { errors.add("Dòng " + (ri + 1) + ": question_text bắt buộc"); return 0; }
+        if (opt1.isBlank())         { errors.add("Dòng " + (ri + 1) + ": option_1 bắt buộc");      return 0; }
+        if (opt2.isBlank())         { errors.add("Dòng " + (ri + 1) + ": option_2 bắt buộc");      return 0; }
+        if (correctAnswer.isBlank()){ errors.add("Dòng " + (ri + 1) + ": correct_answer bắt buộc"); return 0; }
+
+        List<String> options = new ArrayList<>();
+        options.add(opt1); options.add(opt2);
+        if (!opt3.isBlank()) options.add(opt3);
+        if (!opt4.isBlank()) options.add(opt4);
+
+        Question doc = new Question();
+        doc.setQuestionText(questionText);
+        doc.setQuestionType("VOCAB");
+        doc.setLevelId(levelId);
+        doc.setOptions(options);
+        doc.setCorrectAnswers(List.of(correctAnswer));
+        if (!audioUrl.isBlank()) {
+            Question.Metadata meta = new Question.Metadata();
+            meta.setAudioUrl(audioUrl);
+            doc.setMetadata(meta);
+        }
+        Question saved = questionRepository.save(doc);
+
+        QuestionIndex idx = new QuestionIndex();
+        idx.setMongoQuestionId(saved.getId());
+        idx.setLevelId(levelId);
+        idx.setQuestionType(com.languagelearning.entity.QuestionType.VOCAB);
+        idx.setCorrectAnswer(correctAnswer);
+        questionIndexRepository.save(idx);
+        return 1;
+    }
+
+    private int importListeningRow(Row row, Integer levelId, List<String> errors, int ri) {
+        // Columns: question_text | blank_count | correct_answer | audio_url
+        String questionText  = getCellString(row.getCell(0));
+        String blankCountStr = getCellString(row.getCell(1));
+        String correctAnswer = getCellString(row.getCell(2));
+        String audioUrl      = getCellString(row.getCell(3));
+
+        if (questionText.isBlank()) { errors.add("Dòng " + (ri + 1) + ": question_text bắt buộc");  return 0; }
+        if (blankCountStr.isBlank()){ errors.add("Dòng " + (ri + 1) + ": blank_count bắt buộc");    return 0; }
+        if (correctAnswer.isBlank()){ errors.add("Dòng " + (ri + 1) + ": correct_answer bắt buộc"); return 0; }
+
+        int blankCount;
+        try { blankCount = Integer.parseInt(blankCountStr.trim()); }
+        catch (NumberFormatException e) { errors.add("Dòng " + (ri + 1) + ": blank_count phải là số nguyên"); return 0; }
+
+        Question doc = new Question();
+        doc.setQuestionText(questionText);
+        doc.setQuestionType("LISTENING");
+        doc.setLevelId(levelId);
+        doc.setBlankCount(blankCount);
+        doc.setCorrectAnswers(List.of(correctAnswer));
+        if (!audioUrl.isBlank()) {
+            Question.Metadata meta = new Question.Metadata();
+            meta.setAudioUrl(audioUrl);
+            doc.setMetadata(meta);
+        }
+        Question saved = questionRepository.save(doc);
+
+        QuestionIndex idx = new QuestionIndex();
+        idx.setMongoQuestionId(saved.getId());
+        idx.setLevelId(levelId);
+        idx.setQuestionType(com.languagelearning.entity.QuestionType.LISTENING);
+        idx.setCorrectAnswer(correctAnswer);
+        questionIndexRepository.save(idx);
+        return 1;
+    }
+
+    private int importSpeakingRow(Row row, Integer levelId, List<String> errors, int ri) {
+        // Columns: question_text | sample_answer | audio_url
+        // question_text: các câu luyện nói, ngăn cách bằng \n (mỗi câu = 1 dòng)
+        String questionText = getCellString(row.getCell(0));
+        String sampleAnswer = getCellString(row.getCell(1));
+        String audioUrl     = getCellString(row.getCell(2));
+
+        if (questionText.isBlank()) { errors.add("Dòng " + (ri + 1) + ": question_text bắt buộc"); return 0; }
+        if (audioUrl.isBlank())     { errors.add("Dòng " + (ri + 1) + ": audio_url bắt buộc");     return 0; }
+
+        Question doc = new Question();
+        doc.setQuestionText(questionText);
+        doc.setQuestionType("SPEAKING");
+        doc.setLevelId(levelId);
+        if (!sampleAnswer.isBlank()) doc.setSampleAnswer(sampleAnswer);
+        if (!audioUrl.isBlank()) {
+            Question.Metadata meta = new Question.Metadata();
+            meta.setAudioUrl(audioUrl);
+            doc.setMetadata(meta);
+        }
+        Question saved = questionRepository.save(doc);
+
+        QuestionIndex idx = new QuestionIndex();
+        idx.setMongoQuestionId(saved.getId());
+        idx.setLevelId(levelId);
+        idx.setQuestionType(com.languagelearning.entity.QuestionType.SPEAKING);
+        questionIndexRepository.save(idx);
+        return 1;
+    }
+
+    private int importMatchingRow(Row row, Integer levelId, List<String> errors, int ri) {
+        // Columns: left | right
+        String left  = getCellString(row.getCell(0));
+        String right = getCellString(row.getCell(1));
+
+        if (left.isBlank())  { errors.add("Dòng " + (ri + 1) + ": left bắt buộc");  return 0; }
+        if (right.isBlank()) { errors.add("Dòng " + (ri + 1) + ": right bắt buộc"); return 0; }
+
+        Question doc = new Question();
+        doc.setQuestionText(left);
+        doc.setQuestionType("MATCHING");
+        doc.setLevelId(levelId);
+        Question saved = questionRepository.save(doc);
+
+        QuestionIndex idx = new QuestionIndex();
+        idx.setMongoQuestionId(saved.getId());
+        idx.setLevelId(levelId);
+        idx.setQuestionType(com.languagelearning.entity.QuestionType.MATCHING);
+        idx.setCorrectAnswer(right);
+        questionIndexRepository.save(idx);
+        return 1;
+    }
+
+    private String getCellString(Cell cell) {
+        if (cell == null) return "";
+        return switch (cell.getCellType()) {
+            case STRING  -> cell.getStringCellValue().trim();
+            case NUMERIC -> {
+                double d = cell.getNumericCellValue();
+                yield (d == Math.floor(d)) ? String.valueOf((long) d) : String.valueOf(d);
+            }
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case FORMULA -> {
+                try { yield cell.getStringCellValue().trim(); }
+                catch (Exception e) { yield String.valueOf(cell.getNumericCellValue()); }
+            }
+            default -> "";
+        };
     }
 }
