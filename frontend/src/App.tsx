@@ -45,6 +45,7 @@ import GrammarPage from "@/pages/User/learn/grammar/GrammarPage.tsx";
 import GrammarTopicListPage from "@/pages/User/learn/grammar/GrammarTopicListPage.tsx";
 import GrammarTopicDetailPage from "@/pages/User/learn/grammar/GrammarTopicDetailPage.tsx";
 import LearningPage from "@/pages/User/learn/LearningPage.tsx";
+import LearningGuidePage from "@/pages/User/learn/LearningGuidePage.tsx";
 import GeneralRevisionPage from "@/pages/User/learn/general_revision/GeneralRevisionPage.tsx";
 import GeneralRevisionTaskPage from "@/pages/User/learn/general_revision/GeneralRevisionTaskPage.tsx";
 import VocabLessonPage from "@/pages/User/learn/question_type/VocabLessonPage.tsx";
@@ -135,6 +136,7 @@ function App() {
                     <Route path="/" element={<MainLayout/>}>
                         <Route index element={<HomePage/>}/>
                         <Route path="learn" element={<LearningPage/>}/>
+                        <Route path="learn/guide" element={<LearningGuidePage/>}/>
                         <Route path="grammar" element={<GrammarPage/>}>
                             <Route index element={<GrammarTopicListPage/>} />
                             <Route path=":slug" element={<GrammarTopicDetailPage/>} />
