@@ -1,27 +1,107 @@
+version: "3.9"
+
 services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+
+    restart: always
+
+    env_file:
+      - .env
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/database/language_learning_app.sql:/docker-entrypoint-initdb.d/init.sql
+
+    networks:
+      - app-network
+
   redis:
     image: redis:7.2
     container_name: redis-local
+
+    restart: unless-stopped
+
     ports:
       - "6379:6379"
-    restart: unless-stopped
+
     volumes:
-      - redis_data:/data # Lưu dữ liệu vào ổ cứng
+      - redis_data:/data
+
     networks:
-      - redis_net
+      - app-network
 
   redisinsight:
     image: redis/redisinsight:latest
     container_name: redisinsight
+
+    restart: unless-stopped
+
     ports:
       - "5540:5540"
-    restart: unless-stopped
-    networks:
-      - redis_net
 
-networks:
-  redis_net:
-    driver: bridge
+    depends_on:
+      - redis
+
+    networks:
+      - app-network
+
+  backend:
+
+    build:
+      context: ./backend
+
+    container_name: language-learning-backend
+
+    restart: always
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - mysql
+      - redis
+
+    env_file:
+      - .env
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+    networks:
+      - app-network
+
+  frontend:
+
+    build:
+      context: ./frontend
+
+    container_name: language-learning-frontend
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - backend
+
+    networks:
+      - app-network
 
 volumes:
-  redis_data: # Định nghĩa volume để lưu trữ
+
+  mysql_data:
+
+  redis_data:
+
+networks:
+
+  app-network:

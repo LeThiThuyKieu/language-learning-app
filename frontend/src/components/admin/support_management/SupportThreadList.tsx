@@ -31,7 +31,6 @@ export default function SupportThreadList({
     query,
     statusFilter,
     timeSort,
-    isTwoColumn,
     unreadIds,
     onQueryChange,
     onStatusFilterChange,

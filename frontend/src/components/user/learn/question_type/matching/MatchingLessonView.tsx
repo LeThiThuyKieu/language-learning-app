@@ -155,17 +155,6 @@ export default function MatchingLessonView({
     }
 
     if (isFinished) {
-        // Matching: tất cả cặp đều đúng (chỉ ghép đúng mới được tính matched)
-        const attempts: AttemptItem[] = pairs.map((p) => {
-            const q = node.questions?.find(
-                (q) => (q.questionText ?? "").trim() === p.left
-            );
-            return {
-                mongoQuestionId: (q as {mongoQuestionId?: string})?.mongoQuestionId ?? String(q?.id ?? p.id),
-                userAnswer: p.right,
-                correct: true,
-            };
-        });
         return <LessonCompleteView knGained={10} accuracy={100} newBadges={newBadges} onContinue={onNavigate}/>;
     }
 

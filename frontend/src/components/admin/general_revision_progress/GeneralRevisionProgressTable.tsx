@@ -33,7 +33,7 @@ interface Props {
 
 export default function GeneralRevisionProgressTable({
     users, total, page, loading,
-    onViewDetail, onPageChange, onRefresh,
+    onViewDetail, onPageChange,
     search, onSearchChange,
     statusFilter, onStatusFilterChange, onResetFilters,
 }: Props) {

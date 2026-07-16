@@ -3,11 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { grammarService, type GrammarTopic } from "@/services/grammarService";
 import { Loader2 } from "lucide-react";
 
-interface GrammarTopicListProps {
-  onSelectTopic: (topic: GrammarTopic) => void;
-}
-
-export default function GrammarTopicList({ onSelectTopic }: GrammarTopicListProps) {
+export default function GrammarTopicList() {
   const [topics, setTopics] = useState<GrammarTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

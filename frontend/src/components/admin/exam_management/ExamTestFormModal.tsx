@@ -14,12 +14,12 @@ interface Props {
     onSaved: (test: AdminExamTestDto) => void;
 }
 
-const CEFR_LEVELS = ["A2", "B1", "B2", "C1", "C2"];
+const CEFR_LEVELS: Array<"A2" | "B1" | "B2" | "C1" | "C2"> = ["A2", "B1", "B2", "C1", "C2"];
 
 export default function ExamTestFormModal({ mode, test, onClose, onSaved }: Props) {
     const isEdit = mode === "edit";
 
-    const [cefrLevel, setCefrLevel] = useState(test?.cefrLevel ?? "A2");
+    const [cefrLevel, setCefrLevel] = useState<"A2" | "B1" | "B2" | "C1" | "C2">(test?.cefrLevel ?? "A2");
     const [testNumber, setTestNumber] = useState(test?.testNumber?.toString() ?? "1");
     const [title, setTitle] = useState(test?.title ?? "");
     const [description, setDescription] = useState(test?.description ?? "");

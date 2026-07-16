@@ -3,8 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import {
     ArrowLeft, Loader2, Save, Plus, Trash2, Eye, Pencil,
     Image as ImageIcon, Music, AlignLeft, Layers, ChevronDown,
-    Upload, Link as LinkIcon, X, Download, FileSpreadsheet,
-    CheckCircle2, AlertCircle,
+    Upload, Link as LinkIcon, X,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
@@ -794,10 +793,10 @@ function WritingMultiSection({
     setPairs,
     onAdd,
     onDelete,
-    onSave,
-    onEdit,
-    onCancel,
-    isSaving,
+    onSave: _onSave,
+    onEdit: _onEdit,
+    onCancel: _onCancel,
+    isSaving: _isSaving,
     showImport,
     setShowImport,
     onImported,
