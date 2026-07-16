@@ -38,7 +38,7 @@ export default function SupportFloatingButton() {
             ? location.pathname.slice(0, -1)
             : location.pathname;
 
-    const isVisibleOnCurrentPage = ["/", "/profile", "/learn", "/settings", "/help"].includes(normalizedPath);
+    const isVisibleOnCurrentPage = ["/", "/profile", "/learn", "/help"].includes(normalizedPath);
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);

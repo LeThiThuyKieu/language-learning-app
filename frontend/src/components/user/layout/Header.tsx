@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {Menu, X, LogOut, ChevronDown, User, Settings, Home, BookOpen} from "lucide-react";
+import {Menu, X, LogOut, ChevronDown, User, Home, BookOpen} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { useProfileStore } from "@/store/profileStore";
 import { profileService } from "@/services/profileService";
 import ConfirmModal from "./ConfirmModal";
 import { DEFAULT_AVATAR_URL } from "@/constants/avatarOptions";
 
 export default function Header() {
     const { user, logout, isAuthenticated } = useAuthStore();
+    const avatarUrlFromStore = useProfileStore((s) => s.avatarUrl);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_AVATAR_URL);
+
+    // Dùng avatar từ profileStore — tự động cập nhật khi user đổi avatar ở bất kỳ đâu
+    const avatarUrl = avatarUrlFromStore || DEFAULT_AVATAR_URL;
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
@@ -41,31 +45,9 @@ export default function Header() {
     }, [location.pathname]);
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            setAvatarUrl(DEFAULT_AVATAR_URL);
-            return;
-        }
-
-        let isMounted = true;
-
-        const loadAvatar = async () => {
-            try {
-                const profile = await profileService.getMyProfile();
-                if (isMounted) {
-                    setAvatarUrl(profile.avatarUrl || DEFAULT_AVATAR_URL);
-                }
-            } catch {
-                if (isMounted) {
-                    setAvatarUrl(DEFAULT_AVATAR_URL);
-                }
-            }
-        };
-
-        void loadAvatar();
-
-        return () => {
-            isMounted = false;
-        };
+        if (!isAuthenticated) return;
+        // Load profile lần đầu để populate profileStore (bao gồm avatarUrl)
+        profileService.getMyProfile().catch(() => {});
     }, [isAuthenticated]);
 
     const desktopNavLinks = [
@@ -79,7 +61,6 @@ export default function Header() {
         { name: "Khóa học", path: "/learn", icon: BookOpen },
     ];
     const isProfilePage = location.pathname.startsWith("/profile");
-    const isSettingsPage = location.pathname.startsWith("/settings");
 
     const confirmLogout = () => {
         logout();
@@ -178,18 +159,6 @@ export default function Header() {
                                                 <User size={16} /> Hồ sơ của tôi
                                             </span>
                                         </Link>
-                                        <Link
-                                            to="/settings"
-                                            className={`block mx-2 mb-2 p-3 rounded-lg font-semibold ${
-                                                isSettingsPage
-                                                    ? "bg-orange-500/10 text-orange-500"
-                                                    : "text-gray-300"
-                                            }`}
-                                        >
-                                            <span className="flex items-center gap-2">
-                                                <Settings size={16} /> Cài đặt
-                                            </span>
-                                        </Link>
                                         <button
                                             onClick={() => setShowConfirm(true)}
                                             className="w-full flex items-center gap-2 px-4 py-3 text-gray-300 hover:bg-gray-700 transition"
@@ -245,18 +214,6 @@ export default function Header() {
                             >
                                 <span className="flex items-center gap-2">
                                     <User size={16} /> Hồ sơ của tôi
-                                </span>
-                            </Link>
-                            <Link
-                                to="/settings"
-                                className={`block p-3 rounded-lg font-semibold ${
-                                    isSettingsPage
-                                        ? "bg-orange-500/10 text-orange-500"
-                                        : "text-gray-300"
-                                }`}
-                            >
-                                <span className="flex items-center gap-2">
-                                    <Settings size={16} /> Cài đặt
                                 </span>
                             </Link>
                             <button

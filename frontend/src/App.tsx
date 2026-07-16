@@ -64,7 +64,6 @@ import PlacementTestResultsPage from "@/pages/User/learn/placement/PlacementTest
 import LevelConfirmPage from "@/pages/User/learn/LevelConfirmPage.tsx";
 import HelpPage from "@/pages/User/HelpPage.tsx";
 import SupportFloatingButton from "@/components/user/common/SupportFloatingButton.tsx";
-import SettingsPage from "@/pages/User/SettingsPage.tsx";
 import { applyAppearanceSettings, getStoredAppearanceSettings } from "@/utils/appearanceSettings";
 
 const queryClient = new QueryClient();
@@ -147,7 +146,6 @@ function App() {
                         <Route path="general-revision" element={<GeneralRevisionPage/>}/>
                         <Route path="leaderboard" element={<LeaderboardPage/>}/>
                         <Route path="profile" element={<ProfilePage/>}/>
-                        <Route path="settings" element={<SettingsPage/>}/>
                         <Route path="help" element={<HelpPage/>}/>
                     </Route>
 
