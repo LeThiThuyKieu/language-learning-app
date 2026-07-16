@@ -117,7 +117,7 @@ public class AuthService {
         }
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new BadCredentialsException("Invalid email or password");
+            throw new BadCredentialsException("Email hoặc mật khẩu không đúng");
         }
 
         // Sinh JWT
@@ -239,6 +239,11 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("Email không tồn tại trong hệ thống"));
 
+        // Chặn gửi OTP mới nếu tài khoản đang trong thời gian bị khoá do nhập sai quá nhiều lần
+        if (otpService.isLocked(request.getEmail())) {
+            throw new IllegalStateException("Tài khoản đang bị tạm khoá do nhập sai OTP quá nhiều lần. Vui lòng thử lại sau.");
+        }
+
         boolean hasPassword = user.getPasswordHash() != null && !user.getPasswordHash().isBlank();
         String otp = otpService.generateAndStore(request.getEmail());
         emailService.sendOtpEmail(request.getEmail(), otp, hasPassword);
@@ -246,8 +251,16 @@ public class AuthService {
 
     // Xác thực OTP người dùng nhập có đúng với OTP đã gửi hay không.
     public void verifyOtp(VerifyOtpRequest request) {
+        int remaining = otpService.getRemainingAttempts(request.getEmail());
+        if (remaining == 0) {
+            throw new BadCredentialsException("Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã OTP mới.");
+        }
         if (!otpService.verify(request.getEmail(), request.getOtp())) {
-            throw new BadCredentialsException("Mã OTP không đúng hoặc đã hết hạn");
+            int remainingAfter = otpService.getRemainingAttempts(request.getEmail());
+            if (remainingAfter == 0) {
+                throw new BadCredentialsException("Mã OTP không đúng. OTP đã bị vô hiệu hoá, vui lòng gửi lại mã mới.");
+            }
+            throw new BadCredentialsException("Mã OTP không đúng. Còn " + remainingAfter + " lần thử.");
         }
     }
 

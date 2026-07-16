@@ -1,35 +1,8 @@
-import { Link } from "react-router-dom";
-import { BookOpen, Facebook, Globe, Instagram, Mail, MapPin, Phone, Youtube } from "lucide-react";
-
-const footerGroups = [
-  {
-    title: "Khám phá",
-    links: [
-      { label: "Giới thiệu", to: "/" },
-      { label: "Khóa học", to: "/learn" },
-      { label: "Hồ sơ học tập", to: "/profile" },
-      { label: "Đăng nhập", to: "/login" },
-    ],
-  },
-  {
-    title: "Chương trình",
-    links: [
-      { label: "Tiếng Anh giao tiếp", to: "/learn" },
-      { label: "Luyện từ vựng mỗi ngày", to: "/learn" },
-      { label: "Bài học theo chủ đề", to: "/learn" },
-      { label: "Học qua nối từ", to: "/learn" },
-    ],
-  },
-  {
-    title: "Hỗ trợ",
-    links: [
-      { label: "Câu hỏi thường gặp", to: "/help", scrollToTop: true },
-      { label: "Chính sách bảo mật", to: "/" },
-      { label: "Điều khoản sử dụng", to: "/" },
-      { label: "Liên hệ tư vấn", to: "/help", scrollToTop: true },
-    ],
-  },
-];
+import { Link, useNavigate } from "react-router-dom";
+import { BookOpen, Facebook, Globe, Instagram, Lock, Mail, MapPin, Phone, Youtube } from "lucide-react";
+import toast from "react-hot-toast";
+import { getGeneralRevisionUnlocked } from "@/utils/generalRevisionAccess";
+import { useAuthStore } from "@/store/authStore";
 
 const socialLinks = [
   { label: "Facebook", href: "#", icon: Facebook },
@@ -44,6 +17,43 @@ const contactItems = [
 ];
 
 export default function Footer() {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuthStore();
+  const revisionUnlocked = getGeneralRevisionUnlocked(user?.id);
+
+  function go(to: string) {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    navigate(to);
+  }
+
+  const programLinks = [
+    { label: "Chữ cái", to: "/phonetic" },
+    { label: "Ngữ pháp", to: "/grammar" },
+    { label: "Ôn tập", to: "/general-revision", locked: !revisionUnlocked },
+    { label: "Thi", to: "/exam" },
+  ];
+
+  const khamPhaLinks = [
+    { label: "Giới thiệu", to: "/" },
+    { label: "Khóa học", to: "/learn" },
+    ...(isAuthenticated ? [{ label: "Hồ sơ học tập", to: "/profile" }] : []),
+    ...(!isAuthenticated ? [{ label: "Đăng nhập", to: "/login" }] : []),
+  ];
+
+  const hotroLinks = [
+    { label: "Câu hỏi thường gặp", to: "/help" },
+    { label: "Chính sách bảo mật", to: "/" },
+    { label: "Điều khoản sử dụng", to: "/" },
+    ...(isAuthenticated ? [{ label: "Liên hệ tư vấn", to: "/help" }] : []),
+  ];
+
+  function handleProgramClick(item: { to: string; locked?: boolean }) {
+    if (item.locked) {
+      toast.error("Bạn cần hoàn thành phần học để mở khoá phần ôn tập.", { duration: 3000 });
+      return;
+    }
+    go(item.to);
+  }
   return (
     <footer className="relative mt-16 overflow-hidden bg-slate-950 text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(254,77,1,0.24),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(56,189,248,0.16),_transparent_28%)]" />
@@ -73,18 +83,20 @@ export default function Footer() {
                   Mở bài học đầu tiên, xây thói quen 15 phút mỗi ngày và biến việc học thành nhịp sống tự nhiên.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    to="/learning"
+                  <button
+                    type="button"
+                    onClick={() => go(isAuthenticated ? "/learn" : "/login")}
                     className="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-500"
                   >
                     Bắt đầu học
-                  </Link>
-                  <Link
-                    to="/profile"
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => go(isAuthenticated ? "/profile" : "/login")}
                     className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:border-primary-400/50 hover:text-primary-200"
                   >
                     Xem lộ trình
-                  </Link>
+                  </button>
                 </div>
               </div>
             </div>
@@ -120,23 +132,60 @@ export default function Footer() {
                 </div>
               </div>
 
-              {footerGroups.map((group) => (
-                <div key={group.title}>
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">{group.title}</h3>
-                  <ul className="mt-5 space-y-3 text-sm text-slate-300">
-                    {group.links.map((link) => (
-                      <li key={link.label}>
-                        <Link
-                          to={link.to}
-                          className="inline-flex transition-colors duration-200 hover:text-primary-200"
-                        >
-                          {link.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+              {/* Khám phá */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Khám phá</h3>
+                <ul className="mt-5 space-y-3 text-sm text-slate-300">
+                  {khamPhaLinks.map((link) => (
+                    <li key={link.label}>
+                      <button
+                        type="button"
+                        onClick={() => go(link.to)}
+                        className="inline-flex text-left transition-colors duration-200 hover:text-primary-200"
+                      >
+                        {link.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Chương trình */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Chương trình</h3>
+                <ul className="mt-5 space-y-3 text-sm text-slate-300">
+                  {programLinks.map((item) => (
+                    <li key={item.label}>
+                      <button
+                        type="button"
+                        onClick={() => handleProgramClick(item)}
+                        className="inline-flex text-left items-center gap-1.5 transition-colors duration-200 hover:text-primary-200"
+                      >
+                        {item.label}
+                        {item.locked && <Lock className="h-3 w-3 text-slate-500" />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Hỗ trợ */}
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-200">Hỗ trợ</h3>
+                <ul className="mt-5 space-y-3 text-sm text-slate-300">
+                  {hotroLinks.map((link) => (
+                    <li key={link.label}>
+                      <button
+                        type="button"
+                        onClick={() => go(link.to)}
+                        className="inline-flex text-left transition-colors duration-200 hover:text-primary-200"
+                      >
+                        {link.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
 

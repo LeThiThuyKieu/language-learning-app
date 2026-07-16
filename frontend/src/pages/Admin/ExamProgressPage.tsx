@@ -86,7 +86,7 @@ export default function ExamProgressPage() {
             iconBg: "bg-sky-50",
             iconText: "text-sky-500",
             borderColor: "border-l-sky-500",
-            change: "Câu có đáp án chuẩn (Listening + R&W)",
+            change: "Câu có đáp án (Listening + Reading)",
             trend: "up" as const,
         },
         {

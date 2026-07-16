@@ -226,7 +226,20 @@ export const adminApi = {
   bulkAction: async (payload: { action: string; ids: number[]; targetLevelId?: number }) => {
     const response = await apiClient.post(`/admin/learning/bulk`, payload);
     return response.data;
-  }
+  },
+
+  importQuestions: async (file: File, type: string, levelId?: number) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", type);
+    if (levelId != null) formData.append("levelId", String(levelId));
+    const response = await apiClient.post<{ success: boolean; message: string; data: { imported: number; errors: string[] } }>(
+      `/admin/learning/questions/import`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return response.data;
+  },
 };
 
 // Admin metadata

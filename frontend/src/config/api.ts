@@ -31,7 +31,11 @@ const isAuthAttemptRequest = (url: string | undefined) => {
     return (
         url.includes("/auth/login") ||
         url.includes("/auth/register") ||
-        url.includes("/auth/refresh")
+        url.includes("/auth/refresh") ||
+        url.includes("/auth/verify-otp") ||
+        url.includes("/auth/forgot-password") ||
+        url.includes("/auth/reset-password") ||
+        url.includes("/auth/verify-email")
     );
 };
 

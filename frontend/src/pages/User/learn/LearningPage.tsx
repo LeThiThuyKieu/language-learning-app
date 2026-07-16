@@ -17,7 +17,6 @@ import GeneralRevisionUnlockModal from "@/components/user/learn/general_revision
 import LearnSidebar from "@/components/user/learn/common/LearnSidebar.tsx";
 import LearnRightPanel from "@/components/user/learn/common/LearnRightPanel.tsx";
 import {setGeneralRevisionUnlocked} from "@/utils/generalRevisionAccess";
-
 export default function LearningPage() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -306,6 +305,7 @@ export default function LearningPage() {
                                                 {!showOverview && (
                                                     <button
                                                         className="hidden md:inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl font-semibold transition shrink-0"
+                                                        onClick={() => navigate("/learn/guide")}
                                                     >
                                                         <span>Hướng dẫn</span>
                                                     </button>
@@ -461,8 +461,7 @@ export default function LearningPage() {
                 }}
             />
 
-            {/* Modal chúc mừng mở khoá level mới */}
-            {unlockModal && createPortal(
+            {/* Modal chúc mừng mở khoá level mới */}            {unlockModal && createPortal(
                 <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !unlocking && setUnlockModal(null)} />
                     <div className="relative w-full max-w-sm rounded-3xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">

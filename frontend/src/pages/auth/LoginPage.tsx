@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { profileService } from "@/services/profileService";
-import { Eye, EyeOff, KeyRound, Mail, ShieldCheck, Lock, Home, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Mail, ShieldCheck, Lock, Home, ArrowLeft, X } from "lucide-react";
 
 const resolveBackendBaseUrl = () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
@@ -27,6 +27,8 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
     const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [countdown, setCountdown] = useState(0);
+    const [otpError, setOtpError] = useState("");
+    const [otpLocked, setOtpLocked] = useState(false);
     const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     // Countdown resend
@@ -41,14 +43,25 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         if (!email.trim()) return;
         setLoading(true);
         try {
-            // TODO: bỏ comment khi BE sẵn sàng
             await authService.forgotPassword(email.trim());
             toast.success("Mã OTP đã được gửi tới email của bạn");
+            // Reset toàn bộ trạng thái OTP khi gửi mã mới
+            setOtp(["", "", "", "", "", ""]);
+            setOtpError("");
+            setOtpLocked(false);
             setStep("otp");
             setCountdown(60);
         } catch (err) {
             if (axios.isAxiosError(err)) {
-                toast.error(err.response?.data?.message || "Email không tồn tại trong hệ thống");
+                const msg = err.response?.data?.message || "Email không tồn tại trong hệ thống";
+                // Nếu đang bị khoá → chuyển thẳng sang màn OTP để user thấy trạng thái khoá
+                if (msg.includes("tạm khoá") || msg.includes("nhập sai")) {
+                    setOtpError(msg);
+                    setOtpLocked(true);
+                    setStep("otp");
+                } else {
+                    toast.error(msg);
+                }
             } else {
                 toast.error("Không thể gửi OTP, vui lòng thử lại");
             }
@@ -61,18 +74,32 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         if (countdown > 0) return;
         setLoading(true);
         try {
-            
             await authService.forgotPassword(email.trim());
             toast.success("Đã gửi lại mã OTP");
+            // Reset toàn bộ trạng thái OTP khi gửi mã mới
+            setOtp(["", "", "", "", "", ""]);
+            setOtpError("");
+            setOtpLocked(false);
             setCountdown(60);
-        } catch {
-            toast.error("Không thể gửi lại OTP");
+            setTimeout(() => otpRefs.current[0]?.focus(), 50);
+        } catch (err) {
+            const msg = axios.isAxiosError(err)
+                ? (err.response?.data?.message || "Không thể gửi lại OTP")
+                : "Không thể gửi lại OTP";
+            if (msg.includes("tạm khoá") || msg.includes("nhập sai")) {
+                setOtpError(msg);
+                setOtpLocked(true);
+            } else {
+                toast.error(msg);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     const handleOtpChange = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        // Xoá lỗi khi user bắt đầu nhập lại
+        if (otpError) setOtpError("");
         // Chỉ lấy ký tự số, bỏ mọi thứ khác
         const raw = e.target.value.replace(/\D/g, "");
         if (!raw) {
@@ -90,13 +117,8 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         if (idx < 5) {
             // Defer focus để React flush DOM trước — tránh browser vẫn giữ event ở ô cũ
             setTimeout(() => otpRefs.current[idx + 1]?.focus(), 0);
-        } else {
-            // Ô cuối — tự động submit nếu đủ 6 số
-            const code = next.join("");
-            if (code.length === 6) {
-                submitOtp(code);
-            }
         }
+        // Không auto-submit — user phải bấm nút Xác nhận hoặc Enter
     };
 
     const handleOtpKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -130,7 +152,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
         setOtp(next);
         const focusIdx = Math.min(pasted.length - 1, 5);
         otpRefs.current[focusIdx]?.focus();
-        // Tự submit nếu paste đủ 6 số
+        // Tự submit nếu paste đủ 6 số — vẫn giữ cho paste vì đây là hành động chủ động
         if (pasted.length === 6) {
             submitOtp(pasted);
         }
@@ -140,14 +162,22 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
     const submitOtp = async (code: string) => {
         if (loading) return;
         setLoading(true);
+        setOtpError("");
         try {
             await authService.verifyOtp(email.trim(), code);
             setStep("reset");
         } catch (err) {
-            if (axios.isAxiosError(err)) {
-                toast.error(err.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn");
-            } else {
-                toast.error("Xác thực thất bại");
+            const msg = axios.isAxiosError(err)
+                ? (err.response?.data?.message || "Mã OTP không đúng hoặc đã hết hạn")
+                : "Xác thực thất bại";
+            setOtpError(msg);
+            // Nếu OTP bị vô hiệu hoá → lock, không cho nhập thêm
+            if (msg.includes("vô hiệu") || msg.includes("quá nhiều lần")) {
+                setOtpLocked(true);
+            }
+            setOtp(["", "", "", "", "", ""]);
+            if (!msg.includes("vô hiệu") && !msg.includes("quá nhiều lần")) {
+                setTimeout(() => otpRefs.current[0]?.focus(), 50);
             }
         } finally {
             setLoading(false);
@@ -185,13 +215,21 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        /* Overlay */
+        /* Overlay — không đóng khi click ngoài để tránh mất modal do thao tác chuột */
         <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ backdropFilter: "blur(6px)", backgroundColor: "rgba(0,0,0,0.45)" }}
-            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-            <div className="w-full max-w-md bg-white rounded-[28px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md bg-white rounded-[28px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {/* Nút đóng */}
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-10 rounded-full p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+                    aria-label="Đóng"
+                >
+                    <X className="w-5 h-5" />
+                </button>
 
                 {/* ── BƯỚC 1: Nhập email ── */}
                 {step === "email" && (
@@ -266,17 +304,27 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
                                         inputMode="numeric"
                                         maxLength={1}
                                         value={digit}
+                                        disabled={otpLocked}
                                         onChange={(e) => handleOtpChange(idx, e)}
                                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                                         onFocus={(e) => e.target.select()}
-                                        className="w-12 h-14 text-center text-xl font-bold bg-[#F3F4F6] rounded-[14px] outline-none focus:ring-2 focus:ring-[#FE4D01] transition-all"
+                                        className={`w-12 h-14 text-center text-xl font-bold rounded-[14px] outline-none focus:ring-2 transition-all ${
+                                            otpLocked
+                                                ? "bg-gray-100 text-gray-400 cursor-not-allowed ring-2 ring-gray-200"
+                                                : otpError
+                                                ? "bg-red-50 ring-2 ring-red-400"
+                                                : "bg-[#F3F4F6] focus:ring-[#FE4D01]"
+                                        }`}
                                     />
                                 ))}
                             </div>
+                            {otpError && (
+                                <p className="text-sm font-semibold text-red-500 text-center -mt-2">{otpError}</p>
+                            )}
 
                             <button
                                 type="submit"
-                                disabled={loading || otp.join("").length < 6}
+                                disabled={loading || otp.join("").length < 6 || otpLocked}
                                 className="w-full py-4 rounded-full font-semibold text-orange-100 bg-[#D84315] hover:bg-[#BF360C] shadow-md shadow-black/20 active:scale-[0.97] transition-all disabled:opacity-50"
                             >
                                 {loading ? "Đang xác nhận..." : "Xác nhận"}
@@ -295,7 +343,12 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
                         </div>
 
                         <button
-                            onClick={() => setStep("email")}
+                            onClick={() => {
+                                setStep("email");
+                                setOtp(["", "", "", "", "", ""]);
+                                setOtpError("");
+                                setOtpLocked(false);
+                            }}
                             className="w-full mt-4 flex items-center justify-center gap-1.5 text-sm font-semibold text-[#FE4D01] hover:underline"
                         >
                             <ArrowLeft className="w-4 h-4" />
