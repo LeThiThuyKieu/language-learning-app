@@ -353,7 +353,13 @@ export default function LearningManagementPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {filteredQuestions.length === 0 ? (
+                            {loading ? (
+                                <tr>
+                                    <td className="px-5 py-10 text-center text-sm text-gray-500" colSpan={6}>
+                                        Đang tải...
+                                    </td>
+                                </tr>
+                            ) : filteredQuestions.length === 0 ? (
                                 <tr>
                                     <td className="px-5 py-10 text-center text-sm text-gray-500" colSpan={6}>
                                         Không tìm thấy câu hỏi phù hợp.

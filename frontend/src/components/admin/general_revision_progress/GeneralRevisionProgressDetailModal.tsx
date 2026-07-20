@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, ChevronDown, ChevronRight, CheckCircle2, Circle, Clock } from "lucide-react";
+import { X, ChevronDown, ChevronRight, CheckCircle2, Circle } from "lucide-react";
 import {
     generalRevisionProgressService,
     type GeneralRevisionProgressDetail,

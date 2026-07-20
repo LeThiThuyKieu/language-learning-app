@@ -49,31 +49,29 @@ function getScoreLabel(pct: number): { icon: React.ReactNode; text: string; colo
     return { icon: <RefreshCw className="w-5 h-5"/>, text: "Hãy nghe mẫu kỹ hơn và thử lại nhé!", color: "red" };
 }
 
-// Web Speech API types
-// TypeScript không có sẵn type cho Web Speech API nên khai báo thủ công
-interface STTResultEvent extends Event {
+// Web Speech API types (local — no global augmentation to avoid conflicts)
+interface MySTTResultEvent extends Event {
     results: Record<number, Record<number, { transcript: string }>>;
+    resultIndex: number;
 }
-interface STTErrorEvent extends Event {
+interface MySTTErrorEvent extends Event {
     error: string;
 }
-interface SpeechRecognitionInstance extends EventTarget {
+interface MySpeechRecognition extends EventTarget {
     lang: string;
     interimResults: boolean;
     maxAlternatives: number;
-    onresult: ((e: STTResultEvent) => void) | null;
-    onerror: ((e: STTErrorEvent) => void) | null;
+    onresult: ((e: MySTTResultEvent) => void) | null;
+    onerror: ((e: MySTTErrorEvent) => void) | null;
     onend: (() => void) | null;
     start(): void;
     stop(): void;
     abort(): void;
 }
-declare global {
-    interface Window {
-        SpeechRecognition: new () => SpeechRecognitionInstance;
-        webkitSpeechRecognition: new () => SpeechRecognitionInstance;
-    }
-}
+type WindowWithSpeech = typeof window & {
+    SpeechRecognition: new () => MySpeechRecognition;
+    webkitSpeechRecognition: new () => MySpeechRecognition;
+};
 
 //  ScoreDisplay
 // Hiển thị kết quả sau khi kiểm tra: vòng tròn %, nhận xét, so sánh bạn nói / câu mẫu
@@ -199,7 +197,7 @@ export default function SpeakingLessonView({
     const [newBadges, setNewBadges] = useState<BadgeInfo[]>([]);
     const completingRef = useRef(false);
 
-    const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+    const recognitionRef = useRef<MySpeechRecognition | null>(null);
 
     // Reset toàn bộ state khi đổi câu hỏi (mongoQuestionId thay đổi)
     useEffect(() => {
@@ -222,7 +220,8 @@ export default function SpeakingLessonView({
 
     // Bắt đầu ghi âm bằng Web Speech API (chỉ hỗ trợ Chrome)
     function startRecording() {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const w = window as unknown as WindowWithSpeech;
+        const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
         if (!SR) {
             setSttError("Trình duyệt không hỗ trợ ghi âm. Hãy dùng Chrome.");
             return;
@@ -237,13 +236,13 @@ export default function SpeakingLessonView({
         rec.maxAlternatives = 1;
 
         // Nhận kết quả nhận dạng giọng nói
-        rec.onresult = (e: STTResultEvent) => {
+        rec.onresult = (e: MySTTResultEvent) => {
             const text = String(e.results?.[0]?.[0]?.transcript ?? "");
             setTranscript(text);
         };
 
         // Xử lý lỗi ghi âm (not-allowed = chưa cấp quyền mic)
-        rec.onerror = (e: STTErrorEvent) => {
+        rec.onerror = (e: MySTTErrorEvent) => {
             setSttError(e.error === "not-allowed"
                 ? "Vui lòng cho phép truy cập microphone."
                 : "Lỗi ghi âm: " + e.error);
@@ -252,7 +251,7 @@ export default function SpeakingLessonView({
 
         rec.onend = () => setRecording(false);
 
-        recognitionRef.current = rec;
+        recognitionRef.current = rec as unknown as MySpeechRecognition;
         rec.start();
         setRecording(true);
     }

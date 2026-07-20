@@ -16,18 +16,9 @@ interface MergedRow {
     type: string;
 }
 
-// ── helpers ────────────────────────────────────────────────────────────────────
-function typeBadge(type: string) {
-    const map: Record<string, { label: string; cls: string }> = {
-        VOCAB:     { label: "Từ vựng",  cls: "bg-blue-100 text-blue-700" },
-        LISTENING: { label: "Nghe",     cls: "bg-purple-100 text-purple-700" },
-        SPEAKING:  { label: "Nói",      cls: "bg-pink-100 text-pink-700" },
-        MATCHING:  { label: "Ghép đôi", cls: "bg-amber-100 text-amber-700" },
-    };
-    return map[type] ?? { label: type, cls: "bg-gray-100 text-gray-600" };
-}
+// helpers
 
-// ── Section header ─────────────────────────────────────────────────────────────
+// Section header
 function SectionHeader({ label, correct, total, color }: {
     label: string; correct: number; total: number; color: string;
 }) {
@@ -39,7 +30,7 @@ function SectionHeader({ label, correct, total, color }: {
     );
 }
 
-// ── VOCAB row (câu 1-4): expand để xem đáp án + options ──────────────────────
+// VOCAB row (câu 1-4): expand để xem đáp án + options
 function VocabRow({ row, displayIndex, expanded, onToggle }: {
     row: MergedRow; displayIndex: number; expanded: boolean; onToggle: () => void;
 }) {
@@ -131,7 +122,7 @@ function VocabRow({ row, displayIndex, expanded, onToggle }: {
     );
 }
 
-// ── LISTENING block: audio + đoạn văn (xuống dòng đúng) + từng ô điền ─────────
+// LISTENING block: audio + đoạn văn (xuống dòng đúng) + từng ô điền
 function ListeningBlock({ rows }: { rows: MergedRow[] }) {
     const [expanded, setExpanded] = useState(false);
     const audioUrl = rows[0]?.question?.audioUrl;
@@ -213,7 +204,7 @@ function ListeningBlock({ rows }: { rows: MergedRow[] }) {
     );
 }
 
-// ── SPEAKING block: 1 audio + danh sách câu đã nói ───────────────────────────
+// SPEAKING block: 1 audio + danh sách câu đã nói
 function SpeakingBlock({ rows }: { rows: MergedRow[] }) {
     const [expanded, setExpanded] = useState(false);
     const audioUrl = rows[0]?.question?.audioUrl;
@@ -295,7 +286,7 @@ function SpeakingBlock({ rows }: { rows: MergedRow[] }) {
     );
 }
 
-// ── MATCHING block: danh sách cặp nối (không có "Câu 7") ─────────────────────
+// MATCHING block: danh sách cặp nối (không có "Câu 7")
 function MatchingBlock({ rows }: { rows: MergedRow[] }) {
     const [expanded, setExpanded] = useState(false);
     const correctCount = rows.filter(r => r.attempt.correct).length;
@@ -357,7 +348,7 @@ function MatchingBlock({ rows }: { rows: MergedRow[] }) {
     );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// Main component
 export default function ReviewAnswerSheet({ attempts, questions, onClose }: ReviewAnswerSheetProps) {
     const [expandedVocab, setExpandedVocab] = useState<number | null>(null);
 

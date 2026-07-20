@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
     X, ChevronDown, ChevronRight, Loader2,
-    Headphones, BookOpen, Mic, CheckCircle2, XCircle, Minus,
+    Headphones, BookOpen, Mic,
 } from "lucide-react";
 import {
     examProgressService,

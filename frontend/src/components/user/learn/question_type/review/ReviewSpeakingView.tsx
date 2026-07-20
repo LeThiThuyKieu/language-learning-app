@@ -41,30 +41,29 @@ function getScoreLabel(pct: number): { icon: React.ReactNode; text: string; colo
     return { icon: <RefreshCw className="w-5 h-5"/>, text: "Hãy nghe mẫu kỹ hơn và thử lại nhé!", color: "red" };
 }
 
-// Web Speech API types
-interface STTResultEvent extends Event {
+// Web Speech API types (local — no global augmentation to avoid conflicts)
+interface MySTTResultEvent extends Event {
     results: Record<number, Record<number, { transcript: string }>>;
+    resultIndex: number;
 }
-interface STTErrorEvent extends Event {
+interface MySTTErrorEvent extends Event {
     error: string;
 }
-interface SpeechRecognitionInstance extends EventTarget {
+interface MySpeechRecognition extends EventTarget {
     lang: string;
     interimResults: boolean;
     maxAlternatives: number;
-    onresult: ((e: STTResultEvent) => void) | null;
-    onerror: ((e: STTErrorEvent) => void) | null;
+    onresult: ((e: MySTTResultEvent) => void) | null;
+    onerror: ((e: MySTTErrorEvent) => void) | null;
     onend: (() => void) | null;
     start(): void;
     stop(): void;
     abort(): void;
 }
-declare global {
-    interface Window {
-        SpeechRecognition: new () => SpeechRecognitionInstance;
-        webkitSpeechRecognition: new () => SpeechRecognitionInstance;
-    }
-}
+type WindowWithSpeech = typeof window & {
+    SpeechRecognition: new () => MySpeechRecognition;
+    webkitSpeechRecognition: new () => MySpeechRecognition;
+};
 
 //  ScoreDisplay (giống SpeakingLessonView)
 function ScoreDisplay({ pct, transcript, expected }: { pct: number; transcript: string; expected: string }) {
@@ -153,7 +152,7 @@ export default function ReviewSpeakingView({
     const [skippedIndices, setSkippedIndices] = useState<Set<number>>(new Set());
     const [speakingAttempts, setSpeakingAttempts] = useState<AttemptItem[]>([]);
 
-    const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+    const recognitionRef = useRef<MySpeechRecognition | null>(null);
 
     // Reset khi đổi câu hỏi
     useEffect(() => {
@@ -173,7 +172,8 @@ export default function ReviewSpeakingView({
     }, []);
 
     function startRecording() {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const w = window as unknown as WindowWithSpeech;
+        const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
         if (!SR) { setSttError("Trình duyệt không hỗ trợ ghi âm. Hãy dùng Chrome."); return; }
         setSttError("");
         setTranscript("");
@@ -183,13 +183,13 @@ export default function ReviewSpeakingView({
         rec.lang = "en-US";
         rec.interimResults = false;
         rec.maxAlternatives = 1;
-        rec.onresult = (e: STTResultEvent) => { setTranscript(String(e.results?.[0]?.[0]?.transcript ?? "")); };
-        rec.onerror = (e: STTErrorEvent) => {
+        rec.onresult = (e: MySTTResultEvent) => { setTranscript(String(e.results?.[0]?.[0]?.transcript ?? "")); };
+        rec.onerror = (e: MySTTErrorEvent) => {
             setSttError(e.error === "not-allowed" ? "Vui lòng cho phép truy cập microphone." : "Lỗi ghi âm: " + e.error);
             setRecording(false);
         };
         rec.onend = () => setRecording(false);
-        recognitionRef.current = rec;
+        recognitionRef.current = rec as unknown as MySpeechRecognition;
         rec.start();
         setRecording(true);
     }
