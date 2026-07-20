@@ -751,6 +751,7 @@ export default function ExamReadingWritingPage() {
     const [timeHidden, setTimeHidden] = useState(false);
     const [showExitModal, setShowExitModal] = useState(false);
     const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [showTimeUpModal, setShowTimeUpModal] = useState(false);
     const [activePartIdx, setActivePartIdx] = useState(0);
     const [activeQIdx, setActiveQIdx] = useState(0);
     const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -791,6 +792,8 @@ export default function ExamReadingWritingPage() {
             setTimeLeft((t) => {
                 if (t <= 1) {
                     clearInterval(timerRef.current!);
+                    // Auto-submit khi hết giờ
+                    setShowTimeUpModal(true);
                     return 0;
                 }
                 return t - 1;
@@ -1061,6 +1064,48 @@ export default function ExamReadingWritingPage() {
             <LessonExitModal open={showExitModal} onContinue={() => setShowExitModal(false)} onExit={() => navigate(-1)}
                              continueButtonText="Tiếp tục thi"
                              bodyText="Đợi chút! Bạn sẽ mất hết tiến trình thi này nếu thoát bây giờ."/>
+
+            {/* Time-up modal */}
+            {showTimeUpModal && (() => {
+                const totalQ = parts.flatMap((p) => p.questions).length;
+                const answered = Object.keys(answers).length;
+                const unanswered = totalQ - answered;
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"/>
+                        <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                                <h2 className="text-lg font-extrabold text-gray-900">Hết giờ Reading &amp; Writing!</h2>
+                            </div>
+                            <div className="px-6 py-5">
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Thời gian làm bài đã kết thúc. Bài của bạn đang được nộp tự động.
+                                </p>
+                                {unanswered > 0
+                                    ? <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm font-semibold text-yellow-800">
+                                        Câu chưa trả lời: {unanswered}
+                                      </div>
+                                    : <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm font-semibold text-green-700">
+                                        Bạn đã trả lời tất cả {totalQ} câu hỏi.
+                                      </div>
+                                }
+                            </div>
+                            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowTimeUpModal(false);
+                                        handleSubmitWithGrading();
+                                    }}
+                                    className="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-extrabold text-white transition shadow-md"
+                                >
+                                    Chuyển sang Speaking
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }
